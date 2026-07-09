@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export default function SignupPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ shopName: "", ownerName: "", phone: "", password: "" });
+  const [form, setForm] = useState({ shopName: "", address: "", ownerName: "", phone: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -41,6 +41,7 @@ export default function SignupPage() {
 
         {[
           ["نام مغازه/تعمیرگاه", "shopName"],
+          ["آدرس مغازه (اختیاری)", "address"],
           ["نام شما (مدیر)", "ownerName"],
           ["شماره موبایل", "phone"],
         ].map(([label, key]) => (

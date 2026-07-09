@@ -20,6 +20,7 @@ model Shop {
   id            String   @id @default(cuid())
   name          String
   phone         String?
+  address       String?
   // "REPAIR" (repair shop, default) | "DEALER" (phone buy/sell dealer) | "BOTH"
   type          String   @default("REPAIR")
   // subscription plan: "free" | "pro" | "business"
@@ -103,6 +104,9 @@ model User {
   marketReplies   MarketReply[]
   deviceFlags        DeviceFlag[]
   deviceTransactions DeviceTransaction[]
+  passwordResetTokens PasswordResetToken[]
+  conversationsStarted Conversation[] @relation("ConversationStarter")
+  messages             Message[]
 
   @@index([shopId])
 }
@@ -236,6 +240,20 @@ model Invoice {
   @@index([shopId])
 }
 
+// One-time SMS code for the forgot-password flow. Short-lived (10 min)
+// and single-use; never store the plain reset link, only this code.
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  code      String   // 5-digit numeric OTP sent via SMS
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
 // ── Nationwide marketplace ───────────────────────────────────
 // Unlike every other model above, these are NOT shop-isolated on read —
 // any signed-in technician from any shop can see listings from any other
@@ -274,10 +292,41 @@ model MarketListing {
   status       ListingStatus   @default(OPEN)
   createdAt    DateTime        @default(now())
 
-  replies      MarketReply[]
+  replies       MarketReply[]
+  conversations Conversation[]
 
   @@index([province, city])
   @@index([category, status])
+}
+
+// Direct 1-to-1 chat thread on a listing, like Divar's "چت" button —
+// separate from the public MarketReply comments above. One conversation
+// per (listing, interested user) pair; the listing author is always the
+// other participant.
+model Conversation {
+  id            String        @id @default(cuid())
+  listingId     String
+  listing       MarketListing @relation(fields: [listingId], references: [id])
+  starterId     String        // the interested user who opened the chat
+  starter       User          @relation("ConversationStarter", fields: [starterId], references: [id])
+  createdAt     DateTime      @default(now())
+
+  messages      Message[]
+
+  @@unique([listingId, starterId])
+  @@index([listingId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id])
+  content        String
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
 }
 
 model MarketReply {

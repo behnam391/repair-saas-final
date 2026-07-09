@@ -26,6 +26,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <Link href="/invoices" className="text-muted hover:text-ink whitespace-nowrap">فاکتورها</Link>
             <Link href="/market" className="text-muted hover:text-ink whitespace-nowrap">بازار سراسری</Link>
             <Link href="/device-lookup" className="text-muted hover:text-ink whitespace-nowrap">پرونده گوشی</Link>
+            <Link href="/chats" className="text-muted hover:text-ink whitespace-nowrap">چت‌ها</Link>
             {user.role === "OWNER" && <Link href="/admin" className="text-muted hover:text-ink whitespace-nowrap">مدیریت</Link>}
             {user.role === "OWNER" && <Link href="/admin/billing" className="text-muted hover:text-ink whitespace-nowrap">اشتراک</Link>}
             <span className="w-px h-4 bg-surface2 shrink-0" />

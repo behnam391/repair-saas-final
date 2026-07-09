@@ -8,6 +8,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 type Staff = { id: string; name: string; phone: string; role: string; active: boolean };
 type ReportRow = { techId: string; name: string; role: string; closedCount: number; revenue: number };
+type ShopInfo = { name: string; address: string | null; phone: string | null; plan: string };
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
@@ -17,15 +18,24 @@ export default function AdminPage() {
   const [form, setForm] = useState({ name: "", phone: "", password: "", role: "HARDWARE" });
   const [error, setError] = useState("");
 
+  const [shopInfo, setShopInfo] = useState<ShopInfo>({ name: "", address: "", phone: "", plan: "free" });
+  const [shopSaved, setShopSaved] = useState(false);
+
   const isOwner = (session?.user as any)?.role === "OWNER";
 
   async function load() {
-    const [sRes, rRes] = await Promise.all([fetch("/api/staff"), fetch("/api/reports/staff")]);
+    const [sRes, rRes, shopRes] = await Promise.all([
+      fetch("/api/staff"), fetch("/api/reports/staff"), fetch("/api/shop"),
+    ]);
     if (sRes.ok) setStaff((await sRes.json()).staff ?? []);
     if (rRes.ok) {
       const data = await rRes.json();
       setReport(data.staff ?? []);
       setMonthRevenue(data.last30DaysRevenue ?? 0);
+    }
+    if (shopRes.ok) {
+      const data = await shopRes.json();
+      setShopInfo({ name: data.shop.name, address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan });
     }
   }
   useEffect(() => { if (isOwner) load(); }, [isOwner]);
@@ -46,6 +56,19 @@ export default function AdminPage() {
     load();
   }
 
+  async function saveShopInfo() {
+    setShopSaved(false);
+    const res = await fetch("/api/shop", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: shopInfo.name, address: shopInfo.address, phone: shopInfo.phone }),
+    });
+    if (res.ok) {
+      setShopSaved(true);
+      setTimeout(() => setShopSaved(false), 2500);
+    }
+  }
+
   if (status === "loading") return <p className="p-4 text-sm text-muted">در حال بارگذاری...</p>;
   if (!isOwner) {
     return <p className="p-4 text-sm text-muted">این بخش فقط برای مدیر مغازه قابل دسترسی است.</p>;
@@ -53,11 +76,29 @@ export default function AdminPage() {
 
   return (
     <div className="p-4 max-w-xl mx-auto">
-      <h1 className="font-extrabold mb-4">پنل مدیریت</h1>
+      <h1 className="font-extrabold mb-4 text-lg">پنل مدیریت</h1>
 
-      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+      <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4 mb-6 shadow-lg shadow-black/20">
         <div className="text-xs text-muted mb-1">درآمد ۳۰ روز اخیر</div>
-        <div className="text-xl font-extrabold mono">{monthRevenue.toLocaleString("fa-IR")} <span className="text-xs font-normal">تومان</span></div>
+        <div className="text-2xl font-extrabold mono text-copper">{monthRevenue.toLocaleString("fa-IR")} <span className="text-xs font-normal text-ink">تومان</span></div>
+      </div>
+
+      {/* Shop info / address settings */}
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+        <div className="text-sm font-bold mb-3">اطلاعات مغازه</div>
+        <label className="block text-xs text-muted mb-1">نام مغازه</label>
+        <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+          value={shopInfo.name} onChange={(e) => setShopInfo({ ...shopInfo, name: e.target.value })} />
+        <label className="block text-xs text-muted mb-1">آدرس</label>
+        <textarea className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+          placeholder="آدرس کامل مغازه برای نمایش به مشتریان"
+          value={shopInfo.address ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, address: e.target.value })} />
+        <label className="block text-xs text-muted mb-1">تلفن مغازه</label>
+        <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+          value={shopInfo.phone ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, phone: e.target.value })} />
+        <button onClick={saveShopInfo} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm">
+          {shopSaved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
+        </button>
       </div>
 
       <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
@@ -73,7 +114,7 @@ export default function AdminPage() {
           {Object.entries(ROLE_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
         </select>
         {error && <p className="text-danger text-xs mb-2">{error}</p>}
-        <button onClick={addStaff} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
+        <button onClick={addStaff} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm hover:brightness-110 transition">
           افزودن کارمند
         </button>
       </div>

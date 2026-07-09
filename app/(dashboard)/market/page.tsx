@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 const CATEGORY_LABEL: Record<string, string> = {
   BOARD: "برد / شماتیک", FLASH_FILE: "فایل فلش", PART: "قطعه", EXPERTISE: "مشاوره تخصصی", OTHER: "سایر",
@@ -8,11 +10,14 @@ const CATEGORY_LABEL: Record<string, string> = {
 type Listing = {
   id: string; category: string; title: string; description: string; deviceModel?: string;
   province: string; city: string; status: string; createdAt: string;
-  author: { name: string; phone: string }; shop: { name: string };
+  author: { name: string; phone: string }; authorId: string; shop: { name: string };
   replies: { id: string; message: string; author: { name: string; phone: string }; createdAt: string }[];
 };
 
 export default function MarketPage() {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const myId = (session?.user as any)?.id;
   const [listings, setListings] = useState<Listing[]>([]);
   const [provinces, setProvinces] = useState<Record<string, string[]>>({});
   const [filterProvince, setFilterProvince] = useState("");
@@ -39,6 +44,14 @@ export default function MarketPage() {
 
   useEffect(() => { loadLocations(); }, []);
   useEffect(() => { load(); }, [filterProvince, filterCategory]);
+
+  async function startChat(listingId: string) {
+    const res = await fetch(`/api/market/${listingId}/conversations`, { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      router.push(`/chats?open=${data.conversation.id}`);
+    }
+  }
 
   async function sendReply(id: string) {
     const message = replyDraft[id]?.trim();
@@ -109,6 +122,11 @@ export default function MarketPage() {
               <a href={`tel:${l.author.phone}`} className="inline-block text-[11px] text-copper font-semibold mt-1.5">
                 📞 تماس: {l.author.phone}
               </a>
+              {myId !== l.authorId && (
+                <button onClick={() => startChat(l.id)} className="inline-block text-[11px] text-teal font-semibold mt-1.5 mr-3">
+                  💬 ارسال پیام
+                </button>
+              )}
 
               {l.replies.length > 0 && (
                 <div className="mt-3 space-y-1.5 border-t border-surface2 pt-2.5">

@@ -39,3 +39,34 @@ body {
 * { transition: background-color .15s ease, border-color .15s ease; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ── Global visual polish ──────────────────────────────────
+   Targets any element whose class list contains these Tailwind
+   utility fragments, so existing markup gets more depth/feedback
+   without editing every component file individually. */
+[class*="bg-surface"] {
+  box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 1px 1px rgba(0,0,0,.08);
+}
+[data-theme="light"] [class*="bg-surface"] {
+  box-shadow: 0 1px 3px rgba(20,22,27,.08), 0 1px 1px rgba(20,22,27,.04);
+}
+button[class*="bg-copper"], button[class*="bg-teal"] {
+  transition: transform .12s ease, filter .15s ease, box-shadow .15s ease;
+}
+button[class*="bg-copper"]:hover, button[class*="bg-teal"]:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+button[class*="bg-copper"]:active, button[class*="bg-teal"]:active {
+  transform: translateY(0);
+}
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--color-copper);
+  outline-offset: 1px;
+}
+::selection { background: var(--color-copper); color: #fff; }
+
+/* subtle scrollbar for chat/long lists */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: var(--color-surface2); border-radius: 8px; }
+::-webkit-scrollbar-track { background: transparent; }

@@ -5,6 +5,7 @@ import { z } from "zod";
 
 const SignupSchema = z.object({
   shopName: z.string().min(2),
+  address: z.string().optional(),
   ownerName: z.string().min(2),
   phone: z.string().min(5),
   password: z.string().min(4),
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
     const passwordHash = await bcrypt.hash(body.password, 10);
 
     const shop = await db.$transaction(async (tx) => {
-      const s = await tx.shop.create({ data: { name: body.shopName, plan: "free", monthlyQuota: 10 } });
+      const s = await tx.shop.create({ data: { name: body.shopName, address: body.address, plan: "free", monthlyQuota: 10 } });
       await tx.user.create({
         data: { shopId: s.id, name: body.ownerName, phone: body.phone, passwordHash, role: "OWNER" },
       });

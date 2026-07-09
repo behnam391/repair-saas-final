@@ -57,6 +57,9 @@ export default function LoginPage() {
         <p className="text-[11px] text-muted text-center mt-4">
           مغازه جدید هستید؟ <a href="/signup" className="text-copper">ثبت‌نام کنید</a>
         </p>
+        <p className="text-[11px] text-muted text-center mt-2">
+          <a href="/forgot-password" className="text-copper">رمز عبور را فراموش کرده‌اید؟</a>
+        </p>
       </form>
     </div>
   );
