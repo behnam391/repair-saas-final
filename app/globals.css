@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root,
+[data-theme="dark"] {
+  --color-bg: #14161B;
+  --color-surface: #1D2026;
+  --color-surface2: #262A32;
+  --color-copper: #C97B3D;
+  --color-teal: #4FB0A5;
+  --color-amber: #E0A640;
+  --color-danger: #D1574A;
+  --color-muted: #8B919C;
+  --color-ink: #EDEEF0;
+}
+
+[data-theme="light"] {
+  --color-bg: #F5F3EF;
+  --color-surface: #FFFFFF;
+  --color-surface2: #EDEAE3;
+  --color-copper: #B5622A;
+  --color-teal: #2E8177;
+  --color-amber: #B87F1E;
+  --color-danger: #B23A2E;
+  --color-muted: #6B7078;
+  --color-ink: #1C1E22;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: 'Vazirmatn', sans-serif;
+  transition: background-color .2s ease, color .2s ease;
+}
+.mono { font-family: 'JetBrains Mono', monospace; }
+* { transition: background-color .15s ease, border-color .15s ease; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

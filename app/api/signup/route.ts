@@ -1,0 +1,40 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
+
+const SignupSchema = z.object({
+  shopName: z.string().min(2),
+  ownerName: z.string().min(2),
+  phone: z.string().min(5),
+  password: z.string().min(4),
+});
+
+// POST /api/signup — public, no auth required. Anyone can create a new
+// shop on the "free" plan; upgrading later goes through /api/billing.
+export async function POST(req: NextRequest) {
+  try {
+    const body = SignupSchema.parse(await req.json());
+
+    const existing = await db.user.findUnique({ where: { phone: body.phone } });
+    if (existing) {
+      return NextResponse.json({ error: "phone_taken", message: "این شماره موبایل قبلاً ثبت شده" }, { status: 409 });
+    }
+
+    const passwordHash = await bcrypt.hash(body.password, 10);
+
+    const shop = await db.$transaction(async (tx) => {
+      const s = await tx.shop.create({ data: { name: body.shopName, plan: "free", monthlyQuota: 10 } });
+      await tx.user.create({
+        data: { shopId: s.id, name: body.ownerName, phone: body.phone, passwordHash, role: "OWNER" },
+      });
+      return s;
+    });
+
+    return NextResponse.json({ shopId: shop.id }, { status: 201 });
+  } catch (e) {
+    if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input", details: e.errors }, { status: 400 });
+    console.error(e);
+    return NextResponse.json({ error: "internal_error" }, { status: 500 });
+  }
+}

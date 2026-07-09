@@ -1,0 +1,348 @@
+// ─────────────────────────────────────────────────────────────
+// Repair Shop SaaS — Database Schema
+// Multi-tenant model: every business table carries shopId so one
+// Postgres database safely serves many shops (row-level isolation
+// enforced in lib/tenant.ts on every query, not just here).
+// ─────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ── Tenant ──────────────────────────────────────────────────
+
+model Shop {
+  id            String   @id @default(cuid())
+  name          String
+  phone         String?
+  // "REPAIR" (repair shop, default) | "DEALER" (phone buy/sell dealer) | "BOTH"
+  type          String   @default("REPAIR")
+  // subscription plan: "free" | "pro" | "business"
+  plan          String   @default("free")
+  planExpiresAt DateTime?
+  active        Boolean  @default(true) // super admin can suspend a shop
+  // monthly device-intake quota enforced for the "free" plan
+  monthlyQuota  Int      @default(10)
+  smsSenderName String? // shown as the sender name in outgoing SMS
+  createdAt     DateTime @default(now())
+
+  users         User[]
+  customers     Customer[]
+  tickets       Ticket[]
+  inventory     InventoryItem[]
+  invoices      Invoice[]
+  marketListings MarketListing[]
+  marketReplies  MarketReply[]
+  subscriptions  Subscription[]
+  deviceFlags        DeviceFlag[]
+  deviceTransactions DeviceTransaction[]
+}
+
+// You — the SaaS owner — sign in separately from every shop's staff.
+// Deliberately not tied to a Shop, so it isn't caught by any tenant-scoped
+// query, and can't be created through the public signup flow.
+model PlatformAdmin {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+enum SubscriptionStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+// One row per checkout attempt against Zarinpal. Successful payment
+// extends Shop.planExpiresAt by 30 days and sets Shop.plan.
+model Subscription {
+  id        String             @id @default(cuid())
+  shopId    String
+  shop      Shop               @relation(fields: [shopId], references: [id])
+  plan      String             // "pro" | "business"
+  amount    Int                // toman
+  authority String?            // Zarinpal Authority token for this attempt
+  refId     String?            // Zarinpal RefID once verified/paid
+  status    SubscriptionStatus @default(PENDING)
+  createdAt DateTime           @default(now())
+
+  @@index([shopId])
+}
+
+// ── Users (shop staff) ──────────────────────────────────────
+
+enum Role {
+  OWNER     // full access: billing, staff management, all reports
+  FRONTDESK // intake, customer-facing, invoicing
+  HARDWARE
+  SOFTWARE
+  BOARD     // board-level / motherboard & data-recovery specialists
+}
+
+model User {
+  id           String   @id @default(cuid())
+  shopId       String
+  shop         Shop     @relation(fields: [shopId], references: [id])
+  name         String
+  phone        String   @unique
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  assignedTickets Ticket[]        @relation("AssignedTech")
+  historyEntries  TicketHistory[]
+  marketListings  MarketListing[]
+  marketReplies   MarketReply[]
+  deviceFlags        DeviceFlag[]
+  deviceTransactions DeviceTransaction[]
+
+  @@index([shopId])
+}
+
+// ── Customers ────────────────────────────────────────────────
+
+model Customer {
+  id        String   @id @default(cuid())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id])
+  name      String
+  phone     String
+  createdAt DateTime @default(now())
+
+  tickets   Ticket[]
+
+  @@index([shopId, phone])
+}
+
+// ── Repair workflow ─────────────────────────────────────────
+
+// Which specialty lane a ticket currently sits in.
+enum Lane {
+  HARDWARE
+  SOFTWARE
+  BOARD
+  READY     // repaired, awaiting pickup
+}
+
+enum TicketStatus {
+  PENDING    // received by this lane, not started
+  IN_PROGRESS
+  REFERRED   // handed off to another lane
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+model Ticket {
+  id            String       @id @default(cuid())
+  shopId        String
+  shop          Shop         @relation(fields: [shopId], references: [id])
+  no            Int          // human-friendly sequential ticket number, scoped per shop
+  customerId    String
+  customer      Customer     @relation(fields: [customerId], references: [id])
+
+  deviceModel   String
+  imei          String?
+  issueInitial  String       // the problem as described at intake
+
+  lane          Lane
+  status        TicketStatus @default(PENDING)
+  assignedToId  String?
+  assignedTo    User?        @relation("AssignedTech", fields: [assignedToId], references: [id])
+
+  estimatedCost Int?         // toman
+  finalCost     Int?
+
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  deliveredAt   DateTime?
+
+  history       TicketHistory[]
+  invoice       Invoice?
+  partsUsed     TicketPart[]
+
+  @@unique([shopId, no])
+  @@index([shopId, lane, status])
+}
+
+// Every transition (intake, start, referral, completion) is logged here —
+// this IS the "stamped repair tag" timeline shown in the UI.
+model TicketHistory {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  action    String   // e.g. "پذیرش دستگاه", "ارجاع به نرم‌افزار", "آماده تحویل"
+  lane      Lane
+  techId    String?
+  tech      User?    @relation(fields: [techId], references: [id])
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
+// ── Inventory ────────────────────────────────────────────────
+
+model InventoryItem {
+  id          String   @id @default(cuid())
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id])
+  name        String   // e.g. "LCD سامسونگ A54"
+  sku         String?
+  quantity    Int      @default(0)
+  lowStockAt  Int      @default(2)
+  costPrice   Int      // toman, what the shop paid
+  sellPrice   Int      // toman, what the shop charges
+
+  usedIn      TicketPart[]
+
+  @@index([shopId])
+}
+
+// Join table: which parts were consumed on which ticket (drives
+// both inventory deduction and per-technician profit reporting).
+model TicketPart {
+  id          String        @id @default(cuid())
+  ticketId    String
+  ticket      Ticket        @relation(fields: [ticketId], references: [id])
+  itemId      String
+  item        InventoryItem @relation(fields: [itemId], references: [id])
+  quantity    Int           @default(1)
+  priceCharged Int          // toman, locked in at time of use
+}
+
+// ── Invoicing ────────────────────────────────────────────────
+
+model Invoice {
+  id         String   @id @default(cuid())
+  shopId     String
+  shop       Shop     @relation(fields: [shopId], references: [id])
+  ticketId   String   @unique
+  ticket     Ticket   @relation(fields: [ticketId], references: [id])
+  laborCost  Int      // toman
+  partsCost  Int      // toman, sum of TicketPart.priceCharged
+  total      Int
+  paid       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([shopId])
+}
+
+// ── Nationwide marketplace ───────────────────────────────────
+// Unlike every other model above, these are NOT shop-isolated on read —
+// any signed-in technician from any shop can see listings from any other
+// shop (that's the whole point: connecting technicians nationwide). Writes
+// are still tagged with shopId/authorId so we know who posted what and can
+// let them manage/close their own posts.
+
+enum ListingCategory {
+  BOARD       // شماتیک / نقشه برد
+  FLASH_FILE  // فایل فلش رسمی/تست‌شده
+  PART        // قطعه فیزیکی (IC، LCD، باتری و...)
+  EXPERTISE   // مشاوره یا کمک تخصصی
+  OTHER
+}
+
+enum ListingStatus {
+  OPEN
+  RESOLVED
+}
+
+model MarketListing {
+  id           String          @id @default(cuid())
+  shopId       String
+  shop         Shop            @relation(fields: [shopId], references: [id])
+  authorId     String
+  author       User            @relation(fields: [authorId], references: [id])
+
+  category     ListingCategory
+  title        String
+  description  String
+  deviceModel  String?         // e.g. "Samsung A54" — makes search precise
+
+  province     String
+  city         String
+
+  status       ListingStatus   @default(OPEN)
+  createdAt    DateTime        @default(now())
+
+  replies      MarketReply[]
+
+  @@index([province, city])
+  @@index([category, status])
+}
+
+model MarketReply {
+  id          String        @id @default(cuid())
+  listingId   String
+  listing     MarketListing @relation(fields: [listingId], references: [id])
+  shopId      String
+  shop        Shop          @relation(fields: [shopId], references: [id])
+  authorId    String
+  author      User          @relation(fields: [authorId], references: [id])
+  message     String
+  createdAt   DateTime      @default(now())
+
+  @@index([listingId])
+}
+
+// ── Nationwide device history ("medical record" by IMEI) ────
+// Like the marketplace above, these are intentionally NOT shop-isolated
+// on read: the whole point is that any shop, anywhere in Iran, searching
+// an IMEI sees the device's full repair + ownership history — even
+// history recorded by a different shop. Ticket.imei already gives free
+// repair-history lookup (see /api/devices/[imei]); these two models add
+// the crowd-sourced flag and the resale/ownership chain on top of that.
+
+enum FlagType {
+  STOLEN
+  INSTALLMENT_DEBT // قسط پرداخت‌نشده / در گرو بانک یا فروشگاه
+  OTHER
+}
+
+// Crowd-sourced warning, NOT an official/legal registry check — this is
+// reported by fellow technicians/dealers, not verified against police or
+// carrier records. The UI must always display it with that caveat.
+model DeviceFlag {
+  id          String   @id @default(cuid())
+  imei        String
+  flagType    FlagType
+  note        String
+  shopId      String
+  shop        Shop     @relation(fields: [shopId], references: [id])
+  reporterId  String
+  reporter    User     @relation(fields: [reporterId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([imei])
+}
+
+// One row per sale logged by a dealer — builds the ownership chain
+// ("previously owned by X, sold to Y, by which dealer, on what date").
+model DeviceTransaction {
+  id          String   @id @default(cuid())
+  imei        String
+  deviceModel String
+  sellerName  String
+  sellerPhone String?
+  buyerName   String
+  buyerPhone  String?
+  price       Int?     // toman, optional
+  note        String?
+  shopId      String   // the dealer who logged this transaction
+  shop        Shop     @relation(fields: [shopId], references: [id])
+  loggedById  String
+  loggedBy    User     @relation(fields: [loggedById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([imei])
+}
+

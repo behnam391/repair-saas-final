@@ -1,0 +1,17 @@
+{
+  "name": "پنل تعمیرگاه موبایل",
+  "short_name": "تعمیرگاه",
+  "description": "مدیریت گردش‌کار چندتخصصی تعمیر موبایل",
+  "start_url": "/tickets",
+  "display": "standalone",
+  "background_color": "#14161B",
+  "theme_color": "#14161B",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "fa",
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
