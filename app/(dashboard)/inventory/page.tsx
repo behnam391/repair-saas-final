@@ -26,7 +26,7 @@ export default function InventoryPage() {
 
   return (
     <div className="p-4 max-w-xl mx-auto">
-      <h1 className="font-extrabold mb-4">انبار قطعات</h1>
+      <h1 className="display-heading text-lg mb-4">انبار قطعات</h1>
 
       <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4 flex flex-wrap gap-2">
         <input placeholder="نام قطعه" className="bg-surface2 rounded-lg px-2 py-1.5 text-xs flex-1 min-w-[120px]"

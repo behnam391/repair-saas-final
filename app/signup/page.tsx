@@ -35,8 +35,8 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <form onSubmit={submit} className="w-full max-w-sm bg-surface border border-surface2 rounded-2xl p-6">
-        <h1 className="text-lg font-extrabold mb-1">ثبت‌نام مغازه جدید</h1>
+      <form onSubmit={submit} className="w-full max-w-sm bg-surface border-t-2 border-t-copper border-x border-b border-surface2 rounded-2xl p-6">
+        <h1 className="display-heading text-xl mb-1">ثبت‌نام مغازه جدید</h1>
         <p className="text-xs text-muted mb-6">با پلن رایگان شروع کنید، هر زمان می‌توانید ارتقا دهید</p>
 
         {[

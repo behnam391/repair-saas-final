@@ -61,7 +61,8 @@ export default function TicketsPage() {
 
   return (
     <div className="p-3">
-      <div className="flex justify-end mb-3">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="display-heading text-lg">تیکت‌های تعمیر</h1>
         <button
           onClick={() => setShowNew(true)}
           className="bg-copper text-[#1A1410] font-bold text-xs rounded-lg px-4 py-2"
@@ -92,7 +93,7 @@ export default function TicketsPage() {
                     <button
                       key={t.id}
                       onClick={() => setOpenTicket(t)}
-                      className="text-right bg-surface2 border border-surface2 rounded-xl p-3 hover:border-copper transition"
+                      className={`repair-tag ${t.status === "READY" ? "tag-ready" : t.status === "IN_PROGRESS" ? "tag-progress" : ""} text-right bg-surface2 rounded-xl p-3 pr-4 hover:brightness-110 transition`}
                     >
                       <div className="flex justify-between text-xs">
                         <span className="font-bold">{t.deviceModel}</span>

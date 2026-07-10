@@ -75,7 +75,7 @@ export default function InvoicesPage() {
 
   return (
     <div className="p-4 max-w-xl mx-auto">
-      <h1 className="font-extrabold mb-4">صدور و تاریخچه فاکتور</h1>
+      <h1 className="display-heading text-lg mb-4">صدور و تاریخچه فاکتور</h1>
 
       {loading ? (
         <p className="text-muted text-sm">در حال بارگذاری...</p>

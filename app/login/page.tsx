@@ -25,8 +25,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm bg-surface border border-surface2 rounded-2xl p-6">
-        <h1 className="text-lg font-extrabold mb-1">ورود به پنل تعمیرگاه</h1>
+      <form onSubmit={handleSubmit} className="w-full max-w-sm bg-surface border-t-2 border-t-copper border-x border-b border-surface2 rounded-2xl p-6">
+        <h1 className="display-heading text-xl mb-1">ورود به پنل تعمیرگاه</h1>
         <p className="text-xs text-muted mb-6">با شماره موبایل و رمز عبور خود وارد شوید</p>
 
         <label className="block text-xs text-muted mb-1">شماره موبایل</label>

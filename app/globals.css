@@ -2,31 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
+/* ── Design tokens ─────────────────────────────────────────
+   Grounded in the electronics-repair workbench: a dark PCB-blue
+   night backdrop, hot-solder copper as the primary accent, a
+   circuit-trace teal as the secondary signal color. */
 :root,
 [data-theme="dark"] {
-  --color-bg: #14161B;
-  --color-surface: #1D2026;
-  --color-surface2: #262A32;
-  --color-copper: #C97B3D;
-  --color-teal: #4FB0A5;
-  --color-amber: #E0A640;
-  --color-danger: #D1574A;
-  --color-muted: #8B919C;
-  --color-ink: #EDEEF0;
+  --color-bg: #10121A;
+  --color-surface: #1A1D28;
+  --color-surface2: #232733;
+  --color-copper: #E08A3E;
+  --color-copper-deep: #B5622A;
+  --color-teal: #35C9A5;
+  --color-amber: #E7B84F;
+  --color-danger: #E0574A;
+  --color-muted: #8A90A3;
+  --color-ink: #F1F2F6;
+  --color-border: #2B2F3D;
 }
 
 [data-theme="light"] {
-  --color-bg: #F5F3EF;
+  --color-bg: #F6F4EF;
   --color-surface: #FFFFFF;
-  --color-surface2: #EDEAE3;
-  --color-copper: #B5622A;
-  --color-teal: #2E8177;
+  --color-surface2: #EFEBE2;
+  --color-copper: #C06B28;
+  --color-copper-deep: #9A521E;
+  --color-teal: #1F7E68;
   --color-amber: #B87F1E;
   --color-danger: #B23A2E;
   --color-muted: #6B7078;
-  --color-ink: #1C1E22;
+  --color-ink: #191B22;
+  --color-border: #E4DFD3;
 }
 
 body {
@@ -34,24 +42,42 @@ body {
   color: var(--color-ink);
   font-family: 'Vazirmatn', sans-serif;
   transition: background-color .2s ease, color .2s ease;
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(224,138,62,0.10) 1px, transparent 0);
+  background-size: 22px 22px;
 }
+[data-theme="light"] body {
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(192,107,40,0.12) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
 .mono { font-family: 'JetBrains Mono', monospace; }
 * { transition: background-color .15s ease, border-color .15s ease; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* ── Global visual polish ──────────────────────────────────
-   Targets any element whose class list contains these Tailwind
-   utility fragments, so existing markup gets more depth/feedback
-   without editing every component file individually. */
+/* Display heading treatment — tighter tracking, heavier weight,
+   used for page titles so they read as a brand voice, not body text. */
+.display-heading {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, var(--color-ink), var(--color-copper) 140%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ── Global visual polish ────────────────────────────────── */
 [class*="bg-surface"] {
-  box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 1px 1px rgba(0,0,0,.08);
+  box-shadow: 0 1px 2px rgba(0,0,0,.22), 0 1px 1px rgba(0,0,0,.10);
 }
 [data-theme="light"] [class*="bg-surface"] {
   box-shadow: 0 1px 3px rgba(20,22,27,.08), 0 1px 1px rgba(20,22,27,.04);
 }
 button[class*="bg-copper"], button[class*="bg-teal"] {
   transition: transform .12s ease, filter .15s ease, box-shadow .15s ease;
+  background-image: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0) 60%);
 }
 button[class*="bg-copper"]:hover, button[class*="bg-teal"]:hover {
   filter: brightness(1.08);
@@ -65,8 +91,31 @@ input:focus, textarea:focus, select:focus {
   outline-offset: 1px;
 }
 ::selection { background: var(--color-copper); color: #fff; }
-
-/* subtle scrollbar for chat/long lists */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--color-surface2); border-radius: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* ── Repair-tag card signature ───────────────────────────────
+   Ticket cards get a punch-hole + perforated stub edge, like a
+   real workshop repair tag clipped to a device. */
+.repair-tag {
+  position: relative;
+  border-inline-start: 3px solid var(--color-copper);
+}
+.repair-tag::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  inset-inline-start: -3px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  border: 2px solid var(--color-copper);
+  transform: translateX(-50%);
+}
+[dir="rtl"] .repair-tag::before { transform: translateX(50%); }
+.repair-tag.tag-progress { border-inline-start-color: var(--color-amber); }
+.repair-tag.tag-progress::before { border-color: var(--color-amber); }
+.repair-tag.tag-ready { border-inline-start-color: var(--color-teal); }
+.repair-tag.tag-ready::before { border-color: var(--color-teal); }

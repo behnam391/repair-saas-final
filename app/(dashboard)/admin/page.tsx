@@ -76,7 +76,7 @@ export default function AdminPage() {
 
   return (
     <div className="p-4 max-w-xl mx-auto">
-      <h1 className="font-extrabold mb-4 text-lg">پنل مدیریت</h1>
+      <h1 className="display-heading text-lg mb-4">پنل مدیریت</h1>
 
       <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4 mb-6 shadow-lg shadow-black/20">
         <div className="text-xs text-muted mb-1">درآمد ۳۰ روز اخیر</div>

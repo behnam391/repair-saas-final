@@ -45,8 +45,8 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <form onSubmit={step === 1 ? requestCode : submitReset} className="w-full max-w-sm bg-surface border border-surface2 rounded-2xl p-6">
-        <h1 className="text-lg font-extrabold mb-1">بازیابی رمز عبور</h1>
+      <form onSubmit={step === 1 ? requestCode : submitReset} className="w-full max-w-sm bg-surface border-t-2 border-t-copper border-x border-b border-surface2 rounded-2xl p-6">
+        <h1 className="display-heading text-xl mb-1">بازیابی رمز عبور</h1>
         <p className="text-xs text-muted mb-6">
           {step === 1 ? "شماره موبایل ثبت‌شده خود را وارد کنید" : "کد پیامک‌شده و رمز جدید را وارد کنید"}
         </p>

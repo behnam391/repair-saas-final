@@ -34,7 +34,7 @@ export default function DeviceLookupPage() {
 
   return (
     <div className="p-4 max-w-xl mx-auto">
-      <h1 className="font-extrabold mb-1">پرونده گوشی (جستجو با IMEI)</h1>
+      <h1 className="display-heading text-lg mb-1">پرونده گوشی (جستجو با IMEI)</h1>
       <p className="text-[11px] text-muted mb-4">
         تاریخچه تعمیر، گزارش‌های احتمالی و زنجیره خرید و فروش این دستگاه را در سراسر کشور ببینید.
       </p>

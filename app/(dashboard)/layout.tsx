@@ -17,10 +17,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <header className="border-b border-surface2 sticky top-0 bg-bg/90 backdrop-blur z-20 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           <div className="shrink-0">
-            <div className="font-extrabold text-sm">{user.shopName}</div>
+            <div className="display-heading text-sm">{user.shopName}</div>
             <div className="text-[11px] text-muted">{user.name} · {roleLabel(user.role)}</div>
           </div>
-          <nav dir="ltr" className="flex items-center gap-4 text-xs overflow-x-auto no-scrollbar">
+          <nav className="flex items-center gap-4 text-xs overflow-x-auto no-scrollbar">
             <Link href="/tickets" className="text-muted hover:text-ink whitespace-nowrap">تیکت‌ها</Link>
             <Link href="/inventory" className="text-muted hover:text-ink whitespace-nowrap">انبار</Link>
             <Link href="/invoices" className="text-muted hover:text-ink whitespace-nowrap">فاکتورها</Link>
