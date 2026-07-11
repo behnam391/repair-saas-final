@@ -49,6 +49,8 @@ model Shop {
   issueTemplates     IssueTemplate[]
   supportTickets     SupportTicket[]
   returns            ReturnRecord[]
+  partRequests       PartRequest[]
+  referencePrices    ReferencePrice[]
 }
 
 // You — the SaaS owner — sign in separately from every shop's staff.
@@ -121,6 +123,8 @@ model User {
   conversationsStarted Conversation[] @relation("ConversationStarter")
   messages             Message[]
   supportTickets       SupportTicket[]
+  notifications        Notification[]
+  partRequests          PartRequest[]
 
   @@index([shopId])
 }
@@ -153,6 +157,7 @@ enum Lane {
 enum TicketStatus {
   PENDING    // received by this lane, not started
   IN_PROGRESS
+  AWAITING_APPROVAL // technician reported cost/parts, waiting on manager + customer sign-off
   REFERRED   // handed off to another lane
   READY
   DELIVERED
@@ -178,6 +183,9 @@ model Ticket {
 
   estimatedCost Int?         // toman
   finalCost     Int?
+  technicianReportedCost Int? // cost the assigned technician proposes, awaiting manager approval
+  technicianWage         Int? // manager-set wage paid to the technician for this repair
+  technicianNote         String? // technician's note explaining the proposed cost/parts
 
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -219,6 +227,8 @@ model InventoryItem {
   lowStockAt  Int      @default(2)
   costPrice   Int      // toman, what the shop paid
   sellPrice   Int      // toman, what the shop charges
+  condition   String   @default("WORKING") // "WORKING" | "DEFECTIVE" — defective stock kept for parts/reference, not sold
+  frequentlyUsed Boolean @default(false) // starred by the shop for quick pick in invoices
 
   usedIn      TicketPart[]
 
@@ -247,6 +257,7 @@ model Invoice {
   ticket     Ticket   @relation(fields: [ticketId], references: [id])
   laborCost  Int      // toman
   partsCost  Int      // toman, sum of TicketPart.priceCharged
+  technicianWage Int  @default(0) // paid out to the assigned technician
   total      Int
   paid       Boolean  @default(false)
   createdAt  DateTime @default(now())
@@ -288,12 +299,18 @@ enum ListingStatus {
   RESOLVED
 }
 
+enum ListingType {
+  REQUEST // "دنبال این می‌گردم"
+  OFFER   // "این را دارم / برای فروش دارم"
+}
+
 model MarketListing {
   id           String          @id @default(cuid())
   shopId       String
   shop         Shop            @relation(fields: [shopId], references: [id])
   authorId     String
   author       User            @relation(fields: [authorId], references: [id])
+  listingType  ListingType     @default(REQUEST)
 
   category     ListingCategory
   title        String
@@ -508,4 +525,76 @@ model PlatformSettings {
   kavenegarSender     String?
   zarinpalMerchantId  String?
   updatedAt           DateTime @updatedAt
+}
+
+// ── In-app notifications ──────────────────────────────────────
+// Personal notifications (e.g. "someone needs a part you have listed",
+// "manager approved your price") plus platform-wide broadcasts from the
+// super admin (one row per recipient, isBroadcast just marks the origin).
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  title       String
+  message     String
+  link        String?  // optional in-app path to open on click
+  isBroadcast Boolean  @default(false)
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+// ── Ad space (super admin managed) ────────────────────────────
+model AdBanner {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  linkUrl   String?
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ── Part purchase requests (technician → manager) ─────────────
+// When a technician needs a part they don't have, they can either log
+// it directly in inventory themselves, or raise a request the manager
+// fulfills (purchases and adds to inventory).
+enum PartRequestStatus {
+  PENDING
+  FULFILLED
+  REJECTED
+}
+
+model PartRequest {
+  id           String            @id @default(cuid())
+  shopId       String
+  shop         Shop              @relation(fields: [shopId], references: [id])
+  requestedById String
+  requestedBy   User             @relation(fields: [requestedById], references: [id])
+  ticketId     String?
+  itemName     String
+  note         String?
+  status       PartRequestStatus @default(PENDING)
+  createdAt    DateTime          @default(now())
+
+  @@index([shopId, status])
+}
+
+// ── Reference repair pricing guide ────────────────────────────
+// NOT a live feed from Iran's mobile guild (اصناف موبایل ایران) — no
+// public API exists for that. This is a manually-maintained reference
+// table shops can fill in themselves (or copy from official guild
+// bulletins) so technicians see a suggested fair price while working an
+// issue, encouraging more consistent pricing nationwide.
+model ReferencePrice {
+  id          String @id @default(cuid())
+  shopId      String
+  shop        Shop   @relation(fields: [shopId], references: [id])
+  deviceModel String
+  issueLabel  String // matches an IssueTemplate label where possible
+  suggestedPrice Int // toman
+  source      String? // e.g. "بخشنامه اصناف تیر ۱۴۰۵" — free text citation
+  updatedAt   DateTime @updatedAt
+
+  @@index([shopId])
 }

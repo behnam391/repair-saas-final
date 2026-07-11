@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { notifyUser } from "@/lib/notify";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
 const ListingSchema = z.object({
+  listingType: z.enum(["REQUEST", "OFFER"]).default("REQUEST"),
   category: z.enum(["BOARD", "FLASH_FILE", "PART", "EXPERTISE", "OTHER"]),
   title: z.string().min(3),
   description: z.string().min(3),
@@ -15,7 +17,7 @@ const ListingSchema = z.object({
   showContact: z.boolean().optional(),
 });
 
-// GET /api/market?province=&city=&category=&status=OPEN
+// GET /api/market?province=&city=&category=&status=OPEN&listingType=
 // Deliberately NOT scoped to the caller's shopId — this is the nationwide
 // board, visible to every signed-in technician regardless of which shop
 // they belong to. Authentication is still required (requireSession),
@@ -27,6 +29,7 @@ export async function GET(req: NextRequest) {
     const province = searchParams.get("province");
     const city = searchParams.get("city");
     const category = searchParams.get("category");
+    const listingType = searchParams.get("listingType");
     const status = searchParams.get("status") ?? "OPEN";
 
     const listings = await db.marketListing.findMany({
@@ -34,6 +37,7 @@ export async function GET(req: NextRequest) {
         ...(province ? { province } : {}),
         ...(city ? { city } : {}),
         ...(category ? { category: category as any } : {}),
+        ...(listingType ? { listingType: listingType as any } : {}),
         ...(status !== "ALL" ? { status: status as any } : {}),
       },
       include: {
@@ -56,7 +60,20 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/market — post a new nationwide request/offer.
+// Very small heuristic: two listings "match" if their titles/device models
+// share a meaningful word. Good enough to catch "دنبال LCD سامسونگ A54" vs
+// "LCD سامسونگ A54 دارم برای فروش" without needing a real search engine.
+function sharesKeyword(a: string, b: string) {
+  const normalize = (s: string) => s.toLowerCase().split(/[\s،/]+/).filter((w) => w.length > 2);
+  const wordsA = new Set(normalize(a));
+  const wordsB = normalize(b);
+  return wordsB.some((w) => wordsA.has(w));
+}
+
+// POST /api/market — post a new nationwide request/offer. After creating
+// the post, we check for opposite-type listings that look like a match
+// and notify both sides — this is the "کسی دنبال چیزی است که من دارم"
+// feature, implemented as simple keyword matching (not a real search index).
 export async function POST(req: NextRequest) {
   try {
     const { shopId, userId } = await requireSession();
@@ -66,6 +83,34 @@ export async function POST(req: NextRequest) {
       data: { shopId, authorId: userId, ...body },
       include: { author: { select: { name: true, phone: true } } },
     });
+
+    const oppositeType = body.listingType === "REQUEST" ? "OFFER" : "REQUEST";
+    const candidates = await db.marketListing.findMany({
+      where: { listingType: oppositeType, status: "OPEN", category: body.category },
+      select: { id: true, title: true, deviceModel: true, authorId: true },
+      take: 200,
+    });
+
+    const searchText = `${body.title} ${body.deviceModel ?? ""}`;
+    for (const c of candidates) {
+      const candidateText = `${c.title} ${c.deviceModel ?? ""}`;
+      if (sharesKeyword(searchText, candidateText)) {
+        // Notify the other party that a possible match just appeared.
+        await notifyUser(
+          c.authorId,
+          "یک مورد مشابه پیدا شد",
+          `آگهی جدید «${listing.title}» ممکن است با «${c.title}» که شما ثبت کرده‌اید مطابقت داشته باشد.`,
+          "/market"
+        );
+        // Also let the new poster know immediately.
+        await notifyUser(
+          userId,
+          "یک مورد مشابه در بازار هست",
+          `آگهی «${c.title}» با آگهی شما «${listing.title}» ممکن است مطابقت داشته باشد.`,
+          "/market"
+        );
+      }
+    }
 
     return NextResponse.json({ listing }, { status: 201 });
   } catch (e) {

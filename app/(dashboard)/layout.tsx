@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 import ThemeToggle from "@/components/ThemeToggle";
+import NotificationBell from "@/components/NotificationBell";
+import AdBanner from "@/components/AdBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -35,10 +37,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
             {user.role === "OWNER" && <Link href="/admin/billing" className="text-muted hover:text-ink whitespace-nowrap">اشتراک</Link>}
             <span className="w-px h-4 bg-surface2 shrink-0" />
             <ThemeToggle />
+            <NotificationBell />
             <LogoutButton />
           </nav>
         </div>
       </header>
+      <AdBanner />
       <main>{children}</main>
     </div>
   );

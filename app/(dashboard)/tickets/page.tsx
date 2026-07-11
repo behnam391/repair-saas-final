@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار" },
@@ -15,11 +16,17 @@ type Ticket = {
   issueInitial: string;
   lane: string;
   status: string;
+  assignedToId?: string | null;
+  technicianReportedCost?: number | null;
+  technicianNote?: string | null;
   customer: { name: string; phone: string };
   history: { action: string; lane: string; note?: string; createdAt: string; tech?: { name: string } }[];
 };
 
 export default function TicketsPage() {
+  const { data: session } = useSession();
+  const myRole = (session?.user as any)?.role;
+  const myId = (session?.user as any)?.id;
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [openTicket, setOpenTicket] = useState<Ticket | null>(null);
@@ -93,7 +100,7 @@ export default function TicketsPage() {
                     <button
                       key={t.id}
                       onClick={() => setOpenTicket(t)}
-                      className={`repair-tag ${t.status === "READY" ? "tag-ready" : t.status === "IN_PROGRESS" ? "tag-progress" : ""} text-right bg-surface2 rounded-xl p-3 pr-4 hover:brightness-110 transition`}
+                      className={`repair-tag ${t.status === "READY" ? "tag-ready" : t.status === "AWAITING_APPROVAL" ? "tag-awaiting" : t.status === "IN_PROGRESS" ? "tag-progress" : ""} text-right bg-surface2 rounded-xl p-3 pr-4 hover:brightness-110 transition`}
                     >
                       <div className="flex justify-between text-xs">
                         <span className="font-bold">{t.deviceModel}</span>
@@ -101,6 +108,9 @@ export default function TicketsPage() {
                       </div>
                       <div className="text-[11px] text-muted mt-1">{t.customer.name}</div>
                       <div className="text-xs mt-1.5 text-[#C7CAD1]">{t.issueInitial}</div>
+                      {t.status === "AWAITING_APPROVAL" && (
+                        <div className="text-[10px] text-danger font-semibold mt-1.5">⏳ منتظر تأیید هزینه</div>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -113,6 +123,7 @@ export default function TicketsPage() {
       {openTicket && (
         <TicketDetail
           ticket={openTicket}
+          myRole={myRole}
           onClose={() => setOpenTicket(null)}
           onTransition={transition}
         />
@@ -160,10 +171,12 @@ function ReferralFlow({ history, currentLane }: { history: { lane: string }[]; c
 
 function TicketDetail({
   ticket,
+  myRole,
   onClose,
   onTransition,
 }: {
   ticket: Ticket;
+  myRole?: string;
   onClose: () => void;
   onTransition: (id: string, action: string, targetLane?: string, extra?: Record<string, any>) => void;
 }) {
@@ -172,6 +185,13 @@ function TicketDetail({
   const [readyOpen, setReadyOpen] = useState(false);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [includeCard, setIncludeCard] = useState(false);
+
+  const [submitOpen, setSubmitOpen] = useState(false);
+  const [reportedCost, setReportedCost] = useState(0);
+  const [reportNote, setReportNote] = useState("");
+  const [approvedCost, setApprovedCost] = useState(ticket.technicianReportedCost ?? 0);
+  const [wage, setWage] = useState(0);
+  const isOwner = myRole === "OWNER";
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50" onClick={onClose}>
@@ -198,6 +218,42 @@ function TicketDetail({
           ))}
         </div>
 
+        {ticket.status === "AWAITING_APPROVAL" ? (
+          <div className="bg-amber/10 border border-amber/40 rounded-lg p-3 mb-2">
+            <div className="text-xs font-bold text-amber mb-1">در انتظار تأیید مدیر</div>
+            {ticket.technicianReportedCost && (
+              <div className="text-xs mb-1">مبلغ پیشنهادی تعمیرکار: <span className="mono">{ticket.technicianReportedCost.toLocaleString("fa-IR")}</span> تومان</div>
+            )}
+            {ticket.technicianNote && <div className="text-xs text-muted mb-2">{ticket.technicianNote}</div>}
+
+            {isOwner ? (
+              <div className="space-y-2 mt-2">
+                <label className="block text-[11px] text-muted">مبلغ نهایی تأییدشده (تومان)</label>
+                <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={approvedCost} onChange={(e) => setApprovedCost(+e.target.value)} />
+                <label className="block text-[11px] text-muted">دستمزد این تعمیرکار (تومان)</label>
+                <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={wage} onChange={(e) => setWage(+e.target.value)} />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onTransition(ticket.id, "approve-cost", undefined, { approvedCost, technicianWage: wage })}
+                    className="flex-1 bg-teal text-[#0E211E] text-xs font-bold rounded-lg py-2">
+                    تأیید مبلغ
+                  </button>
+                  <button
+                    onClick={() => onTransition(ticket.id, "send-back", undefined, { note: "لطفاً هزینه را بازبینی کنید" })}
+                    className="flex-1 bg-surface border border-surface2 text-xs font-semibold rounded-lg py-2">
+                    بازگشت برای اصلاح
+                  </button>
+                </div>
+                <p className="text-[10px] text-muted">بعد از تأیید، از دکمه «تکمیل و آماده تحویل» برای اطلاع مشتری استفاده کنید.</p>
+              </div>
+            ) : (
+              <p className="text-[11px] text-muted">به‌محض تأیید مدیر، مرحله بعدی اینجا نمایش داده می‌شود.</p>
+            )}
+          </div>
+        ) : null}
+
         {ticket.lane !== "READY" ? (
           <>
             <div className="flex gap-2 flex-wrap">
@@ -207,10 +263,31 @@ function TicketDetail({
               <button onClick={() => setReferOpen((v) => !v)} className="flex-1 bg-surface2 border border-surface2 text-xs font-semibold rounded-lg py-2.5">
                 ارجاع به بخش دیگر
               </button>
-              <button onClick={() => setReadyOpen((v) => !v)} className="flex-1 bg-teal text-[#0E211E] text-xs font-bold rounded-lg py-2.5">
-                تکمیل و آماده تحویل
-              </button>
+              {isOwner ? (
+                <button onClick={() => setReadyOpen((v) => !v)} className="flex-1 bg-teal text-[#0E211E] text-xs font-bold rounded-lg py-2.5">
+                  تکمیل و آماده تحویل
+                </button>
+              ) : (
+                <button onClick={() => setSubmitOpen((v) => !v)} className="flex-1 bg-teal text-[#0E211E] text-xs font-bold rounded-lg py-2.5">
+                  ثبت هزینه برای تأیید مدیر
+                </button>
+              )}
             </div>
+            {submitOpen && (
+              <div className="bg-surface2 border border-surface2 rounded-lg p-3 mt-2.5 space-y-2">
+                <label className="block text-[11px] text-muted">هزینه پیشنهادی (تومان)</label>
+                <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={reportedCost} onChange={(e) => setReportedCost(+e.target.value)} />
+                <label className="block text-[11px] text-muted">یادداشت برای مدیر (قطعات مصرفی و...)</label>
+                <textarea className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={reportNote} onChange={(e) => setReportNote(e.target.value)} />
+                <button
+                  onClick={() => onTransition(ticket.id, "submit-for-approval", undefined, { technicianReportedCost: reportedCost || undefined, note: reportNote || undefined })}
+                  className="w-full bg-teal text-[#0E211E] text-xs font-bold rounded-lg py-2">
+                  ارسال برای تأیید
+                </button>
+              </div>
+            )}
             {readyOpen && (
               <div className="bg-surface2 border border-surface2 rounded-lg p-3 mt-2.5 space-y-2">
                 <label className="block text-[11px] text-muted">قیمت حدودی/نهایی (تومان) — در پیامک به مشتری درج می‌شود</label>

@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireSession, requireRole, UnauthorizedError } from "@/lib/tenant";
 import { sendSms, readyForPickupMessage } from "@/lib/sms";
+import { notifyUser } from "@/lib/notify";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
 const TransitionSchema = z.object({
-  action: z.enum(["start", "refer", "ready", "deliver"]),
+  action: z.enum(["start", "refer", "submit-for-approval", "approve-cost", "send-back", "ready", "deliver"]),
   targetLane: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]).optional(), // required for "refer"
   note: z.string().optional(),
   estimatedCost: z.number().int().optional(), // set when marking ready, sent in the SMS
   includeCardInSms: z.boolean().optional(),
+  technicianReportedCost: z.number().int().optional(), // "submit-for-approval"
+  approvedCost: z.number().int().optional(),            // "approve-cost"
+  technicianWage: z.number().int().optional(),          // "approve-cost"
 });
 
 // PATCH /api/tickets/:id — the single endpoint that drives the whole
@@ -19,7 +23,7 @@ const TransitionSchema = z.object({
 // which is what powers the stamped-timeline view in the UI.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId, userId, name } = await requireSession();
+    const { shopId, userId, name, role } = await requireSession();
     const body = TransitionSchema.parse(await req.json());
 
     // Always re-fetch scoped to shopId — never trust the id alone.
@@ -29,6 +33,75 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     let updated;
 
     switch (body.action) {
+      case "submit-for-approval": {
+        // Technician has worked the ticket, used some parts (already logged
+        // via TicketPart at invoice time or noted here), and proposes a
+        // final price. This does NOT go to the customer yet — the manager
+        // reviews first, so labor/parts math never leaks to the customer
+        // by accident.
+        updated = await db.ticket.update({
+          where: { id: ticket.id },
+          data: {
+            status: "AWAITING_APPROVAL",
+            technicianReportedCost: body.technicianReportedCost,
+            technicianNote: body.note,
+            history: {
+              create: {
+                lane: ticket.lane, action: "ارسال هزینه برای تأیید مدیر", techId: userId,
+                note: body.technicianReportedCost ? `مبلغ پیشنهادی: ${body.technicianReportedCost.toLocaleString("fa-IR")} تومان${body.note ? " — " + body.note : ""}` : body.note,
+              },
+            },
+          },
+        });
+
+        // Notify every OWNER of this shop that a ticket needs approval.
+        const owners = await db.user.findMany({ where: { shopId, role: "OWNER" }, select: { id: true } });
+        for (const o of owners) {
+          await notifyUser(o.id, "هزینه تعمیر منتظر تأیید شماست", `تیکت #${ticket.no} — ${ticket.deviceModel} توسط ${name} آماده بررسی است.`, "/tickets");
+        }
+        break;
+      }
+
+      case "approve-cost": {
+        // Manager-only: confirm the final price (can adjust it) and set
+        // the technician's wage for this repair — this is what keeps
+        // labor cost, parts cost, and shop profit from getting mixed up
+        // later at invoice time.
+        requireRole(role, ["OWNER"]);
+        updated = await db.ticket.update({
+          where: { id: ticket.id },
+          data: {
+            status: "IN_PROGRESS",
+            estimatedCost: body.approvedCost ?? ticket.technicianReportedCost ?? ticket.estimatedCost,
+            technicianWage: body.technicianWage,
+            history: {
+              create: {
+                lane: ticket.lane, action: "هزینه توسط مدیر تأیید شد", techId: userId,
+                note: body.approvedCost ? `مبلغ نهایی تأییدشده: ${body.approvedCost.toLocaleString("fa-IR")} تومان` : undefined,
+              },
+            },
+          },
+        });
+        break;
+      }
+
+      case "send-back": {
+        // Manager rejects the proposed cost / wants changes — back to the
+        // technician with a note, ticket keeps its lane and assignment.
+        requireRole(role, ["OWNER"]);
+        updated = await db.ticket.update({
+          where: { id: ticket.id },
+          data: {
+            status: "IN_PROGRESS",
+            history: { create: { lane: ticket.lane, action: "بازگشت برای اصلاح", techId: userId, note: body.note } },
+          },
+        });
+        if (ticket.assignedToId) {
+          await notifyUser(ticket.assignedToId, "نیاز به اصلاح هزینه", `مدیر برای تیکت #${ticket.no} درخواست اصلاح داد${body.note ? ": " + body.note : "."}`, "/tickets");
+        }
+        break;
+      }
+
       case "start": {
         updated = await db.ticket.update({
           where: { id: ticket.id },

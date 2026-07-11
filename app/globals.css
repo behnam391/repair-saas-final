@@ -119,3 +119,5 @@ input:focus, textarea:focus, select:focus {
 .repair-tag.tag-progress::before { border-color: var(--color-amber); }
 .repair-tag.tag-ready { border-inline-start-color: var(--color-teal); }
 .repair-tag.tag-ready::before { border-color: var(--color-teal); }
+.repair-tag.tag-awaiting { border-inline-start-color: var(--color-danger); }
+.repair-tag.tag-awaiting::before { border-color: var(--color-danger); }

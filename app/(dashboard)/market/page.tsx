@@ -8,7 +8,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 };
 
 type Listing = {
-  id: string; category: string; title: string; description: string; deviceModel?: string;
+  id: string; category: string; listingType: string; title: string; description: string; deviceModel?: string;
   province: string; city: string; status: string; createdAt: string; showContact: boolean;
   author: { name: string; phone: string }; authorId: string; shop: { name: string };
   replies: { id: string; message: string; author: { name: string; phone: string }; createdAt: string }[];
@@ -22,6 +22,7 @@ export default function MarketPage() {
   const [provinces, setProvinces] = useState<Record<string, string[]>>({});
   const [filterProvince, setFilterProvince] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [filterType, setFilterType] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [replyDraft, setReplyDraft] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,7 @@ export default function MarketPage() {
     const qs = new URLSearchParams();
     if (filterProvince) qs.set("province", filterProvince);
     if (filterCategory) qs.set("category", filterCategory);
+    if (filterType) qs.set("listingType", filterType);
     const res = await fetch(`/api/market?${qs.toString()}`);
     const data = await res.json();
     setListings(data.listings ?? []);
@@ -43,7 +45,7 @@ export default function MarketPage() {
   }
 
   useEffect(() => { loadLocations(); }, []);
-  useEffect(() => { load(); }, [filterProvince, filterCategory]);
+  useEffect(() => { load(); }, [filterProvince, filterCategory, filterType]);
 
   async function startChat(listingId: string) {
     const res = await fetch(`/api/market/${listingId}/conversations`, { method: "POST" });
@@ -80,6 +82,16 @@ export default function MarketPage() {
       </div>
       <p className="text-[11px] text-muted mb-4">دنبال یک برد، فایل فلش، قطعه یا مشاوره تخصصی هستید؟ اینجا از تعمیرکاران سراسر ایران کمک بگیرید.</p>
 
+      <div className="flex gap-2 mb-2">
+        {[
+          ["", "همه"], ["REQUEST", "🔍 دنبال این می‌گردم"], ["OFFER", "📦 این را دارم"],
+        ].map(([val, label]) => (
+          <button key={val} onClick={() => setFilterType(val)}
+            className={`text-[11px] rounded-full px-3 py-1.5 border transition ${filterType === val ? "bg-copper text-[#1A1410] border-copper" : "bg-surface2 border-surface2 text-muted"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="flex gap-2 mb-4">
         <select className="flex-1 bg-surface2 border border-surface2 rounded-lg px-2 py-1.5 text-xs"
           value={filterProvince} onChange={(e) => setFilterProvince(e.target.value)}>
@@ -107,6 +119,9 @@ export default function MarketPage() {
                 <div>
                   <span className="text-[10px] bg-copper/20 text-copper rounded-full px-2 py-0.5 font-semibold">
                     {CATEGORY_LABEL[l.category]}
+                  </span>
+                  <span className={`text-[10px] rounded-full px-2 py-0.5 font-semibold mr-1 ${l.listingType === "OFFER" ? "bg-teal/20 text-teal" : "bg-amber/20 text-amber"}`}>
+                    {l.listingType === "OFFER" ? "📦 دارم" : "🔍 می‌خوام"}
                   </span>
                   <div className="font-bold text-sm mt-1.5">{l.title}</div>
                 </div>
@@ -176,7 +191,7 @@ function NewListingModal({
   provinces, onClose, onCreated,
 }: { provinces: Record<string, string[]>; onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
-    category: "PART", title: "", description: "", deviceModel: "",
+    listingType: "REQUEST", category: "PART", title: "", description: "", deviceModel: "",
     province: "تهران", city: "تهران", showContact: true,
   });
   const [error, setError] = useState("");
@@ -203,6 +218,17 @@ function NewListingModal({
       <div className="bg-surface w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5 max-h-[88vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="font-extrabold text-base mb-1">ثبت درخواست در بازار سراسری</div>
         <div className="text-xs text-muted mb-4">این پست برای همه تعمیرکاران سراسر ایران قابل مشاهده است.</div>
+
+        <div className="flex gap-2 mb-3">
+          <button type="button" onClick={() => setForm({ ...form, listingType: "REQUEST" })}
+            className={`flex-1 text-xs rounded-lg py-2 border ${form.listingType === "REQUEST" ? "bg-amber text-[#221904] border-amber font-bold" : "bg-surface2 border-surface2 text-muted"}`}>
+            🔍 دنبال این می‌گردم
+          </button>
+          <button type="button" onClick={() => setForm({ ...form, listingType: "OFFER" })}
+            className={`flex-1 text-xs rounded-lg py-2 border ${form.listingType === "OFFER" ? "bg-teal text-[#0E211E] border-teal font-bold" : "bg-surface2 border-surface2 text-muted"}`}>
+            📦 این را دارم
+          </button>
+        </div>
 
         <label className="block text-xs text-muted mb-1">دسته</label>
         <select className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"

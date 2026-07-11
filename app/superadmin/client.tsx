@@ -59,6 +59,8 @@ export default function SuperAdminClient() {
         <a href="/superadmin/support" className="text-muted hover:text-ink whitespace-nowrap">پشتیبانی</a>
         <a href="/superadmin/users" className="text-muted hover:text-ink whitespace-nowrap">کاربران</a>
         <a href="/superadmin/conversations" className="text-muted hover:text-ink whitespace-nowrap">نظارت بر چت‌ها</a>
+        <a href="/superadmin/notifications" className="text-muted hover:text-ink whitespace-nowrap">اعلان عمومی</a>
+        <a href="/superadmin/ads" className="text-muted hover:text-ink whitespace-nowrap">تبلیغات</a>
         <a href="/superadmin/settings" className="text-muted hover:text-ink whitespace-nowrap">تنظیمات API</a>
       </div>
 
