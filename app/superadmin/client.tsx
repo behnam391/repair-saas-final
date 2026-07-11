@@ -50,9 +50,16 @@ export default function SuperAdminClient() {
 
   return (
     <div className="min-h-screen p-4 max-w-3xl mx-auto">
-      <div className="flex justify-between items-center mb-5">
+      <div className="flex justify-between items-center mb-3">
         <h1 className="font-extrabold text-lg">پنل مدیریت پلتفرم</h1>
         <button onClick={() => signOut({ callbackUrl: "/superadmin/login" })} className="text-xs text-muted hover:text-danger transition-colors">خروج</button>
+      </div>
+      <div className="flex gap-3 text-xs mb-5 overflow-x-auto no-scrollbar">
+        <a href="/superadmin" className="text-copper font-semibold whitespace-nowrap">مغازه‌ها</a>
+        <a href="/superadmin/support" className="text-muted hover:text-ink whitespace-nowrap">پشتیبانی</a>
+        <a href="/superadmin/users" className="text-muted hover:text-ink whitespace-nowrap">کاربران</a>
+        <a href="/superadmin/conversations" className="text-muted hover:text-ink whitespace-nowrap">نظارت بر چت‌ها</a>
+        <a href="/superadmin/settings" className="text-muted hover:text-ink whitespace-nowrap">تنظیمات API</a>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

@@ -30,6 +30,8 @@ model Shop {
   // monthly device-intake quota enforced for the "free" plan
   monthlyQuota  Int      @default(10)
   smsSenderName String? // shown as the sender name in outgoing SMS
+  bankCardNumber    String? // shown on invoice/SMS if the shop opts in
+  bankAccountNumber String?
   createdAt     DateTime @default(now())
 
   users         User[]
@@ -42,6 +44,11 @@ model Shop {
   subscriptions  Subscription[]
   deviceFlags        DeviceFlag[]
   deviceTransactions DeviceTransaction[]
+  favoriteBrands     FavoriteBrand[]
+  customDeviceModels CustomDeviceModel[]
+  issueTemplates     IssueTemplate[]
+  supportTickets     SupportTicket[]
+  returns            ReturnRecord[]
 }
 
 // You — the SaaS owner — sign in separately from every shop's staff.
@@ -96,6 +103,12 @@ model User {
   passwordHash String
   role         Role
   active       Boolean  @default(true)
+  avatarUrl    String?
+  email        String?
+  gmailId      String?
+  telegramId   String?
+  notifyEmail    Boolean @default(false)
+  notifyTelegram Boolean @default(false)
   createdAt    DateTime @default(now())
 
   assignedTickets Ticket[]        @relation("AssignedTech")
@@ -107,6 +120,7 @@ model User {
   passwordResetTokens PasswordResetToken[]
   conversationsStarted Conversation[] @relation("ConversationStarter")
   messages             Message[]
+  supportTickets       SupportTicket[]
 
   @@index([shopId])
 }
@@ -290,6 +304,7 @@ model MarketListing {
   city         String
 
   status       ListingStatus   @default(OPEN)
+  showContact  Boolean         @default(true) // author can hide phone/address on this post
   createdAt    DateTime        @default(now())
 
   replies       MarketReply[]
@@ -395,3 +410,102 @@ model DeviceTransaction {
   @@index([imei])
 }
 
+
+// ── Device catalog customization ────────────────────────────
+// The brand/model list itself is a static catalog in lib/device-catalog.ts
+// (shared by all shops, like a phone book). These two tables let each shop
+// personalize it: star brands they see most for quick access, and add
+// models/brands that aren't in the static list without editing code.
+
+model FavoriteBrand {
+  id     String @id @default(cuid())
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id])
+  brand  String
+
+  @@unique([shopId, brand])
+}
+
+model CustomDeviceModel {
+  id      String @id @default(cuid())
+  shopId  String
+  shop    Shop   @relation(fields: [shopId], references: [id])
+  brand   String
+  model   String
+  createdAt DateTime @default(now())
+
+  @@index([shopId])
+}
+
+// ── Editable issue templates ─────────────────────────────────
+// Quick-pick chips shown on the intake form per specialty lane, seeded
+// with sensible defaults but fully editable per shop (add/rename/remove).
+model IssueTemplate {
+  id     String @id @default(cuid())
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id])
+  lane   Lane   // which specialty tab this chip shows under
+  label  String
+
+  @@index([shopId, lane])
+}
+
+// ── Platform support ─────────────────────────────────────────
+enum SupportStatus {
+  OPEN
+  CLOSED
+}
+
+model SupportTicket {
+  id        String        @id @default(cuid())
+  shopId    String
+  shop      Shop          @relation(fields: [shopId], references: [id])
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  subject   String
+  message   String
+  status    SupportStatus @default(OPEN)
+  createdAt DateTime      @default(now())
+
+  replies   SupportReply[]
+}
+
+model SupportReply {
+  id              String        @id @default(cuid())
+  supportTicketId String
+  supportTicket   SupportTicket @relation(fields: [supportTicketId], references: [id])
+  fromPlatform    Boolean       // true = platform admin replied, false = shop replied
+  message         String
+  createdAt       DateTime      @default(now())
+
+  @@index([supportTicketId])
+}
+
+// ── Returns / refunds ────────────────────────────────────────
+model ReturnRecord {
+  id            String   @id @default(cuid())
+  shopId        String
+  shop          Shop     @relation(fields: [shopId], references: [id])
+  ticketId      String?
+  deviceModel   String
+  customerName  String
+  customerPhone String?
+  reason        String
+  refundAmount  Int?
+  createdAt     DateTime @default(now())
+
+  @@index([shopId])
+}
+
+// ── Platform-wide settings (super admin editable) ────────────
+// Singleton row (id always "singleton") so API keys can be rotated from
+// the super-admin dashboard instead of redeploying with new env vars.
+// lib/sms.ts and lib/zarinpal.ts read this first and fall back to env
+// vars if no row exists yet.
+model PlatformSettings {
+  id                  String  @id @default("singleton")
+  kavenegarApiKey     String?
+  kavenegarSender     String?
+  zarinpalMerchantId  String?
+  updatedAt           DateTime @updatedAt
+}

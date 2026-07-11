@@ -5,10 +5,12 @@ import { useSession } from "next-auth/react";
 const ROLE_LABEL: Record<string, string> = {
   OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی",
 };
+const LANE_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی" };
 
 type Staff = { id: string; name: string; phone: string; role: string; active: boolean };
 type ReportRow = { techId: string; name: string; role: string; closedCount: number; revenue: number };
-type ShopInfo = { name: string; address: string | null; phone: string | null; plan: string };
+type ShopInfo = { name: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null };
+type Template = { id: string; lane: string; label: string };
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
@@ -18,14 +20,22 @@ export default function AdminPage() {
   const [form, setForm] = useState({ name: "", phone: "", password: "", role: "HARDWARE" });
   const [error, setError] = useState("");
 
-  const [shopInfo, setShopInfo] = useState<ShopInfo>({ name: "", address: "", phone: "", plan: "free" });
+  const [shopInfo, setShopInfo] = useState<ShopInfo>({ name: "", address: "", phone: "", plan: "free", bankCardNumber: "", bankAccountNumber: "" });
   const [shopSaved, setShopSaved] = useState(false);
+
+  const [catalog, setCatalog] = useState<Record<string, string[]>>({});
+  const [favoriteBrands, setFavoriteBrands] = useState<string[]>([]);
+
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [newTemplateLane, setNewTemplateLane] = useState("HARDWARE");
+  const [newTemplateLabel, setNewTemplateLabel] = useState("");
 
   const isOwner = (session?.user as any)?.role === "OWNER";
 
   async function load() {
-    const [sRes, rRes, shopRes] = await Promise.all([
+    const [sRes, rRes, shopRes, catRes, tplRes] = await Promise.all([
       fetch("/api/staff"), fetch("/api/reports/staff"), fetch("/api/shop"),
+      fetch("/api/device-catalog"), fetch("/api/issue-templates"),
     ]);
     if (sRes.ok) setStaff((await sRes.json()).staff ?? []);
     if (rRes.ok) {
@@ -35,8 +45,17 @@ export default function AdminPage() {
     }
     if (shopRes.ok) {
       const data = await shopRes.json();
-      setShopInfo({ name: data.shop.name, address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan });
+      setShopInfo({
+        name: data.shop.name, address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
+        bankCardNumber: data.shop.bankCardNumber ?? "", bankAccountNumber: data.shop.bankAccountNumber ?? "",
+      });
     }
+    if (catRes.ok) {
+      const data = await catRes.json();
+      setCatalog(data.catalog ?? {});
+      setFavoriteBrands(data.favoriteBrands ?? []);
+    }
+    if (tplRes.ok) setTemplates((await tplRes.json()).templates ?? []);
   }
   useEffect(() => { if (isOwner) load(); }, [isOwner]);
 
@@ -61,12 +80,44 @@ export default function AdminPage() {
     const res = await fetch("/api/shop", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: shopInfo.name, address: shopInfo.address, phone: shopInfo.phone }),
+      body: JSON.stringify({
+        name: shopInfo.name, address: shopInfo.address, phone: shopInfo.phone,
+        bankCardNumber: shopInfo.bankCardNumber, bankAccountNumber: shopInfo.bankAccountNumber,
+      }),
+    });
+    if (res.ok) { setShopSaved(true); setTimeout(() => setShopSaved(false), 2500); }
+  }
+
+  async function toggleFavoriteBrand(brand: string) {
+    const isFav = favoriteBrands.includes(brand);
+    await fetch("/api/device-catalog", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ brand, favorite: !isFav }),
+    });
+    setFavoriteBrands(isFav ? favoriteBrands.filter((b) => b !== brand) : [...favoriteBrands, brand]);
+  }
+
+  async function addTemplate() {
+    if (!newTemplateLabel.trim()) return;
+    const res = await fetch("/api/issue-templates", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lane: newTemplateLane, label: newTemplateLabel.trim() }),
     });
     if (res.ok) {
-      setShopSaved(true);
-      setTimeout(() => setShopSaved(false), 2500);
+      setNewTemplateLabel("");
+      load();
     }
+  }
+
+  async function removeTemplate(id: string) {
+    await fetch("/api/issue-templates", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    load();
   }
 
   if (status === "loading") return <p className="p-4 text-sm text-muted">در حال بارگذاری...</p>;
@@ -83,7 +134,7 @@ export default function AdminPage() {
         <div className="text-2xl font-extrabold mono text-copper">{monthRevenue.toLocaleString("fa-IR")} <span className="text-xs font-normal text-ink">تومان</span></div>
       </div>
 
-      {/* Shop info / address settings */}
+      {/* Shop info / address / bank settings */}
       <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
         <div className="text-sm font-bold mb-3">اطلاعات مغازه</div>
         <label className="block text-xs text-muted mb-1">نام مغازه</label>
@@ -96,9 +147,57 @@ export default function AdminPage() {
         <label className="block text-xs text-muted mb-1">تلفن مغازه</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
           value={shopInfo.phone ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, phone: e.target.value })} />
+        <label className="block text-xs text-muted mb-1">شماره کارت (برای درج در فاکتور/پیامک)</label>
+        <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono"
+          value={shopInfo.bankCardNumber ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, bankCardNumber: e.target.value })} />
+        <label className="block text-xs text-muted mb-1">شماره حساب</label>
+        <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono"
+          value={shopInfo.bankAccountNumber ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, bankAccountNumber: e.target.value })} />
         <button onClick={saveShopInfo} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm">
           {shopSaved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
         </button>
+      </div>
+
+      {/* Favorite brands */}
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+        <div className="text-sm font-bold mb-1">برندهای پرکاربرد</div>
+        <p className="text-[11px] text-muted mb-3">برندهایی که تیک بزنید، بالای لیست فرم پذیرش دستگاه نمایش داده می‌شوند.</p>
+        <div className="flex flex-wrap gap-1.5">
+          {Object.keys(catalog).map((brand) => (
+            <button key={brand} onClick={() => toggleFavoriteBrand(brand)}
+              className={`text-[11px] rounded-full px-2.5 py-1 border transition ${
+                favoriteBrands.includes(brand) ? "bg-copper text-[#1A1410] border-copper" : "bg-surface2 border-surface2 text-muted"
+              }`}>
+              {brand} {favoriteBrands.includes(brand) && "⭐"}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Issue templates */}
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+        <div className="text-sm font-bold mb-3">الگوهای شرح ایراد</div>
+        <div className="flex gap-2 mb-3">
+          <select className="bg-surface2 rounded-lg px-2 py-2 text-xs" value={newTemplateLane} onChange={(e) => setNewTemplateLane(e.target.value)}>
+            {Object.entries(LANE_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+          </select>
+          <input className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-xs" placeholder="مثلاً: تعویض دوربین"
+            value={newTemplateLabel} onChange={(e) => setNewTemplateLabel(e.target.value)} />
+          <button onClick={addTemplate} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3">افزودن</button>
+        </div>
+        {Object.keys(LANE_LABEL).map((lane) => (
+          <div key={lane} className="mb-2">
+            <div className="text-[11px] text-muted mb-1">{LANE_LABEL[lane]}</div>
+            <div className="flex flex-wrap gap-1.5">
+              {templates.filter((t) => t.lane === lane).map((t) => (
+                <span key={t.id} className="text-[10px] bg-surface2 rounded-full pl-1 pr-2.5 py-1 flex items-center gap-1.5">
+                  {t.label}
+                  <button onClick={() => removeTemplate(t.id)} className="text-danger">✕</button>
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">

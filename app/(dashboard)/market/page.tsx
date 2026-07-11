@@ -9,7 +9,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 type Listing = {
   id: string; category: string; title: string; description: string; deviceModel?: string;
-  province: string; city: string; status: string; createdAt: string;
+  province: string; city: string; status: string; createdAt: string; showContact: boolean;
   author: { name: string; phone: string }; authorId: string; shop: { name: string };
   replies: { id: string; message: string; author: { name: string; phone: string }; createdAt: string }[];
 };
@@ -119,9 +119,11 @@ export default function MarketPage() {
               <div className="text-[11px] text-muted mt-2">
                 {l.author.name} ({l.shop.name}) · {l.city}، {l.province} · {new Date(l.createdAt).toLocaleDateString("fa-IR")}
               </div>
-              <a href={`tel:${l.author.phone}`} className="inline-block text-[11px] text-copper font-semibold mt-1.5">
-                📞 تماس: {l.author.phone}
-              </a>
+              {l.showContact && (
+                <a href={`tel:${l.author.phone}`} className="inline-block text-[11px] text-copper font-semibold mt-1.5">
+                  📞 تماس: {l.author.phone}
+                </a>
+              )}
               {myId !== l.authorId && (
                 <button onClick={() => startChat(l.id)} className="inline-block text-[11px] text-teal font-semibold mt-1.5 mr-3">
                   💬 ارسال پیام
@@ -175,7 +177,7 @@ function NewListingModal({
 }: { provinces: Record<string, string[]>; onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
     category: "PART", title: "", description: "", deviceModel: "",
-    province: "تهران", city: "تهران",
+    province: "تهران", city: "تهران", showContact: true,
   });
   const [error, setError] = useState("");
   const cities = provinces[form.province] || [];
@@ -238,6 +240,11 @@ function NewListingModal({
             </select>
           </div>
         </div>
+
+        <label className="flex items-center gap-2 text-xs text-muted mb-4">
+          <input type="checkbox" checked={form.showContact} onChange={(e) => setForm({ ...form, showContact: e.target.checked })} />
+          نمایش شماره تماس در این آگهی (در غیر این صورت فقط از طریق دکمه چت قابل تماس هستید)
+        </label>
 
         {error && <p className="text-danger text-xs mb-3">{error}</p>}
         <button onClick={submit} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">

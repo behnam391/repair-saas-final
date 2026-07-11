@@ -9,6 +9,8 @@ const UpdateSchema = z.object({
   name: z.string().min(2).optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
+  bankCardNumber: z.string().optional(),
+  bankAccountNumber: z.string().optional(),
 });
 
 export async function GET() {
@@ -16,7 +18,7 @@ export async function GET() {
     const { shopId } = await requireSession();
     const shop = await db.shop.findUniqueOrThrow({
       where: { id: shopId },
-      select: { id: true, name: true, address: true, phone: true, plan: true, type: true },
+      select: { id: true, name: true, address: true, phone: true, plan: true, type: true, bankCardNumber: true, bankAccountNumber: true },
     });
     return NextResponse.json({ shop });
   } catch (e) {

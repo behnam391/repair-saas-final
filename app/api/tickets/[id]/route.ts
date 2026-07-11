@@ -10,6 +10,8 @@ const TransitionSchema = z.object({
   action: z.enum(["start", "refer", "ready", "deliver"]),
   targetLane: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]).optional(), // required for "refer"
   note: z.string().optional(),
+  estimatedCost: z.number().int().optional(), // set when marking ready, sent in the SMS
+  includeCardInSms: z.boolean().optional(),
 });
 
 // PATCH /api/tickets/:id — the single endpoint that drives the whole
@@ -68,6 +70,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
           data: {
             lane: "READY",
             status: "READY",
+            estimatedCost: body.estimatedCost ?? ticket.estimatedCost,
             history: { create: { lane: "READY", action: "آماده تحویل", techId: userId, note: body.note } },
           },
           include: { customer: true, shop: true },
@@ -76,7 +79,15 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         // Fire the automated SMS — this is the core promise of the product.
         try {
           const t = updated as any;
-          await sendSms(t.customer.phone, readyForPickupMessage(t.shop.name, t.customer.name, t.no));
+          await sendSms(
+            t.customer.phone,
+            readyForPickupMessage(t.shop.name, t.customer.name, t.no, {
+              price: t.estimatedCost,
+              shopPhone: t.shop.phone,
+              includeCard: body.includeCardInSms,
+              cardNumber: t.shop.bankCardNumber,
+            })
+          );
         } catch (smsErr) {
           // Don't fail the whole request if SMS delivery fails — log and continue.
           console.error("[sms] failed to notify customer", smsErr);

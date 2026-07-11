@@ -11,6 +11,12 @@ const StaffSchema = z.object({
   phone: z.string().min(5),
   password: z.string().min(4),
   role: z.enum(["OWNER", "FRONTDESK", "HARDWARE", "SOFTWARE", "BOARD"]),
+  avatarUrl: z.string().optional(),
+  email: z.string().optional(),
+  gmailId: z.string().optional(),
+  telegramId: z.string().optional(),
+  notifyEmail: z.boolean().optional(),
+  notifyTelegram: z.boolean().optional(),
 });
 
 // GET /api/staff — list everyone on the shop's team.
@@ -19,7 +25,10 @@ export async function GET() {
     const { shopId } = await requireSession();
     const staff = await db.user.findMany({
       where: { shopId },
-      select: { id: true, name: true, phone: true, role: true, active: true, createdAt: true },
+      select: {
+        id: true, name: true, phone: true, role: true, active: true, createdAt: true,
+        avatarUrl: true, email: true, gmailId: true, telegramId: true, notifyEmail: true, notifyTelegram: true,
+      },
       orderBy: { createdAt: "asc" },
     });
     return NextResponse.json({ staff });
@@ -37,9 +46,10 @@ export async function POST(req: NextRequest) {
 
     const body = StaffSchema.parse(await req.json());
     const passwordHash = await bcrypt.hash(body.password, 10);
+    const { password, ...profile } = body;
 
     const user = await db.user.create({
-      data: { shopId, name: body.name, phone: body.phone, passwordHash, role: body.role },
+      data: { shopId, ...profile, passwordHash },
       select: { id: true, name: true, phone: true, role: true },
     });
     return NextResponse.json({ user }, { status: 201 });

@@ -20,13 +20,17 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <div className="display-heading text-sm">{user.shopName}</div>
             <div className="text-[11px] text-muted">{user.name} · {roleLabel(user.role)}</div>
           </div>
-          <nav className="flex items-center gap-4 text-xs overflow-x-auto no-scrollbar">
+          <nav className="flex items-center gap-4 text-xs overflow-x-auto no-scrollbar flex-1 justify-center">
             <Link href="/tickets" className="text-muted hover:text-ink whitespace-nowrap">تیکت‌ها</Link>
             <Link href="/inventory" className="text-muted hover:text-ink whitespace-nowrap">انبار</Link>
             <Link href="/invoices" className="text-muted hover:text-ink whitespace-nowrap">فاکتورها</Link>
             <Link href="/market" className="text-muted hover:text-ink whitespace-nowrap">بازار سراسری</Link>
             <Link href="/device-lookup" className="text-muted hover:text-ink whitespace-nowrap">پرونده گوشی</Link>
             <Link href="/chats" className="text-muted hover:text-ink whitespace-nowrap">چت‌ها</Link>
+            <Link href="/customers" className="text-muted hover:text-ink whitespace-nowrap">مشتریان</Link>
+            <Link href="/returns" className="text-muted hover:text-ink whitespace-nowrap">مرجوعی</Link>
+            <Link href="/support" className="text-muted hover:text-ink whitespace-nowrap">پشتیبانی</Link>
+            <Link href="/profile" className="text-muted hover:text-ink whitespace-nowrap">پروفایل</Link>
             {user.role === "OWNER" && <Link href="/admin" className="text-muted hover:text-ink whitespace-nowrap">مدیریت</Link>}
             {user.role === "OWNER" && <Link href="/admin/billing" className="text-muted hover:text-ink whitespace-nowrap">اشتراک</Link>}
             <span className="w-px h-4 bg-surface2 shrink-0" />

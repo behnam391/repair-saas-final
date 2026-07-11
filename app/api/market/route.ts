@@ -12,6 +12,7 @@ const ListingSchema = z.object({
   deviceModel: z.string().optional(),
   province: z.string().min(1),
   city: z.string().min(1),
+  showContact: z.boolean().optional(),
 });
 
 // GET /api/market?province=&city=&category=&status=OPEN
