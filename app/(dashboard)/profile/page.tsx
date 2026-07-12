@@ -2,7 +2,10 @@
 import { useEffect, useState } from "react";
 
 export default function ProfilePage() {
-  const [form, setForm] = useState({ avatarUrl: "", email: "", gmailId: "", telegramId: "", notifyEmail: false, notifyTelegram: false });
+  const [form, setForm] = useState({
+    avatarUrl: "", email: "", gmailId: "", telegramId: "", nationalId: "", birthDate: "",
+    notifyEmail: false, notifyTelegram: false,
+  });
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
 
@@ -13,7 +16,9 @@ export default function ProfilePage() {
       setName(data.user.name);
       setForm({
         avatarUrl: data.user.avatarUrl ?? "", email: data.user.email ?? "", gmailId: data.user.gmailId ?? "",
-        telegramId: data.user.telegramId ?? "", notifyEmail: data.user.notifyEmail, notifyTelegram: data.user.notifyTelegram,
+        telegramId: data.user.telegramId ?? "", nationalId: data.user.nationalId ?? "",
+        birthDate: data.user.birthDate ? data.user.birthDate.slice(0, 10) : "",
+        notifyEmail: data.user.notifyEmail, notifyTelegram: data.user.notifyTelegram,
       });
     }
   }
@@ -45,6 +50,19 @@ export default function ProfilePage() {
         placeholder="https://..."
         value={form.avatarUrl} onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })} />
       <p className="text-[10px] text-muted mb-3">فعلاً فقط لینک تصویر پشتیبانی می‌شود؛ آپلود مستقیم فایل به‌زودی اضافه می‌شود.</p>
+
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        <div>
+          <label className="block text-xs text-muted mb-1">کد ملی</label>
+          <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mono"
+            value={form.nationalId} onChange={(e) => setForm({ ...form, nationalId: e.target.value })} />
+        </div>
+        <div>
+          <label className="block text-xs text-muted mb-1">تاریخ تولد</label>
+          <input type="date" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mono"
+            value={form.birthDate} onChange={(e) => setForm({ ...form, birthDate: e.target.value })} />
+        </div>
+      </div>
 
       <label className="block text-xs text-muted mb-1">ایمیل</label>
       <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"

@@ -10,6 +10,8 @@ const Schema = z.object({
   email: z.string().optional(),
   gmailId: z.string().optional(),
   telegramId: z.string().optional(),
+  nationalId: z.string().optional(),
+  birthDate: z.string().optional(), // ISO date string, e.g. "1990-05-12"
   notifyEmail: z.boolean().optional(),
   notifyTelegram: z.boolean().optional(),
 });
@@ -19,7 +21,10 @@ export async function GET() {
     const { userId } = await requireSession();
     const user = await db.user.findUniqueOrThrow({
       where: { id: userId },
-      select: { id: true, name: true, phone: true, avatarUrl: true, email: true, gmailId: true, telegramId: true, notifyEmail: true, notifyTelegram: true },
+      select: {
+        id: true, name: true, phone: true, avatarUrl: true, email: true, gmailId: true, telegramId: true,
+        nationalId: true, birthDate: true, notifyEmail: true, notifyTelegram: true,
+      },
     });
     return NextResponse.json({ user });
   } catch (e) {
@@ -31,8 +36,11 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const { userId } = await requireSession();
-    const body = Schema.parse(await req.json());
-    const user = await db.user.update({ where: { id: userId }, data: body });
+    const { birthDate, ...rest } = Schema.parse(await req.json());
+    const user = await db.user.update({
+      where: { id: userId },
+      data: { ...rest, ...(birthDate ? { birthDate: new Date(birthDate) } : {}) },
+    });
     return NextResponse.json({ user });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

@@ -23,7 +23,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <div className="text-[11px] text-muted">{user.name} · {roleLabel(user.role)}</div>
           </div>
           <nav className="flex items-center gap-4 text-xs overflow-x-auto no-scrollbar flex-1 justify-center">
-            <Link href="/tickets" className="text-muted hover:text-ink whitespace-nowrap">تیکت‌ها</Link>
+            <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1 whitespace-nowrap">🏠 صفحه اصلی</Link>
             <Link href="/inventory" className="text-muted hover:text-ink whitespace-nowrap">انبار</Link>
             <Link href="/invoices" className="text-muted hover:text-ink whitespace-nowrap">فاکتورها</Link>
             <Link href="/market" className="text-muted hover:text-ink whitespace-nowrap">بازار سراسری</Link>

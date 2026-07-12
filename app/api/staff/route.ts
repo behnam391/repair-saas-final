@@ -15,6 +15,8 @@ const StaffSchema = z.object({
   email: z.string().optional(),
   gmailId: z.string().optional(),
   telegramId: z.string().optional(),
+  nationalId: z.string().optional(),
+  birthDate: z.string().optional(),
   notifyEmail: z.boolean().optional(),
   notifyTelegram: z.boolean().optional(),
 });
@@ -46,10 +48,10 @@ export async function POST(req: NextRequest) {
 
     const body = StaffSchema.parse(await req.json());
     const passwordHash = await bcrypt.hash(body.password, 10);
-    const { password, ...profile } = body;
+    const { password, birthDate, ...profile } = body;
 
     const user = await db.user.create({
-      data: { shopId, ...profile, passwordHash },
+      data: { shopId, ...profile, ...(birthDate ? { birthDate: new Date(birthDate) } : {}), passwordHash },
       select: { id: true, name: true, phone: true, role: true },
     });
     return NextResponse.json({ user }, { status: 201 });

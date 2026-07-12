@@ -13,23 +13,34 @@ const CreateTicketSchema = z.object({
   issueInitial: z.string().min(1),
   lane: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]),
   estimatedCost: z.number().int().optional(),
+  devicePasscode: z.string().optional(),
+  customerDamageNotes: z.string().optional(),
+  receiptAck: z.enum(["SHOP_PRINTED_SIGNED", "SITE_PRINTED_SIGNED", "NO_SIGNATURE"]).optional(),
 });
 
 // GET /api/tickets?lane=HARDWARE&status=PENDING
-// Always scoped to the signed-in user's shop — a user from Shop A can
-// never see Shop B's tickets, regardless of what query params are sent.
+// Always scoped to the signed-in user's shop. Specialist technicians
+// (HARDWARE/SOFTWARE/BOARD) only see tickets that are theirs — either
+// already assigned to them, or still unassigned and sitting in their own
+// lane waiting to be picked up. Owners and front-desk staff see everything,
+// since they coordinate across the whole shop.
 export async function GET(req: NextRequest) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId, userId, role } = await requireSession();
     const { searchParams } = new URL(req.url);
     const lane = searchParams.get("lane");
     const status = searchParams.get("status");
+
+    const isSpecialist = ["HARDWARE", "SOFTWARE", "BOARD"].includes(role);
 
     const tickets = await db.ticket.findMany({
       where: {
         shopId,
         ...(lane ? { lane: lane as any } : {}),
         ...(status ? { status: status as any } : {}),
+        ...(isSpecialist
+          ? { OR: [{ assignedToId: userId }, { assignedToId: null, lane: role as any }] }
+          : {}),
       },
       include: {
         customer: true,
@@ -108,6 +119,9 @@ export async function POST(req: NextRequest) {
           lane: body.lane,
           status: "PENDING",
           estimatedCost: body.estimatedCost,
+          devicePasscode: body.devicePasscode,
+          customerDamageNotes: body.customerDamageNotes,
+          receiptAck: body.receiptAck,
           history: {
             create: [
               { lane: body.lane, action: "پذیرش دستگاه", techId: userId, note: body.issueInitial },

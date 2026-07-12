@@ -19,6 +19,8 @@ type Ticket = {
   assignedToId?: string | null;
   technicianReportedCost?: number | null;
   technicianNote?: string | null;
+  devicePasscode?: string | null;
+  customerDamageNotes?: string | null;
   customer: { name: string; phone: string };
   history: { action: string; lane: string; note?: string; createdAt: string; tech?: { name: string } }[];
 };
@@ -204,6 +206,17 @@ function TicketDetail({
         </div>
         <div className="text-xs text-muted mb-4">{ticket.customer.name} · {ticket.customer.phone}</div>
 
+        {(ticket.devicePasscode || ticket.customerDamageNotes) && (
+          <div className="bg-surface2 border border-surface2 rounded-lg p-2.5 mb-4 space-y-1.5">
+            {ticket.devicePasscode && (
+              <div className="text-xs"><span className="text-muted">رمز گوشی: </span><span className="mono font-bold">{ticket.devicePasscode}</span></div>
+            )}
+            {ticket.customerDamageNotes && (
+              <div className="text-xs"><span className="text-muted">توضیحات مشتری: </span>{ticket.customerDamageNotes}</div>
+            )}
+          </div>
+        )}
+
         <ReferralFlow history={ticket.history} currentLane={ticket.lane} />
 
         <div className="space-y-2.5 mb-5">
@@ -337,7 +350,9 @@ function TicketDetail({
 function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
     customerName: "", customerPhone: "", deviceModel: "", imei: "", issueInitial: "", lane: "HARDWARE",
+    devicePasscode: "", customerDamageNotes: "", receiptAck: "NO_SIGNATURE" as string,
   });
+  const [collectPasscode, setCollectPasscode] = useState(false);
   const [error, setError] = useState("");
 
   const [catalog, setCatalog] = useState<Record<string, string[]>>({});
@@ -360,10 +375,11 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
 
   async function submit() {
     setError("");
+    const payload = { ...form, devicePasscode: collectPasscode ? form.devicePasscode : "" };
     const res = await fetch("/api/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) {
       const err = await res.json();
@@ -472,6 +488,49 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
             value={form.issueInitial}
             onChange={(e) => setForm({ ...form, issueInitial: e.target.value })}
           />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-xs text-muted mb-1">توضیحات مشتری درباره آسیب‌دیدگی یا تعمیر قبلی (اختیاری)</label>
+          <textarea
+            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+            placeholder="مثلاً: قبلاً یک‌بار صفحه تعویض شده، یا خط روی بدنه از قبل بوده"
+            value={form.customerDamageNotes}
+            onChange={(e) => setForm({ ...form, customerDamageNotes: e.target.value })}
+          />
+        </div>
+
+        <label className="flex items-center gap-2 text-xs text-muted mb-2">
+          <input type="checkbox" checked={collectPasscode} onChange={(e) => setCollectPasscode(e.target.checked)} />
+          دریافت رمز عبور صفحه گوشی از مشتری (برای تست بعد از تعمیر)
+        </label>
+        {collectPasscode && (
+          <div className="mb-4">
+            <input
+              className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+              placeholder="رمز / الگو / پین"
+              value={form.devicePasscode}
+              onChange={(e) => setForm({ ...form, devicePasscode: e.target.value })}
+            />
+            <p className="text-[10px] text-muted mt-1">این اطلاعات فقط برای کارکنان همین مغازه قابل مشاهده است.</p>
+          </div>
+        )}
+
+        <div className="mb-4">
+          <label className="block text-xs text-muted mb-2">نحوه تأیید پذیرش دستگاه</label>
+          <div className="space-y-1.5">
+            {[
+              ["SHOP_PRINTED_SIGNED", "رسید چاپی مغازه را امضا کرد"],
+              ["SITE_PRINTED_SIGNED", "رسید چاپی سایت را امضا کرد"],
+              ["NO_SIGNATURE", "بدون امضا و بدون نیاز به فیش، دستگاه پذیرش شد"],
+            ].map(([val, label]) => (
+              <label key={val} className="flex items-center gap-2 text-xs bg-surface2 rounded-lg px-3 py-2 cursor-pointer">
+                <input type="radio" name="receiptAck" checked={form.receiptAck === val}
+                  onChange={() => setForm({ ...form, receiptAck: val })} />
+                {label}
+              </label>
+            ))}
+          </div>
         </div>
 
         {error && <p className="text-danger text-xs mb-3">{error}</p>}

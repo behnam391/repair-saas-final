@@ -109,6 +109,8 @@ model User {
   email        String?
   gmailId      String?
   telegramId   String?
+  nationalId   String?
+  birthDate    DateTime?
   notifyEmail    Boolean @default(false)
   notifyTelegram Boolean @default(false)
   createdAt    DateTime @default(now())
@@ -164,6 +166,13 @@ enum TicketStatus {
   CANCELLED
 }
 
+// How the customer acknowledged handing over the device at intake.
+enum ReceiptAck {
+  SHOP_PRINTED_SIGNED // shop already has its own pre-printed paper slip, customer signed that
+  SITE_PRINTED_SIGNED // a receipt was printed from this system and the customer signed it
+  NO_SIGNATURE         // device accepted with no signature/slip required
+}
+
 model Ticket {
   id            String       @id @default(cuid())
   shopId        String
@@ -175,6 +184,9 @@ model Ticket {
   deviceModel   String
   imei          String?
   issueInitial  String       // the problem as described at intake
+  devicePasscode String?     // customer's screen lock/passcode, only if they opted to give it (for post-repair testing)
+  customerDamageNotes String? // pre-existing damage/prior repairs the customer discloses at intake
+  receiptAck    ReceiptAck?  // how intake was acknowledged: shop's own printed slip, site-generated printed slip, or none
 
   lane          Lane
   status        TicketStatus @default(PENDING)
