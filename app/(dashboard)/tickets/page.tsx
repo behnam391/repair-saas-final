@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import PatternLockInput from "@/components/PatternLockInput";
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار" },
@@ -20,6 +21,7 @@ type Ticket = {
   technicianReportedCost?: number | null;
   technicianNote?: string | null;
   devicePasscode?: string | null;
+  devicePasscodeType?: string | null;
   customerDamageNotes?: string | null;
   customer: { name: string; phone: string };
   history: { action: string; lane: string; note?: string; createdAt: string; tech?: { name: string } }[];
@@ -209,7 +211,10 @@ function TicketDetail({
         {(ticket.devicePasscode || ticket.customerDamageNotes) && (
           <div className="bg-surface2 border border-surface2 rounded-lg p-2.5 mb-4 space-y-1.5">
             {ticket.devicePasscode && (
-              <div className="text-xs"><span className="text-muted">رمز گوشی: </span><span className="mono font-bold">{ticket.devicePasscode}</span></div>
+              <div className="text-xs">
+                <span className="text-muted">رمز گوشی ({ticket.devicePasscodeType === "PATTERN" ? "الگو" : ticket.devicePasscodeType === "PASSWORD" ? "پسورد" : "پین"}): </span>
+                <span className="mono font-bold">{ticket.devicePasscode}</span>
+              </div>
             )}
             {ticket.customerDamageNotes && (
               <div className="text-xs"><span className="text-muted">توضیحات مشتری: </span>{ticket.customerDamageNotes}</div>
@@ -350,7 +355,7 @@ function TicketDetail({
 function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
     customerName: "", customerPhone: "", deviceModel: "", imei: "", issueInitial: "", lane: "HARDWARE",
-    devicePasscode: "", customerDamageNotes: "", receiptAck: "NO_SIGNATURE" as string,
+    devicePasscode: "", devicePasscodeType: "PIN" as string, customerDamageNotes: "", receiptAck: "NO_SIGNATURE" as string,
   });
   const [collectPasscode, setCollectPasscode] = useState(false);
   const [error, setError] = useState("");
@@ -506,13 +511,34 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
         </label>
         {collectPasscode && (
           <div className="mb-4">
-            <input
-              className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
-              placeholder="رمز / الگو / پین"
-              value={form.devicePasscode}
-              onChange={(e) => setForm({ ...form, devicePasscode: e.target.value })}
-            />
-            <p className="text-[10px] text-muted mt-1">این اطلاعات فقط برای کارکنان همین مغازه قابل مشاهده است.</p>
+            <div className="flex gap-2 mb-2">
+              {[
+                ["PIN", "پین عددی"],
+                ["PASSWORD", "رمز/پسورد"],
+                ["PATTERN", "الگو"],
+              ].map(([val, label]) => (
+                <button key={val} type="button"
+                  onClick={() => setForm({ ...form, devicePasscodeType: val, devicePasscode: "" })}
+                  className={`flex-1 text-[11px] rounded-lg py-1.5 border transition ${
+                    form.devicePasscodeType === val ? "bg-copper text-[#1A1410] border-copper" : "bg-surface2 border-surface2 text-muted"
+                  }`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {form.devicePasscodeType === "PATTERN" ? (
+              <PatternLockInput value={form.devicePasscode} onChange={(v) => setForm({ ...form, devicePasscode: v })} />
+            ) : (
+              <input
+                type={form.devicePasscodeType === "PIN" ? "tel" : "text"}
+                className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+                placeholder={form.devicePasscodeType === "PIN" ? "مثلاً: 1234" : "رمز عبور"}
+                value={form.devicePasscode}
+                onChange={(e) => setForm({ ...form, devicePasscode: e.target.value })}
+              />
+            )}
+            <p className="text-[10px] text-muted mt-2">این اطلاعات فقط برای کارکنان همین مغازه قابل مشاهده است.</p>
           </div>
         )}
 

@@ -14,6 +14,7 @@ const CreateTicketSchema = z.object({
   lane: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]),
   estimatedCost: z.number().int().optional(),
   devicePasscode: z.string().optional(),
+  devicePasscodeType: z.enum(["PIN", "PASSWORD", "PATTERN"]).optional(),
   customerDamageNotes: z.string().optional(),
   receiptAck: z.enum(["SHOP_PRINTED_SIGNED", "SITE_PRINTED_SIGNED", "NO_SIGNATURE"]).optional(),
 });
@@ -120,6 +121,7 @@ export async function POST(req: NextRequest) {
           status: "PENDING",
           estimatedCost: body.estimatedCost,
           devicePasscode: body.devicePasscode,
+          devicePasscodeType: body.devicePasscodeType,
           customerDamageNotes: body.customerDamageNotes,
           receiptAck: body.receiptAck,
           history: {

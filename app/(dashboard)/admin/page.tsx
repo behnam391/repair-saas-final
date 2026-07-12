@@ -22,6 +22,9 @@ export default function AdminPage() {
 
   const [shopInfo, setShopInfo] = useState<ShopInfo>({ name: "", address: "", phone: "", plan: "free", bankCardNumber: "", bankAccountNumber: "" });
   const [shopSaved, setShopSaved] = useState(false);
+  const [verificationLevel, setVerificationLevel] = useState(1);
+  const [verificationRequestedAt, setVerificationRequestedAt] = useState<string | null>(null);
+  const [verifSubmitted, setVerifSubmitted] = useState(false);
 
   const [catalog, setCatalog] = useState<Record<string, string[]>>({});
   const [favoriteBrands, setFavoriteBrands] = useState<string[]>([]);
@@ -49,6 +52,8 @@ export default function AdminPage() {
         name: data.shop.name, address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
         bankCardNumber: data.shop.bankCardNumber ?? "", bankAccountNumber: data.shop.bankAccountNumber ?? "",
       });
+      setVerificationLevel(data.shop.verificationLevel ?? 1);
+      setVerificationRequestedAt(data.shop.verificationRequestedAt ?? null);
     }
     if (catRes.ok) {
       const data = await catRes.json();
@@ -86,6 +91,16 @@ export default function AdminPage() {
       }),
     });
     if (res.ok) { setShopSaved(true); setTimeout(() => setShopSaved(false), 2500); }
+  }
+
+  async function requestVerification() {
+    const res = await fetch("/api/verification/request", { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      setVerificationLevel(data.shop.verificationLevel);
+      setVerificationRequestedAt(data.shop.verificationRequestedAt);
+      setVerifSubmitted(true);
+    }
   }
 
   async function toggleFavoriteBrand(brand: string) {
@@ -132,6 +147,23 @@ export default function AdminPage() {
       <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4 mb-6 shadow-lg shadow-black/20">
         <div className="text-xs text-muted mb-1">درآمد ۳۰ روز اخیر</div>
         <div className="text-2xl font-extrabold mono text-copper">{monthRevenue.toLocaleString("fa-IR")} <span className="text-xs font-normal text-ink">تومان</span></div>
+      </div>
+
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6 flex items-center justify-between">
+        <div>
+          <div className="text-xs text-muted mb-1">سطح احراز هویت</div>
+          <div className="text-sm font-bold">
+            سطح {verificationLevel} از ۳
+            {verificationLevel === 1 && <span className="text-muted font-normal"> — تازه ثبت‌نام شده</span>}
+            {verificationLevel === 2 && <span className="text-amber font-normal"> — منتظر تأیید پلتفرم</span>}
+            {verificationLevel === 3 && <span className="text-teal font-normal"> — تأییدشده ✅</span>}
+          </div>
+        </div>
+        {verificationLevel < 3 && !verificationRequestedAt && (
+          <button onClick={requestVerification} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3 py-2">
+            {verifSubmitted ? "ارسال شد" : "درخواست ارتقا"}
+          </button>
+        )}
       </div>
 
       {/* Shop info / address / bank settings */}
@@ -221,10 +253,7 @@ export default function AdminPage() {
       <div className="text-sm font-bold mb-2">اعضای تیم</div>
       <div className="space-y-2 mb-6">
         {staff.map((s) => (
-          <div key={s.id} className="flex justify-between bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs">
-            <span>{s.name} · {s.phone}</span>
-            <span className="text-muted">{ROLE_LABEL[s.role] ?? s.role}</span>
-          </div>
+          <StaffRow key={s.id} staff={s} onSaved={load} />
         ))}
       </div>
 
@@ -236,6 +265,52 @@ export default function AdminPage() {
             <span className="mono">{r.closedCount} دستگاه · {r.revenue.toLocaleString("fa-IR")} تومان</span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(staff.name);
+  const [role, setRole] = useState(staff.role);
+  const [active, setActive] = useState(staff.active);
+
+  async function save() {
+    await fetch(`/api/staff/${staff.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, role, active }),
+    });
+    setEditing(false);
+    onSaved();
+  }
+
+  if (!editing) {
+    return (
+      <div className={`flex justify-between items-center bg-surface2 border rounded-lg px-3 py-2 text-xs ${staff.active ? "border-surface2" : "border-danger"}`}>
+        <span>{staff.name} · {staff.phone} {!staff.active && <span className="text-danger">(غیرفعال)</span>}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-muted">{ROLE_LABEL[staff.role] ?? staff.role}</span>
+          <button onClick={() => setEditing(true)} className="text-copper text-[10px] font-semibold">ویرایش</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-surface2 border border-copper rounded-lg p-3 text-xs space-y-2">
+      <input className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={name} onChange={(e) => setName(e.target.value)} />
+      <select className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={role} onChange={(e) => setRole(e.target.value)}>
+        {Object.entries(ROLE_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+      </select>
+      <label className="flex items-center gap-2 text-[11px] text-muted">
+        <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+        حساب فعال باشد
+      </label>
+      <div className="flex gap-2">
+        <button onClick={save} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">ذخیره</button>
+        <button onClick={() => setEditing(false)} className="flex-1 bg-surface rounded-lg py-1.5">انصراف</button>
       </div>
     </div>
   );

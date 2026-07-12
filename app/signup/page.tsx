@@ -4,11 +4,33 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+const BUSINESS_SIZE_OPTIONS = [
+  { key: "SOLO", label: "تک‌نفره", desc: "خودم یک‌تنه همه‌کار را انجام می‌دهم" },
+  { key: "TEAM", label: "تیمی", desc: "من و چند کارمند، هرکدام روی تخصص خودمان" },
+  { key: "ENTERPRISE", label: "مجموعه بزرگ", desc: "کارمندان زیاد، چند شعبه/بخش" },
+] as const;
+
+const SPECIALTY_OPTIONS = [
+  { key: "HARDWARE", label: "سخت‌افزار" },
+  { key: "SOFTWARE", label: "نرم‌افزار" },
+  { key: "BOARD", label: "تخصصی (برد/هارد)" },
+];
+
 export default function SignupPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ shopName: "", address: "", ownerName: "", phone: "", password: "" });
+  const [form, setForm] = useState({
+    shopName: "", address: "", landlinePhone: "", businessSize: "SOLO" as string, specialties: [] as string[],
+    ownerName: "", nationalId: "", birthDate: "", phone: "", password: "",
+  });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function toggleSpecialty(key: string) {
+    setForm((f) => ({
+      ...f,
+      specialties: f.specialties.includes(key) ? f.specialties.filter((s) => s !== key) : [...f.specialties, key],
+    }));
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,16 +56,36 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <form onSubmit={submit} className="w-full max-w-sm bg-surface border-t-2 border-t-copper border-x border-b border-surface2 rounded-2xl p-6">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8">
+      <form onSubmit={submit} className="w-full max-w-md bg-surface border-t-2 border-t-copper border-x border-b border-surface2 rounded-2xl p-6">
         <h1 className="display-heading text-xl mb-1">ثبت‌نام مغازه جدید</h1>
         <p className="text-xs text-muted mb-6">با پلن رایگان شروع کنید، هر زمان می‌توانید ارتقا دهید</p>
+
+        <label className="block text-xs text-muted mb-2">نوع کسب‌وکار شما</label>
+        <div className="space-y-1.5 mb-4">
+          {BUSINESS_SIZE_OPTIONS.map((o) => (
+            <label key={o.key} className={`flex items-start gap-2 text-xs rounded-lg px-3 py-2 cursor-pointer border ${form.businessSize === o.key ? "bg-copper/10 border-copper" : "bg-surface2 border-surface2"}`}>
+              <input type="radio" name="businessSize" className="mt-0.5" checked={form.businessSize === o.key}
+                onChange={() => setForm({ ...form, businessSize: o.key })} />
+              <span><span className="font-bold">{o.label}</span> — <span className="text-muted">{o.desc}</span></span>
+            </label>
+          ))}
+        </div>
+
+        <label className="block text-xs text-muted mb-2">تخصص‌های مغازه (می‌توانید چند مورد انتخاب کنید)</label>
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {SPECIALTY_OPTIONS.map((s) => (
+            <button key={s.key} type="button" onClick={() => toggleSpecialty(s.key)}
+              className={`text-[11px] rounded-full px-3 py-1.5 border transition ${form.specialties.includes(s.key) ? "bg-copper text-[#1A1410] border-copper" : "bg-surface2 border-surface2 text-muted"}`}>
+              {s.label}
+            </button>
+          ))}
+        </div>
 
         {[
           ["نام مغازه/تعمیرگاه", "shopName"],
           ["آدرس مغازه (اختیاری)", "address"],
-          ["نام شما (مدیر)", "ownerName"],
-          ["شماره موبایل", "phone"],
+          ["تلفن ثابت مغازه (اختیاری)", "landlinePhone"],
         ].map(([label, key]) => (
           <div key={key} className="mb-3">
             <label className="block text-xs text-muted mb-1">{label}</label>
@@ -54,14 +96,36 @@ export default function SignupPage() {
             />
           </div>
         ))}
-        <div className="mb-4">
-          <label className="block text-xs text-muted mb-1">رمز عبور</label>
-          <input
-            type="password"
-            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-          />
+
+        <div className="border-t border-surface2 my-4 pt-4">
+          <p className="text-[11px] text-muted mb-2">اطلاعات مدیر (برای احراز هویت و بازیابی حساب)</p>
+          <div className="mb-3">
+            <label className="block text-xs text-muted mb-1">نام شما (مدیر)</label>
+            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+              value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} />
+          </div>
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div>
+              <label className="block text-xs text-muted mb-1">کد ملی</label>
+              <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+                value={form.nationalId} onChange={(e) => setForm({ ...form, nationalId: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs text-muted mb-1">تاریخ تولد</label>
+              <input type="date" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+                value={form.birthDate} onChange={(e) => setForm({ ...form, birthDate: e.target.value })} />
+            </div>
+          </div>
+          <div className="mb-3">
+            <label className="block text-xs text-muted mb-1">شماره موبایل</label>
+            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+              value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          </div>
+          <div className="mb-4">
+            <label className="block text-xs text-muted mb-1">رمز عبور</label>
+            <input type="password" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+              value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          </div>
         </div>
 
         {error && <p className="text-danger text-xs mb-3">{error}</p>}

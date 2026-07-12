@@ -29,6 +29,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <Link href="/market" className="text-muted hover:text-ink whitespace-nowrap">بازار سراسری</Link>
             <Link href="/device-lookup" className="text-muted hover:text-ink whitespace-nowrap">پرونده گوشی</Link>
             <Link href="/chats" className="text-muted hover:text-ink whitespace-nowrap">چت‌ها</Link>
+            <Link href="/history" className="text-muted hover:text-ink whitespace-nowrap">سابقه و جستجو</Link>
             <Link href="/customers" className="text-muted hover:text-ink whitespace-nowrap">مشتریان</Link>
             <Link href="/returns" className="text-muted hover:text-ink whitespace-nowrap">مرجوعی</Link>
             <Link href="/support" className="text-muted hover:text-ink whitespace-nowrap">پشتیبانی</Link>

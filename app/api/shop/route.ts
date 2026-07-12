@@ -18,7 +18,10 @@ export async function GET() {
     const { shopId } = await requireSession();
     const shop = await db.shop.findUniqueOrThrow({
       where: { id: shopId },
-      select: { id: true, name: true, address: true, phone: true, plan: true, type: true, bankCardNumber: true, bankAccountNumber: true },
+      select: {
+        id: true, name: true, address: true, phone: true, plan: true, type: true, bankCardNumber: true, bankAccountNumber: true,
+        landlinePhone: true, businessSize: true, specialties: true, verificationLevel: true, verificationRequestedAt: true,
+      },
     });
     return NextResponse.json({ shop });
   } catch (e) {

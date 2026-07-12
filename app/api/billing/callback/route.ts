@@ -32,7 +32,9 @@ export async function GET(req: NextRequest) {
   }
 
   const planInfo = PLANS[sub.plan as PlanKey];
-  const verified = await verifyPayment({ amountToman: planInfo.priceToman, authority });
+  // Verify against the actual amount charged (already discounted for
+  // duration at checkout time), not the flat monthly price.
+  const verified = await verifyPayment({ amountToman: sub.amount, authority });
 
   if (!verified.ok) {
     await db.subscription.update({ where: { id: sub.id }, data: { status: "FAILED" } });
@@ -50,7 +52,7 @@ export async function GET(req: NextRequest) {
     // Extend from current expiry if still active, otherwise from now.
     const base = shop.planExpiresAt && shop.planExpiresAt > now ? shop.planExpiresAt : now;
     const newExpiry = new Date(base);
-    newExpiry.setDate(newExpiry.getDate() + 30);
+    newExpiry.setMonth(newExpiry.getMonth() + sub.months);
 
     await tx.shop.update({
       where: { id: shop.id },

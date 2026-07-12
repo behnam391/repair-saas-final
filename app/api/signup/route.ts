@@ -6,13 +6,22 @@ import { z } from "zod";
 const SignupSchema = z.object({
   shopName: z.string().min(2),
   address: z.string().optional(),
+  landlinePhone: z.string().optional(),
+  businessSize: z.enum(["SOLO", "TEAM", "ENTERPRISE"]).default("SOLO"),
+  specialties: z.array(z.enum(["HARDWARE", "SOFTWARE", "BOARD"])).default([]),
   ownerName: z.string().min(2),
+  nationalId: z.string().optional(),
+  birthDate: z.string().optional(),
   phone: z.string().min(5),
   password: z.string().min(4),
 });
 
 // POST /api/signup — public, no auth required. Anyone can create a new
 // shop on the "free" plan; upgrading later goes through /api/billing.
+// A shop starts at verification level 1 (just signed up); submitting a
+// complete profile bumps it to level 2 (self-declared), and a platform
+// admin reviewing/approving it bumps it to level 3 (verified) — see
+// /api/verification/request and /api/superadmin/verification.
 export async function POST(req: NextRequest) {
   try {
     const body = SignupSchema.parse(await req.json());
@@ -25,9 +34,23 @@ export async function POST(req: NextRequest) {
     const passwordHash = await bcrypt.hash(body.password, 10);
 
     const shop = await db.$transaction(async (tx) => {
-      const s = await tx.shop.create({ data: { name: body.shopName, address: body.address, plan: "free", monthlyQuota: 10 } });
+      const s = await tx.shop.create({
+        data: {
+          name: body.shopName,
+          address: body.address,
+          landlinePhone: body.landlinePhone,
+          businessSize: body.businessSize,
+          specialties: body.specialties.join(","),
+          plan: "free",
+          monthlyQuota: 10,
+        },
+      });
       await tx.user.create({
-        data: { shopId: s.id, name: body.ownerName, phone: body.phone, passwordHash, role: "OWNER" },
+        data: {
+          shopId: s.id, name: body.ownerName, phone: body.phone, passwordHash, role: "OWNER",
+          nationalId: body.nationalId,
+          ...(body.birthDate ? { birthDate: new Date(body.birthDate) } : {}),
+        },
       });
       return s;
     });

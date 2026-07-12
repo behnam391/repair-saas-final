@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 const PLAN_INFO = {
@@ -8,9 +8,21 @@ const PLAN_INFO = {
   business: { label: "تجاری", price: 990000, quota: "نامحدود" },
 } as const;
 
+const DURATIONS = [
+  { key: 1, label: "۱ ماهه", discount: 0 },
+  { key: 3, label: "۳ ماهه", discount: 5 },
+  { key: 6, label: "۶ ماهه", discount: 10 },
+  { key: 12, label: "۱۲ ماهه", discount: 20 },
+] as const;
+
+function priceFor(monthly: number, duration: number, discount: number) {
+  return Math.round((monthly * duration * (100 - discount)) / 100);
+}
+
 export default function BillingPage() {
   const params = useSearchParams();
   const result = params.get("result");
+  const [duration, setDuration] = useState<number>(1);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -20,7 +32,7 @@ export default function BillingPage() {
     const res = await fetch("/api/billing/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan }),
+      body: JSON.stringify({ plan, duration }),
     });
     const data = await res.json();
     setLoadingPlan(null);
@@ -30,23 +42,35 @@ export default function BillingPage() {
 
   return (
     <div className="p-4 max-w-xl mx-auto">
-      <h1 className="font-extrabold mb-1">اشتراک و پرداخت</h1>
-      <p className="text-xs text-muted mb-5">پلن مناسب کسب‌وکار خود را انتخاب کنید</p>
+      <h1 className="display-heading text-lg mb-1">اشتراک و پرداخت</h1>
+      <p className="text-xs text-muted mb-5">پلن و مدت مناسب کسب‌وکار خود را انتخاب کنید</p>
 
       {result === "success" && <div className="bg-teal/20 text-teal text-xs rounded-lg p-3 mb-4">✅ پرداخت با موفقیت انجام شد و پلن شما ارتقا یافت.</div>}
       {result === "failed" && <div className="bg-danger/20 text-danger text-xs rounded-lg p-3 mb-4">پرداخت ناموفق بود.</div>}
       {result === "cancelled" && <div className="bg-amber/20 text-amber text-xs rounded-lg p-3 mb-4">پرداخت لغو شد.</div>}
       {error && <p className="text-danger text-xs mb-3">{error}</p>}
 
+      <div className="flex gap-2 mb-5">
+        {DURATIONS.map((d) => (
+          <button key={d.key} onClick={() => setDuration(d.key)}
+            className={`flex-1 text-xs rounded-lg py-2 border transition ${duration === d.key ? "bg-copper text-[#1A1410] border-copper" : "bg-surface2 border-surface2 text-muted"}`}>
+            {d.label}{d.discount > 0 && ` (${d.discount}%-)`}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-3">
         {(["free", "pro", "business"] as const).map((key) => {
           const p = PLAN_INFO[key];
+          const total = priceFor(p.price, duration, DURATIONS.find((d) => d.key === duration)!.discount);
           return (
             <div key={key} className="bg-surface border border-surface2 rounded-xl p-4 flex justify-between items-center">
               <div>
                 <div className="font-bold text-sm">{p.label}</div>
                 <div className="text-[11px] text-muted mt-0.5">{p.quota}</div>
-                <div className="mono text-sm mt-1">{p.price === 0 ? "رایگان" : `${p.price.toLocaleString("fa-IR")} تومان / ماه`}</div>
+                <div className="mono text-sm mt-1">
+                  {p.price === 0 ? "رایگان" : `${total.toLocaleString("fa-IR")} تومان / ${duration} ماه`}
+                </div>
               </div>
               {key !== "free" && (
                 <button
