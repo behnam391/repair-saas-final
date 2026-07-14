@@ -5,13 +5,13 @@ import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
-const UpdateSchema = z.object({ active: z.boolean() });
+const UpdateSchema = z.object({ active: z.boolean().optional(), supportAccessEnabled: z.boolean().optional() });
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     await requireSuperAdmin();
-    const { active } = UpdateSchema.parse(await req.json());
-    const shop = await db.shop.update({ where: { id: params.id }, data: { active } });
+    const body = UpdateSchema.parse(await req.json());
+    const shop = await db.shop.update({ where: { id: params.id }, data: body });
     return NextResponse.json({ shop });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

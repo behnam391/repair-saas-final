@@ -62,15 +62,17 @@ export default function SignupPage() {
         <p className="text-xs text-muted mb-6">با پلن رایگان شروع کنید، هر زمان می‌توانید ارتقا دهید</p>
 
         <label className="block text-xs text-muted mb-2">نوع کسب‌وکار شما</label>
-        <div className="space-y-1.5 mb-4">
+        <div className="flex bg-surface2 rounded-lg p-1 mb-4">
           {BUSINESS_SIZE_OPTIONS.map((o) => (
-            <label key={o.key} className={`flex items-start gap-2 text-xs rounded-lg px-3 py-2 cursor-pointer border ${form.businessSize === o.key ? "bg-copper/10 border-copper" : "bg-surface2 border-surface2"}`}>
-              <input type="radio" name="businessSize" className="mt-0.5" checked={form.businessSize === o.key}
-                onChange={() => setForm({ ...form, businessSize: o.key })} />
-              <span><span className="font-bold">{o.label}</span> — <span className="text-muted">{o.desc}</span></span>
-            </label>
+            <button key={o.key} type="button" onClick={() => setForm({ ...form, businessSize: o.key })}
+              className={`flex-1 text-xs font-bold rounded-md py-2 transition ${form.businessSize === o.key ? "bg-copper text-[#1A1410]" : "text-muted"}`}>
+              {o.label}
+            </button>
           ))}
         </div>
+        <p className="text-[11px] text-muted mb-4 -mt-2">
+          {BUSINESS_SIZE_OPTIONS.find((o) => o.key === form.businessSize)?.desc}
+        </p>
 
         <label className="block text-xs text-muted mb-2">تخصص‌های مغازه (می‌توانید چند مورد انتخاب کنید)</label>
         <div className="flex flex-wrap gap-1.5 mb-4">

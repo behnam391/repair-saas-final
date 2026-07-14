@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { PROVINCE_NAMES } from "@/lib/iran-locations";
 
 const ROLE_LABEL: Record<string, string> = {
   OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی",
@@ -9,7 +10,7 @@ const LANE_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SO
 
 type Staff = { id: string; name: string; phone: string; role: string; active: boolean };
 type ReportRow = { techId: string; name: string; role: string; closedCount: number; revenue: number };
-type ShopInfo = { name: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null };
+type ShopInfo = { id?: string; name: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null };
 type Template = { id: string; lane: string; label: string };
 
 export default function AdminPage() {
@@ -49,8 +50,9 @@ export default function AdminPage() {
     if (shopRes.ok) {
       const data = await shopRes.json();
       setShopInfo({
-        name: data.shop.name, address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
+        id: data.shop.id, name: data.shop.name, address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
         bankCardNumber: data.shop.bankCardNumber ?? "", bankAccountNumber: data.shop.bankAccountNumber ?? "",
+        latitude: data.shop.latitude ?? null, longitude: data.shop.longitude ?? null, province: data.shop.province ?? "",
       });
       setVerificationLevel(data.shop.verificationLevel ?? 1);
       setVerificationRequestedAt(data.shop.verificationRequestedAt ?? null);
@@ -88,6 +90,7 @@ export default function AdminPage() {
       body: JSON.stringify({
         name: shopInfo.name, address: shopInfo.address, phone: shopInfo.phone,
         bankCardNumber: shopInfo.bankCardNumber, bankAccountNumber: shopInfo.bankAccountNumber,
+        latitude: shopInfo.latitude ?? undefined, longitude: shopInfo.longitude ?? undefined, province: shopInfo.province || undefined,
       }),
     });
     if (res.ok) { setShopSaved(true); setTimeout(() => setShopSaved(false), 2500); }
@@ -172,6 +175,12 @@ export default function AdminPage() {
         <label className="block text-xs text-muted mb-1">نام مغازه</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
           value={shopInfo.name} onChange={(e) => setShopInfo({ ...shopInfo, name: e.target.value })} />
+        <label className="block text-xs text-muted mb-1">استان</label>
+        <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+          value={shopInfo.province ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, province: e.target.value })}>
+          <option value="">انتخاب استان (برای رتبه‌بندی سراسری)</option>
+          {PROVINCE_NAMES.map((p) => <option key={p} value={p}>{p}</option>)}
+        </select>
         <label className="block text-xs text-muted mb-1">آدرس</label>
         <textarea className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
           placeholder="آدرس کامل مغازه برای نمایش به مشتریان"
@@ -185,10 +194,38 @@ export default function AdminPage() {
         <label className="block text-xs text-muted mb-1">شماره حساب</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono"
           value={shopInfo.bankAccountNumber ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, bankAccountNumber: e.target.value })} />
+
+        <label className="block text-xs text-muted mb-1">موقعیت مکانی مغازه (عرض و طول جغرافیایی)</label>
+        <div className="flex gap-2 mb-1">
+          <input type="number" step="any" placeholder="عرض جغرافیایی (Latitude)" className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm mono"
+            value={shopInfo.latitude ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, latitude: e.target.value ? +e.target.value : null })} />
+          <input type="number" step="any" placeholder="طول جغرافیایی (Longitude)" className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm mono"
+            value={shopInfo.longitude ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, longitude: e.target.value ? +e.target.value : null })} />
+        </div>
+        <p className="text-[10px] text-muted mb-3">
+          مختصات را از گوگل‌مپ کپی کنید (رو نقشه راست‌کلیک کنید). {shopInfo.latitude && shopInfo.longitude && (
+            <a className="text-copper" target="_blank" href={`https://maps.google.com/?q=${shopInfo.latitude},${shopInfo.longitude}`}>مشاهده روی نقشه</a>
+          )}
+        </p>
+
         <button onClick={saveShopInfo} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm">
           {shopSaved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
         </button>
       </div>
+
+      {/* QR self-intake */}
+      {shopInfo.id && (
+        <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6 text-center">
+          <div className="text-sm font-bold mb-1">کد QR پذیرش مشتری</div>
+          <p className="text-[11px] text-muted mb-3">این کد را چاپ کرده و در مغازه نصب کنید؛ مشتری با اسکن آن می‌تواند مشخصات دستگاه خود را ثبت کند.</p>
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${typeof window !== "undefined" ? window.location.origin : ""}/kiosk/${shopInfo.id}`)}`}
+            alt="QR کد پذیرش"
+            className="mx-auto rounded-lg bg-white p-2"
+          />
+          <p className="text-[10px] text-muted mt-2 mono break-all">/kiosk/{shopInfo.id}</p>
+        </div>
+      )}
 
       {/* Favorite brands */}
       <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">

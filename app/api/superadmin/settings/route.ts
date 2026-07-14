@@ -20,6 +20,10 @@ const Schema = z.object({
   kavenegarApiKey: z.string().optional(),
   kavenegarSender: z.string().optional(),
   zarinpalMerchantId: z.string().optional(),
+  telegramBotToken: z.string().optional(),
+  telegramBotUsername: z.string().optional(),
+  guideUrl: z.string().optional(),
+  aboutUsContent: z.string().optional(),
 });
 
 export async function PATCH(req: NextRequest) {

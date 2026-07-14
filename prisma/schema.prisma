@@ -21,6 +21,7 @@ model Shop {
   name          String
   phone         String?
   address       String?
+  province      String? // structured province name (from lib/iran-locations.ts) — used for city/province rankings
   // "REPAIR" (repair shop, default) | "DEALER" (phone buy/sell dealer) | "BOTH"
   type          String   @default("REPAIR")
   // business size chosen at signup: "SOLO" (one person doing everything),
@@ -28,6 +29,8 @@ model Shop {
   businessSize  String   @default("SOLO")
   specialties   String?  // comma-separated: e.g. "HARDWARE,SOFTWARE" — which repair types this shop offers
   landlinePhone String?  // shop's fixed/landline number, separate from the mobile `phone` above
+  latitude      Float?
+  longitude     Float?
   // identity verification level: 1 = just signed up, 2 = full profile submitted,
   // 3 = reviewed and approved by platform admin
   verificationLevel   Int     @default(1)
@@ -36,6 +39,7 @@ model Shop {
   plan          String   @default("free")
   planExpiresAt DateTime?
   active        Boolean  @default(true) // super admin can suspend a shop
+  supportAccessEnabled Boolean @default(false) // shop owner (or super admin, for urgent support cases) can allow platform staff temporary visibility into this shop's admin panel
   // monthly device-intake quota enforced for the "free" plan
   monthlyQuota  Int      @default(10)
   smsSenderName String? // shown as the sender name in outgoing SMS
@@ -58,6 +62,8 @@ model Shop {
   issueTemplates     IssueTemplate[]
   supportTickets     SupportTicket[]
   returns            ReturnRecord[]
+  pendingIntakes     PendingIntake[]
+  ratings            Rating[]
   partRequests       PartRequest[]
   referencePrices    ReferencePrice[]
 }
@@ -135,6 +141,7 @@ model User {
   conversationsStarted Conversation[] @relation("ConversationStarter")
   messages             Message[]
   supportTickets       SupportTicket[]
+  ratingsReceived      Rating[]
   notifications        Notification[]
   partRequests          PartRequest[]
 
@@ -547,6 +554,10 @@ model PlatformSettings {
   kavenegarApiKey     String?
   kavenegarSender     String?
   zarinpalMerchantId  String?
+  telegramBotToken    String? // for future outbound Telegram notifications
+  telegramBotUsername String? // shown to users so they can start a chat with the bot first (API requirement)
+  guideUrl            String? // link to an external help/docs site
+  aboutUsContent      String? // shown on the built-in /about page
   updatedAt           DateTime @updatedAt
 }
 
@@ -570,12 +581,13 @@ model Notification {
 
 // ── Ad space (super admin managed) ────────────────────────────
 model AdBanner {
-  id        String   @id @default(cuid())
-  imageUrl  String
-  linkUrl   String?
-  active    Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  imageUrl    String
+  linkUrl     String?
+  displayType String   @default("BANNER") // "BANNER" (inline strip) | "POPUP" (closable overlay, once per session)
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
 }
 
 // ── Part purchase requests (technician → manager) ─────────────
@@ -620,4 +632,61 @@ model ReferencePrice {
   updatedAt   DateTime @updatedAt
 
   @@index([shopId])
+}
+
+// ── QR self-intake ────────────────────────────────────────────
+// A customer scans the shop's QR code, fills in their own device info on
+// a public (no-login) page, and it lands here for the manager to review.
+// Approving converts it into a real Ticket; rejecting just discards it.
+enum PendingIntakeStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PendingIntake {
+  id            String              @id @default(cuid())
+  shopId        String
+  shop          Shop                @relation(fields: [shopId], references: [id])
+  customerName  String
+  customerPhone String
+  deviceModel   String
+  imei          String?
+  issueDescription String
+  status        PendingIntakeStatus @default(PENDING)
+  createdAt     DateTime            @default(now())
+
+  @@index([shopId, status])
+}
+
+// ── Customer ratings & rankings ──────────────────────────────
+// Public, no-login rating submitted by a customer after a repair (e.g. via
+// a link in the delivery SMS). Feeds the province/national "top repair
+// shops" ranking pages.
+model Rating {
+  id            String   @id @default(cuid())
+  shopId        String
+  shop          Shop     @relation(fields: [shopId], references: [id])
+  ticketId      String?  @unique
+  technicianId  String?
+  technician    User?    @relation(fields: [technicianId], references: [id])
+  stars         Int      // 1-5
+  comment       String?
+  customerPhone String?  // used only to prevent duplicate ratings per ticket, never shown publicly
+  createdAt     DateTime @default(now())
+
+  @@index([shopId])
+  @@index([technicianId])
+}
+
+// ── External government/agency API access ────────────────────
+// We don't have a real spec from Asnaf/Tazirat/tax authorities — this is
+// simply OUR read-only export endpoint, key-protected, that any of those
+// agencies (or a future integration) can be given credentials for.
+model ExternalApiKey {
+  id        String   @id @default(cuid())
+  label     String   // e.g. "اتحادیه اصناف موبایل ایران", "اداره تعزیرات"
+  apiKey    String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
 }

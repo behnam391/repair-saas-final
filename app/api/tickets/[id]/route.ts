@@ -176,7 +176,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
             deliveredAt: new Date(),
             history: { create: { lane: ticket.lane, action: "تحویل داده شد", techId: userId } },
           },
+          include: { customer: true, shop: true },
         });
+
+        try {
+          const t = updated as any;
+          const origin = req.nextUrl.origin;
+          await sendSms(
+            t.customer.phone,
+            `${t.shop.name}\nممنون از اعتماد شما! لطفاً با کلیک روی لینک زیر، تجربه‌تان از تعمیر را با یک امتیاز ثبت کنید:\n${origin}/rate/${t.id}`
+          );
+        } catch (smsErr) {
+          console.error("[sms] failed to send rating link", smsErr);
+        }
         break;
       }
     }

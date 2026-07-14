@@ -9,6 +9,10 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
 
+  const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "" });
+  const [pwMsg, setPwMsg] = useState("");
+  const [pwError, setPwError] = useState("");
+
   async function load() {
     const res = await fetch("/api/profile");
     if (res.ok) {
@@ -32,6 +36,19 @@ export default function ProfilePage() {
       body: JSON.stringify(form),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
+  }
+
+  async function changePassword() {
+    setPwMsg(""); setPwError("");
+    const res = await fetch("/api/profile/password", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(pwForm),
+    });
+    const data = await res.json();
+    if (!res.ok) { setPwError(data.message || "تغییر رمز ناموفق بود"); return; }
+    setPwMsg("✅ رمز عبور با موفقیت تغییر کرد");
+    setPwForm({ currentPassword: "", newPassword: "" });
   }
 
   return (
@@ -91,6 +108,21 @@ export default function ProfilePage() {
       <button onClick={save} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
         {saved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
       </button>
+
+      <div className="border-t border-surface2 my-6 pt-5">
+        <div className="text-sm font-bold mb-3">تغییر رمز عبور</div>
+        <label className="block text-xs text-muted mb-1">رمز فعلی</label>
+        <input type="password" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+          value={pwForm.currentPassword} onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
+        <label className="block text-xs text-muted mb-1">رمز جدید</label>
+        <input type="password" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+          value={pwForm.newPassword} onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
+        {pwMsg && <p className="text-teal text-xs mb-2">{pwMsg}</p>}
+        {pwError && <p className="text-danger text-xs mb-2">{pwError}</p>}
+        <button onClick={changePassword} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm">
+          تغییر رمز عبور
+        </button>
+      </div>
     </div>
   );
 }

@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 export default function SuperAdminSettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [form, setForm] = useState({ kavenegarApiKey: "", kavenegarSender: "", zarinpalMerchantId: "" });
+  const [form, setForm] = useState({
+    kavenegarApiKey: "", kavenegarSender: "", zarinpalMerchantId: "",
+    telegramBotToken: "", telegramBotUsername: "", guideUrl: "", aboutUsContent: "",
+  });
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -18,6 +21,10 @@ export default function SuperAdminSettingsPage() {
       kavenegarApiKey: d.settings?.kavenegarApiKey ?? "",
       kavenegarSender: d.settings?.kavenegarSender ?? "",
       zarinpalMerchantId: d.settings?.zarinpalMerchantId ?? "",
+      telegramBotToken: d.settings?.telegramBotToken ?? "",
+      telegramBotUsername: d.settings?.telegramBotUsername ?? "",
+      guideUrl: d.settings?.guideUrl ?? "",
+      aboutUsContent: d.settings?.aboutUsContent ?? "",
     }));
   }, []);
 
@@ -34,11 +41,12 @@ export default function SuperAdminSettingsPage() {
   return (
     <div className="min-h-screen p-4 max-w-md mx-auto">
       <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
-      <h1 className="font-extrabold text-lg mt-2 mb-1">تنظیمات اتصالات API</h1>
+      <h1 className="font-extrabold text-lg mt-2 mb-1">تنظیمات پلتفرم</h1>
       <p className="text-[11px] text-muted mb-4">
         این مقادیر بر متغیرهای محیطی Vercel اولویت دارند — تغییرشان نیازی به دیپلوی مجدد ندارد.
       </p>
 
+      <div className="text-sm font-bold mb-2">پیامک و پرداخت</div>
       <label className="block text-xs text-muted mb-1">کلید API کاوه‌نگار</label>
       <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
         value={form.kavenegarApiKey} onChange={(e) => setForm({ ...form, kavenegarApiKey: e.target.value })} />
@@ -50,6 +58,26 @@ export default function SuperAdminSettingsPage() {
       <label className="block text-xs text-muted mb-1">مرچنت کد زرین‌پال</label>
       <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4"
         value={form.zarinpalMerchantId} onChange={(e) => setForm({ ...form, zarinpalMerchantId: e.target.value })} />
+
+      <div className="text-sm font-bold mb-2 mt-2">ربات تلگرام</div>
+      <p className="text-[10px] text-muted mb-2">
+        ⚠️ ثبت این مقادیر فقط اطلاعات را ذخیره می‌کند؛ ارسال واقعی پیام هنوز پیاده‌سازی نشده (نیاز به کد اضافی دارد که کاربران باید ابتدا با ربات شروع به گفتگو کنند — محدودیت خود API تلگرام).
+      </p>
+      <label className="block text-xs text-muted mb-1">توکن ربات (از BotFather)</label>
+      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+        value={form.telegramBotToken} onChange={(e) => setForm({ ...form, telegramBotToken: e.target.value })} />
+      <label className="block text-xs text-muted mb-1">نام کاربری ربات (بدون @)</label>
+      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4"
+        value={form.telegramBotUsername} onChange={(e) => setForm({ ...form, telegramBotUsername: e.target.value })} />
+
+      <div className="text-sm font-bold mb-2 mt-2">راهنما و درباره ما</div>
+      <label className="block text-xs text-muted mb-1">لینک راهنمای سایت (دامنه خارجی یا داخلی)</label>
+      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+        placeholder="https://help.example.com"
+        value={form.guideUrl} onChange={(e) => setForm({ ...form, guideUrl: e.target.value })} />
+      <label className="block text-xs text-muted mb-1">متن صفحه «درباره ما»</label>
+      <textarea className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4" rows={4}
+        value={form.aboutUsContent} onChange={(e) => setForm({ ...form, aboutUsContent: e.target.value })} />
 
       <button onClick={save} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
         {saved ? "✅ ذخیره شد" : "ذخیره تنظیمات"}

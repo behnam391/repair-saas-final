@@ -5,7 +5,7 @@ import { signOut } from "next-auth/react";
 const PLAN_LABEL: Record<string, string> = { free: "رایگان", pro: "حرفه‌ای", business: "تجاری" };
 
 type ShopRow = {
-  id: string; name: string; plan: string; active: boolean; planExpiresAt: string | null;
+  id: string; name: string; plan: string; active: boolean; supportAccessEnabled: boolean; planExpiresAt: string | null;
   userCount: number; ticketCount: number; totalPaid: number; createdAt: string;
 };
 
@@ -37,6 +37,15 @@ export default function SuperAdminClient() {
     load();
   }
 
+  async function toggleSupportAccess(id: string, current: boolean) {
+    await fetch(`/api/superadmin/shops/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ supportAccessEnabled: !current }),
+    });
+    load();
+  }
+
   const filtered = useMemo(() => {
     return shops.filter((s) => {
       const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase());
@@ -62,6 +71,7 @@ export default function SuperAdminClient() {
         <a href="/superadmin/notifications" className="text-muted hover:text-ink whitespace-nowrap">اعلان عمومی</a>
         <a href="/superadmin/ads" className="text-muted hover:text-ink whitespace-nowrap">تبلیغات</a>
         <a href="/superadmin/verification" className="text-muted hover:text-ink whitespace-nowrap">احراز هویت</a>
+        <a href="/superadmin/external-keys" className="text-muted hover:text-ink whitespace-nowrap">API سازمان‌ها</a>
         <a href="/superadmin/settings" className="text-muted hover:text-ink whitespace-nowrap">تنظیمات API</a>
       </div>
 
@@ -118,12 +128,20 @@ export default function SuperAdminClient() {
                   )}
                   <div className="text-[11px] text-muted">مجموع پرداختی: {s.totalPaid.toLocaleString("fa-IR")} تومان</div>
                 </div>
-                <button
-                  onClick={() => toggleActive(s.id, s.active)}
-                  className={`text-[11px] font-semibold rounded-lg px-2.5 py-1.5 shrink-0 transition ${s.active ? "bg-danger/20 text-danger hover:bg-danger/30" : "bg-teal/20 text-teal hover:bg-teal/30"}`}
-                >
-                  {s.active ? "تعلیق" : "فعال‌سازی"}
-                </button>
+                <div className="flex flex-col gap-1.5 shrink-0">
+                  <button
+                    onClick={() => toggleActive(s.id, s.active)}
+                    className={`text-[11px] font-semibold rounded-lg px-2.5 py-1.5 transition ${s.active ? "bg-danger/20 text-danger hover:bg-danger/30" : "bg-teal/20 text-teal hover:bg-teal/30"}`}
+                  >
+                    {s.active ? "تعلیق" : "فعال‌سازی"}
+                  </button>
+                  <button
+                    onClick={() => toggleSupportAccess(s.id, s.supportAccessEnabled)}
+                    className={`text-[10px] font-semibold rounded-lg px-2.5 py-1 transition ${s.supportAccessEnabled ? "bg-copper/20 text-copper" : "bg-surface text-muted"}`}
+                  >
+                    {s.supportAccessEnabled ? "دسترسی پشتیبانی: فعال" : "دسترسی پشتیبانی: غیرفعال"}
+                  </button>
+                </div>
               </div>
             </div>
           ))}

@@ -11,6 +11,11 @@ const UpdateSchema = z.object({
   phone: z.string().optional(),
   bankCardNumber: z.string().optional(),
   bankAccountNumber: z.string().optional(),
+  landlinePhone: z.string().optional(),
+  province: z.string().optional(),
+  supportAccessEnabled: z.boolean().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
 });
 
 export async function GET() {
@@ -21,6 +26,7 @@ export async function GET() {
       select: {
         id: true, name: true, address: true, phone: true, plan: true, type: true, bankCardNumber: true, bankAccountNumber: true,
         landlinePhone: true, businessSize: true, specialties: true, verificationLevel: true, verificationRequestedAt: true,
+        latitude: true, longitude: true, province: true,
       },
     });
     return NextResponse.json({ shop });

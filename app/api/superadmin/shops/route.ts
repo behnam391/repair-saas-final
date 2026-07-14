@@ -21,6 +21,7 @@ export async function GET() {
       name: s.name,
       plan: s.plan,
       active: s.active,
+      supportAccessEnabled: s.supportAccessEnabled,
       planExpiresAt: s.planExpiresAt,
       userCount: s._count.users,
       ticketCount: s._count.tickets,

@@ -1,11 +1,12 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import AdBanner from "@/components/AdBanner";
+import DashboardNav from "@/components/DashboardNav";
+import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/login");
   const user = session.user as any;
+
+  let guideUrl: string | null = null;
+  try {
+    const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } });
+    guideUrl = settings?.guideUrl ?? null;
+  } catch {}
 
   return (
     <div className="min-h-screen">
@@ -22,25 +29,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <div className="display-heading text-sm">{user.shopName}</div>
             <div className="text-[11px] text-muted">{user.name} · {roleLabel(user.role)}</div>
           </div>
-          <nav className="flex items-center gap-4 text-xs overflow-x-auto no-scrollbar flex-1 justify-center">
-            <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1 whitespace-nowrap">🏠 صفحه اصلی</Link>
-            <Link href="/inventory" className="text-muted hover:text-ink whitespace-nowrap">انبار</Link>
-            <Link href="/invoices" className="text-muted hover:text-ink whitespace-nowrap">فاکتورها</Link>
-            <Link href="/market" className="text-muted hover:text-ink whitespace-nowrap">بازار سراسری</Link>
-            <Link href="/device-lookup" className="text-muted hover:text-ink whitespace-nowrap">پرونده گوشی</Link>
-            <Link href="/chats" className="text-muted hover:text-ink whitespace-nowrap">چت‌ها</Link>
-            <Link href="/history" className="text-muted hover:text-ink whitespace-nowrap">سابقه و جستجو</Link>
-            <Link href="/customers" className="text-muted hover:text-ink whitespace-nowrap">مشتریان</Link>
-            <Link href="/returns" className="text-muted hover:text-ink whitespace-nowrap">مرجوعی</Link>
-            <Link href="/support" className="text-muted hover:text-ink whitespace-nowrap">پشتیبانی</Link>
-            <Link href="/profile" className="text-muted hover:text-ink whitespace-nowrap">پروفایل</Link>
-            {user.role === "OWNER" && <Link href="/admin" className="text-muted hover:text-ink whitespace-nowrap">مدیریت</Link>}
-            {user.role === "OWNER" && <Link href="/admin/billing" className="text-muted hover:text-ink whitespace-nowrap">اشتراک</Link>}
-            <span className="w-px h-4 bg-surface2 shrink-0" />
+          <DashboardNav role={user.role} guideUrl={guideUrl} />
+          <div className="flex items-center gap-3 shrink-0">
             <ThemeToggle />
             <NotificationBell />
             <LogoutButton />
-          </nav>
+          </div>
         </div>
       </header>
       <AdBanner />
