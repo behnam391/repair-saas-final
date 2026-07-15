@@ -7,15 +7,30 @@ type NavGroup = { label: string; items: NavItem[] };
 
 export default function DashboardNav({ role, guideUrl }: { role: string; guideUrl: string | null }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
-  const ref = useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpenGroup(null);
+      const target = e.target as Node;
+      const insideContainer = containerRef.current?.contains(target);
+      const insideMenu = (e.target as HTMLElement)?.closest?.("[data-nav-menu]");
+      if (!insideContainer && !insideMenu) setOpenGroup(null);
     }
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
+
+  function toggleGroup(label: string) {
+    if (openGroup === label) { setOpenGroup(null); return; }
+    const btn = btnRefs.current[label];
+    if (btn) {
+      const rect = btn.getBoundingClientRect();
+      setMenuPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+    }
+    setOpenGroup(label);
+  }
 
   const groups: NavGroup[] = [
     {
@@ -62,42 +77,53 @@ export default function DashboardNav({ role, guideUrl }: { role: string; guideUr
       : []),
   ];
 
-  return (
-    <div ref={ref} className="flex items-center gap-1 flex-1 justify-center overflow-x-auto no-scrollbar">
-      <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1 whitespace-nowrap text-xs">
-        🏠 صفحه اصلی
-      </Link>
+  const activeGroup = groups.find((g) => g.label === openGroup);
 
-      {groups.map((g) => (
-        <div key={g.label} className="relative">
+  return (
+    <>
+      <div ref={containerRef} className="flex items-center gap-1 flex-1 justify-center flex-wrap">
+        <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1 whitespace-nowrap text-xs">
+          🏠 صفحه اصلی
+        </Link>
+
+        {groups.map((g) => (
           <button
-            onClick={() => setOpenGroup(openGroup === g.label ? null : g.label)}
+            key={g.label}
+            ref={(el) => { btnRefs.current[g.label] = el; }}
+            onClick={() => toggleGroup(g.label)}
             className={`text-xs font-bold rounded-lg px-2.5 py-1.5 whitespace-nowrap transition ${
               openGroup === g.label ? "bg-surface2 text-ink" : "text-ink hover:bg-surface2"
             }`}
           >
             {g.label} ▾
           </button>
-          {openGroup === g.label && (
-            <div className="absolute top-full mt-1 right-0 bg-surface border border-surface2 rounded-xl shadow-lg py-1.5 min-w-[160px] z-50">
-              {g.items.map((item) =>
-                item.external ? (
-                  <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer"
-                    onClick={() => setOpenGroup(null)}
-                    className="block px-3 py-2 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
-                    {item.label} ↗
-                  </a>
-                ) : (
-                  <Link key={item.href} href={item.href} onClick={() => setOpenGroup(null)}
-                    className="block px-3 py-2 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
-                    {item.label}
-                  </Link>
-                )
-              )}
-            </div>
+        ))}
+      </div>
+
+      {/* Rendered with fixed positioning at the viewport level so it's
+          never clipped by the sticky header's stacking/overflow context. */}
+      {activeGroup && menuPos && (
+        <div
+          data-nav-menu
+          style={{ position: "fixed", top: menuPos.top, right: menuPos.right }}
+          className="bg-surface border border-surface2 rounded-xl shadow-lg py-1.5 min-w-[170px] z-[200]"
+        >
+          {activeGroup.items.map((item) =>
+            item.external ? (
+              <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer"
+                onClick={() => setOpenGroup(null)}
+                className="block px-3 py-2 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
+                {item.label} ↗
+              </a>
+            ) : (
+              <Link key={item.href} href={item.href} onClick={() => setOpenGroup(null)}
+                className="block px-3 py-2 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
+                {item.label}
+              </Link>
+            )
           )}
         </div>
-      ))}
-    </div>
+      )}
+    </>
   );
 }

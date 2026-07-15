@@ -45,15 +45,15 @@ export default function AdBanner() {
       )}
 
       {popup && !popupClosed && (
-        <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center px-4" onClick={dismissPopup}>
-          <div className="relative max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <button onClick={dismissPopup} className="absolute -top-3 -left-3 bg-surface border border-surface2 rounded-full w-8 h-8 text-sm z-10">✕</button>
+        <div className="fixed bottom-4 left-4 z-[100]">
+          <div className="relative w-64">
+            <button onClick={dismissPopup} className="absolute -top-2.5 -right-2.5 bg-surface border border-surface2 rounded-full w-6 h-6 text-xs shadow z-10">✕</button>
             {popup.linkUrl ? (
               <a href={popup.linkUrl} target="_blank" rel="noopener noreferrer">
-                <img src={popup.imageUrl} alt="تبلیغ" className="w-full rounded-xl" />
+                <img src={popup.imageUrl} alt="تبلیغ" className="w-64 h-40 object-cover rounded-xl shadow-lg border border-surface2" />
               </a>
             ) : (
-              <img src={popup.imageUrl} alt="تبلیغ" className="w-full rounded-xl" />
+              <img src={popup.imageUrl} alt="تبلیغ" className="w-64 h-40 object-cover rounded-xl shadow-lg border border-surface2" />
             )}
           </div>
         </div>
