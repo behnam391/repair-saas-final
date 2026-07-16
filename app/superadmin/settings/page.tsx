@@ -9,6 +9,7 @@ export default function SuperAdminSettingsPage() {
   const [form, setForm] = useState({
     kavenegarApiKey: "", kavenegarSender: "", zarinpalMerchantId: "",
     telegramBotToken: "", telegramBotUsername: "", guideUrl: "", aboutUsContent: "",
+    smtpHost: "", smtpPort: 587, smtpUser: "", smtpPassword: "", smtpFromAddress: "",
   });
   const [saved, setSaved] = useState(false);
 
@@ -25,6 +26,9 @@ export default function SuperAdminSettingsPage() {
       telegramBotUsername: d.settings?.telegramBotUsername ?? "",
       guideUrl: d.settings?.guideUrl ?? "",
       aboutUsContent: d.settings?.aboutUsContent ?? "",
+      smtpHost: d.settings?.smtpHost ?? "", smtpPort: d.settings?.smtpPort ?? 587,
+      smtpUser: d.settings?.smtpUser ?? "", smtpPassword: d.settings?.smtpPassword ?? "",
+      smtpFromAddress: d.settings?.smtpFromAddress ?? "",
     }));
   }, []);
 
@@ -58,6 +62,23 @@ export default function SuperAdminSettingsPage() {
       <label className="block text-xs text-muted mb-1">مرچنت کد زرین‌پال</label>
       <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4"
         value={form.zarinpalMerchantId} onChange={(e) => setForm({ ...form, zarinpalMerchantId: e.target.value })} />
+
+      <div className="text-sm font-bold mb-2 mt-2">ایمیل (SMTP) — برای بازیابی رمز از طریق ایمیل</div>
+      <p className="text-[10px] text-muted mb-2">
+        مثلاً با Gmail: هاست smtp.gmail.com، پورت ۵۸۷، و به‌جای رمز عبور معمولی از «App Password» جیمیل استفاده کنید.
+      </p>
+      <div className="flex gap-2 mb-3">
+        <input className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" placeholder="smtp.gmail.com"
+          value={form.smtpHost} onChange={(e) => setForm({ ...form, smtpHost: e.target.value })} />
+        <input type="number" className="w-20 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" placeholder="587"
+          value={form.smtpPort} onChange={(e) => setForm({ ...form, smtpPort: +e.target.value })} />
+      </div>
+      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3" placeholder="آدرس ایمیل کاربری SMTP"
+        value={form.smtpUser} onChange={(e) => setForm({ ...form, smtpUser: e.target.value })} />
+      <input type="password" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3" placeholder="رمز عبور / App Password"
+        value={form.smtpPassword} onChange={(e) => setForm({ ...form, smtpPassword: e.target.value })} />
+      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4" placeholder="آدرس فرستنده (اختیاری، پیش‌فرض همان کاربری بالاست)"
+        value={form.smtpFromAddress} onChange={(e) => setForm({ ...form, smtpFromAddress: e.target.value })} />
 
       <div className="text-sm font-bold mb-2 mt-2">ربات تلگرام</div>
       <p className="text-[10px] text-muted mb-2">

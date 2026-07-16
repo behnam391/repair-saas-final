@@ -16,6 +16,7 @@ const UpdateSchema = z.object({
   supportAccessEnabled: z.boolean().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
+  taxPercent: z.number().min(0).max(100).optional(),
 });
 
 export async function GET() {
@@ -26,7 +27,7 @@ export async function GET() {
       select: {
         id: true, name: true, address: true, phone: true, plan: true, type: true, bankCardNumber: true, bankAccountNumber: true,
         landlinePhone: true, businessSize: true, specialties: true, verificationLevel: true, verificationRequestedAt: true,
-        latitude: true, longitude: true, province: true,
+        latitude: true, longitude: true, province: true, taxPercent: true,
       },
     });
     return NextResponse.json({ shop });

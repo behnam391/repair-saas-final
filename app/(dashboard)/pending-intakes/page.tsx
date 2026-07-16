@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-type Intake = { id: string; customerName: string; customerPhone: string; deviceModel: string; imei: string | null; issueDescription: string; createdAt: string };
+type Intake = { id: string; customerName: string; customerPhone: string; deviceModel: string; imei: string | null; issueDescription: string; createdAt: string; isNewCustomer: boolean };
 
 export default function PendingIntakesPage() {
   const [intakes, setIntakes] = useState<Intake[]>([]);
@@ -32,7 +32,10 @@ export default function PendingIntakesPage() {
       <div className="space-y-3">
         {intakes.map((i) => (
           <div key={i.id} className="bg-surface2 border border-surface2 rounded-lg p-3 text-xs">
-            <div className="font-bold">{i.deviceModel}</div>
+            <div className="flex justify-between items-start">
+              <div className="font-bold">{i.deviceModel}</div>
+              {i.isNewCustomer && <span className="text-[9px] bg-copper/20 text-copper rounded-full px-2 py-0.5 shrink-0">مشتری جدید — با تأیید، ذخیره می‌شود</span>}
+            </div>
             <div className="text-muted mt-0.5">{i.customerName} · {i.customerPhone}</div>
             {i.imei && <div className="mono text-muted mt-0.5">IMEI: {i.imei}</div>}
             <div className="text-[#C7CAD1] mt-1.5">{i.issueDescription}</div>

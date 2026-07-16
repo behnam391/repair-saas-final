@@ -45,6 +45,7 @@ model Shop {
   smsSenderName String? // shown as the sender name in outgoing SMS
   bankCardNumber    String? // shown on invoice/SMS if the shop opts in
   bankAccountNumber String?
+  taxPercent    Float    @default(10) // applied to invoice totals; shop can adjust
   createdAt     DateTime @default(now())
 
   users         User[]
@@ -288,6 +289,8 @@ model Invoice {
   laborCost  Int      // toman
   partsCost  Int      // toman, sum of TicketPart.priceCharged
   technicianWage Int  @default(0) // paid out to the assigned technician
+  taxPercent Float    @default(0) // percent applied at invoice time (locked in, in case shop changes rate later)
+  taxAmount  Int      @default(0) // toman, computed at invoice time
   total      Int
   paid       Boolean  @default(false)
   createdAt  DateTime @default(now())
@@ -539,6 +542,8 @@ model ReturnRecord {
   customerPhone String?
   reason        String
   refundAmount  Int?
+  resolved      Boolean  @default(false)
+  resolutionNote String?
   createdAt     DateTime @default(now())
 
   @@index([shopId])
@@ -558,6 +563,11 @@ model PlatformSettings {
   telegramBotUsername String? // shown to users so they can start a chat with the bot first (API requirement)
   guideUrl            String? // link to an external help/docs site
   aboutUsContent      String? // shown on the built-in /about page
+  smtpHost            String?
+  smtpPort            Int?
+  smtpUser            String?
+  smtpPassword        String?
+  smtpFromAddress     String?
   updatedAt           DateTime @updatedAt
 }
 

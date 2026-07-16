@@ -10,7 +10,7 @@ const LANE_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SO
 
 type Staff = { id: string; name: string; phone: string; role: string; active: boolean };
 type ReportRow = { techId: string; name: string; role: string; closedCount: number; revenue: number };
-type ShopInfo = { id?: string; name: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null };
+type ShopInfo = { id?: string; name: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null; taxPercent?: number };
 type Template = { id: string; lane: string; label: string };
 
 export default function AdminPage() {
@@ -53,6 +53,7 @@ export default function AdminPage() {
         id: data.shop.id, name: data.shop.name, address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
         bankCardNumber: data.shop.bankCardNumber ?? "", bankAccountNumber: data.shop.bankAccountNumber ?? "",
         latitude: data.shop.latitude ?? null, longitude: data.shop.longitude ?? null, province: data.shop.province ?? "",
+        taxPercent: data.shop.taxPercent ?? 10,
       });
       setVerificationLevel(data.shop.verificationLevel ?? 1);
       setVerificationRequestedAt(data.shop.verificationRequestedAt ?? null);
@@ -91,6 +92,7 @@ export default function AdminPage() {
         name: shopInfo.name, address: shopInfo.address, phone: shopInfo.phone,
         bankCardNumber: shopInfo.bankCardNumber, bankAccountNumber: shopInfo.bankAccountNumber,
         latitude: shopInfo.latitude ?? undefined, longitude: shopInfo.longitude ?? undefined, province: shopInfo.province || undefined,
+        taxPercent: shopInfo.taxPercent ?? undefined,
       }),
     });
     if (res.ok) { setShopSaved(true); setTimeout(() => setShopSaved(false), 2500); }
@@ -194,6 +196,10 @@ export default function AdminPage() {
         <label className="block text-xs text-muted mb-1">شماره حساب</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono"
           value={shopInfo.bankAccountNumber ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, bankAccountNumber: e.target.value })} />
+
+        <label className="block text-xs text-muted mb-1">درصد مالیات بر خدمات (پیش‌فرض ۱۰٪)</label>
+        <input type="number" step="0.5" min="0" max="100" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono"
+          value={shopInfo.taxPercent ?? 10} onChange={(e) => setShopInfo({ ...shopInfo, taxPercent: +e.target.value })} />
 
         <label className="block text-xs text-muted mb-1">موقعیت مکانی مغازه (عرض و طول جغرافیایی)</label>
         <div className="flex gap-2 mb-1">

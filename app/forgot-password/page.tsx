@@ -7,6 +7,7 @@ export default function ForgotPasswordPage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
   const [phone, setPhone] = useState("");
+  const [channel, setChannel] = useState<"sms" | "email">("sms");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -20,7 +21,7 @@ export default function ForgotPasswordPage() {
     const res = await fetch("/api/auth/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify({ phone, channel }),
     });
     const data = await res.json();
     setLoading(false);
@@ -60,6 +61,20 @@ export default function ForgotPasswordPage() {
               onChange={(e) => setPhone(e.target.value)}
               placeholder="09xxxxxxxxx"
             />
+            <label className="block text-xs text-muted mb-2">کد بازیابی از طریق:</label>
+            <div className="flex bg-surface2 rounded-lg p-1 mb-4">
+              <button type="button" onClick={() => setChannel("sms")}
+                className={`flex-1 text-xs font-bold rounded-md py-2 transition ${channel === "sms" ? "bg-copper text-[#1A1410]" : "text-muted"}`}>
+                پیامک
+              </button>
+              <button type="button" onClick={() => setChannel("email")}
+                className={`flex-1 text-xs font-bold rounded-md py-2 transition ${channel === "email" ? "bg-copper text-[#1A1410]" : "text-muted"}`}>
+                ایمیل
+              </button>
+            </div>
+            {channel === "email" && (
+              <p className="text-[10px] text-muted mb-4">کد به ایمیلی که هنگام ثبت‌نام یا در پروفایل ثبت کرده‌اید ارسال می‌شود.</p>
+            )}
           </>
         ) : (
           <>

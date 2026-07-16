@@ -9,12 +9,33 @@ export default function CustomersPage() {
   const [editing, setEditing] = useState<Cust | null>(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "" });
   const [msg, setMsg] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({ name: "", phone: "" });
+  const [addError, setAddError] = useState("");
 
   async function load() {
     const res = await fetch("/api/customers");
     if (res.ok) setCustomers((await res.json()).customers ?? []);
   }
   useEffect(() => { load(); }, []);
+
+  async function addCustomer() {
+    setAddError("");
+    if (!newCustomer.name || !newCustomer.phone) return;
+    const res = await fetch("/api/customers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newCustomer),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      setAddError(err.message || "افزودن ناموفق بود");
+      return;
+    }
+    setNewCustomer({ name: "", phone: "" });
+    setShowAdd(false);
+    load();
+  }
 
   const filtered = customers.filter((c) => c.name.includes(search) || c.phone.includes(search));
 
@@ -47,7 +68,23 @@ export default function CustomersPage() {
 
   return (
     <div className="p-4 max-w-xl mx-auto">
-      <h1 className="display-heading text-lg mb-4">مشتریان</h1>
+      <div className="flex justify-between items-center mb-3">
+        <h1 className="display-heading text-lg">مشتریان</h1>
+        <button onClick={() => setShowAdd(true)} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3 py-1.5">+ افزودن مشتری</button>
+      </div>
+      {showAdd && (
+        <div className="bg-surface border border-surface2 rounded-xl p-4 mb-4 space-y-2">
+          <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="نام مشتری"
+            value={newCustomer.name} onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })} />
+          <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="شماره تماس"
+            value={newCustomer.phone} onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })} />
+          {addError && <p className="text-danger text-xs">{addError}</p>}
+          <div className="flex gap-2">
+            <button onClick={addCustomer} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-2 text-sm">ثبت</button>
+            <button onClick={() => setShowAdd(false)} className="flex-1 bg-surface2 rounded-lg py-2 text-sm">انصراف</button>
+          </div>
+        </div>
+      )}
       <input
         className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
         placeholder="جستجو با نام یا شماره..."

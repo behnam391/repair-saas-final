@@ -10,6 +10,7 @@ const InvoiceSchema = z.object({
   ticketId: z.string(),
   laborCost: z.number().int().min(0),
   parts: z.array(PartLine).default([]),
+  applyTax: z.boolean().default(true),
 });
 
 // GET /api/invoices — list invoices for the signed-in shop, newest first.
@@ -38,6 +39,8 @@ export async function POST(req: NextRequest) {
     const ticket = await db.ticket.findFirst({ where: { id: body.ticketId, shopId } });
     if (!ticket) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
+    const shop = await db.shop.findUniqueOrThrow({ where: { id: shopId } });
+
     const invoice = await db.$transaction(async (tx) => {
       let partsCost = 0;
       for (const line of body.parts) {
@@ -61,7 +64,10 @@ export async function POST(req: NextRequest) {
         partsCost += item.sellPrice * line.quantity;
       }
 
-      const total = body.laborCost + partsCost;
+      const subtotal = body.laborCost + partsCost;
+      const taxPercent = body.applyTax ? shop.taxPercent : 0;
+      const taxAmount = Math.round((subtotal * taxPercent) / 100);
+      const total = subtotal + taxAmount;
 
       const inv = await tx.invoice.create({
         data: {
@@ -69,6 +75,8 @@ export async function POST(req: NextRequest) {
           ticketId: ticket.id,
           laborCost: body.laborCost,
           partsCost,
+          taxPercent,
+          taxAmount,
           total,
         },
       });

@@ -24,6 +24,11 @@ const Schema = z.object({
   telegramBotUsername: z.string().optional(),
   guideUrl: z.string().optional(),
   aboutUsContent: z.string().optional(),
+  smtpHost: z.string().optional(),
+  smtpPort: z.number().int().optional(),
+  smtpUser: z.string().optional(),
+  smtpPassword: z.string().optional(),
+  smtpFromAddress: z.string().optional(),
 });
 
 export async function PATCH(req: NextRequest) {

@@ -7,7 +7,7 @@ type Ticket = {
 };
 type InvItem = { id: string; name: string; quantity: number; sellPrice: number };
 type Invoice = {
-  id: string; laborCost: number; partsCost: number; total: number; createdAt: string;
+  id: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; createdAt: string;
   ticket: { no: number; deviceModel: string; customer: { name: string } };
 };
 
@@ -18,15 +18,18 @@ export default function InvoicesPage() {
   const [selectedTicket, setSelectedTicket] = useState<string>("");
   const [laborCost, setLaborCost] = useState(0);
   const [parts, setParts] = useState<{ itemId: string; quantity: number }[]>([]);
+  const [applyTax, setApplyTax] = useState(true);
+  const [taxPercent, setTaxPercent] = useState(10);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
   async function load() {
     setLoading(true);
-    const [tRes, iRes, invRes] = await Promise.all([
+    const [tRes, iRes, invRes, shopRes] = await Promise.all([
       fetch("/api/tickets?lane=READY"),
       fetch("/api/inventory"),
       fetch("/api/invoices"),
+      fetch("/api/shop"),
     ]);
     const tData = await tRes.json();
     const iData = await iRes.json();
@@ -34,6 +37,10 @@ export default function InvoicesPage() {
     setReadyTickets((tData.tickets ?? []).filter((t: Ticket) => !t.invoice));
     setItems(iData.items ?? []);
     setInvoices(invData.invoices ?? []);
+    if (shopRes.ok) {
+      const shopData = await shopRes.json();
+      setTaxPercent(shopData.shop.taxPercent ?? 10);
+    }
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
@@ -62,7 +69,7 @@ export default function InvoicesPage() {
     const res = await fetch("/api/invoices", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ticketId: selectedTicket, laborCost, parts }),
+      body: JSON.stringify({ ticketId: selectedTicket, laborCost, parts, applyTax }),
     });
     if (!res.ok) {
       const err = await res.json();
@@ -132,9 +139,17 @@ export default function InvoicesPage() {
               </div>
             ))}
 
+            <label className="flex items-center gap-2 text-xs text-muted mb-2">
+              <input type="checkbox" checked={applyTax} onChange={(e) => setApplyTax(e.target.checked)} />
+              اعمال مالیات {taxPercent}٪ (قابل تغییر در پنل مدیریت)
+            </label>
+
             <div className="text-xs text-muted mt-2 mb-1">
               جمع قطعات: <span className="mono">{partsCostPreview.toLocaleString("fa-IR")}</span> تومان ·
-              {" "}جمع کل: <span className="mono">{(partsCostPreview + laborCost).toLocaleString("fa-IR")}</span> تومان
+              {" "}جمع فرعی: <span className="mono">{(partsCostPreview + laborCost).toLocaleString("fa-IR")}</span> تومان
+              {applyTax && <> · مالیات: <span className="mono">{Math.round(((partsCostPreview + laborCost) * taxPercent) / 100).toLocaleString("fa-IR")}</span> تومان</>}
+              <br />
+              <span className="font-bold text-ink">جمع کل: {(partsCostPreview + laborCost + (applyTax ? Math.round(((partsCostPreview + laborCost) * taxPercent) / 100) : 0)).toLocaleString("fa-IR")} تومان</span>
             </div>
 
             {error && <p className="text-danger text-xs mt-2">{error}</p>}
@@ -154,6 +169,7 @@ export default function InvoicesPage() {
                   <span className="mono">{inv.total.toLocaleString("fa-IR")} تومان</span>
                 </div>
                 <div className="text-muted mt-1">{inv.ticket.customer.name} · {new Date(inv.createdAt).toLocaleDateString("fa-IR")}</div>
+                {inv.taxAmount > 0 && <div className="text-muted mt-0.5">شامل {inv.taxPercent}٪ مالیات ({inv.taxAmount.toLocaleString("fa-IR")} تومان)</div>}
               </div>
             ))}
           </div>
