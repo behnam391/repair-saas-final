@@ -37,7 +37,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
         </div>
       </header>
-      <AdBanner />
+      <div className="no-print"><AdBanner /></div>
       <main>{children}</main>
     </div>
   );

@@ -7,7 +7,7 @@ type Ticket = {
 };
 type InvItem = { id: string; name: string; quantity: number; sellPrice: number };
 type Invoice = {
-  id: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; createdAt: string;
+  id: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; createdAt: string;
   ticket: { no: number; deviceModel: string; customer: { name: string } };
 };
 
@@ -21,6 +21,8 @@ export default function InvoicesPage() {
   const [applyTax, setApplyTax] = useState(true);
   const [taxPercent, setTaxPercent] = useState(10);
   const [error, setError] = useState("");
+  const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null);
+  const [editInvoiceForm, setEditInvoiceForm] = useState({ laborCost: 0, applyTax: true, paid: false });
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -77,6 +79,27 @@ export default function InvoicesPage() {
       return;
     }
     setSelectedTicket(""); setLaborCost(0); setParts([]);
+    load();
+  }
+
+  function startInvoiceEdit(inv: Invoice) {
+    setEditingInvoiceId(inv.id);
+    setEditInvoiceForm({ laborCost: inv.laborCost, applyTax: inv.taxAmount > 0, paid: inv.paid });
+  }
+
+  async function saveInvoiceEdit(id: string) {
+    await fetch(`/api/invoices/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editInvoiceForm),
+    });
+    setEditingInvoiceId(null);
+    load();
+  }
+
+  async function deleteInvoice(id: string) {
+    if (!confirm("این فاکتور حذف شود؟ قطعات مصرفی به انبار برمی‌گردند.")) return;
+    await fetch(`/api/invoices/${id}`, { method: "DELETE" });
     load();
   }
 
@@ -163,14 +186,39 @@ export default function InvoicesPage() {
           <div className="space-y-2">
             {invoices.length === 0 && <p className="text-xs text-muted">هنوز فاکتوری صادر نشده.</p>}
             {invoices.map((inv) => (
-              <div key={inv.id} className="bg-surface2 border border-surface2 rounded-lg p-3 text-xs">
-                <div className="flex justify-between">
-                  <span className="font-bold">{inv.ticket.deviceModel} #{inv.ticket.no}</span>
-                  <span className="mono">{inv.total.toLocaleString("fa-IR")} تومان</span>
+              editingInvoiceId === inv.id ? (
+                <div key={inv.id} className="bg-surface2 border border-copper rounded-lg p-3 text-xs space-y-2">
+                  <label className="block text-[11px] text-muted">اجرت تعمیر (تومان)</label>
+                  <input type="number" className="w-full bg-surface rounded-lg px-2 py-1.5"
+                    value={editInvoiceForm.laborCost} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, laborCost: +e.target.value })} />
+                  <label className="flex items-center gap-2 text-[11px] text-muted">
+                    <input type="checkbox" checked={editInvoiceForm.applyTax} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, applyTax: e.target.checked })} />
+                    اعمال مالیات
+                  </label>
+                  <label className="flex items-center gap-2 text-[11px] text-muted">
+                    <input type="checkbox" checked={editInvoiceForm.paid} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, paid: e.target.checked })} />
+                    پرداخت‌شده است
+                  </label>
+                  <div className="flex gap-2">
+                    <button onClick={() => saveInvoiceEdit(inv.id)} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">ذخیره</button>
+                    <button onClick={() => setEditingInvoiceId(null)} className="flex-1 bg-surface rounded-lg py-1.5">انصراف</button>
+                  </div>
                 </div>
-                <div className="text-muted mt-1">{inv.ticket.customer.name} · {new Date(inv.createdAt).toLocaleDateString("fa-IR")}</div>
-                {inv.taxAmount > 0 && <div className="text-muted mt-0.5">شامل {inv.taxPercent}٪ مالیات ({inv.taxAmount.toLocaleString("fa-IR")} تومان)</div>}
-              </div>
+              ) : (
+                <div key={inv.id} className="bg-surface2 border border-surface2 rounded-lg p-3 text-xs">
+                  <div className="flex justify-between">
+                    <span className="font-bold">{inv.ticket.deviceModel} #{inv.ticket.no}</span>
+                    <span className="mono">{inv.total.toLocaleString("fa-IR")} تومان</span>
+                  </div>
+                  <div className="text-muted mt-1">{inv.ticket.customer.name} · {new Date(inv.createdAt).toLocaleDateString("fa-IR")}</div>
+                  {inv.taxAmount > 0 && <div className="text-muted mt-0.5">شامل {inv.taxPercent}٪ مالیات ({inv.taxAmount.toLocaleString("fa-IR")} تومان)</div>}
+                  <div className="flex gap-3 mt-2">
+                    <a href={`/invoices/${inv.id}/print`} target="_blank" className="text-copper text-[10px] font-semibold">🖨 چاپ</a>
+                    <button onClick={() => startInvoiceEdit(inv)} className="text-copper text-[10px] font-semibold">ویرایش</button>
+                    <button onClick={() => deleteInvoice(inv.id)} className="text-danger text-[10px] font-semibold">حذف</button>
+                  </div>
+                </div>
+              )
             ))}
           </div>
         </>

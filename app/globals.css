@@ -121,3 +121,11 @@ input:focus, textarea:focus, select:focus {
 .repair-tag.tag-ready::before { border-color: var(--color-teal); }
 .repair-tag.tag-awaiting { border-inline-start-color: var(--color-danger); }
 .repair-tag.tag-awaiting::before { border-color: var(--color-danger); }
+
+/* Global print rules: hide the app chrome (header/nav/ad banner) on any
+   page, so print-friendly pages (like invoice printing) look clean
+   without needing to render outside the normal dashboard layout. */
+@media print {
+  header, .no-print { display: none !important; }
+  body { background: white !important; color: black !important; }
+}
