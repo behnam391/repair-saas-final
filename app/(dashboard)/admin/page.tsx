@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { PROVINCE_NAMES } from "@/lib/iran-locations";
+import LocationPicker from "@/components/LocationPicker";
 
 const ROLE_LABEL: Record<string, string> = {
   OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی",
@@ -26,6 +27,7 @@ export default function AdminPage() {
   const [verificationLevel, setVerificationLevel] = useState(1);
   const [verificationRequestedAt, setVerificationRequestedAt] = useState<string | null>(null);
   const [verifSubmitted, setVerifSubmitted] = useState(false);
+  const [neshanApiKey, setNeshanApiKey] = useState("");
 
   const [catalog, setCatalog] = useState<Record<string, string[]>>({});
   const [favoriteBrands, setFavoriteBrands] = useState<string[]>([]);
@@ -37,9 +39,9 @@ export default function AdminPage() {
   const isOwner = (session?.user as any)?.role === "OWNER";
 
   async function load() {
-    const [sRes, rRes, shopRes, catRes, tplRes] = await Promise.all([
+    const [sRes, rRes, shopRes, catRes, tplRes, platformRes] = await Promise.all([
       fetch("/api/staff"), fetch("/api/reports/staff"), fetch("/api/shop"),
-      fetch("/api/device-catalog"), fetch("/api/issue-templates"),
+      fetch("/api/device-catalog"), fetch("/api/issue-templates"), fetch("/api/platform-info"),
     ]);
     if (sRes.ok) setStaff((await sRes.json()).staff ?? []);
     if (rRes.ok) {
@@ -64,6 +66,7 @@ export default function AdminPage() {
       setFavoriteBrands(data.favoriteBrands ?? []);
     }
     if (tplRes.ok) setTemplates((await tplRes.json()).templates ?? []);
+    if (platformRes.ok) setNeshanApiKey((await platformRes.json()).neshanApiKey ?? "");
   }
   useEffect(() => { if (isOwner) load(); }, [isOwner]);
 
@@ -201,7 +204,20 @@ export default function AdminPage() {
         <input type="number" step="0.5" min="0" max="100" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono"
           value={shopInfo.taxPercent ?? 10} onChange={(e) => setShopInfo({ ...shopInfo, taxPercent: +e.target.value })} />
 
-        <label className="block text-xs text-muted mb-1">موقعیت مکانی مغازه (عرض و طول جغرافیایی)</label>
+        <label className="block text-xs text-muted mb-1">موقعیت مکانی مغازه</label>
+        {neshanApiKey ? (
+          <div className="mb-2">
+            <LocationPicker
+              apiKey={neshanApiKey}
+              latitude={shopInfo.latitude ?? null}
+              longitude={shopInfo.longitude ?? null}
+              onChange={(lat, lng) => setShopInfo({ ...shopInfo, latitude: lat, longitude: lng })}
+            />
+            <p className="text-[10px] text-muted mt-1">روی نقشه کلیک کنید یا پین را بکشید تا موقعیت دقیق مغازه ثبت شود.</p>
+          </div>
+        ) : (
+          <p className="text-[10px] text-amber mb-2">نقشه تعاملی فعال نیست — مدیر پلتفرم باید کلید نقشه نشان را در تنظیمات ثبت کند.</p>
+        )}
         <div className="flex gap-2 mb-1">
           <input type="number" step="any" placeholder="عرض جغرافیایی (Latitude)" className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm mono"
             value={shopInfo.latitude ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, latitude: e.target.value ? +e.target.value : null })} />
@@ -209,8 +225,8 @@ export default function AdminPage() {
             value={shopInfo.longitude ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, longitude: e.target.value ? +e.target.value : null })} />
         </div>
         <p className="text-[10px] text-muted mb-3">
-          مختصات را از گوگل‌مپ کپی کنید (رو نقشه راست‌کلیک کنید). {shopInfo.latitude && shopInfo.longitude && (
-            <a className="text-copper" target="_blank" href={`https://maps.google.com/?q=${shopInfo.latitude},${shopInfo.longitude}`}>مشاهده روی نقشه</a>
+          {shopInfo.latitude && shopInfo.longitude && (
+            <a className="text-copper" target="_blank" href={`https://maps.google.com/?q=${shopInfo.latitude},${shopInfo.longitude}`}>مشاهده روی گوگل‌مپ</a>
           )}
         </p>
 

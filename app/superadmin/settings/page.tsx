@@ -10,6 +10,7 @@ export default function SuperAdminSettingsPage() {
     kavenegarApiKey: "", kavenegarSender: "", zarinpalMerchantId: "",
     telegramBotToken: "", telegramBotUsername: "", guideUrl: "", aboutUsContent: "",
     smtpHost: "", smtpPort: 587, smtpUser: "", smtpPassword: "", smtpFromAddress: "",
+    neshanApiKey: "",
   });
   const [saved, setSaved] = useState(false);
 
@@ -29,6 +30,7 @@ export default function SuperAdminSettingsPage() {
       smtpHost: d.settings?.smtpHost ?? "", smtpPort: d.settings?.smtpPort ?? 587,
       smtpUser: d.settings?.smtpUser ?? "", smtpPassword: d.settings?.smtpPassword ?? "",
       smtpFromAddress: d.settings?.smtpFromAddress ?? "",
+      neshanApiKey: d.settings?.neshanApiKey ?? "",
     }));
   }, []);
 
@@ -79,6 +81,14 @@ export default function SuperAdminSettingsPage() {
         value={form.smtpPassword} onChange={(e) => setForm({ ...form, smtpPassword: e.target.value })} />
       <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4" placeholder="آدرس فرستنده (اختیاری، پیش‌فرض همان کاربری بالاست)"
         value={form.smtpFromAddress} onChange={(e) => setForm({ ...form, smtpFromAddress: e.target.value })} />
+
+      <div className="text-sm font-bold mb-2 mt-2">نقشه (نشان)</div>
+      <p className="text-[10px] text-muted mb-2">
+        از <span dir="ltr">platform.neshan.org</span> ثبت‌نام کنید و کلید «نقشه وب» بگیرید — برای نقشه‌ی تعاملی انتخاب موقعیت مغازه استفاده می‌شود.
+      </p>
+      <label className="block text-xs text-muted mb-1">کلید نقشه نشان</label>
+      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4"
+        value={form.neshanApiKey} onChange={(e) => setForm({ ...form, neshanApiKey: e.target.value })} />
 
       <div className="text-sm font-bold mb-2 mt-2">ربات تلگرام</div>
       <p className="text-[10px] text-muted mb-2">

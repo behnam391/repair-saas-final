@@ -568,6 +568,7 @@ model PlatformSettings {
   smtpUser            String?
   smtpPassword        String?
   smtpFromAddress     String?
+  neshanApiKey        String? // for the interactive location-picker map (react-neshan-map-leaflet)
   updatedAt           DateTime @updatedAt
 }
 
