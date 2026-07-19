@@ -19,7 +19,7 @@
     "bcryptjs": "^2.4.3",
     "zod": "^3.23.8",
     "nodemailer": "^7.0.7",
-    "react-neshan-map-leaflet": "^1.2.4"
+    "react-neshan-map-leaflet": "^1.2.1"
   },
   "devDependencies": {
     "@types/node": "^20.14.9",
