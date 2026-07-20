@@ -60,6 +60,32 @@ export const authOptions: NextAuthOptions = {
         return { id: admin.id, name: admin.name, isSuperAdmin: true } as any;
       },
     }),
+    CredentialsProvider({
+      id: "impersonation-credentials",
+      name: "impersonation",
+      credentials: { token: { label: "token", type: "text" } },
+      async authorize(credentials) {
+        if (!credentials?.token) return null;
+
+        const record = await db.impersonationToken.findUnique({
+          where: { token: credentials.token },
+          include: { user: { include: { shop: true } } },
+        });
+        if (!record || record.used || record.expiresAt < new Date()) return null;
+        if (!record.user.shop.supportAccessEnabled) return null; // consent may have been revoked since the link was issued
+
+        await db.impersonationToken.update({ where: { id: record.id }, data: { used: true } });
+
+        return {
+          id: record.user.id,
+          name: record.user.name,
+          role: record.user.role,
+          shopId: record.user.shopId,
+          shopName: record.user.shop.name,
+          isImpersonated: true,
+        } as any;
+      },
+    }),
   ],
   callbacks: {
     async jwt({ token, user }) {
@@ -70,6 +96,7 @@ export const authOptions: NextAuthOptions = {
           token.role = (user as any).role;
           token.shopId = (user as any).shopId;
           token.shopName = (user as any).shopName;
+          token.isImpersonated = (user as any).isImpersonated ?? false;
         }
       }
       return token;
@@ -80,6 +107,7 @@ export const authOptions: NextAuthOptions = {
       (session.user as any).role = token.role;
       (session.user as any).shopId = token.shopId;
       (session.user as any).shopName = token.shopName;
+      (session.user as any).isImpersonated = token.isImpersonated ?? false;
       return session;
     },
   },

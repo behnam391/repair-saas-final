@@ -40,6 +40,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
         </div>
       </header>
+      {user.isImpersonated && (
+        <div className="no-print bg-danger/15 border-b border-danger/40 text-danger text-xs px-4 py-2 text-center font-semibold">
+          ⚠️ این نشست توسط پشتیبانی پلتفرم باز شده است — همه اقدامات ثبت می‌شود.
+        </div>
+      )}
       <div className="no-print"><AdBanner /></div>
       <main>{children}</main>
     </div>

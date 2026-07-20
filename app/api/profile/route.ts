@@ -9,11 +9,9 @@ const Schema = z.object({
   avatarUrl: z.string().optional(),
   email: z.string().optional(),
   gmailId: z.string().optional(),
-  telegramId: z.string().optional(),
   nationalId: z.string().optional(),
   birthDate: z.string().optional(), // ISO date string, e.g. "1990-05-12"
   notifyEmail: z.boolean().optional(),
-  notifyTelegram: z.boolean().optional(),
 });
 
 export async function GET() {
@@ -22,8 +20,8 @@ export async function GET() {
     const user = await db.user.findUniqueOrThrow({
       where: { id: userId },
       select: {
-        id: true, name: true, phone: true, avatarUrl: true, email: true, gmailId: true, telegramId: true,
-        nationalId: true, birthDate: true, notifyEmail: true, notifyTelegram: true,
+        id: true, name: true, phone: true, avatarUrl: true, email: true, gmailId: true,
+        nationalId: true, birthDate: true, notifyEmail: true,
       },
     });
     return NextResponse.json({ user });

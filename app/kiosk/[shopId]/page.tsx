@@ -1,13 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import PatternLockInput from "@/components/PatternLockInput";
 
 export default function KioskPage() {
   const params = useParams();
   const shopId = params.shopId as string;
   const [shopName, setShopName] = useState("");
   const [notFound, setNotFound] = useState(false);
-  const [form, setForm] = useState({ customerName: "", customerPhone: "", deviceModel: "", imei: "", issueDescription: "" });
+  const [form, setForm] = useState({
+    customerName: "", customerPhone: "", deviceModel: "", imei: "", issueDescription: "",
+    devicePasscode: "", devicePasscodeType: "PIN" as string,
+  });
+  const [collectPasscode, setCollectPasscode] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,10 +29,11 @@ export default function KioskPage() {
       setError("لطفاً همه فیلدهای ضروری را پر کنید");
       return;
     }
+    const payload = { ...form, devicePasscode: collectPasscode ? form.devicePasscode : "" };
     const res = await fetch(`/api/kiosk/${shopId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) { setError("ثبت ناموفق بود، لطفاً دوباره تلاش کنید"); return; }
     setSubmitted(true);
@@ -72,6 +78,38 @@ export default function KioskPage() {
           <textarea className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
             value={form.issueDescription} onChange={(e) => setForm({ ...form, issueDescription: e.target.value })} />
         </div>
+
+        <label className="flex items-center gap-2 text-xs text-muted mb-2">
+          <input type="checkbox" checked={collectPasscode} onChange={(e) => setCollectPasscode(e.target.checked)} />
+          می‌خواهم رمز گوشی را برای تست بعد از تعمیر ثبت کنم (اختیاری)
+        </label>
+        {collectPasscode && (
+          <div className="mb-4">
+            <div className="flex gap-2 mb-2">
+              {[["PIN", "پین عددی"], ["PASSWORD", "رمز/پسورد"], ["PATTERN", "الگو"]].map(([val, label]) => (
+                <button key={val} type="button"
+                  onClick={() => setForm({ ...form, devicePasscodeType: val, devicePasscode: "" })}
+                  className={`flex-1 text-[11px] rounded-lg py-1.5 border transition ${
+                    form.devicePasscodeType === val ? "bg-copper text-[#1A1410] border-copper" : "bg-surface2 border-surface2 text-muted"
+                  }`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {form.devicePasscodeType === "PATTERN" ? (
+              <PatternLockInput value={form.devicePasscode} onChange={(v) => setForm({ ...form, devicePasscode: v })} />
+            ) : (
+              <input
+                type={form.devicePasscodeType === "PIN" ? "tel" : "text"}
+                className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+                placeholder={form.devicePasscodeType === "PIN" ? "مثلاً: 1234" : "رمز عبور"}
+                value={form.devicePasscode}
+                onChange={(e) => setForm({ ...form, devicePasscode: e.target.value })}
+              />
+            )}
+            <p className="text-[10px] text-muted mt-2">این اطلاعات فقط برای کارکنان همین مغازه قابل مشاهده است.</p>
+          </div>
+        )}
 
         {error && <p className="text-danger text-xs mb-3">{error}</p>}
 

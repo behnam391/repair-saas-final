@@ -24,6 +24,7 @@ export default function AdminPage() {
 
   const [shopInfo, setShopInfo] = useState<ShopInfo>({ name: "", address: "", phone: "", plan: "free", bankCardNumber: "", bankAccountNumber: "" });
   const [shopSaved, setShopSaved] = useState(false);
+  const [shopSaveError, setShopSaveError] = useState("");
   const [verificationLevel, setVerificationLevel] = useState(1);
   const [verificationRequestedAt, setVerificationRequestedAt] = useState<string | null>(null);
   const [verifSubmitted, setVerifSubmitted] = useState(false);
@@ -88,6 +89,7 @@ export default function AdminPage() {
 
   async function saveShopInfo() {
     setShopSaved(false);
+    setShopSaveError("");
     const res = await fetch("/api/shop", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -99,6 +101,10 @@ export default function AdminPage() {
       }),
     });
     if (res.ok) { setShopSaved(true); setTimeout(() => setShopSaved(false), 2500); }
+    else {
+      const err = await res.json().catch(() => ({}));
+      setShopSaveError(err.message || `ذخیره ناموفق بود (کد ${res.status})`);
+    }
   }
 
   async function requestVerification() {
@@ -248,6 +254,7 @@ export default function AdminPage() {
           )}
         </p>
 
+        {shopSaveError && <p className="text-danger text-xs mb-2">{shopSaveError}</p>}
         <button onClick={saveShopInfo} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm">
           {shopSaved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
         </button>
@@ -264,6 +271,16 @@ export default function AdminPage() {
             className="mx-auto rounded-lg bg-white p-2"
           />
           <p className="text-[10px] text-muted mt-2 mono break-all">/kiosk/{shopInfo.id}</p>
+        </div>
+      )}
+
+      {shopInfo.id && (
+        <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+          <div className="text-sm font-bold mb-1">صفحه عمومی مغازه</div>
+          <p className="text-[11px] text-muted mb-2">این لینک را با مشتریان به اشتراک بگذارید — آدرس، تماس، امتیاز و مسیریابی مغازه را نشان می‌دهد.</p>
+          <a href={`/shop/${shopInfo.id}`} target="_blank" className="text-copper text-xs mono break-all">
+            {typeof window !== "undefined" ? window.location.origin : ""}/shop/{shopInfo.id}
+          </a>
         </div>
       )}
 
@@ -335,11 +352,64 @@ export default function AdminPage() {
       </div>
 
       <div className="text-sm font-bold mb-2">گزارش بهره‌وری (دستگاه‌های تحویل‌شده)</div>
-      <div className="space-y-2">
+      <div className="space-y-2 mb-6">
         {report.map((r) => (
           <div key={r.techId} className="flex justify-between bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs">
             <span>{r.name} · {ROLE_LABEL[r.role] ?? r.role}</span>
             <span className="mono">{r.closedCount} دستگاه · {r.revenue.toLocaleString("fa-IR")} تومان</span>
+          </div>
+        ))}
+      </div>
+
+      <PayrollReport />
+    </div>
+  );
+}
+
+function PayrollReport() {
+  const [rows, setRows] = useState<{ techId: string; name: string; role: string; totalWage: number; ticketCount: number }[]>([]);
+  const [totalPayroll, setTotalPayroll] = useState(0);
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+
+  async function load() {
+    const params = new URLSearchParams();
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    const res = await fetch(`/api/reports/payroll?${params.toString()}`);
+    if (res.ok) {
+      const data = await res.json();
+      setRows(data.rows ?? []);
+      setTotalPayroll(data.totalPayroll ?? 0);
+    }
+  }
+  useEffect(() => { load(); }, []);
+
+  return (
+    <div>
+      <div className="text-sm font-bold mb-2">گزارش حقوق و دستمزد</div>
+      <p className="text-[11px] text-muted mb-3">مجموع دستمزد ثبت‌شده هر تعمیرکار در فاکتورهای این بازه (پیش‌فرض: ماه جاری)</p>
+      <div className="flex gap-2 mb-3">
+        <div className="flex-1">
+          <label className="block text-[10px] text-muted mb-1">از تاریخ</label>
+          <input type="date" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" value={from} onChange={(e) => setFrom(e.target.value)} />
+        </div>
+        <div className="flex-1">
+          <label className="block text-[10px] text-muted mb-1">تا تاریخ</label>
+          <input type="date" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" value={to} onChange={(e) => setTo(e.target.value)} />
+        </div>
+        <button onClick={load} className="self-end bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3 py-1.5">اعمال</button>
+      </div>
+      <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-3 mb-3">
+        <div className="text-[11px] text-muted mb-0.5">مجموع کل حقوق این بازه</div>
+        <div className="text-lg font-extrabold mono text-copper">{totalPayroll.toLocaleString("fa-IR")} <span className="text-xs font-normal text-ink">تومان</span></div>
+      </div>
+      <div className="space-y-2">
+        {rows.length === 0 && <p className="text-xs text-muted">دستمزدی در این بازه ثبت نشده.</p>}
+        {rows.map((r) => (
+          <div key={r.techId} className="flex justify-between bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs">
+            <span>{r.name} · {ROLE_LABEL[r.role] ?? r.role}</span>
+            <span className="mono">{r.ticketCount} فاکتور · {r.totalWage.toLocaleString("fa-IR")} تومان</span>
           </div>
         ))}
       </div>

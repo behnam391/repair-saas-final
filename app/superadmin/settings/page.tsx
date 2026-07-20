@@ -8,7 +8,7 @@ export default function SuperAdminSettingsPage() {
   const router = useRouter();
   const [form, setForm] = useState({
     kavenegarApiKey: "", kavenegarSender: "", zarinpalMerchantId: "",
-    telegramBotToken: "", telegramBotUsername: "", guideUrl: "", aboutUsContent: "",
+    guideUrl: "", aboutUsContent: "",
     smtpHost: "", smtpPort: 587, smtpUser: "", smtpPassword: "", smtpFromAddress: "",
     neshanApiKey: "",
   });
@@ -23,8 +23,6 @@ export default function SuperAdminSettingsPage() {
       kavenegarApiKey: d.settings?.kavenegarApiKey ?? "",
       kavenegarSender: d.settings?.kavenegarSender ?? "",
       zarinpalMerchantId: d.settings?.zarinpalMerchantId ?? "",
-      telegramBotToken: d.settings?.telegramBotToken ?? "",
-      telegramBotUsername: d.settings?.telegramBotUsername ?? "",
       guideUrl: d.settings?.guideUrl ?? "",
       aboutUsContent: d.settings?.aboutUsContent ?? "",
       smtpHost: d.settings?.smtpHost ?? "", smtpPort: d.settings?.smtpPort ?? 587,
@@ -89,17 +87,6 @@ export default function SuperAdminSettingsPage() {
       <label className="block text-xs text-muted mb-1">کلید نقشه نشان</label>
       <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4"
         value={form.neshanApiKey} onChange={(e) => setForm({ ...form, neshanApiKey: e.target.value })} />
-
-      <div className="text-sm font-bold mb-2 mt-2">ربات تلگرام</div>
-      <p className="text-[10px] text-muted mb-2">
-        ⚠️ ثبت این مقادیر فقط اطلاعات را ذخیره می‌کند؛ ارسال واقعی پیام هنوز پیاده‌سازی نشده (نیاز به کد اضافی دارد که کاربران باید ابتدا با ربات شروع به گفتگو کنند — محدودیت خود API تلگرام).
-      </p>
-      <label className="block text-xs text-muted mb-1">توکن ربات (از BotFather)</label>
-      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
-        value={form.telegramBotToken} onChange={(e) => setForm({ ...form, telegramBotToken: e.target.value })} />
-      <label className="block text-xs text-muted mb-1">نام کاربری ربات (بدون @)</label>
-      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4"
-        value={form.telegramBotUsername} onChange={(e) => setForm({ ...form, telegramBotUsername: e.target.value })} />
 
       <div className="text-sm font-bold mb-2 mt-2">راهنما و درباره ما</div>
       <label className="block text-xs text-muted mb-1">لینک راهنمای سایت (دامنه خارجی یا داخلی)</label>

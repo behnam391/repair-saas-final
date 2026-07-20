@@ -10,6 +10,8 @@ const Schema = z.object({
   deviceModel: z.string().min(1),
   imei: z.string().optional(),
   issueDescription: z.string().min(1),
+  devicePasscode: z.string().optional(),
+  devicePasscodeType: z.enum(["PIN", "PASSWORD", "PATTERN"]).optional(),
 });
 
 // GET /api/kiosk/:shopId — public shop name lookup, so the kiosk page can

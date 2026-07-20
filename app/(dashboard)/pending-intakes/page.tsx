@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-type Intake = { id: string; customerName: string; customerPhone: string; deviceModel: string; imei: string | null; issueDescription: string; createdAt: string; isNewCustomer: boolean };
+type Intake = { id: string; customerName: string; customerPhone: string; deviceModel: string; imei: string | null; issueDescription: string; createdAt: string; isNewCustomer: boolean; devicePasscode?: string | null; devicePasscodeType?: string | null };
 
 export default function PendingIntakesPage() {
   const [intakes, setIntakes] = useState<Intake[]>([]);
@@ -38,6 +38,12 @@ export default function PendingIntakesPage() {
             </div>
             <div className="text-muted mt-0.5">{i.customerName} · {i.customerPhone}</div>
             {i.imei && <div className="mono text-muted mt-0.5">IMEI: {i.imei}</div>}
+            {i.devicePasscode && (
+              <div className="text-xs mt-0.5">
+                <span className="text-muted">رمز گوشی ({i.devicePasscodeType === "PATTERN" ? "الگو" : i.devicePasscodeType === "PASSWORD" ? "پسورد" : "پین"}): </span>
+                <span className="mono font-bold">{i.devicePasscode}</span>
+              </div>
+            )}
             <div className="text-[#C7CAD1] mt-1.5">{i.issueDescription}</div>
             <div className="flex gap-2 mt-2.5">
               <select className="bg-surface rounded-lg px-2 py-1.5 text-xs"

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { requireExternalScope, ExternalAuthError } from "@/lib/external-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -11,26 +12,36 @@ export const dynamic = "force-dynamic";
 // exists for us to call). It exists so any of those agencies (or any
 // future integration) can be issued credentials to pull our crowd-sourced
 // stolen/debt flags and ownership-transfer records for a given IMEI.
+// What each key can see is controlled entirely from /superadmin/external-keys
+// (scopes), no code change needed to grant/revoke a category.
 export async function GET(req: NextRequest, { params }: { params: { imei: string } }) {
-  const apiKey = req.headers.get("x-api-key");
-  if (!apiKey) return NextResponse.json({ error: "missing_api_key" }, { status: 401 });
+  try {
+    const keyRecord = await db.externalApiKey.findUnique({ where: { apiKey: req.headers.get("x-api-key") ?? "" } });
+    if (!keyRecord || !keyRecord.active) return NextResponse.json({ error: "invalid_api_key" }, { status: 401 });
+    const scopes = keyRecord.scopes.split(",").map((s) => s.trim());
 
-  const keyRecord = await db.externalApiKey.findUnique({ where: { apiKey } });
-  if (!keyRecord || !keyRecord.active) return NextResponse.json({ error: "invalid_api_key" }, { status: 401 });
+    const imei = params.imei.trim();
+    const result: any = { imei, disclaimer: "این داده‌ها گزارش‌های جمعی کاربران پلتفرم است، نه استعلام رسمی." };
 
-  const imei = params.imei.trim();
-  const [flags, transactions] = await Promise.all([
-    db.deviceFlag.findMany({
-      where: { imei },
-      select: { flagType: true, note: true, createdAt: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    db.deviceTransaction.findMany({
-      where: { imei },
-      select: { sellerName: true, buyerName: true, deviceModel: true, createdAt: true },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
+    if (scopes.includes("device_flags")) {
+      result.flags = await db.deviceFlag.findMany({
+        where: { imei },
+        select: { flagType: true, note: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      });
+    }
+    if (scopes.includes("device_transactions")) {
+      result.transactions = await db.deviceTransaction.findMany({
+        where: { imei },
+        select: { sellerName: true, buyerName: true, deviceModel: true, createdAt: true },
+        orderBy: { createdAt: "desc" },
+      });
+    }
 
-  return NextResponse.json({ imei, flags, transactions, disclaimer: "این داده‌ها گزارش‌های جمعی کاربران پلتفرم است، نه استعلام رسمی." });
+    return NextResponse.json(result);
+  } catch (e) {
+    if (e instanceof ExternalAuthError) return NextResponse.json({ error: e.message }, { status: e.status });
+    console.error(e);
+    return NextResponse.json({ error: "internal_error" }, { status: 500 });
+  }
 }

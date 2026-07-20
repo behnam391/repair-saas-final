@@ -11,7 +11,6 @@ const UpdateSchema = z.object({
   active: z.boolean().optional(),
   email: z.string().optional(),
   gmailId: z.string().optional(),
-  telegramId: z.string().optional(),
   nationalId: z.string().optional(),
 });
 

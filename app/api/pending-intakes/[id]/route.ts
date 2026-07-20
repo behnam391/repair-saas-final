@@ -37,6 +37,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         data: {
           shopId, no: nextNo, customerId: customer.id, deviceModel: intake.deviceModel, imei: intake.imei,
           issueInitial: intake.issueDescription, lane, status: "PENDING",
+          devicePasscode: intake.devicePasscode, devicePasscodeType: intake.devicePasscodeType,
           history: {
             create: [
               { lane, action: "پذیرش خودکار (اسکن QR توسط مشتری)", techId: userId, note: intake.issueDescription },

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-type U = { id: string; name: string; phone: string; email: string | null; role: string; active: boolean; shop: { name: string } };
+type U = { id: string; name: string; phone: string; email: string | null; role: string; active: boolean; shop: { name: string; supportAccessEnabled: boolean } };
 
 export default function SuperAdminUsersPage() {
   const { data: session, status } = useSession();
@@ -13,6 +13,7 @@ export default function SuperAdminUsersPage() {
   const [resetTarget, setResetTarget] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [msg, setMsg] = useState("");
+  const [impersonateError, setImpersonateError] = useState("");
 
   useEffect(() => {
     if (status === "authenticated" && !(session?.user as any)?.isSuperAdmin) router.push("/superadmin/login");
@@ -34,6 +35,14 @@ export default function SuperAdminUsersPage() {
     if (res.ok) { setMsg("رمز عبور با موفقیت تغییر کرد."); setResetTarget(null); setNewPassword(""); }
   }
 
+  async function impersonate(id: string) {
+    setImpersonateError("");
+    const res = await fetch(`/api/superadmin/users/${id}/impersonate`, { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) { setImpersonateError(data.message || "این عملیات ناموفق بود"); return; }
+    window.open(data.url, "_blank");
+  }
+
   return (
     <div className="min-h-screen p-4 max-w-2xl mx-auto">
       <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
@@ -44,6 +53,7 @@ export default function SuperAdminUsersPage() {
       <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4"
         placeholder="جستجو با نام، شماره یا ایمیل..." value={search} onChange={(e) => setSearch(e.target.value)} />
       {msg && <p className="text-teal text-xs mb-3">{msg}</p>}
+      {impersonateError && <p className="text-danger text-xs mb-3">{impersonateError}</p>}
       <div className="space-y-2">
         {filtered.map((u) => (
           <div key={u.id} className="bg-surface2 border border-surface2 rounded-lg p-3 text-xs">
@@ -52,9 +62,19 @@ export default function SuperAdminUsersPage() {
                 <div className="font-bold">{u.name} · {u.phone}</div>
                 <div className="text-muted mt-0.5">{u.shop.name} · {u.email || "بدون ایمیل"}</div>
               </div>
-              <button onClick={() => setResetTarget(resetTarget === u.id ? null : u.id)} className="text-[10px] bg-danger/20 text-danger rounded-lg px-2 py-1">
-                بازنشانی رمز
-              </button>
+              <div className="flex flex-col gap-1.5 shrink-0">
+                <button onClick={() => setResetTarget(resetTarget === u.id ? null : u.id)} className="text-[10px] bg-danger/20 text-danger rounded-lg px-2 py-1">
+                  بازنشانی رمز
+                </button>
+                <button
+                  onClick={() => impersonate(u.id)}
+                  disabled={!u.shop.supportAccessEnabled}
+                  title={!u.shop.supportAccessEnabled ? "این مغازه دسترسی پشتیبانی را فعال نکرده است" : ""}
+                  className={`text-[10px] rounded-lg px-2 py-1 ${u.shop.supportAccessEnabled ? "bg-copper/20 text-copper" : "bg-surface text-muted cursor-not-allowed"}`}
+                >
+                  ورود به‌جای کاربر
+                </button>
+              </div>
             </div>
             {resetTarget === u.id && (
               <div className="flex gap-2 mt-2">

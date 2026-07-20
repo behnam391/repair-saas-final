@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 
 export default function ProfilePage() {
   const [form, setForm] = useState({
-    avatarUrl: "", email: "", gmailId: "", telegramId: "", nationalId: "", birthDate: "",
-    notifyEmail: false, notifyTelegram: false,
+    avatarUrl: "", email: "", gmailId: "", nationalId: "", birthDate: "",
+    notifyEmail: false,
   });
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
@@ -20,9 +20,9 @@ export default function ProfilePage() {
       setName(data.user.name);
       setForm({
         avatarUrl: data.user.avatarUrl ?? "", email: data.user.email ?? "", gmailId: data.user.gmailId ?? "",
-        telegramId: data.user.telegramId ?? "", nationalId: data.user.nationalId ?? "",
+        nationalId: data.user.nationalId ?? "",
         birthDate: data.user.birthDate ? data.user.birthDate.slice(0, 10) : "",
-        notifyEmail: data.user.notifyEmail, notifyTelegram: data.user.notifyTelegram,
+        notifyEmail: data.user.notifyEmail,
       });
     }
   }
@@ -92,18 +92,6 @@ export default function ProfilePage() {
         <input type="checkbox" checked={form.notifyEmail} onChange={(e) => setForm({ ...form, notifyEmail: e.target.checked })} />
         اطلاع‌رسانی از طریق ایمیل/جیمیل فعال باشد
       </label>
-
-      <label className="block text-xs text-muted mb-1">آیدی تلگرام</label>
-      <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
-        placeholder="@username"
-        value={form.telegramId} onChange={(e) => setForm({ ...form, telegramId: e.target.value })} />
-      <label className="flex items-center gap-2 text-xs text-muted mb-4">
-        <input type="checkbox" checked={form.notifyTelegram} onChange={(e) => setForm({ ...form, notifyTelegram: e.target.checked })} />
-        اطلاع‌رسانی از طریق تلگرام فعال باشد
-      </label>
-      <p className="text-[10px] text-muted mb-4">
-        ⚠️ ارسال واقعی پیام به تلگرام هنوز فعال نیست (نیاز به راه‌اندازی ربات تلگرام دارد)؛ فعلاً فقط این اطلاعات ذخیره می‌شود.
-      </p>
 
       <button onClick={save} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
         {saved ? "✅ ذخیره شد" : "ذخیره تغییرات"}

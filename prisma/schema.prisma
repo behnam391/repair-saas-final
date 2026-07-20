@@ -126,11 +126,9 @@ model User {
   avatarUrl    String?
   email        String?
   gmailId      String?
-  telegramId   String?
   nationalId   String?
   birthDate    DateTime?
   notifyEmail    Boolean @default(false)
-  notifyTelegram Boolean @default(false)
   createdAt    DateTime @default(now())
 
   assignedTickets Ticket[]        @relation("AssignedTech")
@@ -140,6 +138,7 @@ model User {
   deviceFlags        DeviceFlag[]
   deviceTransactions DeviceTransaction[]
   passwordResetTokens PasswordResetToken[]
+  impersonationTokens ImpersonationToken[]
   conversationsStarted Conversation[] @relation("ConversationStarter")
   messages             Message[]
   supportTickets       SupportTicket[]
@@ -560,8 +559,6 @@ model PlatformSettings {
   kavenegarApiKey     String?
   kavenegarSender     String?
   zarinpalMerchantId  String?
-  telegramBotToken    String? // for future outbound Telegram notifications
-  telegramBotUsername String? // shown to users so they can start a chat with the bot first (API requirement)
   guideUrl            String? // link to an external help/docs site
   aboutUsContent      String? // shown on the built-in /about page
   smtpHost            String?
@@ -665,6 +662,8 @@ model PendingIntake {
   deviceModel   String
   imei          String?
   issueDescription String
+  devicePasscode String?
+  devicePasscodeType String? // "PIN" | "PASSWORD" | "PATTERN"
   status        PendingIntakeStatus @default(PENDING)
   createdAt     DateTime            @default(now())
 
@@ -699,6 +698,12 @@ model ExternalApiKey {
   id        String   @id @default(cuid())
   label     String   // e.g. "اتحادیه اصناف موبایل ایران", "اداره تعزیرات"
   apiKey    String   @unique
+  // Comma-separated list of data categories this key may read, chosen by
+  // the platform admin when creating/editing the key — no code change
+  // needed to grant/revoke access to a category later. Current categories:
+  // "device_flags", "device_transactions", "shop_directory",
+  // "shop_verification", "ratings"
+  scopes    String   @default("device_flags,device_transactions")
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
 }
@@ -733,4 +738,22 @@ model DealerInventory {
   soldAt        DateTime?
 
   @@index([shopId, status])
+}
+
+// ── Platform support impersonation ────────────────────────────
+// A short-lived, single-use token that lets platform support sign in AS a
+// shop's owner for troubleshooting — only ever issued when the shop has
+// opted in via Shop.supportAccessEnabled, and every use is logged for
+// audit purposes (createdByAdminId).
+model ImpersonationToken {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id])
+  token           String    @unique
+  createdByAdminId String
+  used            Boolean   @default(false)
+  expiresAt       DateTime
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
 }

@@ -17,14 +17,14 @@ export async function GET() {
   }
 }
 
-const Schema = z.object({ label: z.string().min(1) });
+const Schema = z.object({ label: z.string().min(1), scopes: z.array(z.string()).min(1) });
 
 export async function POST(req: NextRequest) {
   try {
     await requireSuperAdmin();
-    const { label } = Schema.parse(await req.json());
+    const { label, scopes } = Schema.parse(await req.json());
     const apiKey = randomBytes(24).toString("hex");
-    const key = await db.externalApiKey.create({ data: { label, apiKey } });
+    const key = await db.externalApiKey.create({ data: { label, apiKey, scopes: scopes.join(",") } });
     return NextResponse.json({ key }, { status: 201 });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

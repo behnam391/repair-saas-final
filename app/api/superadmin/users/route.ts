@@ -14,7 +14,7 @@ export async function GET() {
     const users = await db.user.findMany({
       select: {
         id: true, name: true, phone: true, email: true, role: true, active: true,
-        shop: { select: { name: true } },
+        shop: { select: { name: true, supportAccessEnabled: true } },
       },
       orderBy: { createdAt: "desc" },
     });

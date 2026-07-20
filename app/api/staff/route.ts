@@ -14,11 +14,9 @@ const StaffSchema = z.object({
   avatarUrl: z.string().optional(),
   email: z.string().optional(),
   gmailId: z.string().optional(),
-  telegramId: z.string().optional(),
   nationalId: z.string().optional(),
   birthDate: z.string().optional(),
   notifyEmail: z.boolean().optional(),
-  notifyTelegram: z.boolean().optional(),
 });
 
 // GET /api/staff — list everyone on the shop's team.
@@ -29,7 +27,7 @@ export async function GET() {
       where: { shopId },
       select: {
         id: true, name: true, phone: true, role: true, active: true, createdAt: true,
-        avatarUrl: true, email: true, gmailId: true, telegramId: true, notifyEmail: true, notifyTelegram: true,
+        avatarUrl: true, email: true, gmailId: true, notifyEmail: true,
       },
       orderBy: { createdAt: "asc" },
     });
