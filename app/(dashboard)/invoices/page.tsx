@@ -7,8 +7,10 @@ type Ticket = {
 };
 type InvItem = { id: string; name: string; quantity: number; sellPrice: number };
 type Invoice = {
-  id: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; createdAt: string;
-  ticket: { no: number; deviceModel: string; customer: { name: string } };
+  id: string; type: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; createdAt: string;
+  customerName: string | null;
+  ticket: { no: number; deviceModel: string; customer: { name: string } } | null;
+  items: { quantity: number; item: { name: string } }[];
 };
 
 export default function InvoicesPage() {
@@ -207,13 +209,29 @@ export default function InvoicesPage() {
               ) : (
                 <div key={inv.id} className="bg-surface2 border border-surface2 rounded-lg p-3 text-xs">
                   <div className="flex justify-between">
-                    <span className="font-bold">{inv.ticket.deviceModel} #{inv.ticket.no}</span>
+                    <span className="font-bold">
+                      {inv.ticket
+                        ? `${inv.ticket.deviceModel} #${inv.ticket.no}`
+                        : `🛒 فروش مستقیم${inv.items.length ? ` (${inv.items.map((it) => it.item.name).slice(0, 2).join("، ")}${inv.items.length > 2 ? "…" : ""})` : ""}`}
+                    </span>
                     <span className="mono">{inv.total.toLocaleString("fa-IR")} تومان</span>
                   </div>
-                  <div className="text-muted mt-1">{inv.ticket.customer.name} · {new Date(inv.createdAt).toLocaleDateString("fa-IR")}</div>
+                  <div className="text-muted mt-1">
+                    {inv.ticket?.customer.name ?? inv.customerName ?? "مشتری متفرقه"} · {new Date(inv.createdAt).toLocaleDateString("fa-IR")}
+                    {" "}· <span className={inv.paid ? "text-teal" : "text-amber"}>{inv.paid ? "پرداخت‌شده" : "پرداخت‌نشده"}</span>
+                  </div>
                   {inv.taxAmount > 0 && <div className="text-muted mt-0.5">شامل {inv.taxPercent}٪ مالیات ({inv.taxAmount.toLocaleString("fa-IR")} تومان)</div>}
-                  <div className="flex gap-3 mt-2">
+                  <div className="flex gap-3 mt-2 flex-wrap">
                     <a href={`/invoices/${inv.id}/print`} target="_blank" className="text-copper text-[10px] font-semibold">🖨 چاپ</a>
+                    {!inv.paid && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard?.writeText(`${window.location.origin}/pay/${inv.id}`);
+                        }}
+                        className="text-teal text-[10px] font-semibold" title="لینک صفحه پرداخت آنلاین این فاکتور کپی می‌شود">
+                        💳 کپی لینک پرداخت
+                      </button>
+                    )}
                     <button onClick={() => startInvoiceEdit(inv)} className="text-copper text-[10px] font-semibold">ویرایش</button>
                     <button onClick={() => deleteInvoice(inv.id)} className="text-danger text-[10px] font-semibold">حذف</button>
                   </div>

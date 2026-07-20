@@ -30,6 +30,8 @@ export async function GET(req: NextRequest) {
 
     const byTech: Record<string, { name: string; role: string; totalWage: number; ticketCount: number }> = {};
     for (const inv of invoices) {
+      // SALE invoices have no ticket/technician — payroll only covers repairs.
+      if (!inv.ticket) continue;
       const techId = inv.ticket.assignedToId;
       if (!techId || !inv.ticket.assignedTo) continue;
       if (!byTech[techId]) byTech[techId] = { name: inv.ticket.assignedTo.name, role: inv.ticket.assignedTo.role, totalWage: 0, ticketCount: 0 };

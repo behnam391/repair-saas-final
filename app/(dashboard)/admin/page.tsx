@@ -19,6 +19,7 @@ export default function AdminPage() {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [report, setReport] = useState<ReportRow[]>([]);
   const [monthRevenue, setMonthRevenue] = useState(0);
+  const [monthlyChart, setMonthlyChart] = useState<{ label: string; repair: number; sale: number; total: number }[]>([]);
   const [form, setForm] = useState({ name: "", phone: "", password: "", role: "HARDWARE" });
   const [error, setError] = useState("");
 
@@ -68,6 +69,9 @@ export default function AdminPage() {
     }
     if (tplRes.ok) setTemplates((await tplRes.json()).templates ?? []);
     if (platformRes.ok) setNeshanApiKey((await platformRes.json()).neshanApiKey ?? "");
+    fetch("/api/reports/monthly-revenue").then(async (r) => {
+      if (r.ok) setMonthlyChart((await r.json()).months ?? []);
+    });
   }
   useEffect(() => { if (isOwner) load(); }, [isOwner]);
 
@@ -161,6 +165,46 @@ export default function AdminPage() {
       <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4 mb-6 shadow-lg shadow-black/20">
         <div className="text-xs text-muted mb-1">درآمد ۳۰ روز اخیر</div>
         <div className="text-2xl font-extrabold mono text-copper">{monthRevenue.toLocaleString("fa-IR")} <span className="text-xs font-normal text-ink">تومان</span></div>
+      </div>
+
+      {/* ── Monthly revenue chart + Excel exports ─────────────────── */}
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+        <div className="text-sm font-bold mb-1">نمودار درآمد ۱۲ ماه اخیر</div>
+        <p className="text-[10px] text-muted mb-3">
+          <span className="text-copper">■</span> فاکتور تعمیر &nbsp;
+          <span className="text-teal">■</span> فروش مستقیم
+        </p>
+        {monthlyChart.length === 0 ? (
+          <p className="text-xs text-muted">در حال بارگذاری...</p>
+        ) : (
+          (() => {
+            const max = Math.max(...monthlyChart.map((m) => m.total), 1);
+            return (
+              <div className="flex items-end gap-1 h-32" dir="ltr">
+                {monthlyChart.map((m, i) => (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
+                    <div className="w-full flex flex-col justify-end" style={{ height: "100px" }}
+                      title={`${m.label}: ${m.total.toLocaleString("fa-IR")} تومان (تعمیر ${m.repair.toLocaleString("fa-IR")} · فروش ${m.sale.toLocaleString("fa-IR")})`}>
+                      <div className="w-full rounded-t-sm bg-teal/80" style={{ height: `${(m.sale / max) * 100}px` }} />
+                      <div className={`w-full bg-copper/80 ${m.sale === 0 ? "rounded-t-sm" : ""}`} style={{ height: `${(m.repair / max) * 100}px` }} />
+                    </div>
+                    <div className="text-[8px] text-muted whitespace-nowrap">{m.label}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()
+        )}
+
+        <div className="border-t border-surface2 mt-4 pt-3">
+          <div className="text-xs font-bold mb-2">📥 خروجی اکسل (CSV)</div>
+          <div className="flex gap-2 flex-wrap">
+            <a href="/api/reports/export?type=invoices" className="bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors text-xs font-semibold rounded-lg px-3 py-2">فاکتورها</a>
+            <a href="/api/reports/export?type=tickets" className="bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors text-xs font-semibold rounded-lg px-3 py-2">تیکت‌های تعمیر</a>
+            <a href="/api/reports/export?type=inventory" className="bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors text-xs font-semibold rounded-lg px-3 py-2">انبار</a>
+          </div>
+          <p className="text-[10px] text-muted mt-2">فایل CSV با پشتیبانی فارسی — مستقیم در Excel یا Google Sheets باز می‌شود.</p>
+        </div>
       </div>
 
       <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6 flex items-center justify-between">

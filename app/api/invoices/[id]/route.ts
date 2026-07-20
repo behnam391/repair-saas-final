@@ -19,6 +19,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
             partsUsed: { include: { item: { select: { name: true } } } },
           },
         },
+        items: { include: { item: { select: { name: true } } } },
       },
     });
     if (!invoice) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -60,7 +61,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         where: { id: invoice.id },
         data: { laborCost, taxPercent, taxAmount, total, ...(body.paid !== undefined ? { paid: body.paid } : {}) },
       });
-      await tx.ticket.update({ where: { id: invoice.ticketId }, data: { finalCost: total } });
+      // SALE invoices have no ticket to keep in sync.
+      if (invoice.ticketId) {
+        await tx.ticket.update({ where: { id: invoice.ticketId }, data: { finalCost: total } });
+      }
       return inv;
     });
 
@@ -82,13 +86,24 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     if (!invoice) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
     await db.$transaction(async (tx) => {
-      const parts = await tx.ticketPart.findMany({ where: { ticketId: invoice.ticketId } });
-      for (const p of parts) {
-        await tx.inventoryItem.update({ where: { id: p.itemId }, data: { quantity: { increment: p.quantity } } });
+      if (invoice.ticketId) {
+        // Repair invoice — restore the ticket's consumed parts.
+        const parts = await tx.ticketPart.findMany({ where: { ticketId: invoice.ticketId } });
+        for (const p of parts) {
+          await tx.inventoryItem.update({ where: { id: p.itemId }, data: { quantity: { increment: p.quantity } } });
+        }
+        await tx.ticketPart.deleteMany({ where: { ticketId: invoice.ticketId } });
       }
-      await tx.ticketPart.deleteMany({ where: { ticketId: invoice.ticketId } });
+      // Direct-sale line items — restore sold stock.
+      const saleLines = await tx.invoiceItem.findMany({ where: { invoiceId: invoice.id } });
+      for (const line of saleLines) {
+        await tx.inventoryItem.update({ where: { id: line.itemId }, data: { quantity: { increment: line.quantity } } });
+      }
+      await tx.invoiceItem.deleteMany({ where: { invoiceId: invoice.id } });
       await tx.invoice.delete({ where: { id: invoice.id } });
-      await tx.ticket.update({ where: { id: invoice.ticketId }, data: { finalCost: null } });
+      if (invoice.ticketId) {
+        await tx.ticket.update({ where: { id: invoice.ticketId }, data: { finalCost: null } });
+      }
     });
 
     return NextResponse.json({ ok: true });

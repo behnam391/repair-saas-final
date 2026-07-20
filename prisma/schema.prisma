@@ -270,6 +270,7 @@ model InventoryItem {
   frequentlyUsed Boolean @default(false) // starred by the shop for quick pick in invoices
 
   usedIn      TicketPart[]
+  soldIn      InvoiceItem[]
 
   @@index([shopId])
 }
@@ -292,18 +293,44 @@ model Invoice {
   id         String   @id @default(cuid())
   shopId     String
   shop       Shop     @relation(fields: [shopId], references: [id])
-  ticketId   String   @unique
-  ticket     Ticket   @relation(fields: [ticketId], references: [id])
+  // "REPAIR" invoices close out a Ticket; "SALE" invoices are direct
+  // over-the-counter sales from inventory (accessories, phones, parts)
+  // with no repair ticket at all — ticketId is null for those.
+  type       String   @default("REPAIR")
+  ticketId   String?  @unique
+  ticket     Ticket?  @relation(fields: [ticketId], references: [id])
+  // Walk-in customer info for SALE invoices (optional — cash sales can be anonymous)
+  customerName  String?
+  customerPhone String?
   laborCost  Int      // toman
-  partsCost  Int      // toman, sum of TicketPart.priceCharged
+  partsCost  Int      // toman, sum of TicketPart/InvoiceItem priceCharged
   technicianWage Int  @default(0) // paid out to the assigned technician
   taxPercent Float    @default(0) // percent applied at invoice time (locked in, in case shop changes rate later)
   taxAmount  Int      @default(0) // toman, computed at invoice time
   total      Int
   paid       Boolean  @default(false)
+  // Online payment by the customer via Zarinpal (/pay/[invoiceId])
+  paymentAuthority String?
+  paymentRefId     String?
   createdAt  DateTime @default(now())
 
+  items      InvoiceItem[]
+
   @@index([shopId])
+}
+
+// Line items for direct-SALE invoices (the counterpart of TicketPart,
+// which stays reserved for repair-ticket part consumption).
+model InvoiceItem {
+  id           String        @id @default(cuid())
+  invoiceId    String
+  invoice      Invoice       @relation(fields: [invoiceId], references: [id])
+  itemId       String
+  item         InventoryItem @relation(fields: [itemId], references: [id])
+  quantity     Int           @default(1)
+  priceCharged Int           // toman total for this line, locked in at sale time
+
+  @@index([invoiceId])
 }
 
 // One-time SMS code for the forgot-password flow. Short-lived (10 min)

@@ -37,6 +37,7 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
       label: "عملیات",
       items: [
         { href: "/inventory", label: "انبار قطعات" },
+        { href: "/sales", label: "فروش مستقیم" },
         { href: "/invoices", label: "فاکتورها" },
         { href: "/returns", label: "مرجوعی" },
         { href: "/pending-intakes", label: "پذیرش QR" },

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { IRAN_PROVINCES, PROVINCE_NAMES } from "@/lib/iran-locations";
+import ShopsMap from "@/components/ShopsMap";
 
 type ShopItem = {
   id: string; name: string; address: string | null; phone: string | null;
@@ -31,6 +32,8 @@ export default function CustomerShopsPage() {
   const [myPos, setMyPos] = useState<{ lat: number; lng: number } | null>(null);
   const [sortByDistance, setSortByDistance] = useState(false);
   const [geoError, setGeoError] = useState("");
+  const [view, setView] = useState<"list" | "map">("list");
+  const [neshanKey, setNeshanKey] = useState<string | null>(null);
 
   // rating modal state
   const [ratingShop, setRatingShop] = useState<ShopItem | null>(null);
@@ -39,6 +42,13 @@ export default function CustomerShopsPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const cities = province ? IRAN_PROVINCES[province] ?? [] : [];
+
+  // map key is public-safe (client-side rendering key, see /api/platform-info)
+  useEffect(() => {
+    fetch("/api/platform-info").then(async (r) => {
+      if (r.ok) setNeshanKey((await r.json()).neshanApiKey ?? null);
+    });
+  }, []);
 
   // default the filter to the customer's own province once, on first load
   useEffect(() => {
@@ -126,6 +136,34 @@ export default function CustomerShopsPage() {
           📍 نزدیک‌ترین‌ها
         </button>
       </div>
+
+      <div className="flex bg-surface2 rounded-lg p-1 mb-3">
+        <button onClick={() => setView("list")}
+          className={`flex-1 text-xs font-bold rounded-md py-1.5 transition ${view === "list" ? "bg-teal text-[#0B1512]" : "text-muted"}`}>
+          📋 فهرست
+        </button>
+        <button onClick={() => setView("map")}
+          className={`flex-1 text-xs font-bold rounded-md py-1.5 transition ${view === "map" ? "bg-teal text-[#0B1512]" : "text-muted"}`}>
+          🗺 نقشه
+        </button>
+      </div>
+
+      {view === "map" && (
+        neshanKey ? (
+          <div className="mb-4">
+            <ShopsMap apiKey={neshanKey} shops={display} myPos={myPos} />
+            <p className="text-[10px] text-muted mt-1.5">
+              فقط مغازه‌هایی که موقعیت مکانی‌شان را ثبت کرده‌اند روی نقشه دیده می‌شوند
+              ({display.filter((s) => s.latitude != null && s.longitude != null).length} از {display.length}).
+              {!myPos && <> برای دیدن موقعیت خودتان، دکمه «📍 نزدیک‌ترین‌ها» را بزنید.</>}
+            </p>
+          </div>
+        ) : (
+          <p className="text-xs text-amber bg-amber/10 border border-amber/30 rounded-lg p-3 mb-4">
+            نقشه هنوز فعال نیست — مدیر پلتفرم باید کلید نقشه نشان را در تنظیمات ثبت کند. فعلاً از نمای فهرست استفاده کنید.
+          </p>
+        )
+      )}
       {geoError && <p className="text-danger text-xs mb-2">{geoError}</p>}
       {sortByDistance && myPos && (
         <p className="text-[11px] text-muted mb-2">
@@ -134,7 +172,7 @@ export default function CustomerShopsPage() {
         </p>
       )}
 
-      {loading ? (
+      {view === "list" && (loading ? (
         <p className="text-muted text-sm text-center py-8">در حال بارگذاری...</p>
       ) : display.length === 0 ? (
         <p className="text-xs text-muted text-center py-8">مغازه‌ای در این محدوده پیدا نشد.</p>
@@ -190,7 +228,7 @@ export default function CustomerShopsPage() {
             </div>
           ))}
         </div>
-      )}
+      ))}
 
       {ratingShop && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4" onClick={() => setRatingShop(null)}>
