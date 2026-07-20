@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import ImageUploader from "@/components/ImageUploader";
 
 type Ad = { id: string; imageUrl: string; linkUrl: string | null; active: boolean; sortOrder: number; displayType: string };
 
@@ -52,8 +53,11 @@ export default function SuperAdminAdsPage() {
       <h1 className="font-extrabold text-lg mt-2 mb-4">تبلیغات سایت</h1>
 
       <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
-        <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2" placeholder="آدرس تصویر بنر"
-          value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} />
+        <ImageUploader
+          label="تصویر بنر"
+          value={form.imageUrl}
+          onChange={(url) => setForm({ ...form, imageUrl: url })}
+        />
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2" placeholder="لینک مقصد (اختیاری)"
           value={form.linkUrl} onChange={(e) => setForm({ ...form, linkUrl: e.target.value })} />
         <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"

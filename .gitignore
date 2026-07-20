@@ -9,6 +9,9 @@
 .env
 .env*.local
 
+# locally-uploaded images (dev fallback of /api/upload) — not source code
+/public/uploads/
+
 # misc
 .DS_Store
 *.log

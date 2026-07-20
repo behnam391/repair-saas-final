@@ -60,6 +60,34 @@ export const authOptions: NextAuthOptions = {
         return { id: admin.id, name: admin.name, isSuperAdmin: true } as any;
       },
     }),
+    // Nationwide customer login — completely separate identity from shop
+    // staff (User) and the platform owner (PlatformAdmin). The token never
+    // carries a shopId or role, so it can never pass any tenant-scoped or
+    // role-gated check; customer API routes verify `isCustomer` explicitly.
+    CredentialsProvider({
+      id: "customer-credentials",
+      name: "customer",
+      credentials: {
+        phone: { label: "شماره موبایل", type: "text" },
+        password: { label: "رمز عبور", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.phone || !credentials?.password) return null;
+
+        const customer = await db.platformCustomer.findUnique({ where: { phone: credentials.phone } });
+        if (!customer) return null;
+
+        const valid = await bcrypt.compare(credentials.password, customer.passwordHash);
+        if (!valid) return null;
+
+        return {
+          id: customer.id,
+          name: customer.name,
+          phone: customer.phone,
+          isCustomer: true,
+        } as any;
+      },
+    }),
     CredentialsProvider({
       id: "impersonation-credentials",
       name: "impersonation",
@@ -92,6 +120,9 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         if ((user as any).isSuperAdmin) {
           token.isSuperAdmin = true;
+        } else if ((user as any).isCustomer) {
+          token.isCustomer = true;
+          token.phone = (user as any).phone;
         } else {
           token.role = (user as any).role;
           token.shopId = (user as any).shopId;
@@ -104,6 +135,8 @@ export const authOptions: NextAuthOptions = {
     async session({ session, token }) {
       (session.user as any).id = token.sub;
       (session.user as any).isSuperAdmin = token.isSuperAdmin ?? false;
+      (session.user as any).isCustomer = token.isCustomer ?? false;
+      (session.user as any).phone = token.phone;
       (session.user as any).role = token.role;
       (session.user as any).shopId = token.shopId;
       (session.user as any).shopName = token.shopName;

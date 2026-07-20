@@ -3,7 +3,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
-export default function LoginPage() {
+export default function CustomerLoginPage() {
   const router = useRouter();
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -14,20 +14,22 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const res = await signIn("shop-credentials", { phone, password, redirect: false });
+    const res = await signIn("customer-credentials", { phone, password, redirect: false });
     setLoading(false);
     if (res?.error) {
       setError("شماره موبایل یا رمز عبور اشتباه است");
       return;
     }
-    router.push("/tickets");
+    router.push("/customer");
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm bg-surface border-t-2 border-t-copper border-x border-b border-surface2 rounded-2xl p-6">
-        <h1 className="display-heading text-xl mb-1">ورود به پنل تعمیرگاه</h1>
-        <p className="text-xs text-muted mb-6">با شماره موبایل و رمز عبور خود وارد شوید</p>
+      <form onSubmit={handleSubmit} className="w-full max-w-sm bg-surface border-t-2 border-t-teal border-x border-b border-surface2 rounded-2xl p-6">
+        <h1 className="display-heading text-xl mb-1">ورود مشتریان</h1>
+        <p className="text-xs text-muted mb-6">
+          دنبال تعمیرگاه مطمئن می‌گردید؟ وارد شوید تا مغازه‌های اطراف، امتیازها و سابقه تعمیرهای خودتان را ببینید.
+        </p>
 
         <label className="block text-xs text-muted mb-1">شماره موبایل</label>
         <input
@@ -49,19 +51,19 @@ export default function LoginPage() {
 
         <button
           disabled={loading}
-          className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm disabled:opacity-60"
+          className="w-full bg-teal text-[#0B1512] font-bold rounded-lg py-2.5 text-sm disabled:opacity-60"
         >
           {loading ? "در حال ورود..." : "ورود"}
         </button>
 
         <p className="text-[11px] text-muted text-center mt-4">
-          مغازه جدید هستید؟ <a href="/signup" className="text-copper">ثبت‌نام کنید</a>
+          حساب ندارید؟ <a href="/customer/signup" className="text-teal">ثبت‌نام مشتری</a>
         </p>
         <p className="text-[11px] text-muted text-center mt-2">
-          <a href="/forgot-password" className="text-copper">رمز عبور را فراموش کرده‌اید؟</a>
+          <a href="/customer/forgot-password" className="text-teal">رمز عبور را فراموش کرده‌اید؟</a>
         </p>
         <p className="text-[11px] text-muted text-center mt-4 border-t border-surface2 pt-3">
-          مشتری هستید؟ <a href="/customer/login" className="text-teal">ورود مشتریان</a> — مغازه‌های اطرافتان را مقایسه کنید و سابقه تعمیرهایتان را ببینید
+          تعمیرکار هستید؟ <a href="/login" className="text-copper">ورود پنل تعمیرگاه</a>
         </p>
       </form>
     </div>

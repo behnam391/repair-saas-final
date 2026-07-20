@@ -681,6 +681,12 @@ model Rating {
   ticketId      String?  @unique
   technicianId  String?
   technician    User?    @relation(fields: [technicianId], references: [id])
+  // Set when the rating was submitted from the customer dashboard by a
+  // signed-in PlatformCustomer (as opposed to the anonymous post-repair
+  // SMS link, which leaves this null). One direct rating per
+  // (customer, shop) pair is enforced in the API.
+  platformCustomerId String?
+  platformCustomer   PlatformCustomer? @relation(fields: [platformCustomerId], references: [id])
   stars         Int      // 1-5
   comment       String?
   customerPhone String?  // used only to prevent duplicate ratings per ticket, never shown publicly
@@ -688,6 +694,43 @@ model Rating {
 
   @@index([shopId])
   @@index([technicianId])
+  @@index([platformCustomerId])
+}
+
+// ── Platform-wide customer accounts ──────────────────────────
+// A NATIONWIDE customer identity, completely separate from the per-shop
+// `Customer` model above (which is just each shop's private address book).
+// A PlatformCustomer signs in through their own login (/customer/login),
+// browses/compares shops, sees their own repair history across ALL shops
+// (matched by phone number), and can rate shops directly from their panel.
+// Deliberately NOT tied to any Shop, so it is never caught by tenant
+// scoping and can never be created through the shop signup flow.
+model PlatformCustomer {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String   @unique
+  passwordHash String
+  province     String?  // used as the default filter for "shops near me"
+  city         String?
+  createdAt    DateTime @default(now())
+
+  ratings          Rating[]
+  passwordResetTokens CustomerPasswordResetToken[]
+}
+
+// Same 10-minute single-use OTP pattern as PasswordResetToken, but for
+// PlatformCustomer accounts (separate table so the two login systems
+// stay fully independent).
+model CustomerPasswordResetToken {
+  id         String           @id @default(cuid())
+  customerId String
+  customer   PlatformCustomer @relation(fields: [customerId], references: [id])
+  code       String           // 5-digit numeric OTP sent via SMS
+  expiresAt  DateTime
+  used       Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  @@index([customerId])
 }
 
 // ── External government/agency API access ────────────────────

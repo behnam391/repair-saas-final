@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import ImageUploader from "@/components/ImageUploader";
 
 export default function ProfilePage() {
   const [form, setForm] = useState({
@@ -62,11 +63,11 @@ export default function ProfilePage() {
         <div className="text-sm font-bold">{name}</div>
       </div>
 
-      <label className="block text-xs text-muted mb-1">آدرس عکس پروفایل (لینک تصویر)</label>
-      <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-1"
-        placeholder="https://..."
-        value={form.avatarUrl} onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })} />
-      <p className="text-[10px] text-muted mb-3">فعلاً فقط لینک تصویر پشتیبانی می‌شود؛ آپلود مستقیم فایل به‌زودی اضافه می‌شود.</p>
+      <ImageUploader
+        label="عکس پروفایل"
+        value={form.avatarUrl}
+        onChange={(url) => setForm({ ...form, avatarUrl: url })}
+      />
 
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div>
