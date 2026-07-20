@@ -36,7 +36,7 @@ const CreateSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId, userId } = await requireSession();
     await assertDealer(shopId);
 
     const body = CreateSchema.parse(await req.json());
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     if (body.imei && body.sourceName) {
       await db.deviceTransaction.create({
         data: {
-          shopId, imei: body.imei, deviceModel: body.deviceModel,
+          shopId, loggedById: userId, imei: body.imei, deviceModel: body.deviceModel,
           sellerName: body.sourceName, sellerPhone: body.sourcePhone,
           buyerName: "فروشنده (این مغازه)", price: body.purchasePrice,
           note: "خرید توسط فروشنده برای موجودی فروش",

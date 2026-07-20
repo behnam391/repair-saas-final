@@ -15,7 +15,7 @@ const SellSchema = z.object({
 // appends to the public ownership chain (DeviceTransaction) if it has an IMEI.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId, userId } = await requireSession();
     const item = await db.dealerInventory.findFirst({ where: { id: params.id, shopId } });
     if (!item) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       if (item.imei) {
         await tx.deviceTransaction.create({
           data: {
-            shopId, imei: item.imei, deviceModel: item.deviceModel,
+            shopId, loggedById: userId, imei: item.imei, deviceModel: item.deviceModel,
             sellerName: "فروشنده (این مغازه)", buyerName: body.buyerName, buyerPhone: body.buyerPhone,
             price: body.soldPrice, note: "فروش از موجودی فروشنده",
           },
