@@ -9,7 +9,18 @@ type ConvoListItem = {
   starter: { id: string; name: string };
   messages: { content: string; createdAt: string }[];
 };
-type Msg = { id: string; content: string; createdAt: string; senderId: string; sender: { name: string } };
+type Msg = { id: string; content: string; imageUrl: string | null; createdAt: string; senderId: string; sender: { name: string } };
+
+// One-tap canned replies — the phrases technicians/dealers type all day.
+const CANNED_MESSAGES = [
+  "سلام، موجوده؟",
+  "قیمت نهایی چنده؟",
+  "لطفاً عکس بفرستید",
+  "آدرس دقیق را بفرستید",
+  "ارسال به شهرستان دارید؟",
+  "تست‌شده و سالمه؟",
+  "باشه، هماهنگ می‌کنیم ✅",
+];
 
 export default function ChatsPage() {
   const { data: session } = useSession();
@@ -21,7 +32,9 @@ export default function ChatsPage() {
   const [activeId, setActiveId] = useState<string | null>(openParam);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [draft, setDraft] = useState("");
+  const [uploading, setUploading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   async function loadConversations() {
     const res = await fetch("/api/conversations");
@@ -42,17 +55,37 @@ export default function ChatsPage() {
   }, [activeId]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
-  async function send() {
-    if (!draft.trim() || !activeId) return;
+  async function send(text?: string, imageUrl?: string) {
+    const content = (text ?? draft).trim();
+    if ((!content && !imageUrl) || !activeId) return;
     const res = await fetch(`/api/conversations/${activeId}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: draft.trim() }),
+      body: JSON.stringify({ content, imageUrl }),
     });
     if (res.ok) {
-      setDraft("");
+      if (text === undefined) setDraft("");
       loadMessages(activeId);
       loadConversations();
+    }
+  }
+
+  async function sendImage(file: File) {
+    if (!activeId) return;
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        await send(draft, data.url); // attach current draft text (if any) with the image
+        setDraft("");
+      } else {
+        alert(data.message || "آپلود عکس ناموفق بود");
+      }
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -75,7 +108,7 @@ export default function ChatsPage() {
             >
               <div className="text-xs font-bold">{c.listing.title}</div>
               <div className="text-[11px] text-muted mt-0.5">با {otherName}</div>
-              {last && <div className="text-[11px] text-muted mt-1 truncate">{last.content}</div>}
+              {last && <div className="text-[11px] text-muted mt-1 truncate">{last.content || "📷 عکس"}</div>}
             </button>
           );
         })}
@@ -94,13 +127,46 @@ export default function ChatsPage() {
             <div className="flex-1 overflow-y-auto p-3 space-y-2">
               {messages.map((m) => (
                 <div key={m.id} className={`max-w-[75%] rounded-xl px-3 py-2 text-xs ${m.senderId === myId ? "bg-copper text-[#1A1410] mr-auto" : "bg-surface2 ml-auto"}`}>
+                  {m.imageUrl && (
+                    <a href={m.imageUrl} target="_blank" rel="noreferrer" className="block mb-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={m.imageUrl} alt="" className="max-h-48 rounded-lg" />
+                    </a>
+                  )}
                   {m.content}
                   <div className="text-[9px] opacity-70 mt-1">{new Date(m.createdAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}</div>
                 </div>
               ))}
               <div ref={bottomRef} />
             </div>
-            <div className="p-3 border-t border-surface2 flex gap-2">
+
+            {/* Canned quick replies */}
+            <div className="px-3 pt-2 flex gap-1.5 overflow-x-auto no-scrollbar">
+              {CANNED_MESSAGES.map((c) => (
+                <button key={c} onClick={() => send(c)}
+                  className="whitespace-nowrap text-[11px] bg-surface2 border border-surface2 hover:border-copper rounded-full px-3 py-1.5 transition-colors">
+                  {c}
+                </button>
+              ))}
+            </div>
+
+            <div className="p-3 border-t border-surface2 flex gap-2 items-center">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) sendImage(f);
+                  e.target.value = "";
+                }}
+              />
+              <button onClick={() => fileRef.current?.click()} disabled={uploading}
+                title="ارسال عکس"
+                className="bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm disabled:opacity-50">
+                {uploading ? "⏳" : "📷"}
+              </button>
               <input
                 className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
                 placeholder="پیام بنویسید..."
@@ -108,7 +174,7 @@ export default function ChatsPage() {
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && send()}
               />
-              <button onClick={send} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-4">ارسال</button>
+              <button onClick={() => send()} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-4">ارسال</button>
             </div>
           </>
         )}

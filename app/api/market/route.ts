@@ -12,6 +12,7 @@ const ListingSchema = z.object({
   title: z.string().min(3),
   description: z.string().min(3),
   deviceModel: z.string().optional(),
+  imageUrl: z.string().optional(),
   province: z.string().min(1),
   city: z.string().min(1),
   showContact: z.boolean().optional(),
@@ -80,7 +81,7 @@ export async function POST(req: NextRequest) {
     const body = ListingSchema.parse(await req.json());
 
     const listing = await db.marketListing.create({
-      data: { shopId, authorId: userId, ...body },
+      data: { shopId, authorId: userId, ...body, imageUrl: body.imageUrl || null },
       include: { author: { select: { name: true, phone: true } } },
     });
 
@@ -109,6 +110,43 @@ export async function POST(req: NextRequest) {
           `آگهی «${c.title}» با آگهی شما «${listing.title}» ممکن است مطابقت داشته باشد.`,
           "/market"
         );
+      }
+    }
+
+    // ── Market ↔ inventory matching ─────────────────────────────────
+    // When someone posts a REQUEST ("دنبال این می‌گردم"), scan OTHER shops'
+    // in-stock inventory for items whose name/model shares a keyword with
+    // the request, and notify those shops' active staff — "کسی دنبال چیزی
+    // است که تو در انبارت داری". Deliberately cross-tenant (only pushes a
+    // notification; it reveals nothing about the inventory to the requester
+    // until the shop itself chooses to respond).
+    if (body.listingType === "REQUEST") {
+      const stock = await db.inventoryItem.findMany({
+        where: { shopId: { not: shopId }, quantity: { gt: 0 } },
+        select: { id: true, name: true, deviceModel: true, shopId: true },
+        take: 2000,
+      });
+      const matchedShopIds = new Set<string>();
+      for (const item of stock) {
+        if (sharesKeyword(searchText, `${item.name} ${item.deviceModel ?? ""}`)) {
+          matchedShopIds.add(item.shopId);
+        }
+      }
+      if (matchedShopIds.size > 0) {
+        // Notify each matched shop's active users (owner + staff), capped
+        // so one generic request can't flood the whole country.
+        const recipients = await db.user.findMany({
+          where: { shopId: { in: [...matchedShopIds].slice(0, 30) }, active: true },
+          select: { id: true },
+        });
+        for (const r of recipients.slice(0, 100)) {
+          await notifyUser(
+            r.id,
+            "📦 درخواستی مشابه موجودی انبار شما",
+            `در بازار سراسری درخواست «${listing.title}» ثبت شد که با کالای موجود در انبار شما هم‌خوانی دارد — اگر مایلید پاسخ بدهید یا پیام بفرستید.`,
+            "/market"
+          );
+        }
       }
     }
 

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import ImageUploader from "@/components/ImageUploader";
 
 const CATEGORY_LABEL: Record<string, string> = {
   BOARD: "برد / شماتیک", FLASH_FILE: "فایل فلش", PART: "قطعه", EXPERTISE: "مشاوره تخصصی", OTHER: "سایر",
@@ -9,6 +10,7 @@ const CATEGORY_LABEL: Record<string, string> = {
 
 type Listing = {
   id: string; category: string; listingType: string; title: string; description: string; deviceModel?: string;
+  imageUrl?: string | null;
   province: string; city: string; status: string; createdAt: string; showContact: boolean;
   author: { name: string; phone: string }; authorId: string; shop: { name: string };
   replies: { id: string; message: string; author: { name: string; phone: string }; createdAt: string }[];
@@ -130,6 +132,12 @@ export default function MarketPage() {
                 )}
               </div>
               <div className="text-xs text-[#C7CAD1] mt-1.5">{l.description}</div>
+              {l.imageUrl && (
+                <a href={l.imageUrl} target="_blank" rel="noreferrer" className="block mt-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={l.imageUrl} alt={l.title} className="max-h-40 rounded-lg border border-surface2 object-cover" />
+                </a>
+              )}
               {l.deviceModel && <div className="text-[11px] text-muted mt-1">مدل: {l.deviceModel}</div>}
               <div className="text-[11px] text-muted mt-2">
                 {l.author.name} ({l.shop.name}) · {l.city}، {l.province} · {new Date(l.createdAt).toLocaleDateString("fa-IR")}
@@ -191,7 +199,7 @@ function NewListingModal({
   provinces, onClose, onCreated,
 }: { provinces: Record<string, string[]>; onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
-    listingType: "REQUEST", category: "PART", title: "", description: "", deviceModel: "",
+    listingType: "REQUEST", category: "PART", title: "", description: "", deviceModel: "", imageUrl: "",
     province: "تهران", city: "تهران", showContact: true,
   });
   const [error, setError] = useState("");
@@ -248,6 +256,13 @@ function NewListingModal({
         <label className="block text-xs text-muted mb-1">مدل دستگاه (اختیاری)</label>
         <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
           value={form.deviceModel} onChange={(e) => setForm({ ...form, deviceModel: e.target.value })} />
+
+        <ImageUploader
+          label="عکس محصول (اختیاری — مثلاً عکس برد، قطعه یا گوشی)"
+          value={form.imageUrl}
+          onChange={(url) => setForm({ ...form, imageUrl: url })}
+          showUrlInput={false}
+        />
 
         <div className="flex gap-2 mb-4">
           <div className="flex-1">

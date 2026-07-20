@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
+import ImageUploader from "@/components/ImageUploader";
 
 const CONDITION_LABEL: Record<string, string> = { WORKING: "سالم", DEFECTIVE: "معیوب", FOR_PARTS: "برای قطعات" };
 
 type Item = {
-  id: string; imei: string | null; deviceModel: string; condition: string; purchasePrice: number; askingPrice: number | null;
+  id: string; imei: string | null; deviceModel: string; imageUrl: string | null; condition: string; purchasePrice: number; askingPrice: number | null;
   sourceName: string | null; status: string; soldPrice: number | null; buyerName: string | null; acquiredAt: string; soldAt: string | null;
 };
 
@@ -12,7 +13,7 @@ export default function DealerPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [tab, setTab] = useState<"IN_STOCK" | "SOLD">("IN_STOCK");
   const [notDealer, setNotDealer] = useState(false);
-  const [form, setForm] = useState({ imei: "", deviceModel: "", condition: "WORKING", purchasePrice: 0, askingPrice: 0, sourceName: "", sourcePhone: "" });
+  const [form, setForm] = useState({ imei: "", deviceModel: "", imageUrl: "", condition: "WORKING", purchasePrice: 0, askingPrice: 0, sourceName: "", sourcePhone: "" });
   const [sellId, setSellId] = useState<string | null>(null);
   const [sellForm, setSellForm] = useState({ soldPrice: 0, buyerName: "", buyerPhone: "" });
   const [error, setError] = useState("");
@@ -37,7 +38,7 @@ export default function DealerPage() {
       setError(err.message || "ثبت ناموفق بود");
       return;
     }
-    setForm({ imei: "", deviceModel: "", condition: "WORKING", purchasePrice: 0, askingPrice: 0, sourceName: "", sourcePhone: "" });
+    setForm({ imei: "", deviceModel: "", imageUrl: "", condition: "WORKING", purchasePrice: 0, askingPrice: 0, sourceName: "", sourcePhone: "" });
     load();
   }
 
@@ -106,6 +107,12 @@ export default function DealerPage() {
           <input className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="شماره تماس"
             value={form.sourcePhone} onChange={(e) => setForm({ ...form, sourcePhone: e.target.value })} />
         </div>
+        <ImageUploader
+          label="عکس گوشی (اختیاری)"
+          value={form.imageUrl}
+          onChange={(url) => setForm({ ...form, imageUrl: url })}
+          showUrlInput={false}
+        />
         {error && <p className="text-danger text-xs">{error}</p>}
         <button onClick={addItem} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">افزودن به موجودی</button>
       </div>
@@ -119,9 +126,17 @@ export default function DealerPage() {
         {filtered.length === 0 && <p className="text-xs text-muted text-center py-8">موردی نیست.</p>}
         {filtered.map((i) => (
           <div key={i.id} className="bg-surface2 border border-surface2 rounded-lg p-3 text-xs">
-            <div className="flex justify-between">
-              <span className="font-bold">{i.deviceModel} <span className="text-muted font-normal">({CONDITION_LABEL[i.condition]})</span></span>
-              <span className="mono">{i.purchasePrice.toLocaleString("fa-IR")} تومان</span>
+            <div className="flex justify-between items-start gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                {i.imageUrl && (
+                  <a href={i.imageUrl} target="_blank" rel="noreferrer" className="shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={i.imageUrl} alt="" className="w-12 h-12 rounded-lg object-cover border border-surface" />
+                  </a>
+                )}
+                <span className="font-bold">{i.deviceModel} <span className="text-muted font-normal">({CONDITION_LABEL[i.condition]})</span></span>
+              </div>
+              <span className="mono shrink-0">{i.purchasePrice.toLocaleString("fa-IR")} تومان</span>
             </div>
             {i.imei && <div className="text-muted mono mt-0.5">IMEI: {i.imei}</div>}
             {i.sourceName && <div className="text-muted mt-0.5">خریداری‌شده از: {i.sourceName}</div>}

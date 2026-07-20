@@ -8,6 +8,10 @@ export const dynamic = "force-dynamic";
 const ItemSchema = z.object({
   name: z.string().min(1),
   sku: z.string().optional(),
+  category: z.enum(["PART", "ACCESSORY", "PHONE", "TOOL", "OTHER"]).default("PART"),
+  deviceModel: z.string().optional(),
+  description: z.string().optional(),
+  imageUrl: z.string().optional(),
   quantity: z.number().int().min(0),
   lowStockAt: z.number().int().min(0).default(2),
   costPrice: z.number().int().min(0),
@@ -34,7 +38,14 @@ export async function POST(req: NextRequest) {
   try {
     const { shopId } = await requireSession();
     const body = ItemSchema.parse(await req.json());
-    const item = await db.inventoryItem.create({ data: { shopId, ...body } });
+    const item = await db.inventoryItem.create({
+      data: {
+        shopId, ...body,
+        deviceModel: body.deviceModel || null,
+        description: body.description || null,
+        imageUrl: body.imageUrl || null,
+      },
+    });
     return NextResponse.json({ item }, { status: 201 });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

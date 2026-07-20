@@ -254,6 +254,14 @@ model InventoryItem {
   shop        Shop     @relation(fields: [shopId], references: [id])
   name        String   // e.g. "LCD سامسونگ A54"
   sku         String?
+  // What kind of stock this is — lets a shop keep EVERYTHING phone-related
+  // in one place, not just repair parts:
+  // "PART" (قطعه) | "ACCESSORY" (لوازم جانبی) | "PHONE" (گوشی/دستگاه) |
+  // "TOOL" (ابزار تعمیر) | "OTHER" (سایر)
+  category    String   @default("PART")
+  deviceModel String?  // which device(s) it fits, e.g. "Samsung A54" — also used by the market↔inventory matcher
+  description String?  // free notes: grade, color, supplier, surplus info...
+  imageUrl    String?  // product photo (uploaded via /api/upload)
   quantity    Int      @default(0)
   lowStockAt  Int      @default(2)
   costPrice   Int      // toman, what the shop paid
@@ -349,6 +357,7 @@ model MarketListing {
   title        String
   description  String
   deviceModel  String?         // e.g. "Samsung A54" — makes search precise
+  imageUrl     String?         // photo of the part/product (uploaded via /api/upload)
 
   province     String
   city         String
@@ -388,7 +397,8 @@ model Message {
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   senderId       String
   sender         User         @relation(fields: [senderId], references: [id])
-  content        String
+  content        String       // may be empty when the message is image-only
+  imageUrl       String?      // attached photo (uploaded via /api/upload)
   createdAt      DateTime     @default(now())
 
   @@index([conversationId])
@@ -713,6 +723,7 @@ model PlatformCustomer {
   email        String?  // optional — enables password recovery via email too
   province     String?  // used as the default filter for "shops near me"
   city         String?
+  active       Boolean  @default(true) // platform admin can suspend a customer account
   createdAt    DateTime @default(now())
 
   ratings          Rating[]
@@ -768,6 +779,7 @@ model DealerInventory {
   shop          Shop              @relation(fields: [shopId], references: [id])
   imei          String?
   deviceModel   String
+  imageUrl      String?           // product photo (uploaded via /api/upload)
   condition     String            @default("WORKING") // "WORKING" | "DEFECTIVE" | "FOR_PARTS"
   purchasePrice Int               // toman, what the dealer paid
   askingPrice   Int?              // toman, listed sale price while in stock

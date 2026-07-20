@@ -100,6 +100,11 @@ export default function CustomerProfilePage() {
         <button onClick={changePassword} className="w-full bg-surface2 hover:bg-teal hover:text-[#0B1512] transition-colors font-bold rounded-lg py-2.5 text-sm">
           تغییر رمز عبور
         </button>
+        <p className="text-[11px] text-muted text-center mt-3">
+          رمز فعلی را به خاطر ندارید؟{" "}
+          <a href="/customer/forgot-password" className="text-teal font-semibold">بازیابی با کد پیامکی/ایمیل</a>
+          {" "}(اول از سیستم خارج شوید، بعد کد دریافت کنید)
+        </p>
       </div>
     </div>
   );

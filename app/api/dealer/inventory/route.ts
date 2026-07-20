@@ -26,6 +26,7 @@ export async function GET() {
 const CreateSchema = z.object({
   imei: z.string().optional(),
   deviceModel: z.string().min(1),
+  imageUrl: z.string().optional(),
   condition: z.enum(["WORKING", "DEFECTIVE", "FOR_PARTS"]).default("WORKING"),
   purchasePrice: z.number().int().min(0),
   askingPrice: z.number().int().min(0).optional(),
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
     await assertDealer(shopId);
 
     const body = CreateSchema.parse(await req.json());
-    const item = await db.dealerInventory.create({ data: { shopId, ...body } });
+    const item = await db.dealerInventory.create({ data: { shopId, ...body, imageUrl: body.imageUrl || null } });
 
     // Also log the acquisition on the public ownership chain, if we have
     // an IMEI and a named source (so /device-lookup shows the full history).

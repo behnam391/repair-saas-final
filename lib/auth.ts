@@ -75,7 +75,7 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.phone || !credentials?.password) return null;
 
         const customer = await db.platformCustomer.findUnique({ where: { phone: credentials.phone } });
-        if (!customer) return null;
+        if (!customer || !customer.active) return null; // suspended by platform admin
 
         const valid = await bcrypt.compare(credentials.password, customer.passwordHash);
         if (!valid) return null;
