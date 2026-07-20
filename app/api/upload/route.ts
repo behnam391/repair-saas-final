@@ -50,19 +50,48 @@ export async function POST(req: NextRequest) {
 
   const filename = `${Date.now()}-${randomBytes(6).toString("hex")}.${ext}`;
 
-  try {
-    if (process.env.BLOB_READ_WRITE_TOKEN) {
-      // Vercel Blob — dynamic import so local dev without the package's
-      // token (or even without the dependency installed yet) still works.
+  // ── Backend 1: Vercel Blob (production) ────────────────────────────
+  if (process.env.BLOB_READ_WRITE_TOKEN) {
+    try {
+      // Lazy import (and marked external in next.config.js) so the app
+      // still builds/runs before `npm install` has pulled the package.
       const { put } = await import("@vercel/blob");
       const blob = await put(`uploads/${filename}`, file, {
         access: "public",
         contentType: file.type,
       });
       return NextResponse.json({ url: blob.url });
+    } catch (e: any) {
+      console.error("[upload] Vercel Blob failed", e);
+      const missingPkg = e?.code === "MODULE_NOT_FOUND" || /Cannot find module/i.test(String(e?.message));
+      return NextResponse.json(
+        {
+          error: "blob_failed",
+          message: missingPkg
+            ? "پکیج @vercel/blob نصب نیست — یک‌بار «npm install» را در پوشه پروژه اجرا کنید."
+            : `آپلود به Vercel Blob ناموفق بود: ${e?.message ?? "خطای ناشناخته"} — توکن BLOB_READ_WRITE_TOKEN را بررسی کنید.`,
+        },
+        { status: 500 }
+      );
     }
+  }
 
-    // Local-dev fallback: write into ./public/uploads.
+  // ── No token + running on Vercel: filesystem is read-only, so writing
+  // to public/uploads is impossible. Tell the user exactly what to do
+  // instead of a generic failure.
+  if (process.env.VERCEL) {
+    return NextResponse.json(
+      {
+        error: "blob_token_missing",
+        message:
+          "روی Vercel بدون Blob Storage نمی‌توان فایل ذخیره کرد. در پنل Vercel → Storage → Blob یک استور بسازید (متغیر BLOB_READ_WRITE_TOKEN خودکار اضافه می‌شود) و دوباره دیپلوی کنید. فعلاً می‌توانید لینک مستقیم تصویر را بچسبانید.",
+      },
+      { status: 503 }
+    );
+  }
+
+  // ── Backend 2: local disk (development) ────────────────────────────
+  try {
     const dir = path.join(process.cwd(), "public", "uploads");
     await mkdir(dir, { recursive: true });
     const bytes = Buffer.from(await file.arrayBuffer());
@@ -72,8 +101,11 @@ export async function POST(req: NextRequest) {
       warning:
         "فایل به‌صورت محلی ذخیره شد. برای محیط واقعی (Vercel) حتماً BLOB_READ_WRITE_TOKEN را تنظیم کنید، وگرنه فایل‌ها بعد از هر دیپلوی پاک می‌شوند.",
     });
-  } catch (e) {
-    console.error("[upload] failed", e);
-    return NextResponse.json({ error: "upload_failed", message: "آپلود ناموفق بود" }, { status: 500 });
+  } catch (e: any) {
+    console.error("[upload] local write failed", e);
+    return NextResponse.json(
+      { error: "upload_failed", message: `ذخیره فایل ناموفق بود: ${e?.message ?? "خطای ناشناخته"}` },
+      { status: 500 }
+    );
   }
 }

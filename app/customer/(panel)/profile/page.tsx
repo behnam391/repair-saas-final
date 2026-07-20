@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { IRAN_PROVINCES, PROVINCE_NAMES } from "@/lib/iran-locations";
 
 export default function CustomerProfilePage() {
-  const [form, setForm] = useState({ name: "", province: "", city: "" });
+  const [form, setForm] = useState({ name: "", email: "", province: "", city: "" });
   const [phone, setPhone] = useState("");
   const [saved, setSaved] = useState(false);
 
@@ -19,7 +19,7 @@ export default function CustomerProfilePage() {
       if (res.ok) {
         const { customer } = await res.json();
         setPhone(customer.phone);
-        setForm({ name: customer.name ?? "", province: customer.province ?? "", city: customer.city ?? "" });
+        setForm({ name: customer.name ?? "", email: customer.email ?? "", province: customer.province ?? "", city: customer.city ?? "" });
       }
     })();
   }, []);
@@ -57,6 +57,11 @@ export default function CustomerProfilePage() {
       <label className="block text-xs text-muted mb-1">نام و نام خانوادگی</label>
       <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
         value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+
+      <label className="block text-xs text-muted mb-1">ایمیل (برای بازیابی رمز عبور)</label>
+      <input type="email" dir="ltr" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+        placeholder="you@example.com"
+        value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
 
       <div className="grid grid-cols-2 gap-2 mb-4">
         <div>

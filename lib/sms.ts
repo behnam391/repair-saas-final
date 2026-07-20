@@ -19,6 +19,17 @@ async function getCredentials() {
   }
 }
 
+/**
+ * Whether real SMS sending is possible at all (a Kavenegar API key exists
+ * either in platform settings or env). Used by the forgot-password flows
+ * to tell the user honestly that no code can be delivered yet — checked
+ * BEFORE any account lookup, so it never leaks which numbers exist.
+ */
+export async function isSmsConfigured() {
+  const { apiKey } = await getCredentials();
+  return !!apiKey;
+}
+
 export async function sendSms(to: string, message: string, sender?: string) {
   const { apiKey, sender: defaultSender } = await getCredentials();
   if (!apiKey) {

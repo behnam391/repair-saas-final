@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 const Schema = z.object({
   name: z.string().min(2).optional(),
+  email: z.string().email().optional().or(z.literal("")),
   province: z.string().optional(),
   city: z.string().optional(),
   // optional password change, requires the current password
@@ -20,7 +21,7 @@ export async function GET() {
     const { customerId } = await requireCustomer();
     const customer = await db.platformCustomer.findUniqueOrThrow({
       where: { id: customerId },
-      select: { id: true, name: true, phone: true, province: true, city: true, createdAt: true },
+      select: { id: true, name: true, phone: true, email: true, province: true, city: true, createdAt: true },
     });
     return NextResponse.json({ customer });
   } catch (e) {
@@ -32,10 +33,11 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const { customerId } = await requireCustomer();
-    const { name, province, city, currentPassword, newPassword } = Schema.parse(await req.json());
+    const { name, email, province, city, currentPassword, newPassword } = Schema.parse(await req.json());
 
     const data: Record<string, unknown> = {};
     if (name !== undefined) data.name = name;
+    if (email !== undefined) data.email = email || null;
     if (province !== undefined) data.province = province || null;
     if (city !== undefined) data.city = city || null;
 
@@ -54,7 +56,7 @@ export async function PATCH(req: NextRequest) {
     const updated = await db.platformCustomer.update({
       where: { id: customerId },
       data,
-      select: { id: true, name: true, phone: true, province: true, city: true },
+      select: { id: true, name: true, phone: true, email: true, province: true, city: true },
     });
     return NextResponse.json({ customer: updated });
   } catch (e) {

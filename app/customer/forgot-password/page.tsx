@@ -6,6 +6,7 @@ export default function CustomerForgotPasswordPage() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
   const [phone, setPhone] = useState("");
+  const [channel, setChannel] = useState<"sms" | "email">("sms");
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [msg, setMsg] = useState("");
@@ -18,14 +19,15 @@ export default function CustomerForgotPasswordPage() {
     const res = await fetch("/api/customer/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify({ phone, channel }),
     });
+    const data = await res.json().catch(() => ({}));
     setLoading(false);
     if (res.ok) {
-      setMsg("اگر این شماره ثبت شده باشد، کد ۵ رقمی پیامک شد.");
+      setMsg(data.message || (channel === "email" ? "اگر این شماره ثبت شده باشد، کد ۵ رقمی به ایمیل حساب ارسال شد." : "اگر این شماره ثبت شده باشد، کد ۵ رقمی پیامک شد."));
       setStep(2);
     } else {
-      setError("خطا در ارسال کد — دوباره تلاش کنید");
+      setError(data.message || "خطا در ارسال کد — دوباره تلاش کنید");
     }
   }
 
@@ -59,6 +61,25 @@ export default function CustomerForgotPasswordPage() {
         <label className="block text-xs text-muted mb-1">شماره موبایل</label>
         <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm mono"
           value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="09xxxxxxxxx" disabled={step === 2} />
+
+        {step === 1 && (
+          <>
+            <label className="block text-xs text-muted mb-2">کد بازیابی از طریق:</label>
+            <div className="flex bg-surface2 rounded-lg p-1 mb-4">
+              <button type="button" onClick={() => setChannel("sms")}
+                className={`flex-1 text-xs font-bold rounded-md py-2 transition ${channel === "sms" ? "bg-teal text-[#0B1512]" : "text-muted"}`}>
+                پیامک
+              </button>
+              <button type="button" onClick={() => setChannel("email")}
+                className={`flex-1 text-xs font-bold rounded-md py-2 transition ${channel === "email" ? "bg-teal text-[#0B1512]" : "text-muted"}`}>
+                ایمیل
+              </button>
+            </div>
+            {channel === "email" && (
+              <p className="text-[10px] text-muted mb-4">کد به ایمیلی که هنگام ثبت‌نام یا در پروفایل حساب مشتری ثبت کرده‌اید ارسال می‌شود.</p>
+            )}
+          </>
+        )}
 
         {step === 2 && (
           <>

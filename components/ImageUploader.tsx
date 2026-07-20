@@ -31,7 +31,7 @@ export default function ImageUploader({
       const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.message || "آپلود ناموفق بود");
+        setError(data.message || `آپلود ناموفق بود (خطای سرور ${res.status}) — لاگ ترمینال سرور را ببینید`);
       } else {
         onChange(data.url);
         if (data.warning) setWarning(data.warning);

@@ -710,6 +710,7 @@ model PlatformCustomer {
   name         String
   phone        String   @unique
   passwordHash String
+  email        String?  // optional — enables password recovery via email too
   province     String?  // used as the default filter for "shops near me"
   city         String?
   createdAt    DateTime @default(now())

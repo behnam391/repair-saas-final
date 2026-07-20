@@ -9,6 +9,7 @@ const Schema = z.object({
   name: z.string().min(2),
   phone: z.string().regex(/^09\d{9}$/, "شماره موبایل معتبر نیست"),
   password: z.string().min(6),
+  email: z.string().email("ایمیل معتبر نیست").optional().or(z.literal("")),
   province: z.string().optional(),
   city: z.string().optional(),
 });
@@ -19,7 +20,7 @@ const Schema = z.object({
 // login systems are fully independent.
 export async function POST(req: NextRequest) {
   try {
-    const { name, phone, password, province, city } = Schema.parse(await req.json());
+    const { name, phone, password, email, province, city } = Schema.parse(await req.json());
 
     const existing = await db.platformCustomer.findUnique({ where: { phone } });
     if (existing) {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await bcrypt.hash(password, 10);
     const customer = await db.platformCustomer.create({
-      data: { name, phone, passwordHash, province: province || null, city: city || null },
+      data: { name, phone, passwordHash, email: email || null, province: province || null, city: city || null },
     });
 
     return NextResponse.json({ ok: true, customerId: customer.id }, { status: 201 });

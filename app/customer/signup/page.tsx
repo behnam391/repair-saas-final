@@ -6,7 +6,7 @@ import { IRAN_PROVINCES, PROVINCE_NAMES } from "@/lib/iran-locations";
 
 export default function CustomerSignupPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", phone: "", password: "", province: "", city: "" });
+  const [form, setForm] = useState({ name: "", phone: "", password: "", email: "", province: "", city: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -54,6 +54,11 @@ export default function CustomerSignupPage() {
         <label className="block text-xs text-muted mb-1">رمز عبور (حداقل ۶ کاراکتر)</label>
         <input type="password" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-3 text-sm"
           value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+
+        <label className="block text-xs text-muted mb-1">ایمیل (اختیاری — برای بازیابی رمز عبور)</label>
+        <input type="email" dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-3 text-sm"
+          placeholder="you@example.com"
+          value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
 
         <div className="grid grid-cols-2 gap-2 mb-4">
           <div>
