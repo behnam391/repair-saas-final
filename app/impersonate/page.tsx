@@ -1,9 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 
-export default function ImpersonatePage() {
+function ImpersonateInner() {
   const params = useSearchParams();
   const router = useRouter();
   const [error, setError] = useState("");
@@ -18,9 +18,17 @@ export default function ImpersonatePage() {
     });
   }, [params]);
 
+  return <p className="text-sm text-muted">{error || "در حال ورود..."}</p>;
+}
+
+// useSearchParams() requires a <Suspense> boundary around it, or Next.js
+// fails to statically prerender this page during `next build`.
+export default function ImpersonatePage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <p className="text-sm text-muted">{error || "در حال ورود..."}</p>
+      <Suspense fallback={<p className="text-sm text-muted">در حال بارگذاری...</p>}>
+        <ImpersonateInner />
+      </Suspense>
     </div>
   );
 }
