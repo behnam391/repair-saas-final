@@ -11,7 +11,7 @@ const LANE_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SO
 
 type Staff = { id: string; name: string; phone: string; role: string; active: boolean };
 type ReportRow = { techId: string; name: string; role: string; closedCount: number; revenue: number };
-type ShopInfo = { id?: string; name: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null; taxPercent?: number };
+type ShopInfo = { id?: string; name: string; type?: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null; taxPercent?: number };
 type Template = { id: string; lane: string; label: string };
 
 export default function AdminPage() {
@@ -52,7 +52,7 @@ export default function AdminPage() {
     if (shopRes.ok) {
       const data = await shopRes.json();
       setShopInfo({
-        id: data.shop.id, name: data.shop.name, address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
+        id: data.shop.id, name: data.shop.name, type: data.shop.type ?? "REPAIR", address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
         bankCardNumber: data.shop.bankCardNumber ?? "", bankAccountNumber: data.shop.bankAccountNumber ?? "",
         latitude: data.shop.latitude ?? null, longitude: data.shop.longitude ?? null, province: data.shop.province ?? "",
         taxPercent: data.shop.taxPercent ?? 10,
@@ -92,7 +92,7 @@ export default function AdminPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: shopInfo.name, address: shopInfo.address, phone: shopInfo.phone,
+        name: shopInfo.name, type: shopInfo.type, address: shopInfo.address, phone: shopInfo.phone,
         bankCardNumber: shopInfo.bankCardNumber, bankAccountNumber: shopInfo.bankAccountNumber,
         latitude: shopInfo.latitude ?? undefined, longitude: shopInfo.longitude ?? undefined, province: shopInfo.province || undefined,
         taxPercent: shopInfo.taxPercent ?? undefined,
@@ -177,6 +177,24 @@ export default function AdminPage() {
       {/* Shop info / address / bank settings */}
       <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
         <div className="text-sm font-bold mb-3">اطلاعات مغازه</div>
+
+        <label className="block text-xs text-muted mb-2">نوع فعالیت مغازه</label>
+        <div className="flex bg-surface2 rounded-lg p-1 mb-4">
+          {[
+            ["REPAIR", "فقط تعمیرگاه"],
+            ["DEALER", "فقط خرید و فروش"],
+            ["BOTH", "هر دو"],
+          ].map(([val, label]) => (
+            <button key={val} type="button" onClick={() => setShopInfo({ ...shopInfo, type: val })}
+              className={`flex-1 text-[11px] font-bold rounded-md py-2 transition ${shopInfo.type === val ? "bg-copper text-[#1A1410]" : "text-muted"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {(shopInfo.type === "DEALER" || shopInfo.type === "BOTH") && (
+          <p className="text-[10px] text-teal mb-3">✅ بخش «خرید و فروش» حالا در نوار بالا فعال است.</p>
+        )}
+
         <label className="block text-xs text-muted mb-1">نام مغازه</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
           value={shopInfo.name} onChange={(e) => setShopInfo({ ...shopInfo, name: e.target.value })} />

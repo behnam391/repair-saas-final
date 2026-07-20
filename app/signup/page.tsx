@@ -19,7 +19,7 @@ const SPECIALTY_OPTIONS = [
 export default function SignupPage() {
   const router = useRouter();
   const [form, setForm] = useState({
-    shopName: "", address: "", landlinePhone: "", businessSize: "SOLO" as string, specialties: [] as string[],
+    shopName: "", address: "", landlinePhone: "", businessSize: "SOLO" as string, specialties: [] as string[], shopType: "REPAIR" as string,
     ownerName: "", nationalId: "", birthDate: "", phone: "", password: "",
   });
   const [error, setError] = useState("");
@@ -73,6 +73,20 @@ export default function SignupPage() {
         <p className="text-[11px] text-muted mb-4 -mt-2">
           {BUSINESS_SIZE_OPTIONS.find((o) => o.key === form.businessSize)?.desc}
         </p>
+
+        <label className="block text-xs text-muted mb-2">نوع فعالیت</label>
+        <div className="flex bg-surface2 rounded-lg p-1 mb-4">
+          {[
+            ["REPAIR", "تعمیرگاه"],
+            ["DEALER", "خرید و فروش"],
+            ["BOTH", "هر دو"],
+          ].map(([val, label]) => (
+            <button key={val} type="button" onClick={() => setForm({ ...form, shopType: val })}
+              className={`flex-1 text-xs font-bold rounded-md py-2 transition ${form.shopType === val ? "bg-copper text-[#1A1410]" : "text-muted"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
 
         <label className="block text-xs text-muted mb-2">تخصص‌های مغازه (می‌توانید چند مورد انتخاب کنید)</label>
         <div className="flex flex-wrap gap-1.5 mb-4">

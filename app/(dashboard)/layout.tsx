@@ -16,9 +16,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = session.user as any;
 
   let guideUrl: string | null = null;
+  let shopType: string | null = null;
   try {
     const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } });
     guideUrl = settings?.guideUrl ?? null;
+    const shop = await db.shop.findUnique({ where: { id: user.shopId }, select: { type: true } });
+    shopType = shop?.type ?? null;
   } catch {}
 
   return (
@@ -29,7 +32,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <div className="display-heading text-sm">{user.shopName}</div>
             <div className="text-[11px] text-muted">{user.name} · {roleLabel(user.role)}</div>
           </div>
-          <DashboardNav role={user.role} guideUrl={guideUrl} />
+          <DashboardNav role={user.role} guideUrl={guideUrl} shopType={shopType ?? undefined} />
           <div className="flex items-center gap-3 shrink-0">
             <ThemeToggle />
             <NotificationBell />

@@ -8,6 +8,7 @@ const SignupSchema = z.object({
   address: z.string().optional(),
   landlinePhone: z.string().optional(),
   businessSize: z.enum(["SOLO", "TEAM", "ENTERPRISE"]).default("SOLO"),
+  shopType: z.enum(["REPAIR", "DEALER", "BOTH"]).default("REPAIR"),
   specialties: z.array(z.enum(["HARDWARE", "SOFTWARE", "BOARD"])).default([]),
   ownerName: z.string().min(2),
   nationalId: z.string().optional(),
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
       const s = await tx.shop.create({
         data: {
           name: body.shopName,
+          type: body.shopType,
           address: body.address,
           landlinePhone: body.landlinePhone,
           businessSize: body.businessSize,

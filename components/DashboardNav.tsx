@@ -5,7 +5,7 @@ import Link from "next/link";
 type NavItem = { href: string; label: string; external?: boolean };
 type NavGroup = { label: string; items: NavItem[] };
 
-export default function DashboardNav({ role, guideUrl }: { role: string; guideUrl: string | null }) {
+export default function DashboardNav({ role, guideUrl, shopType }: { role: string; guideUrl: string | null; shopType?: string }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -85,6 +85,11 @@ export default function DashboardNav({ role, guideUrl }: { role: string; guideUr
         <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1 whitespace-nowrap text-xs">
           🏠 صفحه اصلی
         </Link>
+        {(shopType === "DEALER" || shopType === "BOTH") && (
+          <Link href="/dealer" className="bg-teal/15 text-teal font-bold rounded-full px-3 py-1 whitespace-nowrap text-xs">
+            💰 خرید و فروش
+          </Link>
+        )}
 
         {groups.map((g) => (
           <button

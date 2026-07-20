@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 const UpdateSchema = z.object({
   name: z.string().min(2).optional(),
+  type: z.enum(["REPAIR", "DEALER", "BOTH"]).optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
   bankCardNumber: z.string().optional(),

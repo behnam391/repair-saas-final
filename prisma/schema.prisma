@@ -64,6 +64,7 @@ model Shop {
   supportTickets     SupportTicket[]
   returns            ReturnRecord[]
   pendingIntakes     PendingIntake[]
+  dealerInventory    DealerInventory[]
   ratings            Rating[]
   partRequests       PartRequest[]
   referencePrices    ReferencePrice[]
@@ -700,4 +701,36 @@ model ExternalApiKey {
   apiKey    String   @unique
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
+}
+
+// ── Dealer inventory (phone buy/sell) ─────────────────────────
+// A shop with type "DEALER" or "BOTH" uses this to track phones it
+// currently holds in stock and phones it has sold. Selling a phone here
+// also creates a public DeviceTransaction record (same table used by
+// /device-lookup) so the ownership chain stays consistent everywhere.
+enum DealerStockStatus {
+  IN_STOCK
+  SOLD
+}
+
+model DealerInventory {
+  id            String            @id @default(cuid())
+  shopId        String
+  shop          Shop              @relation(fields: [shopId], references: [id])
+  imei          String?
+  deviceModel   String
+  condition     String            @default("WORKING") // "WORKING" | "DEFECTIVE" | "FOR_PARTS"
+  purchasePrice Int               // toman, what the dealer paid
+  askingPrice   Int?              // toman, listed sale price while in stock
+  sourceName    String?           // who the dealer bought it from
+  sourcePhone   String?
+  status        DealerStockStatus @default(IN_STOCK)
+  soldPrice     Int?
+  buyerName     String?
+  buyerPhone    String?
+  notes         String?
+  acquiredAt    DateTime          @default(now())
+  soldAt        DateTime?
+
+  @@index([shopId, status])
 }
