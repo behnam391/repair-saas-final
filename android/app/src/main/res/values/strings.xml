@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Peyvo</string>
+    <string name="title_activity_main">Peyvo</string>
+    <string name="package_name">com.peyvo.app</string>
+    <string name="custom_url_scheme">com.peyvo.app</string>
+</resources>

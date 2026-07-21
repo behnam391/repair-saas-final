@@ -97,8 +97,8 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
             key={g.label}
             ref={(el) => { btnRefs.current[g.label] = el; }}
             onClick={() => toggleGroup(g.label)}
-            className={`text-xs font-bold rounded-lg px-2.5 py-1.5 whitespace-nowrap transition ${
-              openGroup === g.label ? "bg-surface2 text-ink" : "text-ink hover:bg-surface2"
+            className={`text-xs font-bold rounded-lg px-2.5 py-1.5 whitespace-nowrap transition border-b-2 ${
+              openGroup === g.label ? "bg-surface2 text-ink border-copper" : "text-ink hover:bg-surface2 border-transparent"
             }`}
           >
             {g.label} ▾

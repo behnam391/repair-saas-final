@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Adaptive-icon foreground layer: just the Peyvo rings, no background,
+       scaled into Android's ~66% safe zone so it isn't clipped by masks. -->
+  <circle cx="196" cy="256" r="78" fill="none" stroke="#E08A3E" stroke-width="42"/>
+  <circle cx="316" cy="256" r="78" fill="none" stroke="#35C9A5" stroke-width="42"/>
+</svg>

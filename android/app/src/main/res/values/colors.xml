@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Peyvo brand palette, mirrored from app/globals.css's dark theme
+         tokens, so the native chrome (status bar, splash) matches the
+         copper/teal PCB identity used throughout the web app. -->
+    <color name="colorPrimary">#E08A3E</color>
+    <color name="colorPrimaryDark">#B5622A</color>
+    <color name="colorAccent">#35C9A5</color>
+</resources>
