@@ -122,6 +122,70 @@ input:focus, textarea:focus, select:focus {
 .repair-tag.tag-awaiting { border-inline-start-color: var(--color-danger); }
 .repair-tag.tag-awaiting::before { border-color: var(--color-danger); }
 
+/* ── Peyvo brand line ─────────────────────────────────────────
+   A thin gradient trace under the sticky header, sampled from the
+   actual Peyvo logo mark (blue → green) — gives every page the same
+   signature accent without touching per-page markup. */
+.brand-underline {
+  height: 2px;
+  background: linear-gradient(90deg, #008AE9, #62BE38);
+  opacity: .65;
+}
+
+/* Clickable/interactive cards lift slightly on hover — used on list
+   rows and cards throughout (tickets, market listings, inventory). */
+.card-hover {
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-copper);
+  box-shadow: 0 6px 16px rgba(0,0,0,.28);
+}
+[data-theme="light"] .card-hover:hover {
+  box-shadow: 0 6px 16px rgba(20,22,27,.12);
+}
+
+/* Gentle content fade-in on route change, applied to the <main> wrapper
+   in the dashboard/customer layouts — keeps navigation feeling alive
+   instead of an abrupt swap. */
+@keyframes peyvo-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-enter { animation: peyvo-fade-in .28s ease; }
+
+/* Stat tiles (admin/inventory dashboards) — consistent numeric-card look. */
+.stat-tile {
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  position: relative;
+  overflow: hidden;
+}
+.stat-tile::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: -20px;
+  top: -20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224,138,62,.18), transparent 70%);
+}
+
+/* Empty-state placeholder text — a bit of visual character instead of
+   plain gray sentences. */
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--color-muted);
+  font-size: 13px;
+  border: 1px dashed var(--color-border);
+  border-radius: 14px;
+}
+
 /* Global print rules: hide the app chrome (header/nav/ad banner) on any
    page, so print-friendly pages (like invoice printing) look clean
    without needing to render outside the normal dashboard layout. */
