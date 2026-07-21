@@ -1,0 +1,12 @@
+{
+  "appId": "com.peyvo.app",
+  "appName": "Peyvo",
+  "webDir": "android-shell",
+  "server": {
+    "url": "https://YOUR-PEYVO-DOMAIN.example.com",
+    "cleartext": false
+  },
+  "android": {
+    "backgroundColor": "#10121A"
+  }
+}
