@@ -1,4 +1,5 @@
 "use client";
+import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
 
@@ -96,10 +97,10 @@ export default function DealerPage() {
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="IMEI (اختیاری)"
           value={form.imei} onChange={(e) => setForm({ ...form, imei: e.target.value })} />
         <div className="flex gap-2">
-          <input type="number" className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="قیمت خرید"
-            value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: +e.target.value })} />
-          <input type="number" className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="قیمت پیشنهادی فروش"
-            value={form.askingPrice} onChange={(e) => setForm({ ...form, askingPrice: +e.target.value })} />
+          <input type="text" inputMode="numeric" dir="ltr" className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="قیمت خرید"
+            value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: num(e.target.value) })} />
+          <input type="text" inputMode="numeric" dir="ltr" className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="قیمت پیشنهادی فروش"
+            value={form.askingPrice} onChange={(e) => setForm({ ...form, askingPrice: num(e.target.value) })} />
         </div>
         <div className="flex gap-2">
           <input className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="نام فروشنده (از چه کسی خریدید)"
@@ -156,8 +157,8 @@ export default function DealerPage() {
             )}
             {sellId === i.id && (
               <div className="bg-surface rounded-lg p-2.5 mt-2 space-y-1.5">
-                <input type="number" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="قیمت فروش"
-                  value={sellForm.soldPrice} onChange={(e) => setSellForm({ ...sellForm, soldPrice: +e.target.value })} />
+                <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="قیمت فروش"
+                  value={sellForm.soldPrice} onChange={(e) => setSellForm({ ...sellForm, soldPrice: num(e.target.value) })} />
                 <input className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="نام خریدار"
                   value={sellForm.buyerName} onChange={(e) => setSellForm({ ...sellForm, buyerName: e.target.value })} />
                 <input className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="شماره خریدار (اختیاری)"

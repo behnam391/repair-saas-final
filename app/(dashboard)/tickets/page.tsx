@@ -1,4 +1,5 @@
 "use client";
+import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import PatternLockInput from "@/components/PatternLockInput";
@@ -232,7 +233,6 @@ function TicketDetail({
   onTransition: (id: string, action: string, targetLane?: string, extra?: Record<string, any>) => void;
 }) {
   const [referOpen, setReferOpen] = useState(false);
-  const [targetLane, setTargetLane] = useState("SOFTWARE");
   const [readyOpen, setReadyOpen] = useState(false);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [includeCard, setIncludeCard] = useState(false);
@@ -294,11 +294,11 @@ function TicketDetail({
             {isOwner ? (
               <div className="space-y-2 mt-2">
                 <label className="block text-[11px] text-muted">مبلغ نهایی تأییدشده (تومان)</label>
-                <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
-                  value={approvedCost} onChange={(e) => setApprovedCost(+e.target.value)} />
+                <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={approvedCost} onChange={(e) => setApprovedCost(num(e.target.value))} />
                 <label className="block text-[11px] text-muted">دستمزد این تعمیرکار (تومان)</label>
-                <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
-                  value={wage} onChange={(e) => setWage(+e.target.value)} />
+                <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={wage} onChange={(e) => setWage(num(e.target.value))} />
                 <div className="flex gap-2">
                   <button
                     onClick={() => onTransition(ticket.id, "approve-cost", undefined, { approvedCost, technicianWage: wage })}
@@ -341,8 +341,8 @@ function TicketDetail({
             {submitOpen && (
               <div className="bg-surface2 border border-surface2 rounded-lg p-3 mt-2.5 space-y-2">
                 <label className="block text-[11px] text-muted">هزینه پیشنهادی (تومان)</label>
-                <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
-                  value={reportedCost} onChange={(e) => setReportedCost(+e.target.value)} />
+                <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={reportedCost} onChange={(e) => setReportedCost(num(e.target.value))} />
                 <label className="block text-[11px] text-muted">یادداشت برای مدیر (قطعات مصرفی و...)</label>
                 <textarea className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
                   value={reportNote} onChange={(e) => setReportNote(e.target.value)} />
@@ -356,8 +356,8 @@ function TicketDetail({
             {readyOpen && (
               <div className="bg-surface2 border border-surface2 rounded-lg p-3 mt-2.5 space-y-2">
                 <label className="block text-[11px] text-muted">قیمت حدودی/نهایی (تومان) — در پیامک به مشتری درج می‌شود</label>
-                <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
-                  value={estimatedCost} onChange={(e) => setEstimatedCost(+e.target.value)} />
+                <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={estimatedCost} onChange={(e) => setEstimatedCost(num(e.target.value))} />
                 <label className="flex items-center gap-2 text-[11px] text-muted">
                   <input type="checkbox" checked={includeCard} onChange={(e) => setIncludeCard(e.target.checked)} />
                   ارسال شماره کارت مغازه در همین پیامک
@@ -370,22 +370,20 @@ function TicketDetail({
               </div>
             )}
             {referOpen && (
-              <div className="flex gap-2 mt-2.5">
-                <select
-                  value={targetLane}
-                  onChange={(e) => setTargetLane(e.target.value)}
-                  className="flex-1 bg-surface2 border border-surface2 rounded-lg px-2 text-xs"
-                >
+              <div className="bg-surface2 border border-surface2 rounded-xl p-3 mt-2.5">
+                <div className="text-[11px] text-muted mb-2 font-bold">به کدام بخش ارجاع شود؟</div>
+                <div className="flex flex-col gap-2">
                   {LANES.filter((l) => l.key !== ticket.lane && l.key !== "READY").map((l) => (
-                    <option key={l.key} value={l.key}>{l.label}</option>
+                    <button
+                      key={l.key}
+                      onClick={() => onTransition(ticket.id, "refer", l.key)}
+                      className="w-full flex items-center justify-between bg-surface border border-border rounded-xl px-4 py-3 text-sm font-bold hover:border-copper active:bg-copper/15 transition"
+                    >
+                      <span>{l.label}</span>
+                      <span className="text-copper">←</span>
+                    </button>
                   ))}
-                </select>
-                <button
-                  onClick={() => onTransition(ticket.id, "refer", targetLane)}
-                  className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-4"
-                >
-                  ارجاع
-                </button>
+                </div>
               </div>
             )}
           </>

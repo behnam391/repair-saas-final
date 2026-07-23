@@ -1,5 +1,7 @@
 "use client";
+import { num } from "@/lib/num";
 import { useState } from "react";
+import { formatJalaliDate } from "@/lib/jalali";
 
 const FLAG_LABEL: Record<string, string> = { STOLEN: "گزارش مسروقه", INSTALLMENT_DEBT: "بدهی قسط پرداخت‌نشده", OTHER: "سایر" };
 
@@ -73,7 +75,7 @@ export default function DeviceLookupPage() {
                       <div key={f.id} className="bg-danger/10 border border-danger/40 rounded-lg p-2.5 text-xs">
                         <div className="font-bold text-danger">{FLAG_LABEL[f.flagType]}</div>
                         <div className="mt-1">{f.note}</div>
-                        <div className="text-[10px] text-muted mt-1">{f.reporter.name} ({f.shop.name}) · {new Date(f.createdAt).toLocaleDateString("fa-IR")}</div>
+                        <div className="text-[10px] text-muted mt-1">{f.reporter.name} ({f.shop.name}) · {formatJalaliDate(f.createdAt)}</div>
                       </div>
                     ))}
                   </div>
@@ -96,7 +98,7 @@ export default function DeviceLookupPage() {
                         <div>{t.sellerName} → {t.buyerName}</div>
                         {t.price && <div className="mono text-muted mt-0.5">{t.price.toLocaleString("fa-IR")} تومان</div>}
                         {t.note && <div className="mt-1 text-[#C7CAD1]">{t.note}</div>}
-                        <div className="text-[10px] text-muted mt-1">ثبت توسط {t.shop.name} · {new Date(t.createdAt).toLocaleDateString("fa-IR")}</div>
+                        <div className="text-[10px] text-muted mt-1">ثبت توسط {t.shop.name} · {formatJalaliDate(t.createdAt)}</div>
                       </div>
                     ))}
                   </div>
@@ -118,7 +120,7 @@ export default function DeviceLookupPage() {
                           <span className="text-muted">{t.shop.name}</span>
                         </div>
                         <div className="text-[11px] text-muted mt-1">{t.issueInitial}</div>
-                        <div className="text-[10px] text-muted mt-1">{new Date(t.createdAt).toLocaleDateString("fa-IR")}</div>
+                        <div className="text-[10px] text-muted mt-1">{formatJalaliDate(t.createdAt)}</div>
                       </div>
                     ))}
                   </div>
@@ -183,8 +185,8 @@ function TxForm({ imei, onDone }: { imei: string; onDone: () => void }) {
         value={form.sellerName} onChange={(e) => setForm({ ...form, sellerName: e.target.value })} />
       <input className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="نام خریدار"
         value={form.buyerName} onChange={(e) => setForm({ ...form, buyerName: e.target.value })} />
-      <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="مبلغ (تومان)"
-        value={form.price} onChange={(e) => setForm({ ...form, price: +e.target.value })} />
+      <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="مبلغ (تومان)"
+        value={form.price} onChange={(e) => setForm({ ...form, price: num(e.target.value) })} />
       <textarea className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="توضیحات (اختیاری)"
         value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
       <button onClick={submit} className="w-full bg-copper text-[#1A1410] text-xs font-bold rounded-lg py-2">ثبت معامله</button>

@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import { Providers } from "./providers";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
+import DigitInputFixer from "@/components/DigitInputFixer";
 
 export const metadata: Metadata = {
   title: "Peyvo | پیوند تعمیرکار، فروشنده و مشتری",
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Providers>{children}</Providers>
         <ServiceWorkerRegister />
+        <DigitInputFixer />
       </body>
     </html>
   );

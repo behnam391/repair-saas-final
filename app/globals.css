@@ -13,6 +13,12 @@
    opacity modifiers work; --color-* composes them for plain CSS. */
 :root,
 [data-theme="dark"] {
+  /* Tell the browser this is a dark UI so NATIVE widgets (the <select>
+     dropdown list, checkboxes, scrollbars) render dark too — without this,
+     Windows/Chrome paints the options popup white while the inherited text
+     color stays near-white, making options invisible until hovered. */
+  color-scheme: dark;
+
   --rgb-copper: 53 169 255;        /* Peyvo blue, lifted for dark bg */
   --rgb-copper-deep: 0 114 201;
   --rgb-teal: 111 209 63;          /* Peyvo green, lifted */
@@ -44,6 +50,8 @@
 }
 
 [data-theme="light"] {
+  color-scheme: light;
+
   --rgb-copper: 0 119 214;
   --rgb-copper-deep: 0 92 168;
   --rgb-teal: 63 154 30;
@@ -196,6 +204,13 @@ input:focus, textarea:focus, select:focus {
   outline-offset: 1px;
 }
 input, textarea, select { color: var(--color-ink); }
+/* Belt-and-braces for the options popup: explicit solid colors (the
+   translucent surface tokens would compose unpredictably in the native
+   dropdown, so use the opaque page background). */
+select option {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+}
 ::selection { background: rgb(var(--rgb-copper) / 0.85); color: #fff; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb {

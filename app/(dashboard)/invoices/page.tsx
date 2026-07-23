@@ -1,5 +1,7 @@
 "use client";
+import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
+import { formatJalaliDate } from "@/lib/jalali";
 
 type Ticket = {
   id: string; no: number; deviceModel: string; lane: string; invoice: any;
@@ -133,10 +135,10 @@ export default function InvoicesPage() {
 
             <label className="block text-xs text-muted mb-1">هزینه دستمزد (تومان)</label>
             <input
-              type="number"
+              type="text" inputMode="numeric" dir="ltr"
               className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
               value={laborCost}
-              onChange={(e) => setLaborCost(+e.target.value)}
+              onChange={(e) => setLaborCost(num(e.target.value))}
             />
 
             <div className="flex justify-between items-center mb-2">
@@ -155,10 +157,10 @@ export default function InvoicesPage() {
                   ))}
                 </select>
                 <input
-                  type="number" min={1}
+                  type="text" inputMode="numeric" dir="ltr"
                   className="w-16 bg-surface2 border border-surface2 rounded-lg px-2 py-1.5 text-xs"
                   value={p.quantity}
-                  onChange={(e) => updatePart(idx, "quantity", +e.target.value)}
+                  onChange={(e) => updatePart(idx, "quantity", num(e.target.value))}
                 />
                 <button onClick={() => removePart(idx)} className="text-danger text-xs px-2">✕</button>
               </div>
@@ -191,8 +193,8 @@ export default function InvoicesPage() {
               editingInvoiceId === inv.id ? (
                 <div key={inv.id} className="bg-surface2 border border-copper rounded-lg p-3 text-xs space-y-2">
                   <label className="block text-[11px] text-muted">اجرت تعمیر (تومان)</label>
-                  <input type="number" className="w-full bg-surface rounded-lg px-2 py-1.5"
-                    value={editInvoiceForm.laborCost} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, laborCost: +e.target.value })} />
+                  <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface rounded-lg px-2 py-1.5"
+                    value={editInvoiceForm.laborCost} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, laborCost: num(e.target.value) })} />
                   <label className="flex items-center gap-2 text-[11px] text-muted">
                     <input type="checkbox" checked={editInvoiceForm.applyTax} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, applyTax: e.target.checked })} />
                     اعمال مالیات
@@ -217,7 +219,7 @@ export default function InvoicesPage() {
                     <span className="mono">{inv.total.toLocaleString("fa-IR")} تومان</span>
                   </div>
                   <div className="text-muted mt-1">
-                    {inv.ticket?.customer.name ?? inv.customerName ?? "مشتری متفرقه"} · {new Date(inv.createdAt).toLocaleDateString("fa-IR")}
+                    {inv.ticket?.customer.name ?? inv.customerName ?? "مشتری متفرقه"} · {formatJalaliDate(inv.createdAt)}
                     {" "}· <span className={inv.paid ? "text-teal" : "text-amber"}>{inv.paid ? "پرداخت‌شده" : "پرداخت‌نشده"}</span>
                   </div>
                   {inv.taxAmount > 0 && <div className="text-muted mt-0.5">شامل {inv.taxPercent}٪ مالیات ({inv.taxAmount.toLocaleString("fa-IR")} تومان)</div>}

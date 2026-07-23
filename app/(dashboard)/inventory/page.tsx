@@ -1,4 +1,5 @@
 "use client";
+import { num } from "@/lib/num";
 import { useEffect, useMemo, useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
 
@@ -126,23 +127,23 @@ export default function InventoryPage() {
           <div className="flex gap-2">
             <div className="flex-1">
               <label className="block text-[10px] text-muted mb-0.5">موجودی</label>
-              <input type="number" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs"
-                value={form.quantity} onChange={(e) => setForm({ ...form, quantity: +e.target.value })} />
+              <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs"
+                value={form.quantity} onChange={(e) => setForm({ ...form, quantity: num(e.target.value) })} />
             </div>
             <div className="flex-1">
               <label className="block text-[10px] text-muted mb-0.5">هشدار اتمام در</label>
-              <input type="number" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs"
-                value={form.lowStockAt} onChange={(e) => setForm({ ...form, lowStockAt: +e.target.value })} />
+              <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs"
+                value={form.lowStockAt} onChange={(e) => setForm({ ...form, lowStockAt: num(e.target.value) })} />
             </div>
             <div className="flex-1">
               <label className="block text-[10px] text-muted mb-0.5">قیمت خرید</label>
-              <input type="number" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs"
-                value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: +e.target.value })} />
+              <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs"
+                value={form.costPrice} onChange={(e) => setForm({ ...form, costPrice: num(e.target.value) })} />
             </div>
             <div className="flex-1">
               <label className="block text-[10px] text-muted mb-0.5">قیمت فروش</label>
-              <input type="number" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs"
-                value={form.sellPrice} onChange={(e) => setForm({ ...form, sellPrice: +e.target.value })} />
+              <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs"
+                value={form.sellPrice} onChange={(e) => setForm({ ...form, sellPrice: num(e.target.value) })} />
             </div>
           </div>
           <ImageUploader label="عکس کالا (اختیاری)" value={form.imageUrl}
@@ -176,10 +177,10 @@ export default function InventoryPage() {
               <textarea className="w-full bg-surface rounded-lg px-2 py-1.5" rows={2} placeholder="توضیحات"
                 value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
               <div className="flex gap-2">
-                <input type="number" placeholder="موجودی" className="flex-1 bg-surface rounded-lg px-2 py-1.5" value={editForm.quantity} onChange={(e) => setEditForm({ ...editForm, quantity: +e.target.value })} />
-                <input type="number" placeholder="هشدار اتمام" className="flex-1 bg-surface rounded-lg px-2 py-1.5" value={editForm.lowStockAt} onChange={(e) => setEditForm({ ...editForm, lowStockAt: +e.target.value })} />
-                <input type="number" placeholder="قیمت خرید" className="flex-1 bg-surface rounded-lg px-2 py-1.5" value={editForm.costPrice} onChange={(e) => setEditForm({ ...editForm, costPrice: +e.target.value })} />
-                <input type="number" placeholder="قیمت فروش" className="flex-1 bg-surface rounded-lg px-2 py-1.5" value={editForm.sellPrice} onChange={(e) => setEditForm({ ...editForm, sellPrice: +e.target.value })} />
+                <input type="text" inputMode="numeric" dir="ltr" placeholder="موجودی" className="flex-1 bg-surface rounded-lg px-2 py-1.5" value={editForm.quantity} onChange={(e) => setEditForm({ ...editForm, quantity: num(e.target.value) })} />
+                <input type="text" inputMode="numeric" dir="ltr" placeholder="هشدار اتمام" className="flex-1 bg-surface rounded-lg px-2 py-1.5" value={editForm.lowStockAt} onChange={(e) => setEditForm({ ...editForm, lowStockAt: num(e.target.value) })} />
+                <input type="text" inputMode="numeric" dir="ltr" placeholder="قیمت خرید" className="flex-1 bg-surface rounded-lg px-2 py-1.5" value={editForm.costPrice} onChange={(e) => setEditForm({ ...editForm, costPrice: num(e.target.value) })} />
+                <input type="text" inputMode="numeric" dir="ltr" placeholder="قیمت فروش" className="flex-1 bg-surface rounded-lg px-2 py-1.5" value={editForm.sellPrice} onChange={(e) => setEditForm({ ...editForm, sellPrice: num(e.target.value) })} />
               </div>
               <ImageUploader label="عکس کالا" value={editForm.imageUrl}
                 onChange={(url) => setEditForm({ ...editForm, imageUrl: url })} showUrlInput={false} />
