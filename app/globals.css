@@ -82,6 +82,13 @@
   --bloom-green: rgba(98, 190, 56, 0.14);
 }
 
+html, body {
+  /* Never let a stray wide element make the whole page scroll sideways —
+     that's what pushed the header/logout half off-screen on phones. */
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-ink);

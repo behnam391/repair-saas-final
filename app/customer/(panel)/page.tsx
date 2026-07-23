@@ -126,16 +126,16 @@ export default function CustomerShopsPage() {
         </select>
       </div>
 
-      <div className="flex gap-2 mb-3">
-        <input className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+      <div className="flex gap-2 mb-2">
+        <input className="flex-1 min-w-0 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
           placeholder="جستجوی نام مغازه..." value={q} onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && load()} />
-        <button onClick={() => load()} className="bg-surface2 rounded-lg px-3 py-2 text-sm">جستجو</button>
-        <button onClick={locateMe}
-          className={`rounded-lg px-3 py-2 text-sm whitespace-nowrap ${sortByDistance ? "bg-teal text-[#0B1512] font-bold" : "bg-surface2"}`}>
-          📍 نزدیک‌ترین‌ها
-        </button>
+        <button onClick={() => load()} className="bg-surface2 border border-border rounded-lg px-4 py-2 text-sm shrink-0">جستجو</button>
       </div>
+      <button onClick={locateMe}
+        className={`w-full rounded-lg px-3 py-2.5 text-sm font-bold mb-3 border transition ${sortByDistance ? "bg-teal text-white border-teal" : "bg-surface2 border-border"}`}>
+        📍 نزدیک‌ترین تعمیرگاه‌ها به من
+      </button>
 
       <div className="flex bg-surface2 rounded-lg p-1 mb-3">
         <button onClick={() => setView("list")}

@@ -17,15 +17,15 @@ export default async function CustomerPanelLayout({ children }: { children: Reac
   return (
     <div className="min-h-screen">
       <header className="glass-header sticky top-0 z-20 px-4 py-3">
-        <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
-          <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center justify-between gap-3 flex-wrap md:flex-nowrap">
+          <div className="flex items-center gap-2.5 shrink-0 min-w-0">
             <Logo size={26} withText={false} />
-            <div>
-              <div className="display-heading text-sm leading-tight">پنل مشتری Peyvo</div>
-              <div className="text-[11px] text-muted">{user.name}</div>
+            <div className="min-w-0">
+              <div className="display-heading text-sm leading-tight truncate">پنل مشتری Peyvo</div>
+              <div className="text-[11px] text-muted truncate">{user.name}</div>
             </div>
           </div>
-          <CustomerNav />
+          <CustomerNav userName={user.name} />
         </div>
         <div className="brand-underline -mx-4 mt-3" />
       </header>
