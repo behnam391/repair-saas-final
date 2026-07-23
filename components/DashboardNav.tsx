@@ -2,15 +2,28 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { LogoMark } from "./Logo";
 
-type NavItem = { href: string; label: string; external?: boolean };
-type NavGroup = { label: string; icon: string; items: NavItem[] };
+type NavItem = { href: string; label: string; icon: string; external?: boolean };
+type NavGroup = { label: string; items: NavItem[] };
 
-export default function DashboardNav({ role, guideUrl, shopType }: { role: string; guideUrl: string | null; shopType?: string }) {
+export default function DashboardNav({
+  role,
+  guideUrl,
+  shopType,
+  shopName,
+  userName,
+}: {
+  role: string;
+  guideUrl: string | null;
+  shopType?: string;
+  shopName?: string;
+  userName?: string;
+}) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
-  // Portal target only exists client-side; also, the sheet MUST be portaled
+  // Portal target only exists client-side; also, the drawer MUST be portaled
   // to <body>: the glass header's backdrop-filter turns the header into the
   // containing block for fixed-position descendants, which would trap and
   // clip a fixed overlay inside the header box.
@@ -30,7 +43,7 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  // Lock body scroll while the mobile sheet is open.
+  // Lock body scroll while the mobile drawer is open.
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -49,49 +62,44 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
   const groups: NavGroup[] = [
     {
       label: "عملیات",
-      icon: "🛠️",
       items: [
-        { href: "/inventory", label: "انبار قطعات" },
-        { href: "/sales", label: "فروش مستقیم" },
-        { href: "/invoices", label: "فاکتورها" },
-        { href: "/returns", label: "مرجوعی" },
-        { href: "/pending-intakes", label: "پذیرش QR" },
+        { href: "/inventory", label: "انبار قطعات", icon: "📦" },
+        { href: "/sales", label: "فروش مستقیم", icon: "🛒" },
+        { href: "/invoices", label: "فاکتورها", icon: "🧾" },
+        { href: "/returns", label: "مرجوعی", icon: "🔁" },
+        { href: "/pending-intakes", label: "پذیرش QR", icon: "🔳" },
       ],
     },
     {
       label: "ارتباطات",
-      icon: "💬",
       items: [
-        { href: "/market", label: "بازار سراسری" },
-        { href: "/chats", label: "چت‌ها" },
-        { href: "/device-lookup", label: "پرونده گوشی" },
+        { href: "/market", label: "بازار سراسری", icon: "🌐" },
+        { href: "/chats", label: "چت‌ها", icon: "💬" },
+        { href: "/device-lookup", label: "پرونده گوشی", icon: "🔎" },
       ],
     },
     {
       label: "مشتریان",
-      icon: "👥",
       items: [
-        { href: "/customers", label: "دفترچه مشتریان" },
-        { href: "/history", label: "سابقه و جستجو" },
+        { href: "/customers", label: "دفترچه مشتریان", icon: "👥" },
+        { href: "/history", label: "سابقه و جستجو", icon: "🕘" },
       ],
     },
     {
       label: "من",
-      icon: "⚙️",
       items: [
-        { href: "/profile", label: "پروفایل من" },
-        { href: "/support", label: "پشتیبانی" },
-        ...(guideUrl ? [{ href: guideUrl, label: "راهنمای سایت", external: true }] : []),
-        { href: "/about", label: "درباره ما" },
+        { href: "/profile", label: "پروفایل من", icon: "👤" },
+        { href: "/support", label: "پشتیبانی", icon: "🎧" },
+        ...(guideUrl ? [{ href: guideUrl, label: "راهنمای سایت", icon: "📘", external: true }] : []),
+        { href: "/about", label: "درباره ما", icon: "ℹ️" },
       ],
     },
     ...(role === "OWNER"
       ? [{
           label: "مدیریت",
-          icon: "📊",
           items: [
-            { href: "/admin", label: "پنل مدیریت" },
-            { href: "/admin/billing", label: "اشتراک و پرداخت" },
+            { href: "/admin", label: "پنل مدیریت", icon: "📊" },
+            { href: "/admin/billing", label: "اشتراک و پرداخت", icon: "💳" },
           ],
         }]
       : []),
@@ -102,8 +110,8 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
 
   return (
     <>
-      {/* ── Mobile (below md): quick pills + one «منو» button that opens a
-          full sheet with every category visible — no sideways swiping. */}
+      {/* ── Mobile (below md): quick pills + «منو» opening a Telegram-style
+          side drawer. */}
       <div className="flex md:hidden items-center gap-1.5 w-full order-last pt-1">
         <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1.5 whitespace-nowrap text-xs">
           🏠 صفحه اصلی
@@ -123,54 +131,45 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
 
       {mobileOpen && mounted && createPortal(
         <div className="fixed inset-0 z-[300] md:hidden" onClick={() => setMobileOpen(false)}>
-          <div className="absolute inset-0 bg-black/55" />
-          <div
+          <div className="absolute inset-0 bg-black/55 drawer-fade" />
+          <aside
             onClick={(e) => e.stopPropagation()}
-            className="nav-sheet absolute inset-x-0 top-0 rounded-b-3xl border-b border-border p-4 pb-6 max-h-[85vh] overflow-y-auto"
+            className="nav-sheet drawer-enter absolute inset-y-0 right-0 w-[80vw] max-w-[320px] overflow-y-auto rounded-s-3xl"
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="display-heading text-base">منو</span>
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="bg-surface2 rounded-full w-8 h-8 text-sm"
-                title="بستن"
-              >
-                ✕
-              </button>
-            </div>
-            {groups.map((g) => (
-              <div key={g.label} className="mb-4">
-                <div className="text-[11px] font-bold text-muted mb-2 flex items-center gap-1.5">
-                  <span>{g.icon}</span> {g.label}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  {g.items.map((item) =>
-                    item.external ? (
-                      <a
-                        key={item.href}
-                        href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={() => setMobileOpen(false)}
-                        className="bg-surface2 border border-border rounded-xl px-3 py-2.5 text-xs text-ink text-center"
-                      >
-                        {item.label} ↗
-                      </a>
-                    ) : (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className="bg-surface2 border border-border rounded-xl px-3 py-2.5 text-xs text-ink text-center"
-                      >
-                        {item.label}
-                      </Link>
-                    )
-                  )}
-                </div>
+            {/* Profile header — like Telegram's drawer top. */}
+            <div className="drawer-head px-4 pt-5 pb-4 rounded-ss-3xl">
+              <div className="bg-white/95 rounded-2xl w-12 h-12 flex items-center justify-center shadow-lg">
+                <LogoMark size={30} />
               </div>
-            ))}
-          </div>
+              <div className="mt-3 font-extrabold text-white text-sm">{shopName ?? "Peyvo"}</div>
+              <div className="text-white/85 text-[11px] mt-0.5">{userName ?? ""}</div>
+            </div>
+
+            {/* Quick actions */}
+            <nav className="py-1.5">
+              <DrawerRow href="/tickets" icon="🏠" label="صفحه اصلی" onGo={() => setMobileOpen(false)} bold />
+              {showDealer && (
+                <DrawerRow href="/dealer" icon="💰" label="خرید و فروش" onGo={() => setMobileOpen(false)} bold />
+              )}
+
+              {groups.map((g) => (
+                <div key={g.label}>
+                  <div className="h-px bg-border mx-4 my-1.5" />
+                  <div className="px-4 pt-1.5 pb-1 text-[10px] font-bold text-muted">{g.label}</div>
+                  {g.items.map((item) => (
+                    <DrawerRow
+                      key={item.href}
+                      href={item.href}
+                      icon={item.icon}
+                      label={item.label}
+                      external={item.external}
+                      onGo={() => setMobileOpen(false)}
+                    />
+                  ))}
+                </div>
+              ))}
+            </nav>
+          </aside>
         </div>,
         document.body
       )}
@@ -200,8 +199,8 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
         ))}
       </div>
 
-      {/* Rendered with fixed positioning at the viewport level so it's
-          never clipped by the sticky header's stacking/overflow context. */}
+      {/* Rendered at the body level so it's never clipped or trapped by the
+          glass header's backdrop-filter containing block. */}
       {activeGroup && menuPos && mounted && createPortal(
         <div
           data-nav-menu
@@ -213,12 +212,12 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
               <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer"
                 onClick={() => setOpenGroup(null)}
                 className="block px-3 py-2 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
-                {item.label} ↗
+                {item.icon} {item.label} ↗
               </a>
             ) : (
               <Link key={item.href} href={item.href} onClick={() => setOpenGroup(null)}
                 className="block px-3 py-2 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
-                {item.label}
+                {item.icon} {item.label}
               </Link>
             )
           )}
@@ -226,5 +225,36 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
         document.body
       )}
     </>
+  );
+}
+
+/* One flat Telegram-style drawer row: icon bubble + label. */
+function DrawerRow({
+  href,
+  icon,
+  label,
+  onGo,
+  external,
+  bold,
+}: {
+  href: string;
+  icon: string;
+  label: string;
+  onGo: () => void;
+  external?: boolean;
+  bold?: boolean;
+}) {
+  const cls = `flex items-center gap-3 px-4 py-2.5 text-[13px] active:bg-surface2 ${bold ? "font-bold" : ""}`;
+  const inner = (
+    <>
+      <span className="w-8 h-8 rounded-xl bg-surface2 flex items-center justify-center text-[15px] shrink-0">{icon}</span>
+      <span className="flex-1">{label}</span>
+      {external && <span className="text-muted text-[10px]">↗</span>}
+    </>
+  );
+  return external ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" onClick={onGo} className={cls}>{inner}</a>
+  ) : (
+    <Link href={href} onClick={onGo} className={cls}>{inner}</Link>
   );
 }

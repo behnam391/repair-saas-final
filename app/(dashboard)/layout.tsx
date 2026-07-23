@@ -38,7 +38,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <div className="text-[11px] text-muted">{user.name} · {roleLabel(user.role)}</div>
             </div>
           </div>
-          <DashboardNav role={user.role} guideUrl={guideUrl} shopType={shopType ?? undefined} />
+          <DashboardNav
+            role={user.role}
+            guideUrl={guideUrl}
+            shopType={shopType ?? undefined}
+            shopName={user.shopName}
+            userName={`${user.name} · ${roleLabel(user.role)}`}
+          />
           <div className="flex items-center gap-3 shrink-0">
             <ThemeToggle />
             <NotificationBell />

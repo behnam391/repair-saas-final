@@ -251,6 +251,22 @@ input, textarea, select { color: var(--color-ink); }
   box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgb(var(--rgb-copper) / 0.16);
 }
 
+/* Telegram-style mobile drawer: slides in from the right (RTL-natural),
+   overlay fades. */
+@keyframes peyvo-drawer-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes peyvo-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.drawer-enter { animation: peyvo-drawer-in .24s ease-out; }
+.drawer-fade { animation: peyvo-fade .24s ease-out; }
+.drawer-head {
+  background: linear-gradient(135deg, #008AE9, #2FA84F 90%);
+}
+
 /* Gentle content fade-in on route change. */
 @keyframes peyvo-fade-in {
   from { opacity: 0; transform: translateY(4px); }
