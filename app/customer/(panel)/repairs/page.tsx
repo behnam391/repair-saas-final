@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { formatJalaliDate } from "@/lib/jalali";
+import TicketChat from "@/components/TicketChat";
 
 type Repair = {
   id: string; no: number; deviceModel: string; status: string; lane: string;
@@ -22,6 +24,7 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
 export default function CustomerRepairsPage() {
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [loading, setLoading] = useState(true);
+  const [chatWith, setChatWith] = useState<Repair | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -51,7 +54,7 @@ export default function CustomerRepairsPage() {
             const st = STATUS_LABELS[r.status] ?? { label: r.status, cls: "bg-surface2 text-muted" };
             const tagCls = r.status === "READY" ? "tag-ready" : r.status === "IN_PROGRESS" ? "tag-progress" : "";
             return (
-              <div key={r.id} className={`repair-tag ${tagCls} bg-surface border border-surface2 rounded-xl p-3 text-xs`}>
+              <div key={r.id} className={`repair-tag card-hover ${tagCls} bg-surface border border-surface2 rounded-xl p-3 text-xs`}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="font-bold text-sm">{r.deviceModel}</div>
@@ -63,8 +66,8 @@ export default function CustomerRepairsPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-muted">
-                  <span>پذیرش: {new Date(r.createdAt).toLocaleDateString("fa-IR")}</span>
-                  {r.deliveredAt && <span>تحویل: {new Date(r.deliveredAt).toLocaleDateString("fa-IR")}</span>}
+                  <span>پذیرش: {formatJalaliDate(r.createdAt)}</span>
+                  {r.deliveredAt && <span>تحویل: {formatJalaliDate(r.deliveredAt)}</span>}
                   {r.invoice ? (
                     <span>
                       فاکتور: {r.invoice.total.toLocaleString("fa-IR")} تومان
@@ -77,16 +80,32 @@ export default function CustomerRepairsPage() {
                   ) : null}
                 </div>
 
-                <div className="flex gap-3 mt-2 pt-2 border-t border-surface2">
+                <div className="flex gap-3 mt-2 pt-2 border-t border-surface2 flex-wrap items-center">
+                  <button onClick={() => setChatWith(r)} className="text-copper font-bold">💬 گفتگو با مغازه</button>
                   <a href={`/shop/${r.shop.id}`} className="text-teal">صفحه مغازه ↗</a>
-                  {r.shop.phone && <a href={`tel:${r.shop.phone}`} className="text-copper">📞 تماس با تعمیرگاه</a>}
+                  {r.shop.phone && <a href={`tel:${r.shop.phone}`} className="text-muted">📞 تماس</a>}
                   {r.status === "DELIVERED" && !r.rated && (
-                    <a href={`/rate/${r.id}`} className="text-amber mr-auto">⭐ به این تعمیر امتیاز بدهید</a>
+                    <a href={`/rate/${r.id}`} className="text-amber mr-auto">⭐ امتیاز به این تعمیر</a>
                   )}
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {chatWith && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center px-4" onClick={() => setChatWith(null)}>
+          <div className="bg-surface border border-surface2 rounded-t-2xl sm:rounded-2xl p-4 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <div className="font-bold text-sm">گفتگو با {chatWith.shop.name}</div>
+                <div className="text-[11px] text-muted">{chatWith.deviceModel} · کد #{chatWith.no}</div>
+              </div>
+              <button onClick={() => setChatWith(null)} className="bg-surface2 rounded-full w-8 h-8 text-sm">✕</button>
+            </div>
+            <TicketChat endpoint={`/api/customer/repairs/${chatWith.id}/messages`} iAmCustomer />
+          </div>
         </div>
       )}
     </div>

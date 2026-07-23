@@ -282,6 +282,24 @@ select option {
   background: linear-gradient(135deg, #008AE9, #2FA84F 90%);
 }
 
+/* ── Leaflet / Neshan map guards ──────────────────────────────
+   The glass theme's global `* { transition }` and the ambient blur/
+   transform layers make Leaflet tiles animate their repositioning on
+   zoom — which shows as the map flashing then going blank. Kill all
+   transitions/filters inside the map, and give the pane a dark fallback
+   so a momentarily-missing tile reads as map-colored, not white. */
+.leaflet-container,
+.leaflet-container * {
+  transition: none !important;
+  animation: none !important;
+}
+.leaflet-container {
+  background: #0e1524 !important;
+}
+.leaflet-tile { will-change: auto !important; }
+.leaflet-pane img,
+.leaflet-tile { filter: none !important; }
+
 /* Gentle content fade-in on route change. */
 @keyframes peyvo-fade-in {
   from { opacity: 0; transform: translateY(4px); }

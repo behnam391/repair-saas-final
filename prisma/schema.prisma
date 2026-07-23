@@ -225,9 +225,28 @@ model Ticket {
   history       TicketHistory[]
   invoice       Invoice?
   partsUsed     TicketPart[]
+  messages      TicketMessage[]
 
   @@unique([shopId, no])
   @@index([shopId, lane, status])
+}
+
+// Two-way chat between the customer and the shop, scoped to a single repair
+// ticket. The customer reaches it from "تعمیرهای من"; the shop from the
+// ticket detail. `fromCustomer` marks the author side; `senderUserId` holds
+// the shop staff user id when the shop replies (null for customer messages).
+model TicketMessage {
+  id           String   @id @default(cuid())
+  ticketId     String
+  ticket       Ticket   @relation(fields: [ticketId], references: [id])
+  fromCustomer Boolean  // true = customer wrote it, false = shop staff wrote it
+  senderUserId String?  // shop user id when fromCustomer = false
+  content      String
+  createdAt    DateTime @default(now())
+  readByShop     Boolean @default(false)
+  readByCustomer Boolean @default(false)
+
+  @@index([ticketId])
 }
 
 // Every transition (intake, start, referral, completion) is logged here —

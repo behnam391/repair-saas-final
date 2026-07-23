@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import PatternLockInput from "@/components/PatternLockInput";
 import ComboBox from "@/components/ComboBox";
+import TicketChat from "@/components/TicketChat";
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار" },
@@ -235,6 +236,7 @@ function TicketDetail({
 }) {
   const [referOpen, setReferOpen] = useState(false);
   const [readyOpen, setReadyOpen] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [includeCard, setIncludeCard] = useState(false);
 
@@ -271,6 +273,22 @@ function TicketDetail({
         )}
 
         <ReferralFlow history={ticket.history} currentLane={ticket.lane} />
+
+        {/* Customer chat — collapsible, so the ticket detail stays compact. */}
+        <div className="mb-4">
+          <button
+            onClick={() => setShowChat((v) => !v)}
+            className="w-full flex items-center justify-between bg-surface2 border border-border rounded-xl px-3 py-2.5 text-xs font-bold"
+          >
+            <span>💬 گفتگو با مشتری</span>
+            <span className={`text-muted text-[10px] transition-transform ${showChat ? "rotate-180" : ""}`}>▼</span>
+          </button>
+          {showChat && (
+            <div className="bg-surface2/50 border border-border border-t-0 rounded-b-xl p-2 -mt-1">
+              <TicketChat endpoint={`/api/tickets/${ticket.id}/messages`} iAmCustomer={false} />
+            </div>
+          )}
+        </div>
 
         <div className="space-y-2.5 mb-5">
           {ticket.history.map((h, i) => (

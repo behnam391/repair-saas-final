@@ -44,6 +44,11 @@ export default function ShopsMap({
           zoom: myPos || withCoords.length ? 12 : 11,
         }}
         onInit={(L: any, myMap: any) => {
+          // The map is often mounted inside a tab/panel that was display:none
+          // a moment ago, so Leaflet computes a stale size and paints blank on
+          // first interaction. Recompute once things settle.
+          setTimeout(() => { try { myMap.invalidateSize(); } catch {} }, 250);
+          setTimeout(() => { try { myMap.invalidateSize(); } catch {} }, 800);
           for (const s of withCoords) {
             const marker = L.marker([s.latitude, s.longitude]).addTo(myMap);
             const stars = s.ratingCount > 0 ? `★ ${s.avgRating.toFixed(1)} (${s.ratingCount} نظر)` : "بدون امتیاز";
