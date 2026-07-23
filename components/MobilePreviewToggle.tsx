@@ -23,12 +23,14 @@ export default function MobilePreviewToggle() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="hidden md:flex items-center gap-2 fixed bottom-4 left-1/2 -translate-x-1/2 z-[400]
-                   bg-surface2 border border-border rounded-full px-4 py-2 text-xs font-bold shadow-lg
-                   hover:border-copper transition"
+        title="نمای موبایل"
+        aria-label="نمای موبایل"
+        className="hidden md:flex items-center justify-center fixed bottom-5 right-5 z-[400]
+                   w-11 h-11 bg-surface2 border border-border rounded-full text-lg shadow-lg
+                   hover:border-copper transition opacity-60 hover:opacity-100"
         style={{ backdropFilter: "blur(12px)" }}
       >
-        📱 نمای موبایل
+        📱
       </button>
 
       {open && (

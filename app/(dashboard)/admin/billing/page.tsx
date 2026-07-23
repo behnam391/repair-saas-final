@@ -25,6 +25,31 @@ export default function BillingPage() {
   const [duration, setDuration] = useState<number>(1);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [giftCode, setGiftCode] = useState("");
+  const [giftMsg, setGiftMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [redeeming, setRedeeming] = useState(false);
+
+  const PLAN_FA: Record<string, string> = { pro: "حرفه‌ای", business: "تجاری" };
+
+  async function redeemGift() {
+    if (!giftCode.trim()) return;
+    setRedeeming(true);
+    setGiftMsg(null);
+    const res = await fetch("/api/billing/redeem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: giftCode.trim() }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setRedeeming(false);
+    if (res.ok) {
+      setGiftMsg({ ok: true, text: `✅ اشتراک ${PLAN_FA[data.plan] ?? data.plan} به مدت ${data.months} ماه رایگان فعال شد!` });
+      setGiftCode("");
+      setTimeout(() => window.location.reload(), 1800);
+    } else {
+      setGiftMsg({ ok: false, text: data.message || "ثبت کد ناموفق بود" });
+    }
+  }
 
   async function upgrade(plan: "pro" | "business") {
     setError("");
@@ -49,6 +74,26 @@ export default function BillingPage() {
       {result === "failed" && <div className="bg-danger/20 text-danger text-xs rounded-lg p-3 mb-4">پرداخت ناموفق بود.</div>}
       {result === "cancelled" && <div className="bg-amber/20 text-amber text-xs rounded-lg p-3 mb-4">پرداخت لغو شد.</div>}
       {error && <p className="text-danger text-xs mb-3">{error}</p>}
+
+      {/* Gift code redemption */}
+      <div className="bg-surface border border-teal/40 rounded-xl p-4 mb-5">
+        <div className="text-sm font-bold mb-1">🎁 کد هدیه دارید؟</div>
+        <p className="text-[11px] text-muted mb-3">کد هدیه‌ای که از پشتیبانی Peyvo گرفته‌اید را وارد کنید تا اشتراک رایگان فعال شود.</p>
+        <div className="flex gap-2">
+          <input
+            value={giftCode}
+            onChange={(e) => setGiftCode(e.target.value.toUpperCase())}
+            placeholder="PEYVO-XXXXX"
+            dir="ltr"
+            className="flex-1 min-w-0 bg-surface2 border border-border rounded-lg px-3 py-2 text-sm mono text-center"
+          />
+          <button onClick={redeemGift} disabled={redeeming || !giftCode.trim()}
+            className="bg-teal text-white font-bold rounded-lg px-4 text-sm disabled:opacity-50 shrink-0">
+            {redeeming ? "..." : "ثبت کد"}
+          </button>
+        </div>
+        {giftMsg && <p className={`text-xs mt-2 ${giftMsg.ok ? "text-teal" : "text-danger"}`}>{giftMsg.text}</p>}
+      </div>
 
       <div className="flex gap-2 mb-5">
         {DURATIONS.map((d) => (

@@ -104,6 +104,22 @@ model Subscription {
   @@index([shopId])
 }
 
+// A gift/discount code the platform admin generates and hands to a shop.
+// Redeeming it grants a free paid subscription for `months` (no payment).
+// Single-use: once redeemed it records which shop and when.
+model GiftCode {
+  id               String    @id @default(cuid())
+  code             String    @unique // shown to the shop, e.g. "PEYVO-9F3K2"
+  plan             String    // "pro" | "business"
+  months           Int       @default(1) // free duration granted on redemption
+  note             String?   // admin's own note: campaign, recipient, reason
+  redeemedByShopId String?   // set when a shop redeems it
+  redeemedAt       DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([redeemedByShopId])
+}
+
 // ── Users (shop staff) ──────────────────────────────────────
 
 enum Role {
