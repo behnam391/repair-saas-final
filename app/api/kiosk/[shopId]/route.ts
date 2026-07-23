@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { DEVICE_BRANDS } from "@/lib/device-catalog";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,19 @@ export async function GET(req: NextRequest, { params }: { params: { shopId: stri
     return NextResponse.json({ shopName: shop.name, intakeStatus: intake?.status ?? null });
   }
 
-  return NextResponse.json({ shopName: shop.name });
+  // Brand/model catalog (static list + this shop's custom additions) so the
+  // customer picks from the same lists the shop uses — with free typing as
+  // fallback in the UI.
+  const catalog: Record<string, string[]> = JSON.parse(JSON.stringify(DEVICE_BRANDS));
+  try {
+    const custom = await db.customDeviceModel.findMany({ where: { shopId: params.shopId } });
+    for (const c of custom) {
+      if (!catalog[c.brand]) catalog[c.brand] = [];
+      if (!catalog[c.brand].includes(c.model)) catalog[c.brand].push(c.model);
+    }
+  } catch {}
+
+  return NextResponse.json({ shopName: shop.name, catalog });
 }
 
 // POST /api/kiosk/:shopId — public, no auth. Creates a PendingIntake that

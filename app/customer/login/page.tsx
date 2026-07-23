@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
 
 export default function CustomerLoginPage() {
   const router = useRouter();
@@ -26,6 +27,7 @@ export default function CustomerLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <form onSubmit={handleSubmit} className="w-full max-w-sm bg-surface border-t-2 border-t-teal border-x border-b border-surface2 rounded-2xl p-6">
+        <div className="flex justify-center mb-4"><Logo size={40} textClassName="text-xl" /></div>
         <h1 className="display-heading text-xl mb-1">ورود مشتریان</h1>
         <p className="text-xs text-muted mb-6">
           دنبال تعمیرگاه مطمئن می‌گردید؟ وارد شوید تا مغازه‌های اطراف، امتیازها و سابقه تعمیرهای خودتان را ببینید.
@@ -33,9 +35,10 @@ export default function CustomerLoginPage() {
 
         <label className="block text-xs text-muted mb-1">شماره موبایل</label>
         <input
-          className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm"
+          className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm mono"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          inputMode="tel" dir="ltr" maxLength={11}
           placeholder="09xxxxxxxxx"
         />
 

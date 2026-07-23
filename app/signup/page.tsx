@@ -35,8 +35,12 @@ export default function SignupPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError("");
+    if (!/^09\d{9}$/.test(form.phone.trim())) {
+      setError("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد");
+      return;
+    }
+    setLoading(true);
     const res = await fetch("/api/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -135,7 +139,8 @@ export default function SignupPage() {
           </div>
           <div className="mb-3">
             <label className="block text-xs text-muted mb-1">شماره موبایل</label>
-            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+              inputMode="tel" dir="ltr" maxLength={11} placeholder="09xxxxxxxxx"
               value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
           <div className="mb-4">

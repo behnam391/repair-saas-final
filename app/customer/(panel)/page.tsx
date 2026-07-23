@@ -179,7 +179,7 @@ export default function CustomerShopsPage() {
       ) : (
         <div className="space-y-2">
           {display.map((s) => (
-            <div key={s.id} className="bg-surface border border-surface2 rounded-xl p-3 text-xs">
+            <div key={s.id} className="bg-surface border border-surface2 rounded-xl p-3 text-xs card-hover">
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <div className="font-bold text-sm flex items-center gap-1.5 flex-wrap">

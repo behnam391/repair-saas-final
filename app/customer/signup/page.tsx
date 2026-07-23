@@ -48,7 +48,7 @@ export default function CustomerSignupPage() {
 
         <label className="block text-xs text-muted mb-1">شماره موبایل</label>
         <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-3 text-sm mono"
-          placeholder="09xxxxxxxxx"
+          placeholder="09xxxxxxxxx" inputMode="tel" dir="ltr" maxLength={11}
           value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
 
         <label className="block text-xs text-muted mb-1">رمز عبور (حداقل ۶ کاراکتر)</label>

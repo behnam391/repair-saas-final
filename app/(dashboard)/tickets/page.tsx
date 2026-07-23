@@ -3,6 +3,7 @@ import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import PatternLockInput from "@/components/PatternLockInput";
+import ComboBox from "@/components/ComboBox";
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار" },
@@ -415,6 +416,10 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
       setError("نام و شماره تماس مشتری را وارد کنید");
       return;
     }
+    if (step === 1 && !/^09\d{9}$/.test(form.customerPhone.trim())) {
+      setError("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد");
+      return;
+    }
     if (step === 2 && !form.deviceModel.trim()) {
       setError("برند و مدل دستگاه را انتخاب کنید");
       return;
@@ -425,7 +430,6 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
   const [catalog, setCatalog] = useState<Record<string, string[]>>({});
   const [favoriteBrands, setFavoriteBrands] = useState<string[]>([]);
   const [brand, setBrand] = useState("");
-  const [modelMode, setModelMode] = useState<"select" | "custom">("select");
   const [templates, setTemplates] = useState<{ id: string; lane: string; label: string }[]>([]);
 
   useEffect(() => {
@@ -482,61 +486,52 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
         </div>
 
         {step === 1 && (<>
-        {[
-          ["نام مشتری", "customerName", "text"],
-          ["شماره تماس", "customerPhone", "tel"],
-        ].map(([label, key, type]) => (
-          <div className="mb-3" key={key}>
-            <label className="block text-xs text-muted mb-1">{label}</label>
-            <input
-              type={type}
-              className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-              value={(form as any)[key]}
-              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-            />
-          </div>
-        ))}
+        <div className="mb-3">
+          <label className="block text-xs text-muted mb-1">نام مشتری</label>
+          <input
+            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+            value={form.customerName}
+            onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="block text-xs text-muted mb-1">شماره تماس</label>
+          <input
+            inputMode="tel" dir="ltr" maxLength={11} placeholder="09xxxxxxxxx"
+            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+            value={form.customerPhone}
+            onChange={(e) => setForm({ ...form, customerPhone: e.target.value })}
+          />
+        </div>
         </>)}
 
         {step === 2 && (<>
         <label className="block text-xs text-muted mb-1">برند گوشی</label>
-        <select
-          className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
-          value={brand}
-          onChange={(e) => { setBrand(e.target.value); setForm({ ...form, deviceModel: "" }); setModelMode("select"); }}
-        >
-          <option value="">انتخاب برند...</option>
-          {brandList.map((b) => <option key={b} value={b}>{b}{favoriteBrands.includes(b) ? " ⭐" : ""}</option>)}
-          <option value="__custom__">سایر / برند دیگر</option>
-        </select>
+        <div className="mb-3">
+          <ComboBox
+            value={brand}
+            onChange={(v) => { setBrand(v); setForm({ ...form, deviceModel: "" }); }}
+            options={brandList}
+            starred={favoriteBrands}
+            placeholder="انتخاب یا تایپ برند..."
+          />
+        </div>
 
-        {brand === "__custom__" ? (
-          <div className="mb-3">
-            <label className="block text-xs text-muted mb-1">نام برند و مدل (دستی)</label>
-            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-              value={form.deviceModel} onChange={(e) => setForm({ ...form, deviceModel: e.target.value })}
-              placeholder="مثلاً: Tecno Spark 10" />
-          </div>
-        ) : brand ? (
+        {brand && (
           <div className="mb-3">
             <label className="block text-xs text-muted mb-1">مدل</label>
-            {modelMode === "select" ? (
-              <select
-                className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-                value={form.deviceModel}
-                onChange={(e) => e.target.value === "__custom__" ? setModelMode("custom") : setForm({ ...form, deviceModel: e.target.value })}
-              >
-                <option value="">انتخاب مدل...</option>
-                {modelsForBrand.map((m) => <option key={m} value={`${brand} ${m}`}>{m}</option>)}
-                <option value="__custom__">مدل دیگر / نوشتن دستی</option>
-              </select>
-            ) : (
-              <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-                value={form.deviceModel} onChange={(e) => setForm({ ...form, deviceModel: e.target.value })}
-                placeholder={`${brand} ...`} />
-            )}
+            <ComboBox
+              value={
+                form.deviceModel.startsWith(`${brand} `)
+                  ? form.deviceModel.slice(brand.length + 1)
+                  : form.deviceModel
+              }
+              onChange={(m) => setForm({ ...form, deviceModel: m ? `${brand} ${m}` : "" })}
+              options={modelsForBrand}
+              placeholder="انتخاب یا تایپ مدل..."
+            />
           </div>
-        ) : null}
+        )}
 
         <div className="mb-1">
           <label className="block text-xs text-muted mb-1">IMEI (اختیاری)</label>
