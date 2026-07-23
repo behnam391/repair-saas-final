@@ -3,6 +3,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import JalaliDatePicker from "@/components/JalaliDatePicker";
 
 const BUSINESS_SIZE_OPTIONS = [
   { key: "SOLO", label: "تک‌نفره", desc: "خودم یک‌تنه همه‌کار را انجام می‌دهم" },
@@ -128,8 +129,8 @@ export default function SignupPage() {
             </div>
             <div>
               <label className="block text-xs text-muted mb-1">تاریخ تولد</label>
-              <input type="date" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
-                value={form.birthDate} onChange={(e) => setForm({ ...form, birthDate: e.target.value })} />
+              <JalaliDatePicker className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+                value={form.birthDate} onChange={(v) => setForm({ ...form, birthDate: v })} />
             </div>
           </div>
           <div className="mb-3">

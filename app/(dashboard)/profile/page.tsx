@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
+import JalaliDatePicker from "@/components/JalaliDatePicker";
 
 export default function ProfilePage() {
   const [form, setForm] = useState({
@@ -77,8 +78,8 @@ export default function ProfilePage() {
         </div>
         <div>
           <label className="block text-xs text-muted mb-1">تاریخ تولد</label>
-          <input type="date" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mono"
-            value={form.birthDate} onChange={(e) => setForm({ ...form, birthDate: e.target.value })} />
+          <JalaliDatePicker className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm"
+            value={form.birthDate} onChange={(v) => setForm({ ...form, birthDate: v })} />
         </div>
       </div>
 

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { PROVINCE_NAMES } from "@/lib/iran-locations";
 import LocationPicker from "@/components/LocationPicker";
+import JalaliDatePicker from "@/components/JalaliDatePicker";
 
 const ROLE_LABEL: Record<string, string> = {
   OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی",
@@ -162,13 +163,13 @@ export default function AdminPage() {
     <div className="p-4 max-w-xl mx-auto">
       <h1 className="display-heading text-lg mb-4">پنل مدیریت</h1>
 
-      <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4 mb-6 shadow-lg shadow-black/20">
+      <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4 mb-4 shadow-lg shadow-black/20">
         <div className="text-xs text-muted mb-1">درآمد ۳۰ روز اخیر</div>
         <div className="text-2xl font-extrabold mono text-copper">{monthRevenue.toLocaleString("fa-IR")} <span className="text-xs font-normal text-ink">تومان</span></div>
       </div>
 
       {/* ── Monthly revenue chart + Excel exports ─────────────────── */}
-      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+      <Section title="نمودار درآمد و خروجی اکسل" icon="📈" defaultOpen>
         <div className="text-sm font-bold mb-1">نمودار درآمد ۱۲ ماه اخیر</div>
         <p className="text-[10px] text-muted mb-3">
           <span className="text-copper">■</span> فاکتور تعمیر &nbsp;
@@ -205,9 +206,9 @@ export default function AdminPage() {
           </div>
           <p className="text-[10px] text-muted mt-2">فایل CSV با پشتیبانی فارسی — مستقیم در Excel یا Google Sheets باز می‌شود.</p>
         </div>
-      </div>
+      </Section>
 
-      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6 flex items-center justify-between">
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-4 flex items-center justify-between">
         <div>
           <div className="text-xs text-muted mb-1">سطح احراز هویت</div>
           <div className="text-sm font-bold">
@@ -225,9 +226,7 @@ export default function AdminPage() {
       </div>
 
       {/* Shop info / address / bank settings */}
-      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
-        <div className="text-sm font-bold mb-3">اطلاعات مغازه</div>
-
+      <Section title="اطلاعات مغازه" icon="🏪">
         <label className="block text-xs text-muted mb-2">نوع فعالیت مغازه</label>
         <div className="flex bg-surface2 rounded-lg p-1 mb-4">
           {[
@@ -302,12 +301,12 @@ export default function AdminPage() {
         <button onClick={saveShopInfo} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm">
           {shopSaved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
         </button>
-      </div>
+      </Section>
 
       {/* QR self-intake */}
       {shopInfo.id && (
-        <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6 text-center">
-          <div className="text-sm font-bold mb-1">کد QR پذیرش مشتری</div>
+        <Section title="کد QR پذیرش مشتری" icon="🔳">
+          <div className="text-center">
           <p className="text-[11px] text-muted mb-3">این کد را چاپ کرده و در مغازه نصب کنید؛ مشتری با اسکن آن می‌تواند مشخصات دستگاه خود را ثبت کند.</p>
           <img
             src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${typeof window !== "undefined" ? window.location.origin : ""}/kiosk/${shopInfo.id}`)}`}
@@ -315,22 +314,21 @@ export default function AdminPage() {
             className="mx-auto rounded-lg bg-white p-2"
           />
           <p className="text-[10px] text-muted mt-2 mono break-all">/kiosk/{shopInfo.id}</p>
-        </div>
+          </div>
+        </Section>
       )}
 
       {shopInfo.id && (
-        <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
-          <div className="text-sm font-bold mb-1">صفحه عمومی مغازه</div>
+        <Section title="صفحه عمومی مغازه" icon="🔗">
           <p className="text-[11px] text-muted mb-2">این لینک را با مشتریان به اشتراک بگذارید — آدرس، تماس، امتیاز و مسیریابی مغازه را نشان می‌دهد.</p>
           <a href={`/shop/${shopInfo.id}`} target="_blank" className="text-copper text-xs mono break-all">
             {typeof window !== "undefined" ? window.location.origin : ""}/shop/{shopInfo.id}
           </a>
-        </div>
+        </Section>
       )}
 
       {/* Favorite brands */}
-      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
-        <div className="text-sm font-bold mb-1">برندهای پرکاربرد</div>
+      <Section title="برندهای پرکاربرد" icon="⭐">
         <p className="text-[11px] text-muted mb-3">برندهایی که تیک بزنید، بالای لیست فرم پذیرش دستگاه نمایش داده می‌شوند.</p>
         <div className="flex flex-wrap gap-1.5">
           {Object.keys(catalog).map((brand) => (
@@ -342,11 +340,10 @@ export default function AdminPage() {
             </button>
           ))}
         </div>
-      </div>
+      </Section>
 
       {/* Issue templates */}
-      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
-        <div className="text-sm font-bold mb-3">الگوهای شرح ایراد</div>
+      <Section title="الگوهای شرح ایراد" icon="📝">
         <div className="flex gap-2 mb-3">
           <select className="bg-surface2 rounded-lg px-2 py-2 text-xs" value={newTemplateLane} onChange={(e) => setNewTemplateLane(e.target.value)}>
             {Object.entries(LANE_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
@@ -368,10 +365,10 @@ export default function AdminPage() {
             </div>
           </div>
         ))}
-      </div>
+      </Section>
 
-      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
-        <div className="text-sm font-bold mb-3">افزودن کارمند جدید</div>
+      <Section title="تیم و کارکنان" icon="👥">
+        <div className="text-xs font-bold mb-2">افزودن کارمند جدید</div>
         <input placeholder="نام" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
           value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input placeholder="شماره موبایل" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
@@ -386,26 +383,59 @@ export default function AdminPage() {
         <button onClick={addStaff} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm hover:brightness-110 transition">
           افزودن کارمند
         </button>
-      </div>
 
-      <div className="text-sm font-bold mb-2">اعضای تیم</div>
-      <div className="space-y-2 mb-6">
-        {staff.map((s) => (
-          <StaffRow key={s.id} staff={s} onSaved={load} />
-        ))}
-      </div>
+        <div className="text-xs font-bold mb-2 mt-5">اعضای تیم</div>
+        <div className="space-y-2">
+          {staff.map((s) => (
+            <StaffRow key={s.id} staff={s} onSaved={load} />
+          ))}
+        </div>
+      </Section>
 
-      <div className="text-sm font-bold mb-2">گزارش بهره‌وری (دستگاه‌های تحویل‌شده)</div>
-      <div className="space-y-2 mb-6">
-        {report.map((r) => (
-          <div key={r.techId} className="flex justify-between bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs">
-            <span>{r.name} · {ROLE_LABEL[r.role] ?? r.role}</span>
-            <span className="mono">{r.closedCount} دستگاه · {r.revenue.toLocaleString("fa-IR")} تومان</span>
-          </div>
-        ))}
-      </div>
+      <Section title="گزارش بهره‌وری" icon="📊">
+        <p className="text-[11px] text-muted mb-2">دستگاه‌های تحویل‌شده توسط هر تعمیرکار</p>
+        <div className="space-y-2">
+          {report.map((r) => (
+            <div key={r.techId} className="flex justify-between bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs">
+              <span>{r.name} · {ROLE_LABEL[r.role] ?? r.role}</span>
+              <span className="mono">{r.closedCount} دستگاه · {r.revenue.toLocaleString("fa-IR")} تومان</span>
+            </div>
+          ))}
+        </div>
+      </Section>
 
-      <PayrollReport />
+      <Section title="گزارش حقوق و دستمزد" icon="💵">
+        <PayrollReport />
+      </Section>
+    </div>
+  );
+}
+
+/* Collapsible admin section — same accordion pattern as the ticket lanes:
+   tap the header to open/close, chevron shows state. */
+function Section({
+  title,
+  icon,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  icon: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="bg-surface border border-surface2 rounded-xl mb-4">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex justify-between items-center px-4 py-3 text-right"
+      >
+        <span className="text-sm font-bold">{icon} {title}</span>
+        <span className={`text-muted text-[10px] transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
+      </button>
+      {open && <div className="px-4 pb-4">{children}</div>}
     </div>
   );
 }
@@ -431,16 +461,15 @@ function PayrollReport() {
 
   return (
     <div>
-      <div className="text-sm font-bold mb-2">گزارش حقوق و دستمزد</div>
       <p className="text-[11px] text-muted mb-3">مجموع دستمزد ثبت‌شده هر تعمیرکار در فاکتورهای این بازه (پیش‌فرض: ماه جاری)</p>
       <div className="flex gap-2 mb-3">
         <div className="flex-1">
           <label className="block text-[10px] text-muted mb-1">از تاریخ</label>
-          <input type="date" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <JalaliDatePicker className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" value={from} onChange={setFrom} />
         </div>
         <div className="flex-1">
           <label className="block text-[10px] text-muted mb-1">تا تاریخ</label>
-          <input type="date" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" value={to} onChange={(e) => setTo(e.target.value)} />
+          <JalaliDatePicker className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" value={to} onChange={setTo} />
         </div>
         <button onClick={load} className="self-end bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3 py-1.5">اعمال</button>
       </div>
