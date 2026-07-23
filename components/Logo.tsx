@@ -32,13 +32,24 @@ export default function Logo({
   textClassName?: string;
 }) {
   if (!withText) return <LogoMark size={size} />;
+  // Two variants: navy wordmark for light theme, white wordmark for dark —
+  // swapped purely with CSS so it reacts instantly to the theme toggle.
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src="/icons/logo-full.png"
-      alt="Peyvo"
-      style={{ height: size * 1.35, width: "auto", objectFit: "contain" }}
-      className={textClassName}
-    />
+    <span className="inline-flex">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/icons/logo-full.png"
+        alt="Peyvo"
+        style={{ height: size * 1.35, width: "auto", objectFit: "contain" }}
+        className={`${textClassName} block dark:hidden`}
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/icons/logo-full-dark.png"
+        alt="Peyvo"
+        style={{ height: size * 1.35, width: "auto", objectFit: "contain" }}
+        className={`${textClassName} hidden dark:block`}
+      />
+    </span>
   );
 }

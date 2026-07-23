@@ -4,37 +4,72 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-/* ── Design tokens ─────────────────────────────────────────
-   Grounded in the electronics-repair workbench: a dark PCB-blue
-   night backdrop, hot-solder copper as the primary accent, a
-   circuit-trace teal as the secondary signal color. */
+/* ── Peyvo Glass design tokens ────────────────────────────────
+   Glassmorphism identity built on the Peyvo brand: deep night-blue
+   backdrop with ambient blue→green light blooms (sampled from the
+   logo: #008AE9 → #62BE38), translucent frosted surfaces, soft
+   glass borders.
+   Accent colors are stored as RGB triples (--rgb-*) so Tailwind's
+   opacity modifiers work; --color-* composes them for plain CSS. */
 :root,
 [data-theme="dark"] {
-  --color-bg: #10121A;
-  --color-surface: #1A1D28;
-  --color-surface2: #232733;
-  --color-copper: #E08A3E;
-  --color-copper-deep: #B5622A;
-  --color-teal: #35C9A5;
-  --color-amber: #E7B84F;
-  --color-danger: #E0574A;
-  --color-muted: #8A90A3;
-  --color-ink: #F1F2F6;
-  --color-border: #2B2F3D;
+  --rgb-copper: 53 169 255;        /* Peyvo blue, lifted for dark bg */
+  --rgb-copper-deep: 0 114 201;
+  --rgb-teal: 111 209 63;          /* Peyvo green, lifted */
+  --rgb-amber: 255 194 75;
+  --rgb-danger: 255 107 94;
+  --rgb-muted: 148 164 194;
+  --rgb-ink: 242 246 252;
+
+  --color-bg: #0A0F1E;
+  --color-surface: rgba(148, 178, 255, 0.07);
+  --color-surface2: rgba(148, 178, 255, 0.12);
+  --color-border: rgba(160, 190, 255, 0.16);
+
+  --color-copper: rgb(var(--rgb-copper));
+  --color-copper-deep: rgb(var(--rgb-copper-deep));
+  --color-teal: rgb(var(--rgb-teal));
+  --color-amber: rgb(var(--rgb-amber));
+  --color-danger: rgb(var(--rgb-danger));
+  --color-muted: rgb(var(--rgb-muted));
+  --color-ink: rgb(var(--rgb-ink));
+
+  --glass-header: rgba(10, 15, 30, 0.55);
+  --glass-menu: rgba(15, 23, 46, 0.88);
+  --glass-highlight: rgba(255, 255, 255, 0.09);
+  --glass-shadow: 0 8px 28px rgba(2, 6, 20, 0.35);
+  --bloom-blue: rgba(0, 138, 233, 0.22);
+  --bloom-green: rgba(98, 190, 56, 0.13);
 }
 
 [data-theme="light"] {
-  --color-bg: #F6F4EF;
-  --color-surface: #FFFFFF;
-  --color-surface2: #EFEBE2;
-  --color-copper: #C06B28;
-  --color-copper-deep: #9A521E;
-  --color-teal: #1F7E68;
-  --color-amber: #B87F1E;
-  --color-danger: #B23A2E;
-  --color-muted: #6B7078;
-  --color-ink: #191B22;
-  --color-border: #E4DFD3;
+  --rgb-copper: 0 119 214;
+  --rgb-copper-deep: 0 92 168;
+  --rgb-teal: 63 154 30;
+  --rgb-amber: 169 123 20;
+  --rgb-danger: 194 59 46;
+  --rgb-muted: 90 107 133;
+  --rgb-ink: 19 32 58;
+
+  --color-bg: #EDF3FB;
+  --color-surface: rgba(255, 255, 255, 0.62);
+  --color-surface2: rgba(255, 255, 255, 0.82);
+  --color-border: rgba(19, 45, 90, 0.14);
+
+  --color-copper: rgb(var(--rgb-copper));
+  --color-copper-deep: rgb(var(--rgb-copper-deep));
+  --color-teal: rgb(var(--rgb-teal));
+  --color-amber: rgb(var(--rgb-amber));
+  --color-danger: rgb(var(--rgb-danger));
+  --color-muted: rgb(var(--rgb-muted));
+  --color-ink: rgb(var(--rgb-ink));
+
+  --glass-header: rgba(244, 249, 255, 0.6);
+  --glass-menu: rgba(255, 255, 255, 0.92);
+  --glass-highlight: rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 8px 28px rgba(30, 60, 110, 0.12);
+  --bloom-blue: rgba(0, 138, 233, 0.16);
+  --bloom-green: rgba(98, 190, 56, 0.14);
 }
 
 body {
@@ -42,14 +77,22 @@ body {
   color: var(--color-ink);
   font-family: 'Vazirmatn', sans-serif;
   transition: background-color .2s ease, color .2s ease;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(224,138,62,0.10) 1px, transparent 0);
-  background-size: 22px 22px;
 }
-[data-theme="light"] body {
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(192,107,40,0.12) 1px, transparent 0);
-  background-size: 22px 22px;
+
+/* Ambient light blooms behind everything — a fixed layer so the frosted
+   surfaces always have brand-colored light to refract, and scrolling
+   feels like moving over one continuous backdrop. (A fixed pseudo-element
+   is more reliable than background-attachment: fixed in mobile WebViews.) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1000px 640px at 88% -12%, var(--bloom-blue), transparent 62%),
+    radial-gradient(820px 560px at -12% 34%, var(--bloom-green), transparent 58%),
+    radial-gradient(760px 540px at 52% 112%, var(--bloom-blue), transparent 60%);
 }
 
 .mono { font-family: 'JetBrains Mono', monospace; }
@@ -57,27 +100,77 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Display heading treatment — tighter tracking, heavier weight,
-   used for page titles so they read as a brand voice, not body text. */
+/* Display heading treatment — brand voice for page titles. */
 .display-heading {
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(90deg, var(--color-ink), var(--color-copper) 140%);
+  background: linear-gradient(90deg, var(--color-ink), var(--color-copper) 150%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-/* ── Global visual polish ────────────────────────────────── */
-[class*="bg-surface"] {
-  box-shadow: 0 1px 2px rgba(0,0,0,.22), 0 1px 1px rgba(0,0,0,.10);
+/* ── Frosted glass surfaces ───────────────────────────────────
+   Every card/panel in the app uses bg-surface; the token itself is
+   translucent, and this rule adds the frost (blur) + a top light edge.
+   bg-surface2 (inputs, hover chips, subtle fills) stays un-blurred to
+   avoid nested backdrop-filter cost on long lists. */
+[class*="bg-surface"]:not([class*="bg-surface2"]) {
+  backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
 }
-[data-theme="light"] [class*="bg-surface"] {
-  box-shadow: 0 1px 3px rgba(20,22,27,.08), 0 1px 1px rgba(20,22,27,.04);
+
+/* Floating dropdown menus need to stay readable over busy content —
+   give them a denser glass than in-flow cards. */
+[data-nav-menu] {
+  background: var(--glass-menu) !important;
+  backdrop-filter: blur(22px) saturate(1.6);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  border-color: var(--color-border) !important;
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 16px 42px rgba(2, 6, 20, 0.45);
 }
-button[class*="bg-copper"], button[class*="bg-teal"] {
+
+/* Sticky app header — the strongest frost in the system. */
+.glass-header,
+header.sticky {
+  background: var(--glass-header) !important;
+  backdrop-filter: blur(20px) saturate(1.7);
+  -webkit-backdrop-filter: blur(20px) saturate(1.7);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────
+   Primary actions get the brand gradient (blue) / (green) with white
+   text — overrides the legacy dark text-[#1A1410] utility used on the
+   old copper theme, so no per-page edits are needed. */
+button[class*="bg-copper"], a[class*="bg-copper"] {
+  color: #fff !important;
+  background-image: linear-gradient(135deg, rgb(var(--rgb-copper)), rgb(var(--rgb-copper-deep)));
+  border: none;
+}
+button[class*="bg-teal"], a[class*="bg-teal"] {
+  color: #fff !important;
+  background-image: linear-gradient(135deg, rgb(var(--rgb-teal)), rgb(var(--rgb-teal) / 0.75));
+}
+/* ...but tinted chips/badges (bg-copper/15 etc.) are NOT solid buttons —
+   let them keep their own text color and stay translucent. */
+button[class*="bg-copper/"], a[class*="bg-copper/"],
+button[class*="bg-teal/"], a[class*="bg-teal/"] {
+  color: inherit !important;
+  background-image: none;
+}
+button[class*="bg-copper"], button[class*="bg-teal"],
+a[class*="bg-copper"], a[class*="bg-teal"] {
   transition: transform .12s ease, filter .15s ease, box-shadow .15s ease;
-  background-image: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0) 60%);
+}
+button[class*="bg-copper"]:not([class*="bg-copper/"]),
+a[class*="bg-copper"]:not([class*="bg-copper/"]) {
+  box-shadow: 0 6px 18px rgb(var(--rgb-copper) / 0.35);
+}
+button[class*="bg-teal"]:not([class*="bg-teal/"]),
+a[class*="bg-teal"]:not([class*="bg-teal/"]) {
+  box-shadow: 0 6px 18px rgb(var(--rgb-teal) / 0.30);
 }
 button[class*="bg-copper"]:hover, button[class*="bg-teal"]:hover {
   filter: brightness(1.08);
@@ -86,18 +179,24 @@ button[class*="bg-copper"]:hover, button[class*="bg-teal"]:hover {
 button[class*="bg-copper"]:active, button[class*="bg-teal"]:active {
   transform: translateY(0);
 }
+
 input:focus, textarea:focus, select:focus {
-  outline: 2px solid var(--color-copper);
+  outline: 2px solid rgb(var(--rgb-copper) / 0.75);
   outline-offset: 1px;
 }
-::selection { background: var(--color-copper); color: #fff; }
+input, textarea, select { color: var(--color-ink); }
+::selection { background: rgb(var(--rgb-copper) / 0.85); color: #fff; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--color-surface2); border-radius: 8px; }
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--rgb-muted) / 0.35);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--rgb-muted) / 0.55); }
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* ── Repair-tag card signature ───────────────────────────────
-   Ticket cards get a punch-hole + perforated stub edge, like a
-   real workshop repair tag clipped to a device. */
+   Ticket cards keep their punch-hole + colored stub edge — now with
+   brand-blue as the default state color. */
 .repair-tag {
   position: relative;
   border-inline-start: 3px solid var(--color-copper);
@@ -123,39 +222,32 @@ input:focus, textarea:focus, select:focus {
 .repair-tag.tag-awaiting::before { border-color: var(--color-danger); }
 
 /* ── Peyvo brand line ─────────────────────────────────────────
-   A thin gradient trace under the sticky header, sampled from the
-   actual Peyvo logo mark (blue → green) — gives every page the same
-   signature accent without touching per-page markup. */
+   Thin gradient trace under the sticky header, sampled from the logo
+   (blue → green). */
 .brand-underline {
   height: 2px;
   background: linear-gradient(90deg, #008AE9, #62BE38);
-  opacity: .65;
+  opacity: .8;
 }
 
-/* Clickable/interactive cards lift slightly on hover — used on list
-   rows and cards throughout (tickets, market listings, inventory). */
+/* Clickable cards lift and glow with brand light on hover. */
 .card-hover {
   transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
 .card-hover:hover {
   transform: translateY(-2px);
-  border-color: var(--color-copper);
-  box-shadow: 0 6px 16px rgba(0,0,0,.28);
-}
-[data-theme="light"] .card-hover:hover {
-  box-shadow: 0 6px 16px rgba(20,22,27,.12);
+  border-color: rgb(var(--rgb-copper) / 0.55);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgb(var(--rgb-copper) / 0.16);
 }
 
-/* Gentle content fade-in on route change, applied to the <main> wrapper
-   in the dashboard/customer layouts — keeps navigation feeling alive
-   instead of an abrupt swap. */
+/* Gentle content fade-in on route change. */
 @keyframes peyvo-fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
 .page-enter { animation: peyvo-fade-in .28s ease; }
 
-/* Stat tiles (admin/inventory dashboards) — consistent numeric-card look. */
+/* Stat tiles — frosted numeric cards with a corner light bloom. */
 .stat-tile {
   border-radius: 14px;
   padding: 14px 16px;
@@ -163,6 +255,9 @@ input:focus, textarea:focus, select:focus {
   border: 1px solid var(--color-border);
   position: relative;
   overflow: hidden;
+  backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
 }
 .stat-tile::after {
   content: '';
@@ -172,11 +267,10 @@ input:focus, textarea:focus, select:focus {
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(224,138,62,.18), transparent 70%);
+  background: radial-gradient(circle, rgb(var(--rgb-copper) / 0.22), transparent 70%);
 }
 
-/* Empty-state placeholder text — a bit of visual character instead of
-   plain gray sentences. */
+/* Empty-state placeholder. */
 .empty-state {
   text-align: center;
   padding: 32px 16px;
@@ -186,10 +280,20 @@ input:focus, textarea:focus, select:focus {
   border-radius: 14px;
 }
 
-/* Global print rules: hide the app chrome (header/nav/ad banner) on any
-   page, so print-friendly pages (like invoice printing) look clean
-   without needing to render outside the normal dashboard layout. */
+/* Global print rules: kill the glass (translucent surfaces print as
+   mud) and hide app chrome so invoices come out clean. */
 @media print {
   header, .no-print { display: none !important; }
   body { background: white !important; color: black !important; }
+  body::before { display: none !important; }
+  :root, [data-theme="dark"], [data-theme="light"] {
+    --color-surface: #ffffff;
+    --color-surface2: #f3f4f6;
+    --color-border: #d7dbe3;
+  }
+  [class*="bg-surface"], .stat-tile {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
 }

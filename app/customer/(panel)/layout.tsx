@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import CustomerNav from "@/components/CustomerNav";
+import Logo from "@/components/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -15,16 +16,20 @@ export default async function CustomerPanelLayout({ children }: { children: Reac
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-surface2 sticky top-0 bg-bg/90 backdrop-blur z-20 px-4 py-3">
+      <header className="glass-header sticky top-0 z-20 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
-          <div className="shrink-0">
-            <div className="display-heading text-sm">پنل مشتری</div>
-            <div className="text-[11px] text-muted">{user.name}</div>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Logo size={26} withText={false} />
+            <div>
+              <div className="display-heading text-sm leading-tight">پنل مشتری Peyvo</div>
+              <div className="text-[11px] text-muted">{user.name}</div>
+            </div>
           </div>
           <CustomerNav />
         </div>
+        <div className="brand-underline -mx-4 mt-3" />
       </header>
-      <main>{children}</main>
+      <main className="page-enter">{children}</main>
     </div>
   );
 }

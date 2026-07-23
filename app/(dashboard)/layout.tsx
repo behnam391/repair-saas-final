@@ -6,6 +6,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
 import AdBanner from "@/components/AdBanner";
 import DashboardNav from "@/components/DashboardNav";
+import Logo from "@/components/Logo";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -26,11 +27,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen">
-      <header className="border-b border-surface2 sticky top-0 bg-bg/90 backdrop-blur z-20 px-4 py-3">
+      <header className="glass-header sticky top-0 z-20 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
-          <div className="shrink-0">
-            <div className="display-heading text-sm">{user.shopName}</div>
-            <div className="text-[11px] text-muted">{user.name} · {roleLabel(user.role)}</div>
+          <div className="flex items-center gap-2.5 shrink-0">
+            <Logo size={26} withText={false} />
+            <div>
+              <div className="display-heading text-sm leading-tight">{user.shopName}</div>
+              <div className="text-[11px] text-muted">{user.name} · {roleLabel(user.role)}</div>
+            </div>
           </div>
           <DashboardNav role={user.role} guideUrl={guideUrl} shopType={shopType ?? undefined} />
           <div className="flex items-center gap-3 shrink-0">
@@ -39,6 +43,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <LogoutButton />
           </div>
         </div>
+        <div className="brand-underline -mx-4 mt-3" />
       </header>
       {user.isImpersonated && (
         <div className="no-print bg-danger/15 border-b border-danger/40 text-danger text-xs px-4 py-2 text-center font-semibold">
@@ -46,7 +51,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       )}
       <div className="no-print"><AdBanner /></div>
-      <main>{children}</main>
+      <main className="page-enter">{children}</main>
     </div>
   );
 }
