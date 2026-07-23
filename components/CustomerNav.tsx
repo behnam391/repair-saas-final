@@ -13,7 +13,7 @@ const LINKS = [
 export default function CustomerNav() {
   const pathname = usePathname();
   return (
-    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar w-full order-last pt-1 sm:w-auto sm:order-none sm:pt-0">
       {LINKS.map((l) => {
         const active = l.href === "/customer" ? pathname === "/customer" : pathname.startsWith(l.href);
         return (

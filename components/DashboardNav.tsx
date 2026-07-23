@@ -82,7 +82,13 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
 
   return (
     <>
-      <div ref={containerRef} className="flex items-center gap-1 flex-1 justify-center flex-wrap">
+      {/* Mobile: full-width swipeable strip on its own line (order-last drops it
+          below the identity/actions row). Desktop: centered, wrapping, in-row. */}
+      <div
+        ref={containerRef}
+        className="flex items-center gap-1 w-full order-last overflow-x-auto no-scrollbar pt-1 -mb-1
+                   md:w-auto md:order-none md:flex-1 md:justify-center md:flex-wrap md:overflow-visible md:pt-0 md:mb-0"
+      >
         <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1 whitespace-nowrap text-xs">
           🏠 صفحه اصلی
         </Link>

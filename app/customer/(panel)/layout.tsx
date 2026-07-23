@@ -17,7 +17,7 @@ export default async function CustomerPanelLayout({ children }: { children: Reac
   return (
     <div className="min-h-screen">
       <header className="glass-header sticky top-0 z-20 px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
           <div className="flex items-center gap-2.5 shrink-0">
             <Logo size={26} withText={false} />
             <div>

@@ -28,7 +28,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="min-h-screen">
       <header className="glass-header sticky top-0 z-20 px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
+        {/* Mobile: two tiers — identity + actions on the first line, nav on its
+            own swipeable line below. Desktop (md+): everything on one row. */}
+        <div className="flex items-center justify-between gap-3 flex-wrap md:flex-nowrap">
           <div className="flex items-center gap-2.5 shrink-0">
             <Logo size={26} withText={false} />
             <div>
