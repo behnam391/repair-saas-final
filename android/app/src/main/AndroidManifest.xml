@@ -38,4 +38,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Location: lets the in-app map's «nearest shops» feature ask for and
+         use the device location (the WebView still shows the OS permission
+         prompt the first time). -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 </manifest>

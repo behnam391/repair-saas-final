@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 
 // react-neshan-map-leaflet touches window/document on import — client only.
@@ -24,6 +25,7 @@ export default function ShopsMap({
   myPos: { lat: number; lng: number } | null;
 }) {
   const withCoords = shops.filter((s) => s.latitude != null && s.longitude != null);
+  const [tileError, setTileError] = useState(false);
 
   // Center on the user if located, else the first shop, else Tehran.
   const center: [number, number] = myPos
@@ -33,7 +35,17 @@ export default function ShopsMap({
       : [35.6892, 51.389];
 
   return (
-    <div className="rounded-xl overflow-hidden border border-surface2" style={{ height: 380 }}>
+    <div className="relative rounded-xl overflow-hidden border border-surface2" style={{ height: 380 }}>
+      {tileError && (
+        <div className="absolute inset-0 z-[500] bg-bg/95 flex flex-col items-center justify-center text-center px-6 gap-2">
+          <div className="text-2xl">🗺️</div>
+          <p className="text-xs font-bold text-amber">نقشه بارگذاری نشد</p>
+          <p className="text-[11px] text-muted leading-5">
+            کلید نقشه نشان معتبر نیست یا برای دامنه‌ی این سایت مجاز نشده. مدیر پلتفرم باید در پنل نشان،
+            دامنه‌ی سایت را به کلید اضافه کند. فعلاً از نمای «فهرست» و دکمه‌ی «مسیریابی» هر مغازه استفاده کنید.
+          </p>
+        </div>
+      )}
       <NeshanMap
         options={{
           key: apiKey,
@@ -49,6 +61,9 @@ export default function ShopsMap({
           // first interaction. Recompute once things settle.
           setTimeout(() => { try { myMap.invalidateSize(); } catch {} }, 250);
           setTimeout(() => { try { myMap.invalidateSize(); } catch {} }, 800);
+          // Surface tile-load failures (bad/domain-restricted Neshan key) as a
+          // helpful message instead of a silent black rectangle.
+          myMap.on("tileerror", () => setTileError(true));
           for (const s of withCoords) {
             const marker = L.marker([s.latitude, s.longitude]).addTo(myMap);
             const stars = s.ratingCount > 0 ? `★ ${s.avgRating.toFixed(1)} (${s.ratingCount} نظر)` : "بدون امتیاز";

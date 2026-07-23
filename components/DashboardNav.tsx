@@ -113,20 +113,22 @@ export default function DashboardNav({
       {/* ── Mobile (below md): quick pills + «منو» opening a Telegram-style
           side drawer. */}
       <div className="flex md:hidden items-center gap-1.5 w-full order-last pt-1">
-        <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1.5 whitespace-nowrap text-xs">
-          🏠 صفحه اصلی
-        </Link>
-        {showDealer && (
-          <Link href="/dealer" className="bg-teal/15 text-teal font-bold rounded-full px-3 py-1.5 whitespace-nowrap text-xs">
-            💰 خرید و فروش
-          </Link>
-        )}
         <button
           onClick={() => setMobileOpen(true)}
-          className="mr-auto bg-surface2 border border-border text-ink font-bold rounded-full px-3.5 py-1.5 text-xs"
+          className="bg-surface2 border border-border text-ink font-bold rounded-full px-3.5 py-1.5 text-xs"
         >
           ☰ منو
         </button>
+        <div className="flex items-center gap-1.5 ms-auto">
+          <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1.5 whitespace-nowrap text-xs">
+            🏠 صفحه اصلی
+          </Link>
+          {showDealer && (
+            <Link href="/dealer" className="bg-teal/15 text-teal font-bold rounded-full px-3 py-1.5 whitespace-nowrap text-xs">
+              💰 خرید و فروش
+            </Link>
+          )}
+        </div>
       </div>
 
       {mobileOpen && mounted && createPortal(
@@ -134,10 +136,10 @@ export default function DashboardNav({
           <div className="absolute inset-0 bg-black/55 drawer-fade" />
           <aside
             onClick={(e) => e.stopPropagation()}
-            className="nav-sheet drawer-enter absolute inset-y-0 left-0 w-[80vw] max-w-[320px] overflow-y-auto rounded-r-3xl"
+            className="nav-sheet drawer-enter absolute inset-y-0 right-0 w-[80vw] max-w-[320px] overflow-y-auto rounded-l-3xl"
           >
             {/* Profile header — like Telegram's drawer top. */}
-            <div className="drawer-head px-4 pt-5 pb-4 rounded-tr-3xl">
+            <div className="drawer-head px-4 pt-5 pb-4 rounded-tl-3xl">
               <div className="bg-white/95 rounded-2xl w-12 h-12 flex items-center justify-center shadow-lg">
                 <LogoMark size={30} />
               </div>

@@ -2,6 +2,7 @@
 import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
+import ComboBox from "@/components/ComboBox";
 
 const CONDITION_LABEL: Record<string, string> = { WORKING: "سالم", DEFECTIVE: "معیوب", FOR_PARTS: "برای قطعات" };
 
@@ -19,12 +20,25 @@ export default function DealerPage() {
   const [sellForm, setSellForm] = useState({ soldPrice: 0, buyerName: "", buyerPhone: "" });
   const [error, setError] = useState("");
 
+  // Brand/model catalog for the searchable ComboBox, same as the intake form.
+  const [catalog, setCatalog] = useState<Record<string, string[]>>({});
+  const [favoriteBrands, setFavoriteBrands] = useState<string[]>([]);
+  const [brand, setBrand] = useState("");
+  const brandList = [...favoriteBrands, ...Object.keys(catalog).filter((b) => !favoriteBrands.includes(b))];
+  const modelsForBrand = brand ? catalog[brand] ?? [] : [];
+
   async function load() {
     const res = await fetch("/api/dealer/inventory");
     if (res.status === 403) { setNotDealer(true); return; }
     if (res.ok) setItems((await res.json()).items ?? []);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    fetch("/api/device-catalog").then((r) => r.json()).then((d) => {
+      setCatalog(d.catalog ?? {});
+      setFavoriteBrands(d.favoriteBrands ?? []);
+    }).catch(() => {});
+  }, []);
 
   async function addItem() {
     setError("");
@@ -40,6 +54,7 @@ export default function DealerPage() {
       return;
     }
     setForm({ imei: "", deviceModel: "", imageUrl: "", condition: "WORKING", purchasePrice: 0, askingPrice: 0, sourceName: "", sourcePhone: "" });
+    setBrand("");
     load();
   }
 
@@ -87,25 +102,45 @@ export default function DealerPage() {
 
       <div className="bg-surface border border-surface2 rounded-xl p-4 mb-5 space-y-2">
         <div className="text-sm font-bold mb-1">افزودن گوشی به موجودی</div>
-        <div className="flex gap-2">
-          <input className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="مدل دستگاه"
-            value={form.deviceModel} onChange={(e) => setForm({ ...form, deviceModel: e.target.value })} />
-          <select className="bg-surface2 rounded-lg px-2 py-2 text-xs" value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })}>
-            {Object.entries(CONDITION_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
-          </select>
-        </div>
-        <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="IMEI (اختیاری)"
+
+        <label className="block text-xs text-muted mb-1">برند</label>
+        <ComboBox
+          value={brand}
+          onChange={(v) => { setBrand(v); setForm({ ...form, deviceModel: "" }); }}
+          options={brandList}
+          starred={favoriteBrands}
+          placeholder="انتخاب یا تایپ برند..."
+        />
+
+        {brand && (
+          <div>
+            <label className="block text-xs text-muted mb-1 mt-1">مدل</label>
+            <ComboBox
+              value={form.deviceModel.startsWith(`${brand} `) ? form.deviceModel.slice(brand.length + 1) : form.deviceModel}
+              onChange={(m) => setForm({ ...form, deviceModel: m ? `${brand} ${m}` : "" })}
+              options={modelsForBrand}
+              placeholder="انتخاب یا تایپ مدل..."
+            />
+          </div>
+        )}
+
+        <label className="block text-xs text-muted mb-1 mt-1">وضعیت دستگاه</label>
+        <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm" value={form.condition} onChange={(e) => setForm({ ...form, condition: e.target.value })}>
+          {Object.entries(CONDITION_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+        </select>
+
+        <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mono" placeholder="IMEI (اختیاری)" inputMode="tel" dir="ltr"
           value={form.imei} onChange={(e) => setForm({ ...form, imei: e.target.value })} />
         <div className="flex gap-2">
-          <input type="text" inputMode="numeric" dir="ltr" className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="قیمت خرید"
-            value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: num(e.target.value) })} />
-          <input type="text" inputMode="numeric" dir="ltr" className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="قیمت پیشنهادی فروش"
-            value={form.askingPrice} onChange={(e) => setForm({ ...form, askingPrice: num(e.target.value) })} />
+          <input type="text" inputMode="numeric" dir="ltr" className="flex-1 min-w-0 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="قیمت خرید (تومان)"
+            value={form.purchasePrice || ""} onChange={(e) => setForm({ ...form, purchasePrice: num(e.target.value) })} />
+          <input type="text" inputMode="numeric" dir="ltr" className="flex-1 min-w-0 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="قیمت فروش (تومان)"
+            value={form.askingPrice || ""} onChange={(e) => setForm({ ...form, askingPrice: num(e.target.value) })} />
         </div>
         <div className="flex gap-2">
-          <input className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="نام فروشنده (از چه کسی خریدید)"
+          <input className="flex-1 min-w-0 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="نام فروشنده"
             value={form.sourceName} onChange={(e) => setForm({ ...form, sourceName: e.target.value })} />
-          <input className="flex-1 bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="شماره تماس"
+          <input className="flex-1 min-w-0 bg-surface2 rounded-lg px-3 py-2 text-sm mono" placeholder="شماره تماس" inputMode="tel" dir="ltr"
             value={form.sourcePhone} onChange={(e) => setForm({ ...form, sourcePhone: e.target.value })} />
         </div>
         <ImageUploader
@@ -157,11 +192,11 @@ export default function DealerPage() {
             )}
             {sellId === i.id && (
               <div className="bg-surface rounded-lg p-2.5 mt-2 space-y-1.5">
-                <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="قیمت فروش"
-                  value={sellForm.soldPrice} onChange={(e) => setSellForm({ ...sellForm, soldPrice: num(e.target.value) })} />
+                <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="قیمت فروش (تومان)"
+                  value={sellForm.soldPrice || ""} onChange={(e) => setSellForm({ ...sellForm, soldPrice: num(e.target.value) })} />
                 <input className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="نام خریدار"
                   value={sellForm.buyerName} onChange={(e) => setSellForm({ ...sellForm, buyerName: e.target.value })} />
-                <input className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="شماره خریدار (اختیاری)"
+                <input className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs mono" placeholder="شماره خریدار (اختیاری)" inputMode="tel" dir="ltr"
                   value={sellForm.buyerPhone} onChange={(e) => setSellForm({ ...sellForm, buyerPhone: e.target.value })} />
                 <button onClick={() => sell(i.id)} className="w-full bg-teal text-[#0E211E] font-bold rounded-lg py-1.5 text-xs">ثبت فروش</button>
               </div>
