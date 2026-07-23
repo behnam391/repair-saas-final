@@ -36,6 +36,10 @@ export default function TicketsPage() {
   const [openTicket, setOpenTicket] = useState<Ticket | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [toast, setToast] = useState("");
+  const [query, setQuery] = useState("");
+  // Mobile accordion: which lanes are collapsed. Starts empty (all open);
+  // only affects narrow screens — desktop always shows every column.
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   async function load() {
     setLoading(true);
@@ -82,19 +86,61 @@ export default function TicketsPage() {
         </button>
       </div>
 
+      {/* Search — filters every lane live by device, customer, number, or issue. */}
+      <div className="relative mb-3">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="🔍 جستجو: مدل گوشی، نام مشتری، شماره تیکت..."
+          className="w-full bg-surface2 border border-border rounded-xl px-3 py-2.5 text-sm"
+        />
+        {query && (
+          <button
+            onClick={() => setQuery("")}
+            className="absolute left-2 top-1/2 -translate-y-1/2 text-muted text-xs bg-surface rounded-full w-6 h-6"
+            title="پاک کردن"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       {loading ? (
         <p className="text-muted text-sm text-center py-10">در حال بارگذاری...</p>
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-3">
+        /* Mobile: lanes stack vertically (each collapsible). Desktop (sm+):
+           classic side-by-side columns. */
+        <div className="flex flex-col gap-3 sm:flex-row sm:gap-3 sm:overflow-x-auto pb-3">
           {LANES.map((lane) => {
-            const items = tickets.filter((t) => t.lane === lane.key);
+            const q = query.trim().toLowerCase();
+            const items = tickets.filter(
+              (t) =>
+                t.lane === lane.key &&
+                (!q ||
+                  t.deviceModel.toLowerCase().includes(q) ||
+                  t.customer.name.toLowerCase().includes(q) ||
+                  t.customer.phone.includes(q) ||
+                  String(t.no).includes(q) ||
+                  (t.issueInitial ?? "").toLowerCase().includes(q))
+            );
+            const isCollapsed = !!collapsed[lane.key];
             return (
-              <div key={lane.key} className="flex-none w-[84vw] sm:w-72 bg-surface border border-surface2 rounded-2xl">
-                <div className="flex justify-between items-center px-3 py-2.5 border-b border-surface2">
+              <div key={lane.key} className="w-full sm:flex-none sm:w-72 bg-surface border border-surface2 rounded-2xl">
+                {/* On mobile the whole header is a collapse toggle. */}
+                <button
+                  type="button"
+                  onClick={() => setCollapsed((c) => ({ ...c, [lane.key]: !c[lane.key] }))}
+                  className={`w-full flex justify-between items-center px-3 py-2.5 text-right sm:cursor-default sm:pointer-events-none ${
+                    isCollapsed ? "" : "border-b border-surface2"
+                  } sm:border-b sm:border-surface2`}
+                >
                   <span className="font-bold text-[13px]">{lane.label}</span>
-                  <span className="mono text-xs text-muted">{items.length}</span>
-                </div>
-                <div className="p-2.5 flex flex-col gap-2.5 max-h-[70vh] overflow-y-auto">
+                  <span className="flex items-center gap-2">
+                    <span className={`mono text-xs ${items.length > 0 ? "text-copper font-bold" : "text-muted"}`}>{items.length}</span>
+                    <span className={`text-muted text-[10px] transition-transform sm:hidden ${isCollapsed ? "" : "rotate-180"}`}>▼</span>
+                  </span>
+                </button>
+                <div className={`${isCollapsed ? "hidden sm:flex" : "flex"} p-2.5 flex-col gap-2.5 max-h-[70vh] overflow-y-auto`}>
                   {items.length === 0 && (
                     <div className="text-muted text-xs text-center py-6 border border-dashed border-surface2 rounded-lg">
                       دستگاهی در این مرحله نیست
@@ -104,7 +150,7 @@ export default function TicketsPage() {
                     <button
                       key={t.id}
                       onClick={() => setOpenTicket(t)}
-                      className={`repair-tag ${t.status === "READY" ? "tag-ready" : t.status === "AWAITING_APPROVAL" ? "tag-awaiting" : t.status === "IN_PROGRESS" ? "tag-progress" : ""} text-right bg-surface2 rounded-xl p-3 pr-4 hover:brightness-110 transition`}
+                      className={`repair-tag card-hover ${t.status === "READY" ? "tag-ready" : t.status === "AWAITING_APPROVAL" ? "tag-awaiting" : t.status === "IN_PROGRESS" ? "tag-progress" : ""} text-right bg-surface2 rounded-xl p-3 pr-4 hover:brightness-110 transition`}
                     >
                       <div className="flex justify-between text-xs">
                         <span className="font-bold">{t.deviceModel}</span>

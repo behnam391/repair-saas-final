@@ -1,13 +1,21 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 
 type NavItem = { href: string; label: string; external?: boolean };
-type NavGroup = { label: string; items: NavItem[] };
+type NavGroup = { label: string; icon: string; items: NavItem[] };
 
 export default function DashboardNav({ role, guideUrl, shopType }: { role: string; guideUrl: string | null; shopType?: string }) {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  // Portal target only exists client-side; also, the sheet MUST be portaled
+  // to <body>: the glass header's backdrop-filter turns the header into the
+  // containing block for fixed-position descendants, which would trap and
+  // clip a fixed overlay inside the header box.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const containerRef = useRef<HTMLDivElement>(null);
   const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -22,6 +30,12 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
+  // Lock body scroll while the mobile sheet is open.
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
+
   function toggleGroup(label: string) {
     if (openGroup === label) { setOpenGroup(null); return; }
     const btn = btnRefs.current[label];
@@ -35,6 +49,7 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
   const groups: NavGroup[] = [
     {
       label: "عملیات",
+      icon: "🛠️",
       items: [
         { href: "/inventory", label: "انبار قطعات" },
         { href: "/sales", label: "فروش مستقیم" },
@@ -45,6 +60,7 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
     },
     {
       label: "ارتباطات",
+      icon: "💬",
       items: [
         { href: "/market", label: "بازار سراسری" },
         { href: "/chats", label: "چت‌ها" },
@@ -53,6 +69,7 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
     },
     {
       label: "مشتریان",
+      icon: "👥",
       items: [
         { href: "/customers", label: "دفترچه مشتریان" },
         { href: "/history", label: "سابقه و جستجو" },
@@ -60,6 +77,7 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
     },
     {
       label: "من",
+      icon: "⚙️",
       items: [
         { href: "/profile", label: "پروفایل من" },
         { href: "/support", label: "پشتیبانی" },
@@ -70,6 +88,7 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
     ...(role === "OWNER"
       ? [{
           label: "مدیریت",
+          icon: "📊",
           items: [
             { href: "/admin", label: "پنل مدیریت" },
             { href: "/admin/billing", label: "اشتراک و پرداخت" },
@@ -79,20 +98,89 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
   ];
 
   const activeGroup = groups.find((g) => g.label === openGroup);
+  const showDealer = shopType === "DEALER" || shopType === "BOTH";
 
   return (
     <>
-      {/* Mobile: full-width swipeable strip on its own line (order-last drops it
-          below the identity/actions row). Desktop: centered, wrapping, in-row. */}
-      <div
-        ref={containerRef}
-        className="flex items-center gap-1 w-full order-last overflow-x-auto no-scrollbar pt-1 -mb-1
-                   md:w-auto md:order-none md:flex-1 md:justify-center md:flex-wrap md:overflow-visible md:pt-0 md:mb-0"
-      >
+      {/* ── Mobile (below md): quick pills + one «منو» button that opens a
+          full sheet with every category visible — no sideways swiping. */}
+      <div className="flex md:hidden items-center gap-1.5 w-full order-last pt-1">
+        <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1.5 whitespace-nowrap text-xs">
+          🏠 صفحه اصلی
+        </Link>
+        {showDealer && (
+          <Link href="/dealer" className="bg-teal/15 text-teal font-bold rounded-full px-3 py-1.5 whitespace-nowrap text-xs">
+            💰 خرید و فروش
+          </Link>
+        )}
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="mr-auto bg-surface2 border border-border text-ink font-bold rounded-full px-3.5 py-1.5 text-xs"
+        >
+          ☰ منو
+        </button>
+      </div>
+
+      {mobileOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[300] md:hidden" onClick={() => setMobileOpen(false)}>
+          <div className="absolute inset-0 bg-black/55" />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="nav-sheet absolute inset-x-0 top-0 rounded-b-3xl border-b border-border p-4 pb-6 max-h-[85vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="display-heading text-base">منو</span>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="bg-surface2 rounded-full w-8 h-8 text-sm"
+                title="بستن"
+              >
+                ✕
+              </button>
+            </div>
+            {groups.map((g) => (
+              <div key={g.label} className="mb-4">
+                <div className="text-[11px] font-bold text-muted mb-2 flex items-center gap-1.5">
+                  <span>{g.icon}</span> {g.label}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {g.items.map((item) =>
+                    item.external ? (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMobileOpen(false)}
+                        className="bg-surface2 border border-border rounded-xl px-3 py-2.5 text-xs text-ink text-center"
+                      >
+                        {item.label} ↗
+                      </a>
+                    ) : (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className="bg-surface2 border border-border rounded-xl px-3 py-2.5 text-xs text-ink text-center"
+                      >
+                        {item.label}
+                      </Link>
+                    )
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ── Desktop (md+): unchanged — centered pills with dropdown groups. */}
+      <div ref={containerRef} className="hidden md:flex items-center gap-1 flex-1 justify-center flex-wrap">
         <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1 whitespace-nowrap text-xs">
           🏠 صفحه اصلی
         </Link>
-        {(shopType === "DEALER" || shopType === "BOTH") && (
+        {showDealer && (
           <Link href="/dealer" className="bg-teal/15 text-teal font-bold rounded-full px-3 py-1 whitespace-nowrap text-xs">
             💰 خرید و فروش
           </Link>
@@ -114,7 +202,7 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
 
       {/* Rendered with fixed positioning at the viewport level so it's
           never clipped by the sticky header's stacking/overflow context. */}
-      {activeGroup && menuPos && (
+      {activeGroup && menuPos && mounted && createPortal(
         <div
           data-nav-menu
           style={{ position: "fixed", top: menuPos.top, right: menuPos.right }}
@@ -134,7 +222,8 @@ export default function DashboardNav({ role, guideUrl, shopType }: { role: strin
               </Link>
             )
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
