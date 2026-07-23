@@ -126,21 +126,22 @@ export default function TicketsPage() {
             const isCollapsed = !!collapsed[lane.key];
             return (
               <div key={lane.key} className="w-full sm:flex-none sm:w-72 bg-surface border border-surface2 rounded-2xl">
-                {/* On mobile the whole header is a collapse toggle. */}
+                {/* The whole lane header is a collapse toggle — on every
+                    screen size (web and phone alike). */}
                 <button
                   type="button"
                   onClick={() => setCollapsed((c) => ({ ...c, [lane.key]: !c[lane.key] }))}
-                  className={`w-full flex justify-between items-center px-3 py-2.5 text-right sm:cursor-default sm:pointer-events-none ${
+                  className={`w-full flex justify-between items-center px-3 py-2.5 text-right ${
                     isCollapsed ? "" : "border-b border-surface2"
-                  } sm:border-b sm:border-surface2`}
+                  }`}
                 >
                   <span className="font-bold text-[13px]">{lane.label}</span>
                   <span className="flex items-center gap-2">
                     <span className={`mono text-xs ${items.length > 0 ? "text-copper font-bold" : "text-muted"}`}>{items.length}</span>
-                    <span className={`text-muted text-[10px] transition-transform sm:hidden ${isCollapsed ? "" : "rotate-180"}`}>▼</span>
+                    <span className={`text-muted text-[10px] transition-transform ${isCollapsed ? "" : "rotate-180"}`}>▼</span>
                   </span>
                 </button>
-                <div className={`${isCollapsed ? "hidden sm:flex" : "flex"} p-2.5 flex-col gap-2.5 max-h-[70vh] overflow-y-auto`}>
+                <div className={`${isCollapsed ? "hidden" : "flex"} p-2.5 flex-col gap-2.5 max-h-[70vh] overflow-y-auto`}>
                   {items.length === 0 && (
                     <div className="text-muted text-xs text-center py-6 border border-dashed border-surface2 rounded-lg">
                       دستگاهی در این مرحله نیست
