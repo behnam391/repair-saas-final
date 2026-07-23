@@ -134,10 +134,10 @@ export default function DashboardNav({
           <div className="absolute inset-0 bg-black/55 drawer-fade" />
           <aside
             onClick={(e) => e.stopPropagation()}
-            className="nav-sheet drawer-enter absolute inset-y-0 right-0 w-[80vw] max-w-[320px] overflow-y-auto rounded-s-3xl"
+            className="nav-sheet drawer-enter absolute inset-y-0 left-0 w-[80vw] max-w-[320px] overflow-y-auto rounded-r-3xl"
           >
             {/* Profile header — like Telegram's drawer top. */}
-            <div className="drawer-head px-4 pt-5 pb-4 rounded-ss-3xl">
+            <div className="drawer-head px-4 pt-5 pb-4 rounded-tr-3xl">
               <div className="bg-white/95 rounded-2xl w-12 h-12 flex items-center justify-center shadow-lg">
                 <LogoMark size={30} />
               </div>
