@@ -3,12 +3,14 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { IRAN_PROVINCES, PROVINCE_NAMES } from "@/lib/iran-locations";
+import PhoneVerify from "@/components/PhoneVerify";
 
 export default function CustomerSignupPage() {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", phone: "", password: "", email: "", province: "", city: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
 
   const cities = form.province ? IRAN_PROVINCES[form.province] ?? [] : [];
 
@@ -16,6 +18,7 @@ export default function CustomerSignupPage() {
     e.preventDefault();
     setError("");
     if (!/^09\d{9}$/.test(form.phone)) { setError("شماره موبایل باید با 09 شروع شود و ۱۱ رقم باشد"); return; }
+    if (!phoneVerified) { setError("ابتدا شماره موبایل را با کد تأیید کنید"); return; }
     if (form.password.length < 6) { setError("رمز عبور باید حداقل ۶ کاراکتر باشد"); return; }
     setLoading(true);
     const res = await fetch("/api/customer/signup", {
@@ -47,9 +50,11 @@ export default function CustomerSignupPage() {
           value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
 
         <label className="block text-xs text-muted mb-1">شماره موبایل</label>
-        <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-3 text-sm mono"
+        <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-2 text-sm mono"
           placeholder="09xxxxxxxxx" inputMode="tel" dir="ltr" maxLength={11}
           value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+
+        <PhoneVerify phone={form.phone} email={form.email} onChange={setPhoneVerified} />
 
         <label className="block text-xs text-muted mb-1">رمز عبور (حداقل ۶ کاراکتر)</label>
         <input type="password" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-3 text-sm"
@@ -81,9 +86,9 @@ export default function CustomerSignupPage() {
 
         {error && <p className="text-danger text-xs mb-3">{error}</p>}
 
-        <button disabled={loading}
+        <button disabled={loading || !phoneVerified}
           className="w-full bg-teal text-[#0B1512] font-bold rounded-lg py-2.5 text-sm disabled:opacity-60">
-          {loading ? "در حال ثبت‌نام..." : "ثبت‌نام و ورود"}
+          {loading ? "در حال ثبت‌نام..." : !phoneVerified ? "ابتدا شماره را تأیید کنید" : "ثبت‌نام و ورود"}
         </button>
 
         <p className="text-[11px] text-muted text-center mt-4">

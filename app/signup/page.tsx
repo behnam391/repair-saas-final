@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
+import PhoneVerify from "@/components/PhoneVerify";
 
 const BUSINESS_SIZE_OPTIONS = [
   { key: "SOLO", label: "تک‌نفره", desc: "خودم یک‌تنه همه‌کار را انجام می‌دهم" },
@@ -25,6 +26,7 @@ export default function SignupPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
 
   function toggleSpecialty(key: string) {
     setForm((f) => ({
@@ -40,6 +42,7 @@ export default function SignupPage() {
       setError("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد");
       return;
     }
+    if (!phoneVerified) { setError("ابتدا شماره موبایل را با کد تأیید کنید"); return; }
     setLoading(true);
     const res = await fetch("/api/signup", {
       method: "POST",
@@ -137,12 +140,13 @@ export default function SignupPage() {
                 value={form.birthDate} onChange={(v) => setForm({ ...form, birthDate: v })} />
             </div>
           </div>
-          <div className="mb-3">
+          <div className="mb-2">
             <label className="block text-xs text-muted mb-1">شماره موبایل</label>
             <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
               inputMode="tel" dir="ltr" maxLength={11} placeholder="09xxxxxxxxx"
               value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
           </div>
+          <PhoneVerify phone={form.phone} email={undefined} onChange={setPhoneVerified} />
           <div className="mb-4">
             <label className="block text-xs text-muted mb-1">رمز عبور</label>
             <input type="password" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
@@ -152,8 +156,8 @@ export default function SignupPage() {
 
         {error && <p className="text-danger text-xs mb-3">{error}</p>}
 
-        <button disabled={loading} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm disabled:opacity-60">
-          {loading ? "در حال ثبت‌نام..." : "ثبت‌نام و ورود"}
+        <button disabled={loading || !phoneVerified} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm disabled:opacity-60">
+          {loading ? "در حال ثبت‌نام..." : !phoneVerified ? "ابتدا شماره را تأیید کنید" : "ثبت‌نام و ورود"}
         </button>
 
         <p className="text-[11px] text-muted text-center mt-4">

@@ -5,11 +5,12 @@ import JalaliDatePicker from "@/components/JalaliDatePicker";
 
 export default function ProfilePage() {
   const [form, setForm] = useState({
-    avatarUrl: "", email: "", gmailId: "", nationalId: "", birthDate: "",
+    avatarUrl: "", phone: "", email: "", gmailId: "", nationalId: "", birthDate: "",
     notifyEmail: false,
   });
   const [name, setName] = useState("");
   const [saved, setSaved] = useState(false);
+  const [saveErr, setSaveErr] = useState("");
 
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "" });
   const [pwMsg, setPwMsg] = useState("");
@@ -21,7 +22,7 @@ export default function ProfilePage() {
       const data = await res.json();
       setName(data.user.name);
       setForm({
-        avatarUrl: data.user.avatarUrl ?? "", email: data.user.email ?? "", gmailId: data.user.gmailId ?? "",
+        avatarUrl: data.user.avatarUrl ?? "", phone: data.user.phone ?? "", email: data.user.email ?? "", gmailId: data.user.gmailId ?? "",
         nationalId: data.user.nationalId ?? "",
         birthDate: data.user.birthDate ? data.user.birthDate.slice(0, 10) : "",
         notifyEmail: data.user.notifyEmail,
@@ -31,13 +32,15 @@ export default function ProfilePage() {
   useEffect(() => { load(); }, []);
 
   async function save() {
-    setSaved(false);
+    setSaved(false); setSaveErr("");
+    if (form.phone && !/^09\d{9}$/.test(form.phone.trim())) { setSaveErr("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
     const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
+    else { const d = await res.json().catch(() => ({})); setSaveErr(d.message || "ذخیره ناموفق بود"); }
   }
 
   async function changePassword() {
@@ -83,6 +86,10 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      <label className="block text-xs text-muted mb-1">شماره موبایل (برای ورود)</label>
+      <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono" dir="ltr" inputMode="tel" maxLength={11}
+        placeholder="09xxxxxxxxx" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+
       <label className="block text-xs text-muted mb-1">ایمیل</label>
       <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
         value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
@@ -95,6 +102,7 @@ export default function ProfilePage() {
         اطلاع‌رسانی از طریق ایمیل/جیمیل فعال باشد
       </label>
 
+      {saveErr && <p className="text-danger text-xs mb-2">{saveErr}</p>}
       <button onClick={save} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
         {saved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
       </button>

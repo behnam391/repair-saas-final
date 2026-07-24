@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { isPhoneVerifiedForSignup, consumeSignupVerification } from "@/lib/signup-verify";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -27,11 +28,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "phone_taken", message: "این شماره قبلاً ثبت‌نام کرده است" }, { status: 409 });
     }
 
+    if (!(await isPhoneVerifiedForSignup(phone))) {
+      return NextResponse.json({ error: "phone_not_verified", message: "ابتدا شماره موبایل را با کد تأیید، تأیید کنید" }, { status: 403 });
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
     const customer = await db.platformCustomer.create({
       data: { name, phone, passwordHash, email: email || null, province: province || null, city: city || null },
     });
 
+    await consumeSignupVerification(phone);
     return NextResponse.json({ ok: true, customerId: customer.id }, { status: 201 });
   } catch (e) {
     if (e instanceof z.ZodError) {

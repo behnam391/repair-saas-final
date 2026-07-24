@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 const Schema = z.object({
   avatarUrl: z.string().optional(),
+  phone: z.string().min(5).optional(),
   email: z.string().optional(),
   gmailId: z.string().optional(),
   nationalId: z.string().optional(),
@@ -34,10 +35,16 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const { userId } = await requireSession();
-    const { birthDate, ...rest } = Schema.parse(await req.json());
+    const { birthDate, phone, ...rest } = Schema.parse(await req.json());
+
+    if (phone) {
+      const clash = await db.user.findFirst({ where: { phone, id: { not: userId } } });
+      if (clash) return NextResponse.json({ message: "این شماره موبایل قبلاً ثبت شده است" }, { status: 409 });
+    }
+
     const user = await db.user.update({
       where: { id: userId },
-      data: { ...rest, ...(birthDate ? { birthDate: new Date(birthDate) } : {}) },
+      data: { ...rest, ...(phone ? { phone } : {}), ...(birthDate ? { birthDate: new Date(birthDate) } : {}) },
     });
     return NextResponse.json({ user });
   } catch (e) {

@@ -382,6 +382,20 @@ model PasswordResetToken {
   @@index([userId])
 }
 
+// One-time code that verifies a phone (or email) BEFORE a shop/customer
+// account is created at signup. Keyed by the phone itself (no account exists
+// yet). Short-lived; consumed when the account is finally created.
+model SignupVerification {
+  id         String   @id @default(cuid())
+  identifier String   // the phone number being verified (login key)
+  code       String   // 5-digit numeric OTP
+  verified   Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([identifier])
+}
+
 // ── Nationwide marketplace ───────────────────────────────────
 // Unlike every other model above, these are NOT shop-isolated on read —
 // any signed-in technician from any shop can see listings from any other

@@ -14,6 +14,34 @@ export default function SuperAdminUsersPage() {
   const [newPassword, setNewPassword] = useState("");
   const [msg, setMsg] = useState("");
   const [impersonateError, setImpersonateError] = useState("");
+  const [editTarget, setEditTarget] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", phone: "" });
+  const [editErr, setEditErr] = useState("");
+
+  function startEdit(u: U) {
+    setEditTarget(editTarget === u.id ? null : u.id);
+    setEditForm({ name: u.name, phone: u.phone });
+    setEditErr("");
+  }
+
+  async function saveEdit(id: string) {
+    setEditErr("");
+    if (!/^09\d{9}$/.test(editForm.phone.trim())) { setEditErr("شماره باید ۱۱ رقمی و با ۰۹ باشد"); return; }
+    const res = await fetch(`/api/superadmin/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: editForm.name, phone: editForm.phone.trim() }),
+    });
+    if (res.ok) {
+      const { user } = await res.json();
+      setUsers((us) => us.map((x) => (x.id === id ? { ...x, name: user.name, phone: user.phone } : x)));
+      setEditTarget(null);
+      setMsg("اطلاعات کاربر به‌روزرسانی شد.");
+    } else {
+      const d = await res.json().catch(() => ({}));
+      setEditErr(d.message || "ذخیره ناموفق بود");
+    }
+  }
 
   useEffect(() => {
     if (status === "authenticated" && !(session?.user as any)?.isSuperAdmin) router.push("/superadmin/login");
@@ -63,6 +91,9 @@ export default function SuperAdminUsersPage() {
                 <div className="text-muted mt-0.5">{u.shop.name} · {u.email || "بدون ایمیل"}</div>
               </div>
               <div className="flex flex-col gap-1.5 shrink-0">
+                <button onClick={() => startEdit(u)} className="text-[10px] bg-teal/20 text-teal rounded-lg px-2 py-1">
+                  ویرایش نام/شماره
+                </button>
                 <button onClick={() => setResetTarget(resetTarget === u.id ? null : u.id)} className="text-[10px] bg-danger/20 text-danger rounded-lg px-2 py-1">
                   بازنشانی رمز
                 </button>
@@ -76,6 +107,19 @@ export default function SuperAdminUsersPage() {
                 </button>
               </div>
             </div>
+            {editTarget === u.id && (
+              <div className="mt-2 space-y-1.5 bg-surface rounded-lg p-2">
+                <input className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="نام"
+                  value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+                <input className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs mono" dir="ltr" inputMode="tel" maxLength={11} placeholder="شماره موبایل"
+                  value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+                {editErr && <p className="text-danger text-[10px]">{editErr}</p>}
+                <div className="flex gap-2">
+                  <button onClick={() => saveEdit(u.id)} className="flex-1 bg-teal text-white text-xs font-bold rounded-lg py-1.5">ذخیره</button>
+                  <button onClick={() => setEditTarget(null)} className="flex-1 bg-surface2 rounded-lg py-1.5 text-xs">انصراف</button>
+                </div>
+              </div>
+            )}
             {resetTarget === u.id && (
               <div className="flex gap-2 mt-2">
                 <input type="password" className="flex-1 bg-surface rounded-lg px-2 py-1.5 text-xs" placeholder="رمز جدید"

@@ -493,15 +493,20 @@ function PayrollReport() {
 function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(staff.name);
+  const [phone, setPhone] = useState(staff.phone);
   const [role, setRole] = useState(staff.role);
   const [active, setActive] = useState(staff.active);
+  const [err, setErr] = useState("");
 
   async function save() {
-    await fetch(`/api/staff/${staff.id}`, {
+    setErr("");
+    if (!/^09\d{9}$/.test(phone.trim())) { setErr("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
+    const res = await fetch(`/api/staff/${staff.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, role, active }),
+      body: JSON.stringify({ name, phone: phone.trim(), role, active }),
     });
+    if (!res.ok) { const d = await res.json().catch(() => ({})); setErr(d.message || "ذخیره ناموفق بود"); return; }
     setEditing(false);
     onSaved();
   }
@@ -520,7 +525,11 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
 
   return (
     <div className="bg-surface2 border border-copper rounded-lg p-3 text-xs space-y-2">
+      <label className="block text-[10px] text-muted">نام</label>
       <input className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={name} onChange={(e) => setName(e.target.value)} />
+      <label className="block text-[10px] text-muted">شماره موبایل (برای ورود)</label>
+      <input className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs mono" dir="ltr" inputMode="tel" maxLength={11}
+        value={phone} onChange={(e) => setPhone(e.target.value)} />
       <select className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={role} onChange={(e) => setRole(e.target.value)}>
         {Object.entries(ROLE_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
       </select>
@@ -528,6 +537,7 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
         <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
         حساب فعال باشد
       </label>
+      {err && <p className="text-danger text-[11px]">{err}</p>}
       <div className="flex gap-2">
         <button onClick={save} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">ذخیره</button>
         <button onClick={() => setEditing(false)} className="flex-1 bg-surface rounded-lg py-1.5">انصراف</button>
