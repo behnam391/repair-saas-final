@@ -68,6 +68,10 @@ model Shop {
   ratings            Rating[]
   partRequests       PartRequest[]
   referencePrices    ReferencePrice[]
+  partnershipsSent     ShopPartnership[] @relation("PartnershipSentBy")
+  partnershipsReceived ShopPartnership[] @relation("PartnershipSentTo")
+  referralsSent        ShopReferral[]    @relation("ReferralFrom")
+  referralsReceived    ShopReferral[]    @relation("ReferralTo")
 }
 
 // You — the SaaS owner — sign in separately from every shop's staff.
@@ -870,6 +874,94 @@ model DealerInventory {
   soldAt        DateTime?
 
   @@index([shopId, status])
+}
+
+// ── Cross-shop collaboration (partnerships, referrals, commission) ──
+// Deliberately separate from Ticket.lane (which only moves a ticket
+// between HARDWARE/SOFTWARE/BOARD lanes WITHIN one shop). This is for
+// technicians at DIFFERENT, physically separate shops who want to send
+// each other work — e.g. a hardware-only shop referring a software-only
+// job to a partner shop across town, and getting a commission back for it.
+
+enum PartnershipStatus {
+  PENDING   // request sent, other shop hasn't responded yet
+  ACCEPTED  // both shops can now refer customers to each other
+  REJECTED
+  ENDED     // either shop cut off an active partnership later
+}
+
+// A standing collaboration link between two shops. Any staff member at
+// either shop (not just the OWNER) can send/accept these — this is meant
+// to be usable directly by the technicians who'll actually refer work,
+// not gated behind manager approval.
+model ShopPartnership {
+  id                String            @id @default(cuid())
+  requestedByShopId String
+  requestedByShop   Shop              @relation("PartnershipSentBy", fields: [requestedByShopId], references: [id])
+  targetShopId      String
+  targetShop        Shop              @relation("PartnershipSentTo", fields: [targetShopId], references: [id])
+  status            PartnershipStatus @default(PENDING)
+  note              String?           // optional message sent along with the request
+  createdByName     String            // display only — which staff member sent it
+  createdAt         DateTime          @default(now())
+  respondedAt       DateTime?
+
+  referrals         ShopReferral[]
+
+  @@unique([requestedByShopId, targetShopId])
+  @@index([targetShopId, status])
+  @@index([requestedByShopId, status])
+}
+
+enum ReferralStatus {
+  SENT      // referring shop created it, receiving shop hasn't acted yet
+  ACCEPTED  // receiving shop took the customer in and opened their own ticket
+  DECLINED
+  COMPLETED // receiving shop finished the job — commission now applies
+}
+
+enum CommissionStatus {
+  NONE    // no commission expected for this referral
+  PENDING // amount recorded, not yet settled
+  PAID
+}
+
+// A cross-shop hand-off of a customer/device. The receiving shop is NOT
+// given access to the referring shop's ticket/customer records (tenant
+// isolation stays intact) — instead this carries plain copied-over
+// details, and accepting it creates a brand-new Ticket + Customer inside
+// the receiving shop exactly like a normal intake would.
+model ShopReferral {
+  id             String            @id @default(cuid())
+  partnershipId  String
+  partnership    ShopPartnership   @relation(fields: [partnershipId], references: [id])
+  fromShopId     String
+  fromShop       Shop              @relation("ReferralFrom", fields: [fromShopId], references: [id])
+  toShopId       String
+  toShop         Shop              @relation("ReferralTo", fields: [toShopId], references: [id])
+
+  customerName   String
+  customerPhone  String
+  deviceModel    String?
+  issueNote      String?
+  suggestedLane  String?           // "HARDWARE" | "SOFTWARE" | "BOARD" — hint only, receiving shop can re-refer internally afterward
+
+  status         ReferralStatus    @default(SENT)
+  resultTicketId String?           // the Ticket the receiving shop opened upon accepting
+
+  commissionType    String?           // "PERCENT" | "FLAT" — arrangement suggested when the referral was sent
+  commissionValue   Int?              // percent (0-100) or flat toman, per commissionType — a suggestion only
+  commissionAmount  Int?              // toman, final figure entered by the receiving shop when marked COMPLETED
+  commissionStatus  CommissionStatus  @default(NONE)
+  commissionPaidAt  DateTime?
+
+  createdByName  String            // display only — which staff member at fromShop created this
+  createdAt      DateTime          @default(now())
+  respondedAt    DateTime?
+  completedAt    DateTime?
+
+  @@index([fromShopId, status])
+  @@index([toShopId, status])
 }
 
 // ── Platform support impersonation ────────────────────────────

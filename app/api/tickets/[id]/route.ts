@@ -8,7 +8,7 @@ import { z } from "zod";
 export const dynamic = "force-dynamic";
 
 const TransitionSchema = z.object({
-  action: z.enum(["start", "refer", "submit-for-approval", "approve-cost", "send-back", "ready", "deliver"]),
+  action: z.enum(["start", "refer", "submit-for-approval", "approve-cost", "send-back", "ready", "deliver", "cancel"]),
   targetLane: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]).optional(), // required for "refer"
   note: z.string().optional(),
   estimatedCost: z.number().int().optional(), // set when marking ready, sent in the SMS
@@ -29,6 +29,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     // Always re-fetch scoped to shopId — never trust the id alone.
     const ticket = await db.ticket.findFirst({ where: { id: params.id, shopId } });
     if (!ticket) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+    if (body.action === "cancel" && (ticket.status === "DELIVERED" || ticket.status === "CANCELLED")) {
+      return NextResponse.json({ message: "این تیکت قبلاً بسته شده است" }, { status: 400 });
+    }
 
     let updated;
 
@@ -189,6 +193,29 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         } catch (smsErr) {
           console.error("[sms] failed to send rating link", smsErr);
         }
+        break;
+      }
+
+      case "cancel": {
+        // Covers both: the customer changed their mind mid-repair and took
+        // the device back, or the shop otherwise needs to close the ticket
+        // without finishing. Leaves the workflow entirely (excluded from
+        // the active board's default query) but stays searchable in
+        // history with its full timeline intact.
+        updated = await db.ticket.update({
+          where: { id: ticket.id },
+          data: {
+            status: "CANCELLED",
+            history: {
+              create: {
+                lane: ticket.lane,
+                action: "انصراف از تعمیر — دستگاه بازگردانده شد",
+                techId: userId,
+                note: body.note,
+              },
+            },
+          },
+        });
         break;
       }
     }

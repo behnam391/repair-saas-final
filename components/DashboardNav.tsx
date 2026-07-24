@@ -76,6 +76,7 @@ export default function DashboardNav({
         { href: "/market", label: "بازار سراسری", icon: "🌐" },
         { href: "/chats", label: "چت‌ها", icon: "💬" },
         { href: "/device-lookup", label: "پرونده گوشی", icon: "🔎" },
+        { href: "/collaboration", label: "همکاری مغازه‌ها", icon: "🤝" },
       ],
     },
     {

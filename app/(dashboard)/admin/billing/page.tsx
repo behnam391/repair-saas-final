@@ -1,6 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { formatJalaliDate } from "@/lib/jalali";
+
+const STATUS_LABEL: Record<string, string> = { PENDING: "در انتظار پرداخت", PAID: "پرداخت‌شده", FAILED: "ناموفق" };
 
 const PLAN_INFO = {
   free: { label: "رایگان", price: 0, quota: "۱۰ دستگاه در ماه" },
@@ -29,7 +32,27 @@ export default function BillingPage() {
   const [giftMsg, setGiftMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [redeeming, setRedeeming] = useState(false);
 
-  const PLAN_FA: Record<string, string> = { pro: "حرفه‌ای", business: "تجاری" };
+  const [currentPlan, setCurrentPlan] = useState<string>("free");
+  const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
+  const [history, setHistory] = useState<{ id: string; plan: string; months: number; amount: number; status: string; createdAt: string }[]>([]);
+
+  const PLAN_FA: Record<string, string> = { free: "رایگان", pro: "حرفه‌ای", business: "تجاری" };
+
+  async function loadShopAndHistory() {
+    const [shopRes, histRes] = await Promise.all([fetch("/api/shop"), fetch("/api/billing/history")]);
+    if (shopRes.ok) {
+      const d = await shopRes.json();
+      setCurrentPlan(d.shop.plan ?? "free");
+      setPlanExpiresAt(d.shop.planExpiresAt ?? null);
+    }
+    if (histRes.ok) setHistory((await histRes.json()).subscriptions ?? []);
+  }
+  useEffect(() => { loadShopAndHistory(); }, []);
+
+  const remainingDays = planExpiresAt
+    ? Math.ceil((new Date(planExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+  const isExpired = remainingDays !== null && remainingDays <= 0;
 
   async function redeemGift() {
     if (!giftCode.trim()) return;
@@ -75,6 +98,28 @@ export default function BillingPage() {
       {result === "cancelled" && <div className="bg-amber/20 text-amber text-xs rounded-lg p-3 mb-4">پرداخت لغو شد.</div>}
       {error && <p className="text-danger text-xs mb-3">{error}</p>}
 
+      {/* Current plan + remaining time — the whole point of "مدیریت اشتراک" */}
+      <div className={`bg-gradient-to-br from-surface to-surface2 border rounded-xl p-4 mb-5 ${isExpired ? "border-danger" : "border-surface2"}`}>
+        <div className="text-xs text-muted mb-1">پلن فعلی شما</div>
+        <div className="text-lg font-extrabold mb-2">{PLAN_FA[currentPlan] ?? currentPlan}</div>
+        {currentPlan === "free" ? (
+          <p className="text-[11px] text-muted">پلن رایگان — محدود به سهمیه ماهانه، بدون تاریخ انقضا.</p>
+        ) : planExpiresAt ? (
+          <>
+            <div className="text-[11px] text-muted">
+              تاریخ انقضا: <span className="mono font-bold text-ink">{formatJalaliDate(planExpiresAt)}</span>
+            </div>
+            <div className={`text-sm font-bold mt-1 ${isExpired ? "text-danger" : remainingDays !== null && remainingDays <= 7 ? "text-amber" : "text-teal"}`}>
+              {isExpired
+                ? "⛔ اشتراک شما منقضی شده — برای ادامه دسترسی کامل، تمدید کنید"
+                : `⏳ ${remainingDays?.toLocaleString("fa-IR")} روز باقی‌مانده`}
+            </div>
+          </>
+        ) : (
+          <p className="text-[11px] text-muted">تاریخ انقضا ثبت نشده.</p>
+        )}
+      </div>
+
       {/* Gift code redemption */}
       <div className="bg-surface border border-teal/40 rounded-xl p-4 mb-5">
         <div className="text-sm font-bold mb-1">🎁 کد هدیه دارید؟</div>
@@ -109,9 +154,12 @@ export default function BillingPage() {
           const p = PLAN_INFO[key];
           const total = priceFor(p.price, duration, DURATIONS.find((d) => d.key === duration)!.discount);
           return (
-            <div key={key} className="bg-surface border border-surface2 rounded-xl p-4 flex justify-between items-center">
+            <div key={key} className={`bg-surface border rounded-xl p-4 flex justify-between items-center ${currentPlan === key ? "border-copper" : "border-surface2"}`}>
               <div>
-                <div className="font-bold text-sm">{p.label}</div>
+                <div className="font-bold text-sm flex items-center gap-1.5">
+                  {p.label}
+                  {currentPlan === key && <span className="text-[9px] bg-copper text-[#1A1410] rounded-full px-2 py-0.5 font-bold">فعلی</span>}
+                </div>
                 <div className="text-[11px] text-muted mt-0.5">{p.quota}</div>
                 <div className="mono text-sm mt-1">
                   {p.price === 0 ? "رایگان" : `${total.toLocaleString("fa-IR")} تومان / ${duration} ماه`}
@@ -129,6 +177,33 @@ export default function BillingPage() {
             </div>
           );
         })}
+      </div>
+
+      {/* Transaction history */}
+      <div className="mt-6">
+        <div className="text-sm font-bold mb-2">تاریخچه تراکنش‌ها</div>
+        {history.length === 0 ? (
+          <p className="text-xs text-muted">هنوز تراکنشی ثبت نشده.</p>
+        ) : (
+          <div className="space-y-2">
+            {history.map((h) => (
+              <div key={h.id} className="bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs flex justify-between items-center">
+                <div>
+                  <span className="font-bold">{PLAN_FA[h.plan] ?? h.plan}</span>
+                  <span className="text-muted"> · {h.months.toLocaleString("fa-IR")} ماهه · {formatJalaliDate(h.createdAt)}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="mono">{h.amount.toLocaleString("fa-IR")} تومان</span>
+                  <span className={
+                    h.status === "PAID" ? "text-teal font-semibold" : h.status === "FAILED" ? "text-danger font-semibold" : "text-amber font-semibold"
+                  }>
+                    {STATUS_LABEL[h.status] ?? h.status}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -38,7 +38,14 @@ export async function GET(req: NextRequest) {
       where: {
         shopId,
         ...(lane ? { lane: lane as any } : {}),
-        ...(status ? { status: status as any } : {}),
+        // The active board (this endpoint's main use, from tickets/page.tsx)
+        // only ever asks for lane/no status filter — so by default, hide
+        // tickets that already left the workflow (delivered or cancelled).
+        // Without this, a delivered ticket's lane stays "READY" forever
+        // and it would never disappear from the "آماده تحویل" column.
+        // Passing an explicit ?status= (e.g. the history/search page)
+        // always wins and is never restricted here.
+        ...(status ? { status: status as any } : { status: { notIn: ["DELIVERED", "CANCELLED"] } }),
         ...(isSpecialist
           ? { OR: [{ assignedToId: userId }, { assignedToId: null, lane: role as any }] }
           : {}),

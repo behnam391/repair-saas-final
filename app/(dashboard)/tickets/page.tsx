@@ -247,6 +247,9 @@ function TicketDetail({
   const [wage, setWage] = useState(0);
   const isOwner = myRole === "OWNER";
 
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelNote, setCancelNote] = useState("");
+
   return (
     <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50" onClick={onClose}>
       <div
@@ -411,6 +414,39 @@ function TicketDetail({
             ثبت تحویل به مشتری
           </button>
         )}
+
+        {/* Available at any stage before the device is actually delivered —
+            covers both "customer changed their mind mid-repair" and any
+            other reason the shop needs to close the ticket without
+            finishing it. */}
+        <div className="mt-3 pt-3 border-t border-surface2">
+          {!cancelOpen ? (
+            <button onClick={() => setCancelOpen(true)} className="w-full text-danger text-[11px] font-semibold py-1">
+              انصراف از تعمیر و بازگشت دستگاه به مشتری
+            </button>
+          ) : (
+            <div className="bg-danger/10 border border-danger/40 rounded-lg p-3 space-y-2">
+              <div className="text-[11px] font-bold text-danger">ثبت انصراف و بازگشت دستگاه</div>
+              <p className="text-[10px] text-muted">این تیکت بسته می‌شود و از تابلوی فعال حذف می‌شود؛ بعداً از «سابقه و جستجو» با وضعیت «لغوشده» قابل مشاهده است.</p>
+              <textarea
+                className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                placeholder="دلیل انصراف (اختیاری)"
+                value={cancelNote}
+                onChange={(e) => setCancelNote(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onTransition(ticket.id, "cancel", undefined, { note: cancelNote || undefined })}
+                  className="flex-1 bg-danger text-white text-xs font-bold rounded-lg py-2">
+                  بله، دستگاه بازگردانده شد
+                </button>
+                <button onClick={() => setCancelOpen(false)} className="flex-1 bg-surface border border-surface2 text-xs font-semibold rounded-lg py-2">
+                  انصراف از این کار
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

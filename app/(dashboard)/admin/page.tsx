@@ -12,7 +12,13 @@ const LANE_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SO
 
 type Staff = { id: string; name: string; phone: string; role: string; active: boolean };
 type ReportRow = { techId: string; name: string; role: string; closedCount: number; revenue: number };
-type ShopInfo = { id?: string; name: string; type?: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null; taxPercent?: number };
+type ShopInfo = { id?: string; name: string; type?: string; businessSize?: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null; taxPercent?: number };
+
+const BUSINESS_SIZE_OPTIONS = [
+  { key: "SOLO", label: "تک‌نفره" },
+  { key: "TEAM", label: "تیمی" },
+  { key: "ENTERPRISE", label: "مجموعه بزرگ" },
+] as const;
 type Template = { id: string; lane: string; label: string };
 
 export default function AdminPage() {
@@ -55,7 +61,7 @@ export default function AdminPage() {
     if (shopRes.ok) {
       const data = await shopRes.json();
       setShopInfo({
-        id: data.shop.id, name: data.shop.name, type: data.shop.type ?? "REPAIR", address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
+        id: data.shop.id, name: data.shop.name, type: data.shop.type ?? "REPAIR", businessSize: data.shop.businessSize ?? "SOLO", address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
         bankCardNumber: data.shop.bankCardNumber ?? "", bankAccountNumber: data.shop.bankAccountNumber ?? "",
         latitude: data.shop.latitude ?? null, longitude: data.shop.longitude ?? null, province: data.shop.province ?? "",
         taxPercent: data.shop.taxPercent ?? 10,
@@ -99,7 +105,7 @@ export default function AdminPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: shopInfo.name, type: shopInfo.type, address: shopInfo.address, phone: shopInfo.phone,
+        name: shopInfo.name, type: shopInfo.type, businessSize: shopInfo.businessSize, address: shopInfo.address, phone: shopInfo.phone,
         bankCardNumber: shopInfo.bankCardNumber, bankAccountNumber: shopInfo.bankAccountNumber,
         latitude: shopInfo.latitude ?? undefined, longitude: shopInfo.longitude ?? undefined, province: shopInfo.province || undefined,
         taxPercent: shopInfo.taxPercent ?? undefined,
@@ -243,6 +249,17 @@ export default function AdminPage() {
         {(shopInfo.type === "DEALER" || shopInfo.type === "BOTH") && (
           <p className="text-[10px] text-teal mb-3">✅ بخش «خرید و فروش» حالا در نوار بالا فعال است.</p>
         )}
+
+        <label className="block text-xs text-muted mb-2">اندازه کسب‌وکار</label>
+        <div className="flex bg-surface2 rounded-lg p-1 mb-4">
+          {BUSINESS_SIZE_OPTIONS.map((o) => (
+            <button key={o.key} type="button" onClick={() => setShopInfo({ ...shopInfo, businessSize: o.key })}
+              className={`flex-1 text-[11px] font-bold rounded-md py-2 transition ${shopInfo.businessSize === o.key ? "bg-copper text-[#1A1410]" : "text-muted"}`}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+        <p className="text-[10px] text-muted mb-3 -mt-2">همان انتخابی که موقع ثبت‌نام کردید — هر وقت خواستید از تک‌نفره به تیمی (یا برعکس) تغییرش دهید.</p>
 
         <label className="block text-xs text-muted mb-1">نام مغازه</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
@@ -497,6 +514,9 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
   const [role, setRole] = useState(staff.role);
   const [active, setActive] = useState(staff.active);
   const [err, setErr] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteMsg, setDeleteMsg] = useState("");
 
   async function save() {
     setErr("");
@@ -511,14 +531,46 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
     onSaved();
   }
 
+  async function doDelete() {
+    setDeleting(true);
+    setErr("");
+    const res = await fetch(`/api/staff/${staff.id}`, { method: "DELETE" });
+    const d = await res.json().catch(() => ({}));
+    setDeleting(false);
+    if (!res.ok) { setErr(d.message || "حذف ناموفق بود"); setConfirmDelete(false); return; }
+    if (d.deactivated) {
+      // Had real ticket/history activity on record — kept for history's
+      // sake, but fully deactivated (blocked from logging in).
+      setDeleteMsg("این کارمند سابقه فعالیت داشت؛ برای حفظ تاریخچه، به‌جای حذف کامل غیرفعال شد.");
+      setConfirmDelete(false);
+      onSaved();
+      return;
+    }
+    onSaved();
+  }
+
   if (!editing) {
     return (
-      <div className={`flex justify-between items-center bg-surface2 border rounded-lg px-3 py-2 text-xs ${staff.active ? "border-surface2" : "border-danger"}`}>
-        <span>{staff.name} · {staff.phone} {!staff.active && <span className="text-danger">(غیرفعال)</span>}</span>
-        <div className="flex items-center gap-2">
-          <span className="text-muted">{ROLE_LABEL[staff.role] ?? staff.role}</span>
-          <button onClick={() => setEditing(true)} className="text-copper text-[10px] font-semibold">ویرایش</button>
+      <div className={`bg-surface2 border rounded-lg px-3 py-2 text-xs ${staff.active ? "border-surface2" : "border-danger"}`}>
+        <div className="flex justify-between items-center">
+          <span>{staff.name} · {staff.phone} {!staff.active && <span className="text-danger">(غیرفعال)</span>}</span>
+          <div className="flex items-center gap-2">
+            <span className="text-muted">{ROLE_LABEL[staff.role] ?? staff.role}</span>
+            <button onClick={() => setEditing(true)} className="text-copper text-[10px] font-semibold">ویرایش</button>
+            {!confirmDelete ? (
+              <button onClick={() => { setConfirmDelete(true); setDeleteMsg(""); }} className="text-danger text-[10px] font-semibold">حذف</button>
+            ) : (
+              <span className="flex items-center gap-1.5">
+                <button onClick={doDelete} disabled={deleting} className="text-danger text-[10px] font-bold disabled:opacity-50">
+                  {deleting ? "..." : "مطمئنید؟ ✕"}
+                </button>
+                <button onClick={() => setConfirmDelete(false)} className="text-muted text-[10px]">انصراف</button>
+              </span>
+            )}
+          </div>
         </div>
+        {err && <p className="text-danger text-[10px] mt-1.5">{err}</p>}
+        {deleteMsg && <p className="text-amber text-[10px] mt-1.5">{deleteMsg}</p>}
       </div>
     );
   }
