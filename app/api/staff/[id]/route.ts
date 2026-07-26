@@ -9,6 +9,7 @@ const UpdateSchema = z.object({
   name: z.string().min(1).optional(),
   phone: z.string().min(5).optional(),
   role: z.enum(["OWNER", "FRONTDESK", "HARDWARE", "SOFTWARE", "BOARD"]).optional(),
+  specialty: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]).nullable().optional(),
   active: z.boolean().optional(),
   email: z.string().optional(),
   gmailId: z.string().optional(),
@@ -34,7 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     const user = await db.user.update({
       where: { id: target.id },
-      data: body,
+      data: body as any,
       select: { id: true, name: true, phone: true, role: true, active: true },
     });
     return NextResponse.json({ user });
@@ -71,20 +72,25 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
       }
     }
 
+    // A staff member with NO activity on record (no assigned tickets,
+    // history, market posts, ratings, etc.) can be fully deleted — this
+    // frees their phone number for re-use. Anyone with real activity is
+    // instead deactivated so past tickets/history keep their technician
+    // reference intact. We try the hard delete first; if the database
+    // refuses for ANY reason (foreign-key constraint being the expected
+    // one), we fall back to deactivating rather than surfacing an error —
+    // "remove from the shop, keep the history" is exactly the intent.
     try {
       await db.user.delete({ where: { id: target.id } });
       return NextResponse.json({ ok: true, deactivated: false });
     } catch (delErr: any) {
-      // P2003 = foreign key constraint failed: this staff member has real
-      // history (assigned tickets, ticket-history entries, market posts,
-      // ratings, etc.) that must stay intact. Fall back to deactivating —
-      // this already fully blocks their login, matching the practical
-      // meaning of "removing" them.
-      if (delErr?.code === "P2003") {
+      try {
         await db.user.update({ where: { id: target.id }, data: { active: false } });
         return NextResponse.json({ ok: true, deactivated: true });
+      } catch (deactErr) {
+        console.error("[staff delete] both delete and deactivate failed", delErr, deactErr);
+        return NextResponse.json({ message: "حذف کارمند ناموفق بود، دوباره تلاش کنید" }, { status: 500 });
       }
-      throw delErr;
     }
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

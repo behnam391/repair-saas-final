@@ -127,7 +127,34 @@ export const authOptions: NextAuthOptions = {
           token.role = (user as any).role;
           token.shopId = (user as any).shopId;
           token.shopName = (user as any).shopName;
+          token.specialty = (user as any).specialty ?? null;
           token.isImpersonated = (user as any).isImpersonated ?? false;
+        }
+        return token;
+      }
+
+      // On every SUBSEQUENT request (no fresh `user`), re-check a shop
+      // user against the database. This is what makes removing/firing a
+      // staff member take effect immediately — their existing session is
+      // invalidated on the next request instead of surviving until the
+      // JWT expires. It also lets a role or specialty change apply without
+      // forcing the person to log out and back in. Wrapped so a transient
+      // DB error never locks the whole team out (we keep the prior token).
+      if (token.role && !token.isCustomer && !token.isSuperAdmin && token.sub) {
+        try {
+          const fresh = await db.user.findUnique({
+            where: { id: token.sub as string },
+            select: { active: true, role: true, specialty: true, shop: { select: { active: true } } } as any,
+          });
+          if (!fresh || !fresh.active || !(fresh as any).shop?.active) {
+            token.disabled = true;
+          } else {
+            token.disabled = false;
+            token.role = fresh.role;
+            token.specialty = (fresh as any).specialty ?? null;
+          }
+        } catch (e) {
+          console.error("[auth] session revalidation failed, keeping existing token", e);
         }
       }
       return token;
@@ -137,10 +164,22 @@ export const authOptions: NextAuthOptions = {
       (session.user as any).isSuperAdmin = token.isSuperAdmin ?? false;
       (session.user as any).isCustomer = token.isCustomer ?? false;
       (session.user as any).phone = token.phone;
+      (session.user as any).isImpersonated = token.isImpersonated ?? false;
+
+      // A shop session that failed revalidation (staff removed/deactivated,
+      // or shop suspended) is stripped of its shop scope, so requireSession
+      // rejects it and the app treats the caller as signed out.
+      if (token.disabled) {
+        (session.user as any).role = undefined;
+        (session.user as any).shopId = undefined;
+        (session.user as any).disabled = true;
+        return session;
+      }
+
       (session.user as any).role = token.role;
       (session.user as any).shopId = token.shopId;
       (session.user as any).shopName = token.shopName;
-      (session.user as any).isImpersonated = token.isImpersonated ?? false;
+      (session.user as any).specialty = token.specialty ?? null;
       return session;
     },
   },

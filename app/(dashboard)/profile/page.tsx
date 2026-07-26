@@ -3,12 +3,15 @@ import { useEffect, useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
 
+const SPECIALTY_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی (برد/سی‌پی‌یو)" };
+
 export default function ProfilePage() {
   const [form, setForm] = useState({
     avatarUrl: "", phone: "", email: "", gmailId: "", nationalId: "", birthDate: "",
-    notifyEmail: false,
+    notifyEmail: false, specialty: "",
   });
   const [name, setName] = useState("");
+  const [roleLabel, setRoleLabel] = useState("");
   const [saved, setSaved] = useState(false);
   const [saveErr, setSaveErr] = useState("");
 
@@ -21,11 +24,14 @@ export default function ProfilePage() {
     if (res.ok) {
       const data = await res.json();
       setName(data.user.name);
+      const ROLE_FA: Record<string, string> = { OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی" };
+      setRoleLabel(ROLE_FA[data.user.role] ?? data.user.role ?? "");
       setForm({
         avatarUrl: data.user.avatarUrl ?? "", phone: data.user.phone ?? "", email: data.user.email ?? "", gmailId: data.user.gmailId ?? "",
         nationalId: data.user.nationalId ?? "",
         birthDate: data.user.birthDate ? data.user.birthDate.slice(0, 10) : "",
         notifyEmail: data.user.notifyEmail,
+        specialty: data.user.specialty ?? "",
       });
     }
   }
@@ -37,7 +43,7 @@ export default function ProfilePage() {
     const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, specialty: form.specialty || null }),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
     else { const d = await res.json().catch(() => ({})); setSaveErr(d.message || "ذخیره ناموفق بود"); }
@@ -89,6 +95,16 @@ export default function ProfilePage() {
       <label className="block text-xs text-muted mb-1">شماره موبایل (برای ورود)</label>
       <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono" dir="ltr" inputMode="tel" maxLength={11}
         placeholder="09xxxxxxxxx" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+
+      <label className="block text-xs text-muted mb-1">
+        تخصص من {roleLabel && <span className="text-muted">— نقش: {roleLabel}</span>}
+      </label>
+      <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-1"
+        value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })}>
+        <option value="">— فقط هماهنگی/پذیرش، کار فنی نمی‌کنم —</option>
+        {Object.entries(SPECIALTY_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+      </select>
+      <p className="text-[10px] text-muted mb-3">اگر خودتان هم گوشی تعمیر می‌کنید (مثلاً مدیری که نرم‌افزار هم کار می‌کند)، تخصص‌تان را انتخاب کنید.</p>
 
       <label className="block text-xs text-muted mb-1">ایمیل</label>
       <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"

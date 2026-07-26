@@ -9,8 +9,11 @@ const ROLE_LABEL: Record<string, string> = {
   OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی",
 };
 const LANE_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی" };
+// Which repair lane someone works in — separate from role, so an OWNER can
+// also be a technician. "" = coordinator only (does not pick up lane work).
+const SPECIALTY_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی (برد/سی‌پی‌یو)" };
 
-type Staff = { id: string; name: string; phone: string; role: string; active: boolean };
+type Staff = { id: string; name: string; phone: string; role: string; specialty?: string | null; active: boolean };
 type ReportRow = { techId: string; name: string; role: string; closedCount: number; revenue: number };
 type ShopInfo = { id?: string; name: string; type?: string; businessSize?: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null; taxPercent?: number };
 
@@ -27,7 +30,7 @@ export default function AdminPage() {
   const [report, setReport] = useState<ReportRow[]>([]);
   const [monthRevenue, setMonthRevenue] = useState(0);
   const [monthlyChart, setMonthlyChart] = useState<{ label: string; repair: number; sale: number; total: number }[]>([]);
-  const [form, setForm] = useState({ name: "", phone: "", password: "", role: "HARDWARE" });
+  const [form, setForm] = useState({ name: "", phone: "", password: "", role: "HARDWARE", specialty: "" });
   const [error, setError] = useState("");
 
   const [shopInfo, setShopInfo] = useState<ShopInfo>({ name: "", address: "", phone: "", plan: "free", bankCardNumber: "", bankAccountNumber: "" });
@@ -87,14 +90,14 @@ export default function AdminPage() {
     const res = await fetch("/api/staff", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, specialty: form.specialty || null }),
     });
     if (!res.ok) {
       const err = await res.json();
       setError(err.message || "افزودن کارمند ناموفق بود");
       return;
     }
-    setForm({ name: "", phone: "", password: "", role: "HARDWARE" });
+    setForm({ name: "", phone: "", password: "", role: "HARDWARE", specialty: "" });
     load();
   }
 
@@ -392,10 +395,18 @@ export default function AdminPage() {
           value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         <input placeholder="رمز عبور موقت" type="password" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
           value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-        <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+        <label className="block text-[11px] text-muted mb-1">نقش (سطح دسترسی)</label>
+        <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
           value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
           {Object.entries(ROLE_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
         </select>
+        <label className="block text-[11px] text-muted mb-1">تخصص تعمیر (اختیاری — این فرد چه چیزی تعمیر می‌کند)</label>
+        <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-1"
+          value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })}>
+          <option value="">— فقط هماهنگی/پذیرش، کار فنی نمی‌کند —</option>
+          {Object.entries(SPECIALTY_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+        </select>
+        <p className="text-[10px] text-muted mb-3">مثلاً یک مدیر که خودش هم نرم‌افزار کار می‌کند: نقش «مدیر» + تخصص «نرم‌افزار».</p>
         {error && <p className="text-danger text-xs mb-2">{error}</p>}
         <button onClick={addStaff} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm hover:brightness-110 transition">
           افزودن کارمند
@@ -403,10 +414,17 @@ export default function AdminPage() {
 
         <div className="text-xs font-bold mb-2 mt-5">اعضای تیم</div>
         <div className="space-y-2">
-          {staff.map((s) => (
+          {staff.filter((s) => s.active).map((s) => (
             <StaffRow key={s.id} staff={s} onSaved={load} />
           ))}
+          {staff.filter((s) => s.active).length === 0 && (
+            <p className="text-[11px] text-muted">عضو فعالی نیست.</p>
+          )}
         </div>
+
+        {staff.some((s) => !s.active) && (
+          <RemovedStaff staff={staff.filter((s) => !s.active)} onRestored={load} />
+        )}
       </Section>
 
       <Section title="گزارش بهره‌وری" icon="📊">
@@ -512,7 +530,7 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
   const [name, setName] = useState(staff.name);
   const [phone, setPhone] = useState(staff.phone);
   const [role, setRole] = useState(staff.role);
-  const [active, setActive] = useState(staff.active);
+  const [specialty, setSpecialty] = useState(staff.specialty ?? "");
   const [err, setErr] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -524,7 +542,7 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
     const res = await fetch(`/api/staff/${staff.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone: phone.trim(), role, active }),
+      body: JSON.stringify({ name, phone: phone.trim(), role, specialty: specialty || null }),
     });
     if (!res.ok) { const d = await res.json().catch(() => ({})); setErr(d.message || "ذخیره ناموفق بود"); return; }
     setEditing(false);
@@ -538,24 +556,23 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
     const d = await res.json().catch(() => ({}));
     setDeleting(false);
     if (!res.ok) { setErr(d.message || "حذف ناموفق بود"); setConfirmDelete(false); return; }
-    if (d.deactivated) {
-      // Had real ticket/history activity on record — kept for history's
-      // sake, but fully deactivated (blocked from logging in).
-      setDeleteMsg("این کارمند سابقه فعالیت داشت؛ برای حفظ تاریخچه، به‌جای حذف کامل غیرفعال شد.");
-      setConfirmDelete(false);
-      onSaved();
-      return;
-    }
+    // Whether hard-deleted or deactivated, the person now leaves the active
+    // roster; the parent reloads and moves any deactivated row into the
+    // "removed staff" section below.
+    setConfirmDelete(false);
     onSaved();
   }
 
   if (!editing) {
     return (
-      <div className={`bg-surface2 border rounded-lg px-3 py-2 text-xs ${staff.active ? "border-surface2" : "border-danger"}`}>
+      <div className="bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs">
         <div className="flex justify-between items-center">
-          <span>{staff.name} · {staff.phone} {!staff.active && <span className="text-danger">(غیرفعال)</span>}</span>
+          <span>{staff.name} · {staff.phone}</span>
           <div className="flex items-center gap-2">
-            <span className="text-muted">{ROLE_LABEL[staff.role] ?? staff.role}</span>
+            <span className="text-muted">
+              {ROLE_LABEL[staff.role] ?? staff.role}
+              {staff.specialty && <span className="text-teal"> · {SPECIALTY_LABEL[staff.specialty] ?? staff.specialty}</span>}
+            </span>
             <button onClick={() => setEditing(true)} className="text-copper text-[10px] font-semibold">ویرایش</button>
             {!confirmDelete ? (
               <button onClick={() => { setConfirmDelete(true); setDeleteMsg(""); }} className="text-danger text-[10px] font-semibold">حذف</button>
@@ -569,6 +586,7 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
             )}
           </div>
         </div>
+        {confirmDelete && <p className="text-[10px] text-muted mt-1.5">این فرد از فهرست تیم حذف و دسترسی‌اش قطع می‌شود؛ سابقه‌ی کارهایش حفظ می‌ماند و در صورت نیاز قابل بازگردانی است.</p>}
         {err && <p className="text-danger text-[10px] mt-1.5">{err}</p>}
         {deleteMsg && <p className="text-amber text-[10px] mt-1.5">{deleteMsg}</p>}
       </div>
@@ -582,18 +600,59 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
       <label className="block text-[10px] text-muted">شماره موبایل (برای ورود)</label>
       <input className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs mono" dir="ltr" inputMode="tel" maxLength={11}
         value={phone} onChange={(e) => setPhone(e.target.value)} />
+      <label className="block text-[10px] text-muted">نقش (سطح دسترسی)</label>
       <select className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={role} onChange={(e) => setRole(e.target.value)}>
         {Object.entries(ROLE_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
       </select>
-      <label className="flex items-center gap-2 text-[11px] text-muted">
-        <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
-        حساب فعال باشد
-      </label>
+      <label className="block text-[10px] text-muted">تخصص تعمیر (اختیاری)</label>
+      <select className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={specialty} onChange={(e) => setSpecialty(e.target.value)}>
+        <option value="">— فقط هماهنگی/پذیرش —</option>
+        {Object.entries(SPECIALTY_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+      </select>
       {err && <p className="text-danger text-[11px]">{err}</p>}
       <div className="flex gap-2">
         <button onClick={save} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">ذخیره</button>
         <button onClick={() => setEditing(false)} className="flex-1 bg-surface rounded-lg py-1.5">انصراف</button>
       </div>
+    </div>
+  );
+}
+
+/* Collapsed list of removed/deactivated staff — kept for history, with a
+   one-click restore that reactivates the account (re-enabling login). */
+function RemovedStaff({ staff, onRestored }: { staff: Staff[]; onRestored: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  async function restore(id: string) {
+    setBusy(id);
+    await fetch(`/api/staff/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active: true }),
+    });
+    setBusy(null);
+    onRestored();
+  }
+
+  return (
+    <div className="mt-4 pt-3 border-t border-surface2">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="w-full flex justify-between items-center text-[11px] font-bold text-muted">
+        <span>کارکنان حذف‌شده / غیرفعال ({staff.length.toLocaleString("fa-IR")})</span>
+        <span className={`text-[9px] transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
+      </button>
+      {open && (
+        <div className="space-y-1.5 mt-2">
+          {staff.map((s) => (
+            <div key={s.id} className="flex justify-between items-center bg-surface2/60 border border-surface2 rounded-lg px-3 py-2 text-xs">
+              <span className="text-muted">{s.name} · {s.phone}</span>
+              <button onClick={() => restore(s.id)} disabled={busy === s.id} className="text-teal text-[10px] font-bold disabled:opacity-50">
+                {busy === s.id ? "..." : "بازگردانی"}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

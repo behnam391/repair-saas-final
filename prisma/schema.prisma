@@ -142,6 +142,11 @@ model User {
   phone        String   @unique
   passwordHash String
   role         Role
+  // Which repair lane this person actually works in, INDEPENDENT of role.
+  // Lets an OWNER (or FRONTDESK) also be a technician — e.g. a solo owner
+  // who is the shop's only hardware+software tech. null = coordinator only,
+  // does not personally pick up lane work. One of HARDWARE/SOFTWARE/BOARD.
+  specialty    String?
   active       Boolean  @default(true)
   avatarUrl    String?
   email        String?
