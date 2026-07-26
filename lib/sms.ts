@@ -52,6 +52,20 @@ export async function sendSms(to: string, message: string, sender?: string) {
   return { ok: true, raw: await res.json() };
 }
 
+// Sent the moment a device is accepted at intake — the professional
+// "we've got your device" confirmation. Gives the customer their tracking
+// number right away so they don't have to call to check.
+export function intakeReceivedMessage(
+  shopName: string,
+  customerName: string,
+  ticketNo: number,
+  opts?: { deviceModel?: string | null; shopPhone?: string | null }
+) {
+  let msg = `${shopName}\nسلام ${customerName} عزیز، دستگاه شما${opts?.deviceModel ? ` (${opts.deviceModel})` : ""} با کد پیگیری #${ticketNo} پذیرش شد. به‌محض آماده‌شدن، با پیامک اطلاع می‌دهیم.`;
+  if (opts?.shopPhone) msg += `\nتماس با تعمیرگاه: ${opts.shopPhone}`;
+  return msg;
+}
+
 // Pre-built message for the most important automated notification: the
 // device is ready for pickup. Includes the estimated/final price and the
 // shop's own phone number (for the customer to call back), when available.

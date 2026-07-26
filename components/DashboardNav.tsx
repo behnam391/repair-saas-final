@@ -100,6 +100,7 @@ export default function DashboardNav({
           label: "مدیریت",
           items: [
             { href: "/admin", label: "پنل مدیریت", icon: "📊" },
+            { href: "/expenses", label: "دخل و خرج", icon: "🧮" },
             { href: "/admin/billing", label: "اشتراک و پرداخت", icon: "💳" },
           ],
         }]

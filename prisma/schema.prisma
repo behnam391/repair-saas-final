@@ -72,6 +72,25 @@ model Shop {
   partnershipsReceived ShopPartnership[] @relation("PartnershipSentTo")
   referralsSent        ShopReferral[]    @relation("ReferralFrom")
   referralsReceived    ShopReferral[]    @relation("ReferralTo")
+  expenses           Expense[]
+}
+
+// ── Cash book (دخل و خرج) ────────────────────────────────────
+// The income side of a shop's finances already comes from Invoice totals;
+// this is the missing EXPENSE side (rent, utilities, cash parts buys,
+// wages, misc), so the owner can see true net profit — not just revenue.
+model Expense {
+  id            String   @id @default(cuid())
+  shopId        String
+  shop          Shop     @relation(fields: [shopId], references: [id])
+  amount        Int      // toman
+  category      String   // RENT | WAGE | PARTS | UTILITY | OTHER
+  note          String?
+  createdByName String   // display only — who logged it
+  spentAt       DateTime @default(now()) // when the money was actually spent (owner may backdate)
+  createdAt     DateTime @default(now())
+
+  @@index([shopId, spentAt])
 }
 
 // You — the SaaS owner — sign in separately from every shop's staff.
