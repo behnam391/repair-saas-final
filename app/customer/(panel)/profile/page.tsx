@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
 import { IRAN_PROVINCES, PROVINCE_NAMES } from "@/lib/iran-locations";
 
 export default function CustomerProfilePage() {
@@ -10,6 +11,31 @@ export default function CustomerProfilePage() {
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "" });
   const [pwMsg, setPwMsg] = useState("");
   const [pwError, setPwError] = useState("");
+
+  const [delOpen, setDelOpen] = useState(false);
+  const [delPassword, setDelPassword] = useState("");
+  const [delErr, setDelErr] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  async function deleteAccount() {
+    setDelErr("");
+    if (!delPassword) { setDelErr("برای حذف حساب، رمز عبورتان را وارد کنید"); return; }
+    setDeleting(true);
+    const res = await fetch("/api/customer/profile", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: delPassword }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      setDelErr(d.message || "حذف حساب ناموفق بود");
+      setDeleting(false);
+      return;
+    }
+    // Account gone — end the session and leave the panel.
+    await signOut({ redirect: false });
+    window.location.href = "/";
+  }
 
   const cities = form.province ? IRAN_PROVINCES[form.province] ?? [] : [];
 
@@ -105,6 +131,37 @@ export default function CustomerProfilePage() {
           <a href="/customer/forgot-password" className="text-teal font-semibold">بازیابی با کد پیامکی/ایمیل</a>
           {" "}(اول از سیستم خارج شوید، بعد کد دریافت کنید)
         </p>
+      </div>
+
+      {/* Danger zone — permanent account deletion */}
+      <div className="border-t border-danger/40 my-6 pt-5">
+        <div className="text-sm font-bold text-danger mb-1">حذف حساب کاربری</div>
+        <p className="text-[11px] text-muted mb-3">
+          با حذف حساب، اطلاعات حساب و امتیازهایی که ثبت کرده‌اید برای همیشه پاک می‌شود و قابل بازگشت نیست. (سابقه‌ی تعمیرهای شما نزد خود مغازه‌ها باقی می‌ماند.)
+        </p>
+        {!delOpen ? (
+          <button onClick={() => { setDelOpen(true); setDelErr(""); }}
+            className="w-full bg-danger/15 text-danger font-bold rounded-lg py-2.5 text-sm hover:bg-danger/25 transition">
+            حذف حساب من
+          </button>
+        ) : (
+          <div className="bg-danger/10 border border-danger/40 rounded-lg p-3 space-y-2">
+            <label className="block text-[11px] text-muted">برای تأیید، رمز عبورتان را وارد کنید</label>
+            <input type="password" className="w-full bg-surface border border-surface2 rounded-lg px-3 py-2 text-sm"
+              value={delPassword} onChange={(e) => setDelPassword(e.target.value)} />
+            {delErr && <p className="text-danger text-[11px]">{delErr}</p>}
+            <div className="flex gap-2">
+              <button onClick={deleteAccount} disabled={deleting}
+                className="flex-1 bg-danger text-white font-bold rounded-lg py-2 text-sm disabled:opacity-60">
+                {deleting ? "در حال حذف..." : "بله، حساب من را حذف کن"}
+              </button>
+              <button onClick={() => { setDelOpen(false); setDelPassword(""); setDelErr(""); }}
+                className="flex-1 bg-surface border border-surface2 font-semibold rounded-lg py-2 text-sm">
+                انصراف
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

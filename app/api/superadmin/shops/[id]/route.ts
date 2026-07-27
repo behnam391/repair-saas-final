@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSuperAdmin, UnauthorizedError } from "@/lib/tenant";
 import { PLANS, PlanKey } from "@/lib/plans";
+import { deleteShopCascade } from "@/lib/cascade";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -47,5 +48,22 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input" }, { status: 400 });
     console.error(e);
     return NextResponse.json({ error: "internal_error" }, { status: 500 });
+  }
+}
+
+// DELETE /api/superadmin/shops/:id — permanently remove a shop and ALL its
+// data (super-admin only). Irreversible — meant for clearing test shops.
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    await requireSuperAdmin();
+    const shop = await db.shop.findUnique({ where: { id: params.id }, select: { id: true } });
+    if (!shop) return NextResponse.json({ error: "not_found" }, { status: 404 });
+
+    await deleteShopCascade(params.id);
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    console.error("[superadmin] shop delete failed", e);
+    return NextResponse.json({ error: "internal_error", message: "حذف مغازه ناموفق بود" }, { status: 500 });
   }
 }

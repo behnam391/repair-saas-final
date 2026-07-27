@@ -59,6 +59,17 @@ export default function SuperAdminClient() {
     load();
   }
 
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  async function deleteShop(id: string) {
+    setDeletingId(id);
+    const res = await fetch(`/api/superadmin/shops/${id}`, { method: "DELETE" });
+    setDeletingId(null);
+    setConfirmDelete(null);
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.message || "حذف ناموفق بود"); return; }
+    load();
+  }
+
   const filtered = useMemo(() => {
     return shops.filter((s) => {
       const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase());
@@ -165,8 +176,27 @@ export default function SuperAdminClient() {
                   >
                     🎁 هدیه اشتراک
                   </button>
+                  {confirmDelete === s.id ? (
+                    <div className="flex gap-1">
+                      <button onClick={() => deleteShop(s.id)} disabled={deletingId === s.id}
+                        className="text-[10px] font-bold rounded-lg px-2 py-1 bg-danger text-white disabled:opacity-50">
+                        {deletingId === s.id ? "..." : "حذف قطعی"}
+                      </button>
+                      <button onClick={() => setConfirmDelete(null)} className="text-[10px] rounded-lg px-2 py-1 bg-surface text-muted">لغو</button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setConfirmDelete(s.id)}
+                      className="text-[10px] font-semibold rounded-lg px-2.5 py-1 bg-danger/15 text-danger hover:bg-danger/25 transition"
+                    >
+                      🗑 حذف کامل از دیتابیس
+                    </button>
+                  )}
                 </div>
               </div>
+              {confirmDelete === s.id && (
+                <p className="text-[10px] text-danger mt-2">این کار «{s.name}» و همه‌ی داده‌هایش (کاربران، تیکت‌ها، فاکتورها و…) را برای همیشه پاک می‌کند و قابل بازگشت نیست.</p>
+              )}
             </div>
           ))}
         </div>

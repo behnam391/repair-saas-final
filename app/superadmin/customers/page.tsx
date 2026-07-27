@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { formatJalaliDate } from "@/lib/jalali";
 
 type CustomerRow = {
   id: string; name: string; phone: string; email: string | null;
@@ -42,6 +43,17 @@ export default function SuperAdminCustomersPage() {
     load();
   }
 
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  async function deleteCustomer(id: string) {
+    setDeletingId(id);
+    const res = await fetch(`/api/superadmin/customers/${id}`, { method: "DELETE" });
+    setDeletingId(null);
+    setConfirmDelete(null);
+    if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.message || "حذف ناموفق بود"); return; }
+    load();
+  }
+
   return (
     <div className="min-h-screen p-4 max-w-2xl mx-auto">
       <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
@@ -72,14 +84,30 @@ export default function SuperAdminCustomersPage() {
                 <div className="text-muted mt-0.5">
                   {[c.city, c.province].filter(Boolean).join("، ") || "بدون موقعیت"}
                   {" "}· {c.ratingCount} امتیاز ثبت‌شده
-                  {" "}· عضویت {new Date(c.createdAt).toLocaleDateString("fa-IR")}
+                  {" "}· عضویت {formatJalaliDate(c.createdAt)}
                 </div>
               </div>
-              <button
-                onClick={() => toggleActive(c.id, c.active)}
-                className={`shrink-0 text-[11px] font-semibold rounded-lg px-2.5 py-1.5 transition ${c.active ? "bg-danger/20 text-danger hover:bg-danger/30" : "bg-teal/20 text-teal hover:bg-teal/30"}`}>
-                {c.active ? "تعلیق" : "فعال‌سازی"}
-              </button>
+              <div className="flex flex-col gap-1.5 shrink-0">
+                <button
+                  onClick={() => toggleActive(c.id, c.active)}
+                  className={`text-[11px] font-semibold rounded-lg px-2.5 py-1.5 transition ${c.active ? "bg-danger/20 text-danger hover:bg-danger/30" : "bg-teal/20 text-teal hover:bg-teal/30"}`}>
+                  {c.active ? "تعلیق" : "فعال‌سازی"}
+                </button>
+                {confirmDelete === c.id ? (
+                  <div className="flex gap-1">
+                    <button onClick={() => deleteCustomer(c.id)} disabled={deletingId === c.id}
+                      className="text-[10px] font-bold rounded-lg px-2 py-1 bg-danger text-white disabled:opacity-50">
+                      {deletingId === c.id ? "..." : "حذف قطعی"}
+                    </button>
+                    <button onClick={() => setConfirmDelete(null)} className="text-[10px] rounded-lg px-2 py-1 bg-surface text-muted">لغو</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmDelete(c.id)}
+                    className="text-[10px] font-semibold rounded-lg px-2.5 py-1 bg-danger/10 text-danger hover:bg-danger/20 transition">
+                    🗑 حذف از دیتابیس
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

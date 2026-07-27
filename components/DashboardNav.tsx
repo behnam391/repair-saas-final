@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { LogoMark } from "./Logo";
+import { canSeeNav } from "@/lib/permissions";
 
 type NavItem = { href: string; label: string; icon: string; external?: boolean };
 type NavGroup = { label: string; items: NavItem[] };
@@ -107,8 +108,14 @@ export default function DashboardNav({
       : []),
   ];
 
-  const activeGroup = groups.find((g) => g.label === openGroup);
-  const showDealer = shopType === "DEALER" || shopType === "BOTH";
+  // Hide any nav entry this role shouldn't see, then drop groups that end
+  // up empty. Owner is unaffected (canSeeNav returns true for OWNER).
+  const visibleGroups = groups
+    .map((g) => ({ ...g, items: g.items.filter((item) => canSeeNav(role, item.href)) }))
+    .filter((g) => g.items.length > 0);
+
+  const activeGroup = visibleGroups.find((g) => g.label === openGroup);
+  const showDealer = (shopType === "DEALER" || shopType === "BOTH") && canSeeNav(role, "/dealer");
 
   return (
     <>
@@ -156,7 +163,7 @@ export default function DashboardNav({
                 <DrawerRow href="/dealer" icon="💰" label="خرید و فروش" onGo={() => setMobileOpen(false)} bold />
               )}
 
-              {groups.map((g) => (
+              {visibleGroups.map((g) => (
                 <div key={g.label}>
                   <div className="h-px bg-border mx-4 my-1.5" />
                   <div className="px-4 pt-1.5 pb-1 text-[10px] font-bold text-muted">{g.label}</div>
@@ -189,7 +196,7 @@ export default function DashboardNav({
           </Link>
         )}
 
-        {groups.map((g) => (
+        {visibleGroups.map((g) => (
           <button
             key={g.label}
             ref={(el) => { btnRefs.current[g.label] = el; }}

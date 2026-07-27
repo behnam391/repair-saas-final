@@ -65,3 +65,36 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
 }
+
+const DeleteSchema = z.object({ password: z.string().min(1) });
+
+// DELETE /api/customer/profile — the customer permanently deletes their own
+// nationwide account. Requires the current password as a safety check.
+// Removes their data (ratings + reset tokens) then the account itself. This
+// does NOT touch any shop's repair tickets — those live under the shop's own
+// per-shop customer records, matched only by phone number.
+export async function DELETE(req: NextRequest) {
+  try {
+    const { customerId } = await requireCustomer();
+    const { password } = DeleteSchema.parse(await req.json());
+
+    const customer = await db.platformCustomer.findUniqueOrThrow({ where: { id: customerId } });
+    const valid = await bcrypt.compare(password, customer.passwordHash);
+    if (!valid) {
+      return NextResponse.json({ error: "wrong_password", message: "رمز عبور اشتباه است" }, { status: 400 });
+    }
+
+    await db.$transaction(async (tx) => {
+      await tx.rating.deleteMany({ where: { platformCustomerId: customerId } });
+      await tx.customerPasswordResetToken.deleteMany({ where: { customerId } });
+      await tx.platformCustomer.delete({ where: { id: customerId } });
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input", message: "رمز عبور را وارد کنید" }, { status: 400 });
+    console.error(e);
+    return NextResponse.json({ error: "internal_error" }, { status: 500 });
+  }
+}
