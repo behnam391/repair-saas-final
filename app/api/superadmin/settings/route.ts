@@ -20,6 +20,9 @@ const Schema = z.object({
   kavenegarApiKey: z.string().optional(),
   kavenegarSender: z.string().optional(),
   zarinpalMerchantId: z.string().optional(),
+  paymentProvider: z.enum(["zarinpal", "zibal", "nextpay"]).optional(),
+  zibalMerchant: z.string().optional(),
+  nextpayApiKey: z.string().optional(),
   guideUrl: z.string().optional(),
   aboutUsContent: z.string().optional(),
   smtpHost: z.string().optional(),
@@ -36,8 +39,8 @@ export async function PATCH(req: NextRequest) {
     const body = Schema.parse(await req.json());
     const settings = await db.platformSettings.upsert({
       where: { id: "singleton" },
-      update: body,
-      create: { id: "singleton", ...body },
+      update: body as any,
+      create: { id: "singleton", ...body } as any,
     });
     return NextResponse.json({ settings });
   } catch (e) {

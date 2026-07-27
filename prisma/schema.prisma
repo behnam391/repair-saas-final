@@ -119,8 +119,9 @@ model Subscription {
   plan      String             // "pro" | "business"
   months    Int                @default(1) // duration purchased: 1, 3, 6, or 12
   amount    Int                // toman, already discounted for the duration
-  authority String?            // Zarinpal Authority token for this attempt
-  refId     String?            // Zarinpal RefID once verified/paid
+  paymentProvider String?      // "zarinpal" | "zibal" | "nextpay" — which gateway this attempt used
+  authority String?            // gateway transaction token (Zarinpal authority / Zibal trackId / NextPay trans_id)
+  refId     String?            // gateway reference id once verified/paid
   status    SubscriptionStatus @default(PENDING)
   createdAt DateTime           @default(now())
 
@@ -372,8 +373,9 @@ model Invoice {
   taxAmount  Int      @default(0) // toman, computed at invoice time
   total      Int
   paid       Boolean  @default(false)
-  // Online payment by the customer via Zarinpal (/pay/[invoiceId])
-  paymentAuthority String?
+  // Online payment by the customer (/pay/[invoiceId]) via the active gateway
+  paymentProvider  String? // "zarinpal" | "zibal" | "nextpay"
+  paymentAuthority String? // gateway transaction token
   paymentRefId     String?
   createdAt  DateTime @default(now())
 
@@ -673,6 +675,10 @@ model PlatformSettings {
   kavenegarApiKey     String?
   kavenegarSender     String?
   zarinpalMerchantId  String?
+  // Which gateway is currently active platform-wide: "zarinpal" | "zibal" | "nextpay".
+  paymentProvider     String? @default("zarinpal")
+  zibalMerchant       String? // Zibal merchant id (or "zibal" for their sandbox)
+  nextpayApiKey       String? // NextPay api_key
   guideUrl            String? // link to an external help/docs site
   aboutUsContent      String? // shown on the built-in /about page
   smtpHost            String?

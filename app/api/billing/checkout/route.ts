@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
-import { requestPayment } from "@/lib/zarinpal";
+import { requestPayment } from "@/lib/payments";
 import { PLANS, DURATIONS, priceForDuration, type PlanKey, type DurationKey } from "@/lib/plans";
 import { z } from "zod";
 
@@ -25,13 +25,14 @@ export async function POST(req: NextRequest) {
       data: { shopId, plan, months: durationInfo.months, amount, status: "PENDING" },
     });
 
-    const { authority, payUrl } = await requestPayment({
+    const { provider, token, payUrl } = await requestPayment({
       amountToman: amount,
       description: `ارتقا به پلن ${planInfo.label} (${durationInfo.label}) — تعمیرگاه`,
       callbackUrl: `${origin}/api/billing/callback?subId=${sub.id}`,
+      orderId: sub.id,
     });
 
-    await db.subscription.update({ where: { id: sub.id }, data: { authority } });
+    await db.subscription.update({ where: { id: sub.id }, data: { authority: token, paymentProvider: provider } as any });
 
     return NextResponse.json({ payUrl });
   } catch (e) {

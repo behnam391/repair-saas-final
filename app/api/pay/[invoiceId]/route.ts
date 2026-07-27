@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requestPayment } from "@/lib/zarinpal";
+import { requestPayment } from "@/lib/payments";
 
 export const dynamic = "force-dynamic";
 
@@ -37,13 +37,14 @@ export async function POST(req: NextRequest, { params }: { params: { invoiceId: 
     if (invoice.total <= 0) return NextResponse.json({ error: "zero_amount", message: "مبلغ فاکتور صفر است" }, { status: 400 });
 
     const origin = req.nextUrl.origin;
-    const { authority, payUrl } = await requestPayment({
+    const { provider, token, payUrl } = await requestPayment({
       amountToman: invoice.total,
       description: `پرداخت فاکتور ${invoice.shop.name} — ${invoice.id.slice(0, 8)}`,
       callbackUrl: `${origin}/api/pay/callback?invoiceId=${invoice.id}`,
+      orderId: invoice.id,
     });
 
-    await db.invoice.update({ where: { id: invoice.id }, data: { paymentAuthority: authority } });
+    await db.invoice.update({ where: { id: invoice.id }, data: { paymentAuthority: token, paymentProvider: provider } as any });
 
     return NextResponse.json({ payUrl });
   } catch (e) {

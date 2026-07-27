@@ -1,40 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { verifyPayment } from "@/lib/zarinpal";
+import { verifyPayment, parseCallback, collectCallbackParams, type ProviderKey } from "@/lib/payments";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/pay/callback?invoiceId=...&Authority=...&Status=OK|NOK
-// Zarinpal redirects the customer's browser here after paying an invoice.
-// Mirrors /api/billing/callback: only the stored authority + Zarinpal's
-// verify response are trusted, never the Status query param alone.
-export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl;
-  const invoiceId = searchParams.get("invoiceId");
-  const authority = searchParams.get("Authority");
-  const status = searchParams.get("Status");
+// /api/pay/callback?invoiceId=...  (+ gateway params)
+// The active gateway redirects the customer's browser here after paying an
+// invoice. Mirrors /api/billing/callback: only the stored token + the
+// gateway's verify response are trusted. Handles GET (Zarinpal/Zibal) and
+// POST (NextPay).
+async function handle(req: NextRequest) {
   const origin = req.nextUrl.origin;
+  const params = await collectCallbackParams(req);
+  const invoiceId = params.get("invoiceId") || req.nextUrl.searchParams.get("invoiceId");
 
-  if (!invoiceId || !authority) {
-    return NextResponse.redirect(`${origin}/pay/error`);
-  }
+  if (!invoiceId) return NextResponse.redirect(`${origin}/pay/error`, 303);
 
   const invoice = await db.invoice.findUnique({ where: { id: invoiceId } });
-  if (!invoice || invoice.paymentAuthority !== authority) {
-    return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=error`);
-  }
+  if (!invoice) return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=error`, 303);
 
   if (invoice.paid) {
-    return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=success`);
+    return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=success`, 303);
   }
 
-  if (status !== "OK") {
-    return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=cancelled`);
+  const provider = (((invoice as any).paymentProvider as ProviderKey) || "zarinpal");
+  const { token, success } = parseCallback(provider, params);
+
+  if (!token || invoice.paymentAuthority !== token) {
+    return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=error`, 303);
   }
 
-  const verified = await verifyPayment({ amountToman: invoice.total, authority });
+  if (!success) {
+    return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=cancelled`, 303);
+  }
+
+  const verified = await verifyPayment({ provider, amountToman: invoice.total, token });
   if (!verified.ok) {
-    return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=failed`);
+    return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=failed`, 303);
   }
 
   await db.invoice.update({
@@ -42,5 +44,8 @@ export async function GET(req: NextRequest) {
     data: { paid: true, paymentRefId: verified.refId ?? null },
   });
 
-  return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=success`);
+  return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=success`, 303);
 }
+
+export async function GET(req: NextRequest) { return handle(req); }
+export async function POST(req: NextRequest) { return handle(req); }

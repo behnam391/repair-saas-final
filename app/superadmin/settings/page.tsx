@@ -8,6 +8,7 @@ export default function SuperAdminSettingsPage() {
   const router = useRouter();
   const [form, setForm] = useState({
     kavenegarApiKey: "", kavenegarSender: "", zarinpalMerchantId: "",
+    paymentProvider: "zarinpal", zibalMerchant: "", nextpayApiKey: "",
     guideUrl: "", aboutUsContent: "",
     smtpHost: "", smtpPort: 587, smtpUser: "", smtpPassword: "", smtpFromAddress: "",
     neshanApiKey: "",
@@ -23,6 +24,9 @@ export default function SuperAdminSettingsPage() {
       kavenegarApiKey: d.settings?.kavenegarApiKey ?? "",
       kavenegarSender: d.settings?.kavenegarSender ?? "",
       zarinpalMerchantId: d.settings?.zarinpalMerchantId ?? "",
+      paymentProvider: d.settings?.paymentProvider ?? "zarinpal",
+      zibalMerchant: d.settings?.zibalMerchant ?? "",
+      nextpayApiKey: d.settings?.nextpayApiKey ?? "",
       guideUrl: d.settings?.guideUrl ?? "",
       aboutUsContent: d.settings?.aboutUsContent ?? "",
       smtpHost: d.settings?.smtpHost ?? "", smtpPort: d.settings?.smtpPort ?? 587,
@@ -59,9 +63,33 @@ export default function SuperAdminSettingsPage() {
       <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
         value={form.kavenegarSender} onChange={(e) => setForm({ ...form, kavenegarSender: e.target.value })} />
 
-      <label className="block text-xs text-muted mb-1">مرچنت کد زرین‌پال</label>
-      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4"
-        value={form.zarinpalMerchantId} onChange={(e) => setForm({ ...form, zarinpalMerchantId: e.target.value })} />
+      <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
+        <label className="block text-xs font-bold mb-1">درگاه پرداخت فعال</label>
+        <p className="text-[10px] text-muted mb-2">هر پرداخت با همان درگاهی که شروع شده تأیید می‌شود؛ پس می‌توانید هر زمان بدون مشکل درگاه فعال را عوض کنید.</p>
+        <div className="flex bg-surface2 rounded-lg p-1 mb-3">
+          {[["zarinpal", "زرین‌پال"], ["zibal", "زیبال"], ["nextpay", "نکست‌پی"]].map(([val, label]) => (
+            <button key={val} type="button" onClick={() => setForm({ ...form, paymentProvider: val })}
+              className={`flex-1 text-[11px] font-bold rounded-md py-2 transition ${form.paymentProvider === val ? "bg-copper text-[#1A1410]" : "text-muted"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <label className="block text-[11px] text-muted mb-1">مرچنت کد زرین‌پال {form.paymentProvider === "zarinpal" && <span className="text-teal">(فعال)</span>}</label>
+        <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2" dir="ltr"
+          placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+          value={form.zarinpalMerchantId} onChange={(e) => setForm({ ...form, zarinpalMerchantId: e.target.value })} />
+
+        <label className="block text-[11px] text-muted mb-1">مرچنت زیبال {form.paymentProvider === "zibal" && <span className="text-teal">(فعال)</span>}</label>
+        <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-1" dir="ltr"
+          placeholder="merchant (برای تست: zibal)"
+          value={form.zibalMerchant} onChange={(e) => setForm({ ...form, zibalMerchant: e.target.value })} />
+        <p className="text-[10px] text-muted mb-2">اگر خالی بگذارید، از مرچنت تستِ «zibal» استفاده می‌شود (فقط برای آزمایش).</p>
+
+        <label className="block text-[11px] text-muted mb-1">کلید API نکست‌پی {form.paymentProvider === "nextpay" && <span className="text-teal">(فعال)</span>}</label>
+        <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" dir="ltr"
+          value={form.nextpayApiKey} onChange={(e) => setForm({ ...form, nextpayApiKey: e.target.value })} />
+      </div>
 
       <div className="text-sm font-bold mb-2 mt-2">ایمیل (SMTP) — برای بازیابی رمز از طریق ایمیل</div>
       <p className="text-[10px] text-muted mb-2">

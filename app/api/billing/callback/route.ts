@@ -1,55 +1,53 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { verifyPayment } from "@/lib/zarinpal";
+import { verifyPayment, parseCallback, collectCallbackParams, type ProviderKey } from "@/lib/payments";
 import { PLANS, type PlanKey } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/billing/callback?subId=...&Authority=...&Status=OK|NOK
-// Zarinpal redirects the user's browser here after payment. This route
-// has no session requirement (the user is mid-redirect from the gateway),
-// so it trusts only the subId + Zarinpal's own verify response — never
-// the Status query param alone, which is not authoritative.
-export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl;
-  const subId = searchParams.get("subId");
-  const authority = searchParams.get("Authority");
-  const status = searchParams.get("Status");
-
+// /api/billing/callback?subId=...  (+ gateway params)
+// The active gateway redirects the user's browser here after payment. No
+// session requirement (mid-redirect from the gateway), so it trusts only
+// the subId + the stored token + the gateway's own verify response — never
+// the callback's success flag alone. Handles GET (Zarinpal/Zibal) and POST
+// (NextPay) alike.
+async function handle(req: NextRequest) {
   const origin = req.nextUrl.origin;
-  if (!subId || !authority) {
-    return NextResponse.redirect(`${origin}/admin/billing?result=error`);
-  }
+  const params = await collectCallbackParams(req);
+  const subId = params.get("subId") || req.nextUrl.searchParams.get("subId");
+
+  if (!subId) return NextResponse.redirect(`${origin}/admin/billing?result=error`, 303);
 
   const sub = await db.subscription.findUnique({ where: { id: subId } });
-  if (!sub || sub.authority !== authority) {
-    return NextResponse.redirect(`${origin}/admin/billing?result=error`);
+  if (!sub) return NextResponse.redirect(`${origin}/admin/billing?result=error`, 303);
+
+  const provider = (((sub as any).paymentProvider as ProviderKey) || "zarinpal");
+  const { token, success } = parseCallback(provider, params);
+
+  // The token echoed back by the gateway must match the one we stored at
+  // checkout — guards against a tampered/mismatched callback.
+  if (!token || sub.authority !== token) {
+    return NextResponse.redirect(`${origin}/admin/billing?result=error`, 303);
   }
 
-  if (status !== "OK") {
+  if (!success) {
     await db.subscription.update({ where: { id: sub.id }, data: { status: "FAILED" } });
-    return NextResponse.redirect(`${origin}/admin/billing?result=cancelled`);
+    return NextResponse.redirect(`${origin}/admin/billing?result=cancelled`, 303);
   }
 
   const planInfo = PLANS[sub.plan as PlanKey];
-  // Verify against the actual amount charged (already discounted for
-  // duration at checkout time), not the flat monthly price.
-  const verified = await verifyPayment({ amountToman: sub.amount, authority });
+  const verified = await verifyPayment({ provider, amountToman: sub.amount, token });
 
   if (!verified.ok) {
     await db.subscription.update({ where: { id: sub.id }, data: { status: "FAILED" } });
-    return NextResponse.redirect(`${origin}/admin/billing?result=failed`);
+    return NextResponse.redirect(`${origin}/admin/billing?result=failed`, 303);
   }
 
   await db.$transaction(async (tx) => {
-    await tx.subscription.update({
-      where: { id: sub.id },
-      data: { status: "PAID", refId: verified.refId },
-    });
+    await tx.subscription.update({ where: { id: sub.id }, data: { status: "PAID", refId: verified.refId } });
 
     const shop = await tx.shop.findUniqueOrThrow({ where: { id: sub.shopId } });
     const now = new Date();
-    // Extend from current expiry if still active, otherwise from now.
     const base = shop.planExpiresAt && shop.planExpiresAt > now ? shop.planExpiresAt : now;
     const newExpiry = new Date(base);
     newExpiry.setMonth(newExpiry.getMonth() + sub.months);
@@ -60,5 +58,8 @@ export async function GET(req: NextRequest) {
     });
   });
 
-  return NextResponse.redirect(`${origin}/admin/billing?result=success`);
+  return NextResponse.redirect(`${origin}/admin/billing?result=success`, 303);
 }
+
+export async function GET(req: NextRequest) { return handle(req); }
+export async function POST(req: NextRequest) { return handle(req); }
