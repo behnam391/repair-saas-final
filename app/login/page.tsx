@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Logo from "@/components/Logo";
+import EnamadBadge from "@/components/EnamadBadge";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,6 +28,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <form onSubmit={handleSubmit} className="w-full max-w-sm bg-surface border-t-2 border-t-copper border-x border-b border-surface2 rounded-2xl p-6">
+        <div className="flex justify-center mb-4"><Logo size={40} textClassName="text-xl" /></div>
         <h1 className="display-heading text-xl mb-1">ورود به پنل تعمیرگاه</h1>
         <p className="text-xs text-muted mb-6">با شماره موبایل و رمز عبور خود وارد شوید</p>
 
@@ -63,6 +66,8 @@ export default function LoginPage() {
         <p className="text-[11px] text-muted text-center mt-4 border-t border-surface2 pt-3">
           مشتری هستید؟ <a href="/customer/login" className="text-teal">ورود مشتریان</a> — مغازه‌های اطرافتان را مقایسه کنید و سابقه تعمیرهایتان را ببینید
         </p>
+
+        <EnamadBadge className="mt-5" />
       </form>
     </div>
   );

@@ -31,6 +31,8 @@ const Schema = z.object({
   smtpPassword: z.string().optional(),
   smtpFromAddress: z.string().optional(),
   neshanApiKey: z.string().optional(),
+  enamadId: z.string().optional(),
+  enamadCode: z.string().optional(),
 });
 
 export async function PATCH(req: NextRequest) {

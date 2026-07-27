@@ -11,7 +11,7 @@ export default function SuperAdminSettingsPage() {
     paymentProvider: "zarinpal", zibalMerchant: "", nextpayApiKey: "",
     guideUrl: "", aboutUsContent: "",
     smtpHost: "", smtpPort: 587, smtpUser: "", smtpPassword: "", smtpFromAddress: "",
-    neshanApiKey: "",
+    neshanApiKey: "", enamadId: "", enamadCode: "",
   });
   const [saved, setSaved] = useState(false);
 
@@ -33,6 +33,8 @@ export default function SuperAdminSettingsPage() {
       smtpUser: d.settings?.smtpUser ?? "", smtpPassword: d.settings?.smtpPassword ?? "",
       smtpFromAddress: d.settings?.smtpFromAddress ?? "",
       neshanApiKey: d.settings?.neshanApiKey ?? "",
+      enamadId: d.settings?.enamadId ?? "",
+      enamadCode: d.settings?.enamadCode ?? "",
     }));
   }, []);
 
@@ -115,6 +117,17 @@ export default function SuperAdminSettingsPage() {
       <label className="block text-xs text-muted mb-1">کلید نقشه نشان</label>
       <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4"
         value={form.neshanApiKey} onChange={(e) => setForm({ ...form, neshanApiKey: e.target.value })} />
+
+      <div className="text-sm font-bold mb-2 mt-2">نماد اعتماد الکترونیکی (اینماد)</div>
+      <p className="text-[10px] text-muted mb-2">
+        از پنل <span dir="ltr">enamad.ir</span> مقدار <span dir="ltr">id</span> و <span dir="ltr">Code</span> نماد را کپی کنید. به‌محض ذخیره، لوگوی اینماد در صفحات عمومی سایت (ورود و درباره ما) نمایش داده می‌شود — بدون <span dir="ltr">rel="noopener noreferrer"</span> تا اینماد بتواند آن را تأیید کند.
+      </p>
+      <div className="flex gap-2 mb-4">
+        <input className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono" dir="ltr" placeholder="id (مثلاً 123456)"
+          value={form.enamadId} onChange={(e) => setForm({ ...form, enamadId: e.target.value })} />
+        <input className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono" dir="ltr" placeholder="Code"
+          value={form.enamadCode} onChange={(e) => setForm({ ...form, enamadCode: e.target.value })} />
+      </div>
 
       <div className="text-sm font-bold mb-2 mt-2">راهنما و درباره ما</div>
       <label className="block text-xs text-muted mb-1">لینک راهنمای سایت (دامنه خارجی یا داخلی)</label>

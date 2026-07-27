@@ -687,6 +687,11 @@ model PlatformSettings {
   smtpPassword        String?
   smtpFromAddress     String?
   neshanApiKey        String? // for the interactive location-picker map (react-neshan-map-leaflet)
+  // Enamad (نماد اعتماد الکترونیکی) trust-seal identifiers — public values
+  // shown in the seal markup on public pages. Required by payment gateways
+  // before granting a live درگاه.
+  enamadId            String?
+  enamadCode          String?
   updatedAt           DateTime @updatedAt
 }
 

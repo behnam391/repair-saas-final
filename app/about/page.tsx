@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import EnamadBadge from "@/components/EnamadBadge";
 
 export default function AboutPage() {
   const [content, setContent] = useState<string | null>(null);
@@ -16,6 +17,8 @@ export default function AboutPage() {
       ) : (
         <p className="text-xs text-muted">محتوایی هنوز ثبت نشده است.</p>
       )}
+
+      <EnamadBadge className="mt-8" />
     </div>
   );
 }
