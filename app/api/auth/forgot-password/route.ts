@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendSms, isSmsConfigured } from "@/lib/sms";
 import { sendEmail, isEmailConfigured } from "@/lib/email";
+import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,13 @@ function generateOtp() {
 export async function POST(req: NextRequest) {
   try {
     const { phone, channel } = Schema.parse(await req.json());
+
+    // Abuse guards (see lib/ratelimit). Kept BEFORE the account lookup so the
+    // throttle behaves identically for existing/non-existing numbers → no leak.
+    const ipLimit = rateLimit(`forgot:ip:${clientIp(req)}`, 8, 10 * 60 * 1000);
+    if (!ipLimit.ok) { const t = tooMany(ipLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
+    const phoneLimit = rateLimit(`forgot:phone:${phone}`, 4, 10 * 60 * 1000);
+    if (!phoneLimit.ok) { const t = tooMany(phoneLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
 
     // Honest capability check BEFORE looking the account up (so the answer
     // doesn't depend on whether the phone exists → no information leak).

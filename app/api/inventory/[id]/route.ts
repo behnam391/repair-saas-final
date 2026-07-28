@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ const UpdateSchema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const item = await db.inventoryItem.findFirst({ where: { id: params.id, shopId } });
     if (!item) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
@@ -44,7 +44,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const item = await db.inventoryItem.findFirst({ where: { id: params.id, shopId } });
     if (!item) return NextResponse.json({ error: "not_found" }, { status: 404 });
 

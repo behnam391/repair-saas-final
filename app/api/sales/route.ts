@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { sendSms } from "@/lib/sms";
 import { z } from "zod";
 
@@ -23,7 +23,7 @@ const SaleSchema = z.object({
 // SALE-type invoice (visible in /invoices and printable like any other).
 export async function POST(req: NextRequest) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const body = SaleSchema.parse(await req.json());
     const shop = await db.shop.findUniqueOrThrow({ where: { id: shopId } });
 

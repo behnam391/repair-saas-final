@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ async function assertDealer(shopId: string) {
 
 export async function GET() {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const items = await db.dealerInventory.findMany({ where: { shopId }, orderBy: { acquiredAt: "desc" } });
     return NextResponse.json({ items });
   } catch (e) {
@@ -37,7 +37,7 @@ const CreateSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const { shopId, userId } = await requireSession();
+    const { shopId, userId } = await requireDeskSession();
     await assertDealer(shopId);
 
     const body = CreateSchema.parse(await req.json());

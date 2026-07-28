@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { notifyUser } from "@/lib/notify";
 import { z } from "zod";
 
@@ -21,7 +21,7 @@ const CreateSchema = z.object({
 // sent or received. The page splits these into "sent" / "received".
 export async function GET() {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const referrals = await (db as any).shopReferral.findMany({
       where: { OR: [{ fromShopId: shopId }, { toShopId: shopId }] },
       include: {
@@ -44,7 +44,7 @@ export async function GET() {
 // never to an arbitrary shop.
 export async function POST(req: NextRequest) {
   try {
-    const { shopId, name } = await requireSession();
+    const { shopId, name } = await requireDeskSession();
     const body = CreateSchema.parse(await req.json());
 
     const partnership = await (db as any).shopPartnership.findFirst({

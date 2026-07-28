@@ -67,7 +67,13 @@ export default function LoginPage() {
           مشتری هستید؟ <a href="/customer/login" className="text-teal">ورود مشتریان</a> — مغازه‌های اطرافتان را مقایسه کنید و سابقه تعمیرهایتان را ببینید
         </p>
 
-        <EnamadBadge className="mt-5" />
+        <div className="flex justify-center gap-3 flex-wrap mt-4 text-[10px] text-muted">
+          <a href="/terms" className="hover:text-copper">قوانین و مقررات</a>
+          <a href="/privacy" className="hover:text-copper">حریم خصوصی</a>
+          <a href="/refund" className="hover:text-copper">بازگشت وجه</a>
+        </div>
+
+        <EnamadBadge className="mt-4" />
       </form>
     </div>
   );

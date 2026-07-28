@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +15,7 @@ const Schema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId, userId } = await requireSession();
+    const { shopId, userId } = await requireDeskSession();
     const intake = await db.pendingIntake.findFirst({ where: { id: params.id, shopId, status: "PENDING" } });
     if (!intake) return NextResponse.json({ error: "not_found" }, { status: 404 });
 

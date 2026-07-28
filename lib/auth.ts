@@ -157,25 +157,42 @@ export const authOptions: NextAuthOptions = {
           console.error("[auth] session revalidation failed, keeping existing token", e);
         }
       }
+
+      // Same live check for customer sessions — a suspended or deleted
+      // customer loses access on their next request, not only at token
+      // expiry. Wrapped so a transient DB error never locks everyone out.
+      if (token.isCustomer && token.sub) {
+        try {
+          const fresh = await db.platformCustomer.findUnique({
+            where: { id: token.sub as string },
+            select: { active: true },
+          });
+          token.disabled = !fresh || !fresh.active;
+        } catch (e) {
+          console.error("[auth] customer revalidation failed, keeping existing token", e);
+        }
+      }
       return token;
     },
     async session({ session, token }) {
       (session.user as any).id = token.sub;
       (session.user as any).isSuperAdmin = token.isSuperAdmin ?? false;
-      (session.user as any).isCustomer = token.isCustomer ?? false;
       (session.user as any).phone = token.phone;
       (session.user as any).isImpersonated = token.isImpersonated ?? false;
 
-      // A shop session that failed revalidation (staff removed/deactivated,
-      // or shop suspended) is stripped of its shop scope, so requireSession
-      // rejects it and the app treats the caller as signed out.
+      // A session that failed revalidation (staff removed/deactivated, shop
+      // suspended, or customer suspended/deleted) is stripped of every scope
+      // flag, so requireSession / requireCustomer both reject it and the app
+      // treats the caller as signed out.
       if (token.disabled) {
+        (session.user as any).isCustomer = false;
         (session.user as any).role = undefined;
         (session.user as any).shopId = undefined;
         (session.user as any).disabled = true;
         return session;
       }
 
+      (session.user as any).isCustomer = token.isCustomer ?? false;
       (session.user as any).role = token.role;
       (session.user as any).shopId = token.shopId;
       (session.user as any).shopName = token.shopName;

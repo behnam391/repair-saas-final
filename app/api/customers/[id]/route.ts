@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ const Schema = z.object({ name: z.string().min(1).optional(), phone: z.string().
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const body = Schema.parse(await req.json());
     const customer = await db.customer.updateMany({ where: { id: params.id, shopId }, data: body });
     if (customer.count === 0) return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -23,7 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const ticketCount = await db.ticket.count({ where: { customerId: params.id, shopId } });
     if (ticketCount > 0) {
       return NextResponse.json({ error: "has_tickets", message: "این مشتری سابقه تعمیر دارد و قابل حذف نیست." }, { status: 409 });

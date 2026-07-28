@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const intakes = await db.pendingIntake.findMany({ where: { shopId, status: "PENDING" }, orderBy: { createdAt: "desc" } });
 
     const phones = intakes.map((i) => i.customerPhone);

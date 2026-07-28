@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { notifyUser } from "@/lib/notify";
 import { z } from "zod";
 
@@ -16,7 +16,7 @@ const CreateSchema = z.object({
 // "active partners" / "pending" / "incoming requests" client-side.
 export async function GET() {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const partnerships = await (db as any).shopPartnership.findMany({
       where: { OR: [{ requestedByShopId: shopId }, { targetShopId: shopId }] },
       include: {
@@ -34,12 +34,11 @@ export async function GET() {
 }
 
 // POST /api/collaboration/partnerships — send a new collaboration request
-// to another shop. Open to any signed-in staff member (owner or
-// technician) — this is meant to be usable by the people who'll actually
-// refer work, not gated behind manager approval.
+// to another shop. Restricted to desk roles (OWNER/FRONTDESK), consistent
+// with the collaboration section being hidden from repair technicians.
 export async function POST(req: NextRequest) {
   try {
-    const { shopId, name } = await requireSession();
+    const { shopId, name } = await requireDeskSession();
     const body = CreateSchema.parse(await req.json());
 
     if (body.targetShopId === shopId) {

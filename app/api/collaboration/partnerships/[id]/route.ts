@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { notifyUser } from "@/lib/notify";
 import { z } from "zod";
 
@@ -15,7 +15,7 @@ const ActionSchema = z.object({
 // - "end": either side of an already-ACCEPTED partnership may end it.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId, name } = await requireSession();
+    const { shopId, name } = await requireDeskSession();
     const { action } = ActionSchema.parse(await req.json());
 
     const partnership = await (db as any).shopPartnership.findFirst({

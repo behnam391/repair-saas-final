@@ -3,7 +3,7 @@
   "appName": "Peyvo",
   "webDir": "android-shell",
   "server": {
-    "url": "https://repair-saas-final-git-main-behnam14.vercel.app",
+    "url": "https://peyvo.ir",
     "cleartext": false
   },
   "android": {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 // GET /api/invoices/:id — full detail, used by the print view.
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const invoice = await db.invoice.findFirst({
       where: { id: params.id, shopId },
       include: {
@@ -42,7 +42,7 @@ const UpdateSchema = z.object({
 // stock deltas mid-edit risks corrupting inventory counts.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const invoice = await db.invoice.findFirst({ where: { id: params.id, shopId } });
     if (!invoice) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
@@ -81,7 +81,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 // removing the invoice, so stock counts stay correct.
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const invoice = await db.invoice.findFirst({ where: { id: params.id, shopId } });
     if (!invoice) return NextResponse.json({ error: "not_found" }, { status: 404 });
 

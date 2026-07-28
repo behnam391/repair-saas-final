@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { sendSms } from "@/lib/sms";
 import { z } from "zod";
 
@@ -17,7 +17,7 @@ const InvoiceSchema = z.object({
 // GET /api/invoices — list invoices for the signed-in shop, newest first.
 export async function GET() {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const invoices = await db.invoice.findMany({
       where: { shopId },
       include: {
@@ -37,7 +37,7 @@ export async function GET() {
 // current inventory sell prices, deducts stock, and produces the invoice.
 export async function POST(req: NextRequest) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const body = InvoiceSchema.parse(await req.json());
 
     const ticket = await db.ticket.findFirst({ where: { id: body.ticketId, shopId } });

@@ -35,6 +35,21 @@ export function requireRole(role: string, allowed: string[]) {
 }
 
 /**
+ * Shop session that ALSO requires a "desk" role (OWNER or FRONTDESK) —
+ * i.e. the customer/money/inventory side of the shop. Repair-only
+ * technicians (HARDWARE/SOFTWARE/BOARD) are rejected. This is the
+ * server-side counterpart to the role-based nav hiding: it stops a
+ * technician from reaching these endpoints by typing the URL directly.
+ */
+export async function requireDeskSession() {
+  const s = await requireSession();
+  if (!["OWNER", "FRONTDESK"].includes(s.role)) {
+    throw new UnauthorizedError(`Role ${s.role} not permitted for this section`);
+  }
+  return s;
+}
+
+/**
  * For platform-owner-only routes (/api/superadmin/*). Completely separate
  * from requireSession — a shop user's session will never satisfy this,
  * and this function never returns a shopId, so it can't be misused to

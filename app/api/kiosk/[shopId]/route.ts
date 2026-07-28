@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { DEVICE_BRANDS } from "@/lib/device-catalog";
+import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,13 @@ export async function GET(req: NextRequest, { params }: { params: { shopId: stri
 // a staff member must review and approve before it becomes a real ticket.
 export async function POST(req: NextRequest, { params }: { params: { shopId: string } }) {
   try {
+    // Public, unauthenticated endpoint — throttle per IP and per shop so a
+    // QR link can't be spammed to flood a shop's pending list.
+    const ipLimit = rateLimit(`kiosk:ip:${clientIp(req)}`, 12, 10 * 60 * 1000);
+    if (!ipLimit.ok) { const t = tooMany(ipLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
+    const shopLimit = rateLimit(`kiosk:shop:${params.shopId}`, 40, 10 * 60 * 1000);
+    if (!shopLimit.ok) { const t = tooMany(shopLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
+
     const shop = await db.shop.findUnique({ where: { id: params.shopId } });
     if (!shop || !shop.active) return NextResponse.json({ error: "not_found" }, { status: 404 });
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { notifyUser } from "@/lib/notify";
 import { z } from "zod";
 
@@ -24,7 +24,7 @@ function laneLabel(lane: string) {
 //   purely a record, no real money moves through the app.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId, userId, name } = await requireSession();
+    const { shopId, userId, name } = await requireDeskSession();
     const body = ActionSchema.parse(await req.json());
 
     const referral = await (db as any).shopReferral.findFirst({

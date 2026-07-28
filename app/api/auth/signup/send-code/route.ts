@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { sendSms, isSmsConfigured } from "@/lib/sms";
 import { sendEmail, isEmailConfigured } from "@/lib/email";
+import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,22 @@ function generateOtp() {
 export async function POST(req: NextRequest) {
   try {
     const { phone, channel, email } = Schema.parse(await req.json());
+
+    // Abuse guards: per-IP burst limit + per-phone limit (in-memory), plus a
+    // DB-backed 60s per-phone cooldown that holds even across instances — the
+    // real protection against someone draining the SMS credit.
+    const ipLimit = rateLimit(`sendcode:ip:${clientIp(req)}`, 8, 10 * 60 * 1000);
+    if (!ipLimit.ok) { const t = tooMany(ipLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
+    const phoneLimit = rateLimit(`sendcode:phone:${phone}`, 4, 10 * 60 * 1000);
+    if (!phoneLimit.ok) { const t = tooMany(phoneLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
+
+    const recent = await db.signupVerification.findFirst({
+      where: { identifier: phone, createdAt: { gt: new Date(Date.now() - 60 * 1000) } },
+      orderBy: { createdAt: "desc" },
+    });
+    if (recent) {
+      return NextResponse.json({ message: "کد قبلی هنوز معتبر است. لطفاً کمی صبر کنید و اگر پیامک نرسید، چند لحظه بعد دوباره تلاش کنید." }, { status: 429 });
+    }
 
     const isDev = process.env.NODE_ENV !== "production";
     if (channel === "email" && !email) {
