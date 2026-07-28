@@ -9,6 +9,11 @@ export const metadata: Metadata = {
   title: "Peyvo | پیوند تعمیرکار، فروشنده و مشتری",
   description: "پیوو (Peyvo) — مدیریت گردش‌کار چندتخصصی تعمیر موبایل و پیوند تعمیرکار، فروشنده و مشتری",
   manifest: "/manifest.json",
+  // Enamad (نماد اعتماد الکترونیکی) domain-ownership verification meta tag.
+  // Renders <meta name="enamad" content="64662765"> in the site <head> on
+  // every page (including the home page Enamad checks). Harmless to keep
+  // permanently after verification.
+  other: { enamad: "64662765" },
   icons: {
     icon: [
       { url: "/icons/favicon-32.png", sizes: "32x32", type: "image/png" },
