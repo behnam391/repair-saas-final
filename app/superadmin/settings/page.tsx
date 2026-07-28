@@ -14,6 +14,9 @@ export default function SuperAdminSettingsPage() {
     smtpHost: "", smtpPort: 587, smtpUser: "", smtpPassword: "", smtpFromAddress: "",
     neshanApiKey: "", enamadId: "", enamadCode: "",
     fontFamily: "vazirmatn", defaultTheme: "dark",
+    proPriceToman: 490000, businessPriceToman: 990000,
+    proQuota: 200, businessQuota: 100000,
+    discount3: 5, discount6: 10, discount12: 20,
   });
   const [saved, setSaved] = useState(false);
 
@@ -52,6 +55,14 @@ export default function SuperAdminSettingsPage() {
       enamadCode: d.settings?.enamadCode ?? "",
       fontFamily: d.settings?.fontFamily ?? "vazirmatn",
       defaultTheme: d.settings?.defaultTheme ?? "dark",
+      // effective = stored value, or the code default when never set
+      proPriceToman: d.settings?.proPriceToman ?? 490000,
+      businessPriceToman: d.settings?.businessPriceToman ?? 990000,
+      proQuota: d.settings?.proQuota ?? 200,
+      businessQuota: d.settings?.businessQuota ?? 100000,
+      discount3: d.settings?.discount3 ?? 5,
+      discount6: d.settings?.discount6 ?? 10,
+      discount12: d.settings?.discount12 ?? 20,
     }));
   }, []);
 
@@ -112,6 +123,65 @@ export default function SuperAdminSettingsPage() {
             >
               {label}
             </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
+        <div className="text-sm font-bold mb-1">💳 قیمت‌گذاری اشتراک‌ها</div>
+        <p className="text-[10px] text-muted mb-3">قیمت پلن‌ها و تخفیف مدت‌ها را از همین‌جا تعیین کن. هم صفحه‌ی خریدِ مغازه‌ها و هم مبلغی که در درگاه پرداخت کسر می‌شود، بلافاصله از این مقادیر استفاده می‌کنند (بدون دیپلوی مجدد).</p>
+
+        <div className="grid grid-cols-2 gap-x-3 gap-y-2.5 mb-3">
+          <div>
+            <label className="block text-[11px] font-bold mb-1">حرفه‌ای — قیمت ماهانه</label>
+            <div className="relative">
+              <input type="number" dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg pr-3 pl-12 py-2 text-sm mono"
+                value={form.proPriceToman} onChange={(e) => setForm({ ...form, proPriceToman: Math.max(0, +e.target.value) })} />
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] text-muted pointer-events-none">تومان</span>
+            </div>
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold mb-1">حرفه‌ای — سهمیه ماهانه</label>
+            <input type="number" dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+              value={form.proQuota} onChange={(e) => setForm({ ...form, proQuota: Math.max(0, +e.target.value) })} />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold mb-1">تجاری — قیمت ماهانه</label>
+            <div className="relative">
+              <input type="number" dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg pr-3 pl-12 py-2 text-sm mono"
+                value={form.businessPriceToman} onChange={(e) => setForm({ ...form, businessPriceToman: Math.max(0, +e.target.value) })} />
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] text-muted pointer-events-none">تومان</span>
+            </div>
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold mb-1">تجاری — سهمیه ماهانه</label>
+            <input type="number" dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+              value={form.businessQuota} onChange={(e) => setForm({ ...form, businessQuota: Math.max(0, +e.target.value) })} />
+            <p className="text-[9px] text-muted mt-0.5">۱۰۰٬۰۰۰ به بالا = نامحدود</p>
+          </div>
+        </div>
+
+        <label className="block text-[11px] font-bold mb-1.5">تخفیف مدت‌های بلندتر (درصد)</label>
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          {([["discount3", "۳ ماهه"], ["discount6", "۶ ماهه"], ["discount12", "۱۲ ماهه"]] as const).map(([field, label]) => (
+            <div key={field}>
+              <span className="block text-[10px] text-muted mb-1">{label}</span>
+              <div className="relative">
+                <input type="number" dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg pr-3 pl-7 py-2 text-sm mono"
+                  value={form[field]} onChange={(e) => setForm({ ...form, [field]: Math.min(100, Math.max(0, +e.target.value)) })} />
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[9px] text-muted pointer-events-none">٪</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-surface2 rounded-lg p-2.5 text-[11px] space-y-1">
+          <div className="text-muted mb-1">پیش‌نمایش مبلغ نهایی (با احتساب تخفیف):</div>
+          {([["حرفه‌ای", form.proPriceToman], ["تجاری", form.businessPriceToman]] as const).map(([label, price]) => (
+            <div key={label} className="flex justify-between">
+              <span>{label} · ۱۲ ماهه</span>
+              <span className="mono font-bold">{Math.round((price * 12 * (100 - form.discount12)) / 100).toLocaleString("fa-IR")} تومان</span>
+            </div>
           ))}
         </div>
       </div>

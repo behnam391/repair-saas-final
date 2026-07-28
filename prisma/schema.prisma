@@ -699,6 +699,18 @@ model PlatformSettings {
   // visitor sees ("dark" | "light") before any personal choice is stored.
   fontFamily          String? @default("vazirmatn")
   defaultTheme        String? @default("dark")
+  // Subscription pricing overrides (toman / percent), editable from the
+  // super-admin panel so plans can be repriced without a code change. null on
+  // any field = fall back to the code default in lib/plans.ts. Read through
+  // getPricing(), which every price calculation (checkout, gift-quota, the
+  // shop-facing billing page via /api/pricing) goes through.
+  proPriceToman       Int?     // monthly price of the "pro" (حرفه‌ای) plan
+  businessPriceToman  Int?     // monthly price of the "business" (تجاری) plan
+  proQuota            Int?     // monthly device-intake quota granted by "pro"
+  businessQuota       Int?     // monthly device-intake quota granted by "business"
+  discount3           Int?     // % discount for the 3-month commitment
+  discount6           Int?     // % discount for the 6-month commitment
+  discount12          Int?     // % discount for the 12-month commitment
   updatedAt           DateTime @updatedAt
 }
 

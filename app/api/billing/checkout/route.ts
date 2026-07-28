@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
 import { requestPayment } from "@/lib/payments";
-import { PLANS, DURATIONS, priceForDuration, type PlanKey, type DurationKey } from "@/lib/plans";
+import { getPricing, priceForDuration, type PlanKey, type DurationKey } from "@/lib/plans";
 import { logCaught } from "@/lib/logError";
 import { z } from "zod";
 
@@ -17,9 +17,12 @@ export async function POST(req: NextRequest) {
   try {
     const { shopId } = await requireSession();
     const { plan, duration } = CheckoutSchema.parse(await req.json());
-    const planInfo = PLANS[plan as PlanKey];
-    const durationInfo = DURATIONS[duration as DurationKey];
-    const amount = priceForDuration(plan as PlanKey, duration as DurationKey);
+    // Effective, possibly admin-overridden pricing — the amount charged must
+    // reflect the price set in the super-admin panel, not the code default.
+    const pricing = await getPricing();
+    const planInfo = pricing.plans[plan as PlanKey];
+    const durationInfo = pricing.durations[duration as DurationKey];
+    const amount = priceForDuration(plan as PlanKey, duration as DurationKey, pricing);
 
     const origin = req.nextUrl.origin;
     const sub = await db.subscription.create({

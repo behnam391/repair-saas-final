@@ -5,27 +5,44 @@ import { formatJalaliDate } from "@/lib/jalali";
 
 const STATUS_LABEL: Record<string, string> = { PENDING: "در انتظار پرداخت", PAID: "پرداخت‌شده", FAILED: "ناموفق" };
 
-const PLAN_INFO = {
-  free: { label: "رایگان", price: 0, quota: "۱۰ دستگاه در ماه" },
-  pro: { label: "حرفه‌ای", price: 490000, quota: "۲۰۰ دستگاه در ماه" },
-  business: { label: "تجاری", price: 990000, quota: "نامحدود" },
-} as const;
+type PlanRow = { label: string; priceToman: number; monthlyQuota: number };
+type DurRow = { months: number; label: string; discountPct: number };
+type Pricing = {
+  plans: Record<"free" | "pro" | "business", PlanRow>;
+  durations: Record<string, DurRow>;
+};
 
-const DURATIONS = [
-  { key: 1, label: "۱ ماهه", discount: 0 },
-  { key: 3, label: "۳ ماهه", discount: 5 },
-  { key: 6, label: "۶ ماهه", discount: 10 },
-  { key: 12, label: "۱۲ ماهه", discount: 20 },
-] as const;
+// Fallback shown only until /api/pricing responds — the server (getPricing) is
+// the source of truth, reflecting any prices the super admin set in the panel.
+const DEFAULT_PRICING: Pricing = {
+  plans: {
+    free: { label: "رایگان", priceToman: 0, monthlyQuota: 10 },
+    pro: { label: "حرفه‌ای", priceToman: 490000, monthlyQuota: 200 },
+    business: { label: "تجاری", priceToman: 990000, monthlyQuota: 100000 },
+  },
+  durations: {
+    "1": { months: 1, label: "۱ ماهه", discountPct: 0 },
+    "3": { months: 3, label: "۳ ماهه", discountPct: 5 },
+    "6": { months: 6, label: "۶ ماهه", discountPct: 10 },
+    "12": { months: 12, label: "۱۲ ماهه", discountPct: 20 },
+  },
+};
 
-function priceFor(monthly: number, duration: number, discount: number) {
-  return Math.round((monthly * duration * (100 - discount)) / 100);
+const DURATION_KEYS = [1, 3, 6, 12] as const;
+
+function priceFor(monthly: number, months: number, discount: number) {
+  return Math.round((monthly * months * (100 - discount)) / 100);
+}
+
+function quotaLabel(quota: number) {
+  return quota >= 100000 ? "نامحدود" : `${quota.toLocaleString("fa-IR")} دستگاه در ماه`;
 }
 
 export default function BillingPage() {
   const params = useSearchParams();
   const result = params.get("result");
   const [duration, setDuration] = useState<number>(1);
+  const [pricing, setPricing] = useState<Pricing>(DEFAULT_PRICING);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [giftCode, setGiftCode] = useState("");
@@ -48,6 +65,17 @@ export default function BillingPage() {
     if (histRes.ok) setHistory((await histRes.json()).subscriptions ?? []);
   }
   useEffect(() => { loadShopAndHistory(); }, []);
+
+  // Live subscription prices (may have been changed by the super admin).
+  useEffect(() => {
+    fetch("/api/pricing")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d?.plans && d?.durations) setPricing(d); })
+      .catch(() => {});
+  }, []);
+
+  const durationList = DURATION_KEYS.map((k) => ({ key: k, ...(pricing.durations[String(k)] ?? DEFAULT_PRICING.durations[String(k)]) }));
+  const activeDiscount = pricing.durations[String(duration)]?.discountPct ?? 0;
 
   const remainingDays = planExpiresAt
     ? Math.ceil((new Date(planExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
@@ -141,18 +169,18 @@ export default function BillingPage() {
       </div>
 
       <div className="flex gap-2 mb-5">
-        {DURATIONS.map((d) => (
+        {durationList.map((d) => (
           <button key={d.key} onClick={() => setDuration(d.key)}
             className={`flex-1 text-xs rounded-lg py-2 border transition ${duration === d.key ? "bg-copper text-[#1A1410] border-copper" : "bg-surface2 border-surface2 text-muted"}`}>
-            {d.label}{d.discount > 0 && ` (${d.discount}%-)`}
+            {d.label}{d.discountPct > 0 && ` (${d.discountPct}%-)`}
           </button>
         ))}
       </div>
 
       <div className="space-y-3">
         {(["free", "pro", "business"] as const).map((key) => {
-          const p = PLAN_INFO[key];
-          const total = priceFor(p.price, duration, DURATIONS.find((d) => d.key === duration)!.discount);
+          const p = pricing.plans[key];
+          const total = priceFor(p.priceToman, duration, activeDiscount);
           return (
             <div key={key} className={`bg-surface border rounded-xl p-4 flex justify-between items-center ${currentPlan === key ? "border-copper" : "border-surface2"}`}>
               <div>
@@ -160,9 +188,9 @@ export default function BillingPage() {
                   {p.label}
                   {currentPlan === key && <span className="text-[9px] bg-copper text-[#1A1410] rounded-full px-2 py-0.5 font-bold">فعلی</span>}
                 </div>
-                <div className="text-[11px] text-muted mt-0.5">{p.quota}</div>
+                <div className="text-[11px] text-muted mt-0.5">{quotaLabel(p.monthlyQuota)}</div>
                 <div className="mono text-sm mt-1">
-                  {p.price === 0 ? "رایگان" : `${total.toLocaleString("fa-IR")} تومان / ${duration} ماه`}
+                  {p.priceToman === 0 ? "رایگان" : `${total.toLocaleString("fa-IR")} تومان / ${duration} ماه`}
                 </div>
               </div>
               {key !== "free" && (

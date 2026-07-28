@@ -35,6 +35,14 @@ const Schema = z.object({
   enamadCode: z.string().optional(),
   fontFamily: z.string().optional(),
   defaultTheme: z.enum(["dark", "light"]).optional(),
+  // Subscription pricing (toman) and duration discounts (percent).
+  proPriceToman: z.number().int().min(0).optional(),
+  businessPriceToman: z.number().int().min(0).optional(),
+  proQuota: z.number().int().min(0).optional(),
+  businessQuota: z.number().int().min(0).optional(),
+  discount3: z.number().int().min(0).max(100).optional(),
+  discount6: z.number().int().min(0).max(100).optional(),
+  discount12: z.number().int().min(0).max(100).optional(),
 });
 
 export async function PATCH(req: NextRequest) {

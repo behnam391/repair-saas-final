@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyPayment, parseCallback, collectCallbackParams, type ProviderKey } from "@/lib/payments";
-import { PLANS, type PlanKey } from "@/lib/plans";
+import { getPricing, type PlanKey } from "@/lib/plans";
 import { logCaught } from "@/lib/logError";
 
 export const dynamic = "force-dynamic";
@@ -37,7 +37,8 @@ async function handle(req: NextRequest) {
       return NextResponse.redirect(`${origin}/admin/billing?result=cancelled`, 303);
     }
 
-    const planInfo = PLANS[sub.plan as PlanKey];
+    const pricing = await getPricing();
+    const planInfo = pricing.plans[sub.plan as PlanKey];
     const verified = await verifyPayment({ provider, amountToman: sub.amount, token });
 
     if (!verified.ok) {

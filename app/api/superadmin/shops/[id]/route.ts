@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSuperAdmin, UnauthorizedError } from "@/lib/tenant";
-import { PLANS, PlanKey } from "@/lib/plans";
+import { getPricing, PlanKey } from "@/lib/plans";
 import { deleteShopCascade } from "@/lib/cascade";
 import { z } from "zod";
 
@@ -23,7 +23,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     // Handle a direct subscription gift separately from the simple toggles.
     if (body.grantPlan) {
-      const planInfo = PLANS[body.grantPlan as PlanKey];
+      const pricing = await getPricing();
+      const planInfo = pricing.plans[body.grantPlan as PlanKey];
       const months = body.grantMonths ?? 1;
       const shopNow = await db.shop.findUniqueOrThrow({ where: { id: params.id } });
       const now = new Date();
