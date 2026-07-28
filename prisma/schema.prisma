@@ -692,6 +692,13 @@ model PlatformSettings {
   // before granting a live درگاه.
   enamadId            String?
   enamadCode          String?
+  // Site-wide appearance, changed live from the super-admin panel (no
+  // redeploy). fontFamily is a key into lib/fonts.ts FONT_OPTIONS; the
+  // root layout loads the matching Google-Fonts stylesheet and sets the
+  // --app-font CSS variable. defaultTheme is the initial theme a brand-new
+  // visitor sees ("dark" | "light") before any personal choice is stored.
+  fontFamily          String? @default("vazirmatn")
+  defaultTheme        String? @default("dark")
   updatedAt           DateTime @updatedAt
 }
 
@@ -1015,4 +1022,34 @@ model ImpersonationToken {
   createdAt       DateTime  @default(now())
 
   @@index([userId])
+}
+
+// ── Error log (خطاها) ─────────────────────────────────────────
+// A lightweight, self-hosted error database so the platform owner can
+// see WHAT broke in production and WHERE, straight from the super-admin
+// panel — no external Sentry account needed. Deliberately has NO foreign
+// keys to Shop/User: a logging write must NEVER fail or cascade because
+// of a missing/invalid id, so shopId/userId are plain best-effort strings.
+// Written from three places: server API catch blocks (lib/logError.ts),
+// the React error boundaries (app/error.tsx, app/global-error.tsx), and
+// the browser window error listeners (components/ClientErrorReporter.tsx),
+// the latter two via the public POST /api/log-error intake.
+model ErrorLog {
+  id         String   @id @default(cuid())
+  source     String   @default("server") // "server" | "client" | "payment" | "boundary"
+  level      String   @default("error")  // "error" | "warn" | "fatal"
+  message    String                       // short human summary / error message
+  stack      String?                      // full stack trace or extra detail (can be long)
+  digest     String?                      // Next.js error-boundary digest, when present
+  path       String?                      // URL path / route where it happened
+  method     String?                      // HTTP method, for server errors
+  shopId     String?                      // best-effort tenant tag (NOT a foreign key)
+  userId     String?                      // best-effort actor tag (NOT a foreign key)
+  userAgent  String?                      // browser UA, for client errors
+  context    String?                      // small JSON blob of extra key/values
+  resolved   Boolean  @default(false)     // super admin ticks these off once handled
+  createdAt  DateTime @default(now())
+
+  @@index([resolved, createdAt])
+  @@index([source, createdAt])
 }

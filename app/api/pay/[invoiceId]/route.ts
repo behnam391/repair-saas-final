@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requestPayment } from "@/lib/payments";
+import { logCaught } from "@/lib/logError";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest, { params }: { params: { invoiceId: 
     return NextResponse.json({ payUrl });
   } catch (e) {
     console.error("[pay] checkout failed", e);
+    await logCaught(e, { source: "payment", path: `/api/pay/${params.invoiceId}`, method: "POST", context: { invoiceId: params.invoiceId } });
     return NextResponse.json({ error: "checkout_failed", message: (e as Error).message }, { status: 500 });
   }
 }

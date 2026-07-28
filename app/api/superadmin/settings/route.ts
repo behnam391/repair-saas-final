@@ -33,6 +33,8 @@ const Schema = z.object({
   neshanApiKey: z.string().optional(),
   enamadId: z.string().optional(),
   enamadCode: z.string().optional(),
+  fontFamily: z.string().optional(),
+  defaultTheme: z.enum(["dark", "light"]).optional(),
 });
 
 export async function PATCH(req: NextRequest) {

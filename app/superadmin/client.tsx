@@ -102,6 +102,7 @@ export default function SuperAdminClient() {
         <a href="/superadmin/gift-codes" className="text-muted hover:text-ink whitespace-nowrap">🎁 کد هدیه</a>
         <a href="/superadmin/external-keys" className="text-muted hover:text-ink whitespace-nowrap">API سازمان‌ها</a>
         <a href="/superadmin/settings" className="text-muted hover:text-ink whitespace-nowrap">تنظیمات API</a>
+        <a href="/superadmin/errors" className="text-muted hover:text-ink whitespace-nowrap">🐞 خطاها</a>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

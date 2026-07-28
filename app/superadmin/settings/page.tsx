@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { FONT_OPTIONS } from "@/lib/fonts";
 
 export default function SuperAdminSettingsPage() {
   const { data: session, status } = useSession();
@@ -12,12 +13,26 @@ export default function SuperAdminSettingsPage() {
     guideUrl: "", aboutUsContent: "",
     smtpHost: "", smtpPort: 587, smtpUser: "", smtpPassword: "", smtpFromAddress: "",
     neshanApiKey: "", enamadId: "", enamadCode: "",
+    fontFamily: "vazirmatn", defaultTheme: "dark",
   });
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated" && !(session?.user as any)?.isSuperAdmin) router.push("/superadmin/login");
   }, [status, session]);
+
+  // Load every font's stylesheet so the pickers below preview in the real
+  // typeface (only the active font + Vazirmatn are loaded by the layout).
+  useEffect(() => {
+    FONT_OPTIONS.forEach((f) => {
+      if (!f.url || document.querySelector(`link[data-font="${f.key}"]`)) return;
+      const l = document.createElement("link");
+      l.rel = "stylesheet";
+      l.href = f.url;
+      l.setAttribute("data-font", f.key);
+      document.head.appendChild(l);
+    });
+  }, []);
 
   useEffect(() => {
     fetch("/api/superadmin/settings").then((r) => r.json()).then((d) => setForm({
@@ -35,6 +50,8 @@ export default function SuperAdminSettingsPage() {
       neshanApiKey: d.settings?.neshanApiKey ?? "",
       enamadId: d.settings?.enamadId ?? "",
       enamadCode: d.settings?.enamadCode ?? "",
+      fontFamily: d.settings?.fontFamily ?? "vazirmatn",
+      defaultTheme: d.settings?.defaultTheme ?? "dark",
     }));
   }, []);
 
@@ -55,6 +72,49 @@ export default function SuperAdminSettingsPage() {
       <p className="text-[11px] text-muted mb-4">
         این مقادیر بر متغیرهای محیطی Vercel اولویت دارند — تغییرشان نیازی به دیپلوی مجدد ندارد.
       </p>
+
+      <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
+        <div className="text-sm font-bold mb-1">🎨 ظاهر سایت — فونت و تم</div>
+        <p className="text-[10px] text-muted mb-3">فونت و تمِ کل سایت را از همین‌جا عوض کن؛ بلافاصله و بدون دیپلوی مجدد روی همه‌ی صفحه‌ها اعمال می‌شود.</p>
+
+        <label className="block text-[11px] font-bold mb-1.5">فونت سایت</label>
+        <div className="space-y-2 mb-4">
+          {FONT_OPTIONS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setForm({ ...form, fontFamily: f.key })}
+              className={`w-full text-right rounded-xl px-3 py-2.5 border transition ${form.fontFamily === f.key ? "border-copper bg-copper/10" : "border-surface2 bg-surface2"}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-bold" style={{ fontFamily: f.family }}>
+                  {f.label} — پیوو تعمیرگاه
+                </div>
+                {form.fontFamily === f.key && <span className="text-copper text-sm">✓</span>}
+              </div>
+              <div className="text-[10px] text-muted mt-0.5">{f.note}</div>
+              <div className="text-[13px] mt-1.5 text-ink/85" style={{ fontFamily: f.family }} dir="rtl">
+                نمونه: خدمات تعمیر موبایل ۱۲۳۴۵۶۷۸۹۰
+              </div>
+            </button>
+          ))}
+        </div>
+
+        <label className="block text-[11px] font-bold mb-1">تم پیش‌فرض بازدیدکننده‌های جدید</label>
+        <p className="text-[10px] text-muted mb-2">کاربرانی که خودشان قبلاً تم را عوض کرده‌اند، انتخاب خودشان حفظ می‌شود.</p>
+        <div className="flex bg-surface2 rounded-lg p-1">
+          {[["dark", "🌙 شب"], ["light", "☀️ روز"]].map(([val, label]) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => setForm({ ...form, defaultTheme: val })}
+              className={`flex-1 text-[12px] font-bold rounded-md py-2 transition ${form.defaultTheme === val ? "bg-copper text-[#0A0F1E]" : "text-muted"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="text-sm font-bold mb-2">پیامک و پرداخت</div>
       <label className="block text-xs text-muted mb-1">کلید API کاوه‌نگار</label>

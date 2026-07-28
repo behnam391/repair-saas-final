@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
 import { requestPayment } from "@/lib/payments";
 import { PLANS, DURATIONS, priceForDuration, type PlanKey, type DurationKey } from "@/lib/plans";
+import { logCaught } from "@/lib/logError";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,7 @@ export async function POST(req: NextRequest) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input" }, { status: 400 });
     console.error(e);
+    await logCaught(e, { source: "payment", path: "/api/billing/checkout", method: "POST" });
     return NextResponse.json({ error: "internal_error", message: (e as Error).message }, { status: 500 });
   }
 }
