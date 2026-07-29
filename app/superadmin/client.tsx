@@ -6,6 +6,31 @@ import { formatJalaliDate } from "@/lib/jalali";
 
 const PLAN_LABEL: Record<string, string> = { free: "رایگان", pro: "حرفه‌ای", business: "تجاری" };
 
+// Grouped superadmin navigation. Grouping + wrapping keeps the many
+// destinations tidy and inside the box, instead of one long scrolling row.
+const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: string }[] }[] = [
+  { label: "مدیریت", items: [
+    { href: "/superadmin", label: "مغازه‌ها", icon: "🏪" },
+    { href: "/superadmin/users", label: "کاربران", icon: "👤" },
+    { href: "/superadmin/customers", label: "مشتریان", icon: "👥" },
+  ] },
+  { label: "پشتیبانی و نظارت", items: [
+    { href: "/superadmin/support", label: "پشتیبانی", icon: "🎧" },
+    { href: "/superadmin/conversations", label: "نظارت بر چت‌ها", icon: "💬" },
+    { href: "/superadmin/verification", label: "احراز هویت", icon: "✅" },
+  ] },
+  { label: "بازاریابی", items: [
+    { href: "/superadmin/notifications", label: "اعلان عمومی", icon: "📣" },
+    { href: "/superadmin/ads", label: "تبلیغات", icon: "🖼️" },
+    { href: "/superadmin/gift-codes", label: "کد هدیه", icon: "🎁" },
+  ] },
+  { label: "سیستم", items: [
+    { href: "/superadmin/settings", label: "تنظیمات", icon: "⚙️" },
+    { href: "/superadmin/external-keys", label: "API سازمان‌ها", icon: "🔌" },
+    { href: "/superadmin/errors", label: "خطاها", icon: "🐞" },
+  ] },
+];
+
 type ShopRow = {
   id: string; name: string; plan: string; active: boolean; supportAccessEnabled: boolean; planExpiresAt: string | null;
   userCount: number; ticketCount: number; totalPaid: number; createdAt: string;
@@ -90,19 +115,27 @@ export default function SuperAdminClient() {
         </div>
         <button onClick={() => signOut({ callbackUrl: "/superadmin/login" })} className="text-xs text-muted hover:text-danger transition-colors">خروج</button>
       </div>
-      <div className="flex gap-3 text-xs mb-5 overflow-x-auto no-scrollbar">
-        <a href="/superadmin" className="text-copper font-semibold whitespace-nowrap">مغازه‌ها</a>
-        <a href="/superadmin/support" className="text-muted hover:text-ink whitespace-nowrap">پشتیبانی</a>
-        <a href="/superadmin/users" className="text-muted hover:text-ink whitespace-nowrap">کاربران</a>
-        <a href="/superadmin/customers" className="text-muted hover:text-ink whitespace-nowrap">مشتریان</a>
-        <a href="/superadmin/conversations" className="text-muted hover:text-ink whitespace-nowrap">نظارت بر چت‌ها</a>
-        <a href="/superadmin/notifications" className="text-muted hover:text-ink whitespace-nowrap">اعلان عمومی</a>
-        <a href="/superadmin/ads" className="text-muted hover:text-ink whitespace-nowrap">تبلیغات</a>
-        <a href="/superadmin/verification" className="text-muted hover:text-ink whitespace-nowrap">احراز هویت</a>
-        <a href="/superadmin/gift-codes" className="text-muted hover:text-ink whitespace-nowrap">🎁 کد هدیه</a>
-        <a href="/superadmin/external-keys" className="text-muted hover:text-ink whitespace-nowrap">API سازمان‌ها</a>
-        <a href="/superadmin/settings" className="text-muted hover:text-ink whitespace-nowrap">تنظیمات API</a>
-        <a href="/superadmin/errors" className="text-muted hover:text-ink whitespace-nowrap">🐞 خطاها</a>
+      <div className="mb-5 space-y-2.5">
+        {NAV_GROUPS.map((g) => (
+          <div key={g.label}>
+            <div className="text-[10px] font-bold text-muted mb-1.5">{g.label}</div>
+            <div className="flex flex-wrap gap-2">
+              {g.items.map((it) => (
+                <a
+                  key={it.href}
+                  href={it.href}
+                  className={`text-xs rounded-lg px-3 py-1.5 border transition ${
+                    it.href === "/superadmin"
+                      ? "bg-copper/15 text-copper border-copper/40 font-bold"
+                      : "bg-surface2 border-surface2 text-muted hover:text-ink"
+                  }`}
+                >
+                  {it.icon} {it.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">

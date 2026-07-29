@@ -4,9 +4,23 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FONT_OPTIONS } from "@/lib/fonts";
 
+// Settings are grouped into internal tabs so each concern has a clear home
+// (theme is no longer buried next to API keys). It's still ONE form and one
+// save — tabs only filter what's shown; switching tabs never loses edits.
+const TABS: [string, string][] = [
+  ["appearance", "🎨 ظاهر"],
+  ["subs", "💳 اشتراک"],
+  ["sms", "📩 پیامک"],
+  ["payment", "🏦 پرداخت"],
+  ["email", "✉️ ایمیل"],
+  ["trust", "🛡️ اعتماد"],
+  ["other", "⚙️ سایر"],
+];
+
 export default function SuperAdminSettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [tab, setTab] = useState("appearance");
   const [form, setForm] = useState({
     kavenegarApiKey: "", kavenegarSender: "", zarinpalMerchantId: "",
     smsUseLookup: false, kavenegarOtpTemplate: "", kavenegarIntakeTemplate: "", kavenegarReadyTemplate: "",
@@ -20,6 +34,9 @@ export default function SuperAdminSettingsPage() {
     discount3: 5, discount6: 10, discount12: 20,
   });
   const [saved, setSaved] = useState(false);
+  const [testEmailTo, setTestEmailTo] = useState("");
+  const [testMsg, setTestMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated" && !(session?.user as any)?.isSuperAdmin) router.push("/superadmin/login");
@@ -79,6 +96,27 @@ export default function SuperAdminSettingsPage() {
       body: JSON.stringify(form),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
+    return res.ok;
+  }
+
+  // Persist the current SMTP settings first, then ask the server to send a real
+  // test email so the config can be verified end-to-end.
+  async function sendTestEmail() {
+    setTestMsg(null);
+    if (!testEmailTo.trim()) { setTestMsg({ ok: false, text: "ایمیل مقصد را وارد کن." }); return; }
+    setTesting(true);
+    const ok = await save();
+    if (!ok) { setTesting(false); setTestMsg({ ok: false, text: "ذخیره تنظیمات ناموفق بود." }); return; }
+    const res = await fetch("/api/superadmin/test-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to: testEmailTo.trim() }),
+    });
+    const d = await res.json().catch(() => ({}));
+    setTesting(false);
+    setTestMsg(res.ok
+      ? { ok: true, text: "✅ ایمیل آزمایشی ارسال شد. صندوق ورودی (و پوشه‌ی اسپم) را چک کن." }
+      : { ok: false, text: d.message || "ارسال ناموفق بود." });
   }
 
   return (
@@ -89,6 +127,18 @@ export default function SuperAdminSettingsPage() {
         این مقادیر بر متغیرهای محیطی Vercel اولویت دارند — تغییرشان نیازی به دیپلوی مجدد ندارد.
       </p>
 
+      {/* Internal section tabs — wrap so they never overflow the box. */}
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {TABS.map(([key, label]) => (
+          <button key={key} type="button" onClick={() => setTab(key)}
+            className={`text-[11px] font-bold rounded-lg px-3 py-1.5 transition ${tab === key ? "bg-copper text-[#0A0F1E]" : "bg-surface2 text-muted hover:text-ink"}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── ظاهر ── */}
+      {tab === "appearance" && (
       <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
         <div className="text-sm font-bold mb-1">🎨 ظاهر سایت — فونت و تم</div>
         <p className="text-[10px] text-muted mb-3">فونت و تمِ کل سایت را از همین‌جا عوض کن؛ بلافاصله و بدون دیپلوی مجدد روی همه‌ی صفحه‌ها اعمال می‌شود.</p>
@@ -131,7 +181,10 @@ export default function SuperAdminSettingsPage() {
           ))}
         </div>
       </div>
+      )}
 
+      {/* ── اشتراک ── */}
+      {tab === "subs" && (
       <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
         <div className="text-sm font-bold mb-1">💳 قیمت‌گذاری اشتراک‌ها</div>
         <p className="text-[10px] text-muted mb-3">قیمت پلن‌ها و تخفیف مدت‌ها را از همین‌جا تعیین کن. هم صفحه‌ی خریدِ مغازه‌ها و هم مبلغی که در درگاه پرداخت کسر می‌شود، بلافاصله از این مقادیر استفاده می‌کنند (بدون دیپلوی مجدد).</p>
@@ -190,54 +243,64 @@ export default function SuperAdminSettingsPage() {
           ))}
         </div>
       </div>
+      )}
 
-      <div className="text-sm font-bold mb-2">پیامک و پرداخت</div>
-      <label className="block text-xs text-muted mb-1">کلید API کاوه‌نگار</label>
-      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
-        value={form.kavenegarApiKey} onChange={(e) => setForm({ ...form, kavenegarApiKey: e.target.value })} />
+      {/* ── پیامک ── */}
+      {tab === "sms" && (
+      <div>
+        <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
+          <div className="text-sm font-bold mb-2">📨 پیامک (کاوه‌نگار)</div>
+          <label className="block text-xs text-muted mb-1">کلید API کاوه‌نگار</label>
+          <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+            value={form.kavenegarApiKey} onChange={(e) => setForm({ ...form, kavenegarApiKey: e.target.value })} />
 
-      <label className="block text-xs text-muted mb-1">شماره خط ارسال کاوه‌نگار</label>
-      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
-        value={form.kavenegarSender} onChange={(e) => setForm({ ...form, kavenegarSender: e.target.value })} />
-
-      {/* Kavenegar Lookup (OTP/verification templates) — lets the 3 core SMS
-          send without a dedicated line. */}
-      <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
-        <div className="flex items-center justify-between mb-1">
-          <div className="text-sm font-bold">📩 ارسال با لوکاپ (سرویس اعتبارسنجی)</div>
-          <button type="button" onClick={() => setForm({ ...form, smsUseLookup: !form.smsUseLookup })}
-            className={`text-[11px] font-bold rounded-full px-3 py-1 transition ${form.smsUseLookup ? "bg-teal text-white" : "bg-surface2 text-muted"}`}>
-            {form.smsUseLookup ? "روشن" : "خاموش"}
-          </button>
+          <label className="block text-xs text-muted mb-1">شماره خط ارسال کاوه‌نگار</label>
+          <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+            value={form.kavenegarSender} onChange={(e) => setForm({ ...form, kavenegarSender: e.target.value })} />
         </div>
-        <p className="text-[10px] text-muted mb-3">
-          اگر خط اختصاصی نداری، کدهای تایید و پیامک‌های پذیرش/آماده‌تحویل را با «الگوی لوکاپ» بفرست (روی خط خدماتی، بدون خرید خط). ابتدا هر الگو را در پنل کاوه‌نگار (سرویس اعتبارسنجی ← ساخت الگو) بساز و به تایید برسان، بعد نام دقیق همان الگو را این‌جا وارد کن.
-        </p>
-        {form.smsUseLookup && (
-          <div className="space-y-3">
-            <div>
-              <label className="block text-[11px] font-bold mb-1">نام الگوی کد تایید</label>
-              <input dir="ltr" placeholder="peyvocode" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
-                value={form.kavenegarOtpTemplate} onChange={(e) => setForm({ ...form, kavenegarOtpTemplate: e.target.value })} />
-              <p className="text-[9px] text-muted mt-1" dir="rtl">متن الگو: «کد تایید پیوو: <span className="mono">%token</span>»</p>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold mb-1">نام الگوی پذیرش دستگاه</label>
-              <input dir="ltr" placeholder="peyvointake" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
-                value={form.kavenegarIntakeTemplate} onChange={(e) => setForm({ ...form, kavenegarIntakeTemplate: e.target.value })} />
-              <p className="text-[9px] text-muted mt-1" dir="rtl">متن الگو: «<span className="mono">%token10</span> - دستگاه شما با کد پیگیری <span className="mono">%token</span> پذیرش شد. تماس: <span className="mono">%token2</span>»</p>
-            </div>
-            <div>
-              <label className="block text-[11px] font-bold mb-1">نام الگوی آماده تحویل</label>
-              <input dir="ltr" placeholder="peyvoready" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
-                value={form.kavenegarReadyTemplate} onChange={(e) => setForm({ ...form, kavenegarReadyTemplate: e.target.value })} />
-              <p className="text-[9px] text-muted mt-1" dir="rtl">متن الگو: «<span className="mono">%token10</span> - دستگاه شما با کد پیگیری <span className="mono">%token</span> آماده تحویل است. مبلغ: <span className="mono">%token2</span> تومان. تماس: <span className="mono">%token3</span>»</p>
-            </div>
-            <p className="text-[10px] text-amber" dir="rtl">توجه: در توکن‌ها فاصله مجاز نیست، جز <span className="mono">token10</span> (نام مغازه). تا وقتی الگوها در کاوه‌نگار تایید نشده‌اند، این گزینه را روشن نکن.</p>
-          </div>
-        )}
-      </div>
 
+        {/* Kavenegar Lookup (OTP/verification templates) — lets the 3 core SMS
+            send without a dedicated line. */}
+        <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-sm font-bold">📩 ارسال با لوکاپ (سرویس اعتبارسنجی)</div>
+            <button type="button" onClick={() => setForm({ ...form, smsUseLookup: !form.smsUseLookup })}
+              className={`text-[11px] font-bold rounded-full px-3 py-1 transition ${form.smsUseLookup ? "bg-teal text-white" : "bg-surface2 text-muted"}`}>
+              {form.smsUseLookup ? "روشن" : "خاموش"}
+            </button>
+          </div>
+          <p className="text-[10px] text-muted mb-3">
+            اگر خط اختصاصی نداری، کدهای تایید و پیامک‌های پذیرش/آماده‌تحویل را با «الگوی لوکاپ» بفرست (روی خط خدماتی، بدون خرید خط). ابتدا هر الگو را در پنل کاوه‌نگار (سرویس اعتبارسنجی ← ساخت الگو) بساز و به تایید برسان، بعد نام دقیق همان الگو را این‌جا وارد کن.
+          </p>
+          {form.smsUseLookup && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] font-bold mb-1">نام الگوی کد تایید</label>
+                <input dir="ltr" placeholder="peyvocode" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+                  value={form.kavenegarOtpTemplate} onChange={(e) => setForm({ ...form, kavenegarOtpTemplate: e.target.value })} />
+                <p className="text-[9px] text-muted mt-1" dir="rtl">متن الگو: «کد تایید پیوو: <span className="mono">%token</span>»</p>
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold mb-1">نام الگوی پذیرش دستگاه</label>
+                <input dir="ltr" placeholder="peyvointake" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+                  value={form.kavenegarIntakeTemplate} onChange={(e) => setForm({ ...form, kavenegarIntakeTemplate: e.target.value })} />
+                <p className="text-[9px] text-muted mt-1" dir="rtl">متن الگو: «<span className="mono">%token10</span> - دستگاه شما با کد پیگیری <span className="mono">%token</span> پذیرش شد. تماس: <span className="mono">%token2</span>»</p>
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold mb-1">نام الگوی آماده تحویل</label>
+                <input dir="ltr" placeholder="peyvoready" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+                  value={form.kavenegarReadyTemplate} onChange={(e) => setForm({ ...form, kavenegarReadyTemplate: e.target.value })} />
+                <p className="text-[9px] text-muted mt-1" dir="rtl">متن الگو: «<span className="mono">%token10</span> - دستگاه شما با کد پیگیری <span className="mono">%token</span> آماده تحویل است. مبلغ: <span className="mono">%token2</span> تومان. تماس: <span className="mono">%token3</span>»</p>
+              </div>
+              <p className="text-[10px] text-amber" dir="rtl">توجه: در توکن‌ها فاصله مجاز نیست، جز <span className="mono">token10</span> (نام مغازه). تا وقتی الگوها در کاوه‌نگار تایید نشده‌اند، این گزینه را روشن نکن.</p>
+            </div>
+          )}
+        </div>
+      </div>
+      )}
+
+      {/* ── پرداخت ── */}
+      {tab === "payment" && (
       <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
         <label className="block text-xs font-bold mb-1">درگاه پرداخت فعال</label>
         <p className="text-[10px] text-muted mb-2">هر پرداخت با همان درگاهی که شروع شده تأیید می‌شود؛ پس می‌توانید هر زمان بدون مشکل درگاه فعال را عوض کنید.</p>
@@ -265,51 +328,86 @@ export default function SuperAdminSettingsPage() {
         <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" dir="ltr"
           value={form.nextpayApiKey} onChange={(e) => setForm({ ...form, nextpayApiKey: e.target.value })} />
       </div>
+      )}
 
-      <div className="text-sm font-bold mb-2 mt-2">ایمیل (SMTP) — برای بازیابی رمز از طریق ایمیل</div>
-      <p className="text-[10px] text-muted mb-2">
-        مثلاً با Gmail: هاست smtp.gmail.com، پورت ۵۸۷، و به‌جای رمز عبور معمولی از «App Password» جیمیل استفاده کنید.
-      </p>
-      <div className="flex gap-2 mb-3">
-        <input className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" placeholder="smtp.gmail.com"
-          value={form.smtpHost} onChange={(e) => setForm({ ...form, smtpHost: e.target.value })} />
-        <input type="number" className="w-20 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" placeholder="587"
-          value={form.smtpPort} onChange={(e) => setForm({ ...form, smtpPort: +e.target.value })} />
+      {/* ── ایمیل (SMTP) ── */}
+      {tab === "email" && (
+      <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
+        <div className="text-sm font-bold mb-1">✉️ ایمیل (SMTP)</div>
+        <p className="text-[10px] text-muted mb-3">
+          برای ارسال ایمیل (مثلاً کد بازیابی رمز از طریق ایمیل). با Gmail: هاست <span dir="ltr">smtp.gmail.com</span>، پورت ۵۸۷، و به‌جای رمز عبور معمولی از «App Password» جیمیل استفاده کن.
+        </p>
+        <div className="flex gap-2 mb-3">
+          <input className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" placeholder="smtp.gmail.com"
+            value={form.smtpHost} onChange={(e) => setForm({ ...form, smtpHost: e.target.value })} />
+          <input type="number" dir="ltr" className="w-20 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" placeholder="587"
+            value={form.smtpPort} onChange={(e) => setForm({ ...form, smtpPort: +e.target.value })} />
+        </div>
+        <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3" dir="ltr" placeholder="آدرس ایمیل کاربری SMTP"
+          value={form.smtpUser} onChange={(e) => setForm({ ...form, smtpUser: e.target.value })} />
+        <input type="password" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3" placeholder="رمز عبور / App Password"
+          value={form.smtpPassword} onChange={(e) => setForm({ ...form, smtpPassword: e.target.value })} />
+        <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4" dir="ltr" placeholder="آدرس فرستنده (اختیاری، پیش‌فرض همان کاربری بالاست)"
+          value={form.smtpFromAddress} onChange={(e) => setForm({ ...form, smtpFromAddress: e.target.value })} />
+
+        {/* End-to-end verification */}
+        <div className="border-t border-surface2 pt-3">
+          <label className="block text-[11px] font-bold mb-1">تست ارسال ایمیل</label>
+          <p className="text-[10px] text-muted mb-2">یک ایمیل آزمایشی بفرست تا مطمئن شوی تنظیمات درست کار می‌کند. (اول ذخیره می‌شود، بعد ارسال.)</p>
+          <div className="flex gap-2">
+            <input dir="ltr" type="email" placeholder="you@example.com"
+              className="flex-1 min-w-0 bg-surface2 border border-border rounded-lg px-3 py-2 text-sm"
+              value={testEmailTo} onChange={(e) => setTestEmailTo(e.target.value)} />
+            <button type="button" onClick={sendTestEmail} disabled={testing}
+              className="bg-teal text-white font-bold rounded-lg px-4 text-sm disabled:opacity-50 shrink-0">
+              {testing ? "..." : "ارسال تست"}
+            </button>
+          </div>
+          {testMsg && <p className={`text-xs mt-2 ${testMsg.ok ? "text-teal" : "text-danger"}`}>{testMsg.text}</p>}
+        </div>
       </div>
-      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3" placeholder="آدرس ایمیل کاربری SMTP"
-        value={form.smtpUser} onChange={(e) => setForm({ ...form, smtpUser: e.target.value })} />
-      <input type="password" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3" placeholder="رمز عبور / App Password"
-        value={form.smtpPassword} onChange={(e) => setForm({ ...form, smtpPassword: e.target.value })} />
-      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4" placeholder="آدرس فرستنده (اختیاری، پیش‌فرض همان کاربری بالاست)"
-        value={form.smtpFromAddress} onChange={(e) => setForm({ ...form, smtpFromAddress: e.target.value })} />
+      )}
 
-      <div className="text-sm font-bold mb-2 mt-2">نقشه (نشان)</div>
-      <p className="text-[10px] text-muted mb-2">
-        از <span dir="ltr">platform.neshan.org</span> ثبت‌نام کنید و کلید «نقشه وب» بگیرید — برای نقشه‌ی تعاملی انتخاب موقعیت مغازه استفاده می‌شود.
-      </p>
-      <label className="block text-xs text-muted mb-1">کلید نقشه نشان</label>
-      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4"
-        value={form.neshanApiKey} onChange={(e) => setForm({ ...form, neshanApiKey: e.target.value })} />
-
-      <div className="text-sm font-bold mb-2 mt-2">نماد اعتماد الکترونیکی (اینماد)</div>
-      <p className="text-[10px] text-muted mb-2">
-        از پنل <span dir="ltr">enamad.ir</span> مقدار <span dir="ltr">id</span> و <span dir="ltr">Code</span> نماد را کپی کنید. به‌محض ذخیره، لوگوی اینماد در صفحات عمومی سایت (ورود و درباره ما) نمایش داده می‌شود — بدون <span dir="ltr">rel="noopener noreferrer"</span> تا اینماد بتواند آن را تأیید کند.
-      </p>
-      <div className="flex gap-2 mb-4">
-        <input className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono" dir="ltr" placeholder="id (مثلاً 123456)"
-          value={form.enamadId} onChange={(e) => setForm({ ...form, enamadId: e.target.value })} />
-        <input className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono" dir="ltr" placeholder="Code"
-          value={form.enamadCode} onChange={(e) => setForm({ ...form, enamadCode: e.target.value })} />
+      {/* ── اعتماد (اینماد) ── */}
+      {tab === "trust" && (
+      <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
+        <div className="text-sm font-bold mb-2">🛡️ نماد اعتماد الکترونیکی (اینماد)</div>
+        <p className="text-[10px] text-muted mb-2">
+          از پنل <span dir="ltr">enamad.ir</span> مقدار <span dir="ltr">id</span> و <span dir="ltr">Code</span> نماد را کپی کنید. به‌محض ذخیره، لوگوی اینماد در صفحات عمومی سایت (ورود و درباره ما) نمایش داده می‌شود — بدون <span dir="ltr">rel="noopener noreferrer"</span> تا اینماد بتواند آن را تأیید کند.
+        </p>
+        <div className="flex gap-2">
+          <input className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono" dir="ltr" placeholder="id (مثلاً 123456)"
+            value={form.enamadId} onChange={(e) => setForm({ ...form, enamadId: e.target.value })} />
+          <input className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono" dir="ltr" placeholder="Code"
+            value={form.enamadCode} onChange={(e) => setForm({ ...form, enamadCode: e.target.value })} />
+        </div>
       </div>
+      )}
 
-      <div className="text-sm font-bold mb-2 mt-2">راهنما و درباره ما</div>
-      <label className="block text-xs text-muted mb-1">لینک راهنمای سایت (دامنه خارجی یا داخلی)</label>
-      <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
-        placeholder="https://help.example.com"
-        value={form.guideUrl} onChange={(e) => setForm({ ...form, guideUrl: e.target.value })} />
-      <label className="block text-xs text-muted mb-1">متن صفحه «درباره ما»</label>
-      <textarea className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-4" rows={4}
-        value={form.aboutUsContent} onChange={(e) => setForm({ ...form, aboutUsContent: e.target.value })} />
+      {/* ── سایر (نقشه، راهنما) ── */}
+      {tab === "other" && (
+      <div>
+        <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
+          <div className="text-sm font-bold mb-1">🗺️ نقشه (نشان)</div>
+          <p className="text-[10px] text-muted mb-2">
+            از <span dir="ltr">platform.neshan.org</span> ثبت‌نام کنید و کلید «نقشه وب» بگیرید — برای نقشه‌ی تعاملی انتخاب موقعیت مغازه استفاده می‌شود.
+          </p>
+          <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" placeholder="کلید نقشه نشان"
+            value={form.neshanApiKey} onChange={(e) => setForm({ ...form, neshanApiKey: e.target.value })} />
+        </div>
+
+        <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
+          <div className="text-sm font-bold mb-1">📘 راهنما و درباره ما</div>
+          <label className="block text-xs text-muted mb-1 mt-1">لینک راهنمای سایت (دامنه خارجی یا داخلی)</label>
+          <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+            placeholder="https://help.example.com"
+            value={form.guideUrl} onChange={(e) => setForm({ ...form, guideUrl: e.target.value })} />
+          <label className="block text-xs text-muted mb-1">متن صفحه «درباره ما»</label>
+          <textarea className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" rows={4}
+            value={form.aboutUsContent} onChange={(e) => setForm({ ...form, aboutUsContent: e.target.value })} />
+        </div>
+      </div>
+      )}
 
       <button onClick={save} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
         {saved ? "✅ ذخیره شد" : "ذخیره تنظیمات"}
