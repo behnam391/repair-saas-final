@@ -43,6 +43,7 @@ export default function BillingPage() {
   const result = params.get("result");
   const [duration, setDuration] = useState<number>(1);
   const [pricing, setPricing] = useState<Pricing>(DEFAULT_PRICING);
+  const [walletBalance, setWalletBalance] = useState(0);
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [giftCode, setGiftCode] = useState("");
@@ -56,13 +57,16 @@ export default function BillingPage() {
   const PLAN_FA: Record<string, string> = { free: "رایگان", pro: "حرفه‌ای", business: "تجاری" };
 
   async function loadShopAndHistory() {
-    const [shopRes, histRes] = await Promise.all([fetch("/api/shop"), fetch("/api/billing/history")]);
+    const [shopRes, histRes, walletRes] = await Promise.all([
+      fetch("/api/shop"), fetch("/api/billing/history"), fetch("/api/wallet"),
+    ]);
     if (shopRes.ok) {
       const d = await shopRes.json();
       setCurrentPlan(d.shop.plan ?? "free");
       setPlanExpiresAt(d.shop.planExpiresAt ?? null);
     }
     if (histRes.ok) setHistory((await histRes.json()).subscriptions ?? []);
+    if (walletRes.ok) setWalletBalance((await walletRes.json()).balance ?? 0);
   }
   useEffect(() => { loadShopAndHistory(); }, []);
 
@@ -102,18 +106,33 @@ export default function BillingPage() {
     }
   }
 
-  async function upgrade(plan: "pro" | "business") {
+  // Unified checkout: gateway (redirect) or wallet (instant). `dur` lets the
+  // history «ادامه پرداخت» button resume a specific attempt's plan+duration.
+  async function startCheckout(plan: string, dur: number, payWith: "gateway" | "wallet") {
     setError("");
-    setLoadingPlan(plan);
+    setLoadingPlan(`${plan}-${payWith}`);
     const res = await fetch("/api/billing/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan, duration }),
+      body: JSON.stringify({ plan, duration: dur, payWith }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     setLoadingPlan(null);
     if (!res.ok) { setError(data.message || "شروع پرداخت ناموفق بود"); return; }
+    if (data.paidFromWallet) { window.location.reload(); return; }
     window.location.href = data.payUrl;
+  }
+
+  async function cancelPending(id: string) {
+    await fetch("/api/billing/history", {
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }),
+    });
+    loadShopAndHistory();
+  }
+
+  async function deleteEntry(id: string) {
+    await fetch(`/api/billing/history?id=${id}`, { method: "DELETE" });
+    loadShopAndHistory();
   }
 
   return (
@@ -146,6 +165,15 @@ export default function BillingPage() {
         ) : (
           <p className="text-[11px] text-muted">تاریخ انقضا ثبت نشده.</p>
         )}
+      </div>
+
+      {/* Wallet balance — pay a subscription straight from here */}
+      <div className="flex items-center justify-between bg-surface2 border border-surface2 rounded-xl px-4 py-3 mb-5">
+        <div className="text-xs">
+          <span className="text-muted">👛 موجودی کیف پول: </span>
+          <span className="mono font-bold">{walletBalance.toLocaleString("fa-IR")} تومان</span>
+        </div>
+        <a href="/admin/wallet" className="text-[11px] text-copper font-semibold whitespace-nowrap">شارژ کیف پول →</a>
       </div>
 
       {/* Gift code redemption */}
@@ -194,13 +222,23 @@ export default function BillingPage() {
                 </div>
               </div>
               {key !== "free" && (
-                <button
-                  onClick={() => upgrade(key)}
-                  disabled={loadingPlan === key}
-                  className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-4 py-2 disabled:opacity-60"
-                >
-                  {loadingPlan === key ? "..." : "ارتقا"}
-                </button>
+                <div className="flex flex-col gap-1.5 shrink-0">
+                  <button
+                    onClick={() => startCheckout(key, duration, "gateway")}
+                    disabled={loadingPlan === `${key}-gateway`}
+                    className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-4 py-2 disabled:opacity-60"
+                  >
+                    {loadingPlan === `${key}-gateway` ? "..." : "ارتقا (درگاه)"}
+                  </button>
+                  <button
+                    onClick={() => startCheckout(key, duration, "wallet")}
+                    disabled={loadingPlan === `${key}-wallet` || walletBalance < total}
+                    title={walletBalance < total ? "موجودی کیف پول کافی نیست" : "پرداخت از موجودی کیف پول"}
+                    className="bg-teal/20 text-teal text-[11px] font-bold rounded-lg px-4 py-1.5 disabled:opacity-40"
+                  >
+                    {loadingPlan === `${key}-wallet` ? "..." : "از کیف پول"}
+                  </button>
+                </div>
               )}
             </div>
           );
@@ -215,19 +253,35 @@ export default function BillingPage() {
         ) : (
           <div className="space-y-2">
             {history.map((h) => (
-              <div key={h.id} className="bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs flex justify-between items-center">
-                <div>
-                  <span className="font-bold">{PLAN_FA[h.plan] ?? h.plan}</span>
-                  <span className="text-muted"> · {h.months.toLocaleString("fa-IR")} ماهه · {formatJalaliDate(h.createdAt)}</span>
+              <div key={h.id} className="bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="font-bold">{PLAN_FA[h.plan] ?? h.plan}</span>
+                    <span className="text-muted"> · {h.months.toLocaleString("fa-IR")} ماهه · {formatJalaliDate(h.createdAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="mono">{h.amount.toLocaleString("fa-IR")} تومان</span>
+                    <span className={
+                      h.status === "PAID" ? "text-teal font-semibold" : h.status === "FAILED" ? "text-danger font-semibold" : "text-amber font-semibold"
+                    }>
+                      {STATUS_LABEL[h.status] ?? h.status}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="mono">{h.amount.toLocaleString("fa-IR")} تومان</span>
-                  <span className={
-                    h.status === "PAID" ? "text-teal font-semibold" : h.status === "FAILED" ? "text-danger font-semibold" : "text-amber font-semibold"
-                  }>
-                    {STATUS_LABEL[h.status] ?? h.status}
-                  </span>
-                </div>
+                {h.status !== "PAID" && (
+                  <div className="flex gap-1.5 mt-2 justify-end">
+                    {h.status === "PENDING" && (
+                      <>
+                        <button onClick={() => startCheckout(h.plan, h.months, "gateway")}
+                          className="text-[10px] font-semibold rounded-md px-2.5 py-1 bg-copper/20 text-copper">ادامه پرداخت</button>
+                        <button onClick={() => cancelPending(h.id)}
+                          className="text-[10px] font-semibold rounded-md px-2.5 py-1 bg-amber/20 text-amber">لغو</button>
+                      </>
+                    )}
+                    <button onClick={() => deleteEntry(h.id)}
+                      className="text-[10px] font-semibold rounded-md px-2.5 py-1 bg-danger/15 text-danger">حذف</button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

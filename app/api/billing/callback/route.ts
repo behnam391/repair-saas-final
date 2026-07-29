@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyPayment, parseCallback, collectCallbackParams, type ProviderKey } from "@/lib/payments";
-import { getPricing, type PlanKey } from "@/lib/plans";
+import { getPricing, extendPlanExpiry, type PlanKey } from "@/lib/plans";
 import { logCaught } from "@/lib/logError";
 
 export const dynamic = "force-dynamic";
@@ -50,10 +50,7 @@ async function handle(req: NextRequest) {
       await tx.subscription.update({ where: { id: sub.id }, data: { status: "PAID", refId: verified.refId } });
 
       const shop = await tx.shop.findUniqueOrThrow({ where: { id: sub.shopId } });
-      const now = new Date();
-      const base = shop.planExpiresAt && shop.planExpiresAt > now ? shop.planExpiresAt : now;
-      const newExpiry = new Date(base);
-      newExpiry.setMonth(newExpiry.getMonth() + sub.months);
+      const newExpiry = extendPlanExpiry(shop.planExpiresAt, sub.months);
 
       await tx.shop.update({
         where: { id: shop.id },

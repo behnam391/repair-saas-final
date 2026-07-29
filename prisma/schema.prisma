@@ -46,6 +46,11 @@ model Shop {
   bankCardNumber    String? // shown on invoice/SMS if the shop opts in
   bankAccountNumber String?
   taxPercent    Float    @default(10) // applied to invoice totals; shop can adjust
+  // Prepaid wallet balance (toman). The shop tops this up via the payment
+  // gateway (arbitrary amount) and can then pay subscriptions from it without
+  // going back to the gateway each time. Every change is journaled in
+  // WalletTransaction; this column is the fast-read current total.
+  walletBalance Int      @default(0)
   createdAt     DateTime @default(now())
 
   users         User[]
@@ -73,6 +78,30 @@ model Shop {
   referralsSent        ShopReferral[]    @relation("ReferralFrom")
   referralsReceived    ShopReferral[]    @relation("ReferralTo")
   expenses           Expense[]
+  walletTransactions WalletTransaction[]
+}
+
+// ── Shop wallet ledger (کیف پول) ──────────────────────────────
+// One row per money movement on a shop's prepaid wallet. TOPUP rows start
+// PENDING and settle to PAID/FAILED through the payment-gateway callback
+// (mirroring Subscription). SPEND rows (paying a subscription from balance)
+// and REFUND rows are written already-settled. Shop.walletBalance is the
+// running total; balanceAfter snapshots it per row for the ledger view.
+model WalletTransaction {
+  id              String   @id @default(cuid())
+  shopId          String
+  shop            Shop     @relation(fields: [shopId], references: [id])
+  type            String   // "TOPUP" | "SPEND" | "REFUND"
+  amount          Int      // toman, always positive; `type` gives the direction
+  status          String   @default("PENDING") // "PENDING" | "PAID" | "FAILED"
+  note            String?  // e.g. "شارژ کیف پول" or "اشتراک حرفه‌ای ۳ ماهه"
+  paymentProvider String?  // gateway used for a TOPUP
+  authority       String?  // gateway token for a TOPUP
+  refId           String?  // gateway reference once verified
+  balanceAfter    Int?     // wallet balance after this row settled
+  createdAt       DateTime @default(now())
+
+  @@index([shopId, createdAt])
 }
 
 // ── Cash book (دخل و خرج) ────────────────────────────────────

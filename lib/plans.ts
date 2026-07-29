@@ -42,6 +42,17 @@ export function priceForDuration(plan: PlanKey, duration: DurationKey, pricing?:
   return Math.round((base * (100 - discount)) / 100);
 }
 
+// Pure date helper: the new plan expiry after adding `months`, counting from
+// the current expiry if it's still in the future, otherwise from now. Shared by
+// the gateway callback and the pay-from-wallet path so both extend identically.
+export function extendPlanExpiry(current: Date | null | undefined, months: number): Date {
+  const now = new Date();
+  const base = current && current > now ? current : now;
+  const d = new Date(base);
+  d.setMonth(d.getMonth() + months);
+  return d;
+}
+
 // SERVER-ONLY. Reads PlatformSettings and overlays any admin price/quota/
 // discount overrides on top of the code defaults. Never throws — falls back to
 // the defaults on any error so checkout can't break just because settings are
