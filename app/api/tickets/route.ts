@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
-import { sendSms, intakeReceivedMessage } from "@/lib/sms";
+import { sendSms, sendIntakeSms, intakeReceivedMessage } from "@/lib/sms";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -149,13 +149,15 @@ export async function POST(req: NextRequest) {
     // notifications so the customer is kept in the loop from the very
     // first moment. Never let an SMS hiccup fail the intake itself.
     try {
-      await sendSms(
-        result.customer.phone,
-        intakeReceivedMessage(shop.name, result.customer.name, result.no, {
+      await sendIntakeSms(result.customer.phone, {
+        shopName: shop.name,
+        ticketNo: result.no,
+        shopPhone: shop.phone,
+        fallback: intakeReceivedMessage(shop.name, result.customer.name, result.no, {
           deviceModel: result.deviceModel,
           shopPhone: shop.phone,
-        })
-      );
+        }),
+      });
     } catch (smsErr) {
       console.error("[sms] failed to send intake confirmation", smsErr);
     }

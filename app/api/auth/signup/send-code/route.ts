@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sendSms, isSmsConfigured } from "@/lib/sms";
+import { sendSms, sendCodeSms, isSmsConfigured } from "@/lib/sms";
 import { sendEmail, isEmailConfigured } from "@/lib/email";
 import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 import { z } from "zod";
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     try {
       const text = `کد تأیید ثبت‌نام شما در Peyvo: ${code}\nاین کد تا ۱۰ دقیقه معتبر است.`;
       if (channel === "email" && email) await sendEmail(email, "کد تأیید ثبت‌نام Peyvo", text);
-      else await sendSms(phone, text);
+      else await sendCodeSms(phone, code, text);
     } catch (e) {
       console.error("[signup] failed to send OTP", e);
     }

@@ -9,6 +9,7 @@ export default function SuperAdminSettingsPage() {
   const router = useRouter();
   const [form, setForm] = useState({
     kavenegarApiKey: "", kavenegarSender: "", zarinpalMerchantId: "",
+    smsUseLookup: false, kavenegarOtpTemplate: "", kavenegarIntakeTemplate: "", kavenegarReadyTemplate: "",
     paymentProvider: "zarinpal", zibalMerchant: "", nextpayApiKey: "",
     guideUrl: "", aboutUsContent: "",
     smtpHost: "", smtpPort: 587, smtpUser: "", smtpPassword: "", smtpFromAddress: "",
@@ -41,6 +42,10 @@ export default function SuperAdminSettingsPage() {
     fetch("/api/superadmin/settings").then((r) => r.json()).then((d) => setForm({
       kavenegarApiKey: d.settings?.kavenegarApiKey ?? "",
       kavenegarSender: d.settings?.kavenegarSender ?? "",
+      smsUseLookup: d.settings?.smsUseLookup ?? false,
+      kavenegarOtpTemplate: d.settings?.kavenegarOtpTemplate ?? "",
+      kavenegarIntakeTemplate: d.settings?.kavenegarIntakeTemplate ?? "",
+      kavenegarReadyTemplate: d.settings?.kavenegarReadyTemplate ?? "",
       zarinpalMerchantId: d.settings?.zarinpalMerchantId ?? "",
       paymentProvider: d.settings?.paymentProvider ?? "zarinpal",
       zibalMerchant: d.settings?.zibalMerchant ?? "",
@@ -194,6 +199,44 @@ export default function SuperAdminSettingsPage() {
       <label className="block text-xs text-muted mb-1">شماره خط ارسال کاوه‌نگار</label>
       <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
         value={form.kavenegarSender} onChange={(e) => setForm({ ...form, kavenegarSender: e.target.value })} />
+
+      {/* Kavenegar Lookup (OTP/verification templates) — lets the 3 core SMS
+          send without a dedicated line. */}
+      <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-sm font-bold">📩 ارسال با لوکاپ (سرویس اعتبارسنجی)</div>
+          <button type="button" onClick={() => setForm({ ...form, smsUseLookup: !form.smsUseLookup })}
+            className={`text-[11px] font-bold rounded-full px-3 py-1 transition ${form.smsUseLookup ? "bg-teal text-white" : "bg-surface2 text-muted"}`}>
+            {form.smsUseLookup ? "روشن" : "خاموش"}
+          </button>
+        </div>
+        <p className="text-[10px] text-muted mb-3">
+          اگر خط اختصاصی نداری، کدهای تایید و پیامک‌های پذیرش/آماده‌تحویل را با «الگوی لوکاپ» بفرست (روی خط خدماتی، بدون خرید خط). ابتدا هر الگو را در پنل کاوه‌نگار (سرویس اعتبارسنجی ← ساخت الگو) بساز و به تایید برسان، بعد نام دقیق همان الگو را این‌جا وارد کن.
+        </p>
+        {form.smsUseLookup && (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-[11px] font-bold mb-1">نام الگوی کد تایید</label>
+              <input dir="ltr" placeholder="peyvocode" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+                value={form.kavenegarOtpTemplate} onChange={(e) => setForm({ ...form, kavenegarOtpTemplate: e.target.value })} />
+              <p className="text-[9px] text-muted mt-1" dir="rtl">متن الگو: «کد تایید پیوو: <span className="mono">%token</span>»</p>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold mb-1">نام الگوی پذیرش دستگاه</label>
+              <input dir="ltr" placeholder="peyvointake" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+                value={form.kavenegarIntakeTemplate} onChange={(e) => setForm({ ...form, kavenegarIntakeTemplate: e.target.value })} />
+              <p className="text-[9px] text-muted mt-1" dir="rtl">متن الگو: «<span className="mono">%token10</span> - دستگاه شما با کد پیگیری <span className="mono">%token</span> پذیرش شد. تماس: <span className="mono">%token2</span>»</p>
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold mb-1">نام الگوی آماده تحویل</label>
+              <input dir="ltr" placeholder="peyvoready" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+                value={form.kavenegarReadyTemplate} onChange={(e) => setForm({ ...form, kavenegarReadyTemplate: e.target.value })} />
+              <p className="text-[9px] text-muted mt-1" dir="rtl">متن الگو: «<span className="mono">%token10</span> - دستگاه شما با کد پیگیری <span className="mono">%token</span> آماده تحویل است. مبلغ: <span className="mono">%token2</span> تومان. تماس: <span className="mono">%token3</span>»</p>
+            </div>
+            <p className="text-[10px] text-amber" dir="rtl">توجه: در توکن‌ها فاصله مجاز نیست، جز <span className="mono">token10</span> (نام مغازه). تا وقتی الگوها در کاوه‌نگار تایید نشده‌اند، این گزینه را روشن نکن.</p>
+          </div>
+        )}
+      </div>
 
       <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
         <label className="block text-xs font-bold mb-1">درگاه پرداخت فعال</label>

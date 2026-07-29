@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sendSms, isSmsConfigured } from "@/lib/sms";
+import { sendSms, sendCodeSms, isSmsConfigured } from "@/lib/sms";
 import { sendEmail, isEmailConfigured } from "@/lib/email";
 import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 import { z } from "zod";
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         if (channel === "email" && user.email) {
           await sendEmail(user.email, "کد بازیابی رمز عبور", `کد بازیابی رمز عبور شما: ${code}\nاین کد تا ۱۰ دقیقه معتبر است.`);
         } else {
-          await sendSms(phone, `کد بازیابی رمز عبور شما: ${code}\nاین کد تا ۱۰ دقیقه معتبر است.`);
+          await sendCodeSms(phone, code, `کد بازیابی رمز عبور شما: ${code}\nاین کد تا ۱۰ دقیقه معتبر است.`);
         }
       } catch (e) {
         console.error("[forgot-password] failed to send OTP", e);

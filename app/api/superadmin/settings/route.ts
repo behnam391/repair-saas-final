@@ -19,6 +19,10 @@ export async function GET() {
 const Schema = z.object({
   kavenegarApiKey: z.string().optional(),
   kavenegarSender: z.string().optional(),
+  smsUseLookup: z.boolean().optional(),
+  kavenegarOtpTemplate: z.string().optional(),
+  kavenegarIntakeTemplate: z.string().optional(),
+  kavenegarReadyTemplate: z.string().optional(),
   zarinpalMerchantId: z.string().optional(),
   paymentProvider: z.enum(["zarinpal", "zibal", "nextpay"]).optional(),
   zibalMerchant: z.string().optional(),

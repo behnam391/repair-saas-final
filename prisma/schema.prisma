@@ -703,6 +703,16 @@ model PlatformSettings {
   id                  String  @id @default("singleton")
   kavenegarApiKey     String?
   kavenegarSender     String?
+  // Kavenegar OTP/Lookup (سرویس اعتبارسنجی) — when smsUseLookup is on, the
+  // three core transactional messages (verification codes, intake, ready) are
+  // sent via approved templates instead of free-form text, so no dedicated
+  // line is needed. The *Template fields hold the exact approved template
+  // names created in the Kavenegar panel. Off by default: until the templates
+  // exist, sends fall back to free-form so nothing breaks.
+  smsUseLookup            Boolean @default(false)
+  kavenegarOtpTemplate    String? // template for verification/reset codes  (%token = code)
+  kavenegarIntakeTemplate String? // device-received template  (%token=ticket, %token2=phone, %token10=shop)
+  kavenegarReadyTemplate  String? // ready-for-pickup template  (%token=ticket, %token2=price, %token3=phone, %token10=shop)
   zarinpalMerchantId  String?
   // Which gateway is currently active platform-wide: "zarinpal" | "zibal" | "nextpay".
   paymentProvider     String? @default("zarinpal")

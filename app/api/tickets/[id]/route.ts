@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, requireRole, UnauthorizedError } from "@/lib/tenant";
-import { sendSms, readyForPickupMessage } from "@/lib/sms";
+import { sendSms, sendReadySms, readyForPickupMessage } from "@/lib/sms";
 import { notifyUser } from "@/lib/notify";
 import { z } from "zod";
 
@@ -156,15 +156,18 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         // Fire the automated SMS — this is the core promise of the product.
         try {
           const t = updated as any;
-          await sendSms(
-            t.customer.phone,
-            readyForPickupMessage(t.shop.name, t.customer.name, t.no, {
+          await sendReadySms(t.customer.phone, {
+            shopName: t.shop.name,
+            ticketNo: t.no,
+            price: t.estimatedCost,
+            shopPhone: t.shop.phone,
+            fallback: readyForPickupMessage(t.shop.name, t.customer.name, t.no, {
               price: t.estimatedCost,
               shopPhone: t.shop.phone,
               includeCard: body.includeCardInSms,
               cardNumber: t.shop.bankCardNumber,
-            })
-          );
+            }),
+          });
         } catch (smsErr) {
           // Don't fail the whole request if SMS delivery fails — log and continue.
           console.error("[sms] failed to notify customer", smsErr);
