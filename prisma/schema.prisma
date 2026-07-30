@@ -710,6 +710,10 @@ model PlatformSettings {
   // line is needed. The *Template fields hold the exact approved template
   // names created in the Kavenegar panel. Off by default: until the templates
   // exist, sends fall back to free-form so nothing breaks.
+  // Automatic backups to a Telegram bot. When both are set, the daily cron
+  // (/api/cron/backup) sends a full JSON snapshot to this chat via the Bot API.
+  telegramBotToken        String? // from @BotFather
+  telegramChatId          String? // the chat/channel id the backup file is sent to
   smsUseLookup            Boolean @default(false)
   kavenegarOtpTemplate    String? // template for verification/reset codes  (%token = code)
   kavenegarIntakeTemplate String? // device-received template  (%token=ticket, %token2=phone, %token10=shop)

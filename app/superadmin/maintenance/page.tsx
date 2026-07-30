@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, type ChangeEvent } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { formatJalaliDate } from "@/lib/jalali";
@@ -20,10 +20,22 @@ export default function MaintenancePage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirm, setConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [tg, setTg] = useState({ token: "", chatId: "" });
+  const [tgMsg, setTgMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [tgBusy, setTgBusy] = useState<"save" | "test" | null>(null);
+  const [restoreConfirm, setRestoreConfirm] = useState<any>(null);
+  const [restoreMsg, setRestoreMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated" && !(session?.user as any)?.isSuperAdmin) router.push("/superadmin/login");
   }, [status, session, router]);
+
+  useEffect(() => {
+    fetch("/api/superadmin/settings").then((r) => r.json()).then((d) => {
+      setTg({ token: d.settings?.telegramBotToken ?? "", chatId: d.settings?.telegramChatId ?? "" });
+    }).catch(() => {});
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -68,6 +80,61 @@ export default function MaintenancePage() {
     load();
   }
 
+  async function saveTelegram(then?: "test") {
+    setTgBusy(then ?? "save"); setTgMsg(null);
+    const res = await fetch("/api/superadmin/settings", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ telegramBotToken: tg.token, telegramChatId: tg.chatId }),
+    });
+    if (!res.ok) { setTgBusy(null); setTgMsg({ ok: false, text: "ذخیره ناموفق بود." }); return false; }
+    if (!then) { setTgBusy(null); setTgMsg({ ok: true, text: "✅ ذخیره شد." }); }
+    return true;
+  }
+  async function testTelegram() {
+    // save the latest token/chat id first, then send a real backup now
+    const ok = await saveTelegram("test");
+    if (!ok) return;
+    const res = await fetch("/api/superadmin/backup", { method: "POST" });
+    const d = await res.json().catch(() => ({}));
+    setTgBusy(null);
+    setTgMsg(res.ok
+      ? { ok: true, text: "✅ بکاپ آزمایشی به تلگرام ارسال شد. چتت را ببین." }
+      : { ok: false, text: d.message || "ارسال ناموفق بود." });
+  }
+
+  function onRestoreFile(e: ChangeEvent<HTMLInputElement>) {
+    setRestoreMsg(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(String(reader.result));
+        if (!parsed?.models) { setRestoreMsg({ ok: false, text: "فایل بکاپ معتبر نیست." }); return; }
+        setRestoreConfirm(parsed);
+      } catch {
+        setRestoreMsg({ ok: false, text: "فایل JSON خوانده نشد." });
+      }
+    };
+    reader.readAsText(file);
+  }
+  async function doRestore() {
+    if (!restoreConfirm) return;
+    setRestoring(true); setRestoreMsg(null);
+    const res = await fetch("/api/superadmin/restore", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ models: restoreConfirm.models }),
+    });
+    const d = await res.json().catch(() => ({}));
+    setRestoring(false); setRestoreConfirm(null);
+    if (res.ok) {
+      setRestoreMsg({ ok: true, text: `✅ بازیابی انجام شد: ${(d.totalRestored ?? 0).toLocaleString("fa-IR")} رکورد بازگردانده شد${d.totalFailed ? `، ${(d.totalFailed).toLocaleString("fa-IR")} ناموفق` : ""}.` });
+      load();
+    } else {
+      setRestoreMsg({ ok: false, text: d.message || "بازیابی ناموفق بود." });
+    }
+  }
+
   return (
     <div className="min-h-screen p-4 max-w-2xl mx-auto">
       <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
@@ -83,6 +150,55 @@ export default function MaintenancePage() {
           className="inline-block bg-copper text-[#1A1410] font-bold rounded-lg px-4 py-2.5 text-sm">
           ⬇️ دانلود بکاپ کامل
         </a>
+      </div>
+
+      {/* ── Auto-backup to Telegram ── */}
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-5">
+        <div className="text-sm font-bold mb-1">🤖 بکاپ خودکار روزانه (تلگرام)</div>
+        <p className="text-[11px] text-muted mb-3">
+          هر روز یک بکاپ کامل خودکار ساخته و به رباتِ تلگرام فرستاده می‌شود. توکن ربات را از <span dir="ltr">@BotFather</span> بگیر، و شناسه‌ی چت را از <span dir="ltr">@userinfobot</span>. حتماً اول یک‌بار به رباتِ خودت در تلگرام «Start» بزن تا بتواند پیام بفرستد.
+        </p>
+        <label className="block text-[11px] text-muted mb-1">توکن ربات</label>
+        <input dir="ltr" placeholder="123456:ABC-..." className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono mb-2"
+          value={tg.token} onChange={(e) => setTg({ ...tg, token: e.target.value })} />
+        <label className="block text-[11px] text-muted mb-1">شناسه‌ی چت (Chat ID)</label>
+        <input dir="ltr" placeholder="123456789" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono mb-3"
+          value={tg.chatId} onChange={(e) => setTg({ ...tg, chatId: e.target.value })} />
+        <div className="flex gap-2 flex-wrap">
+          <button onClick={() => saveTelegram()} disabled={tgBusy !== null}
+            className="bg-copper text-[#1A1410] font-bold rounded-lg px-4 py-2 text-sm disabled:opacity-50">
+            {tgBusy === "save" ? "..." : "ذخیره"}
+          </button>
+          <button onClick={testTelegram} disabled={tgBusy !== null || !tg.token || !tg.chatId}
+            className="bg-teal/20 text-teal font-bold rounded-lg px-4 py-2 text-sm disabled:opacity-40">
+            {tgBusy === "test" ? "در حال ارسال..." : "ارسال بکاپ آزمایشی"}
+          </button>
+        </div>
+        {tgMsg && <p className={`text-xs mt-2 ${tgMsg.ok ? "text-teal" : "text-danger"}`}>{tgMsg.text}</p>}
+      </div>
+
+      {/* ── Restore ── */}
+      <div className="bg-surface border border-danger/30 rounded-xl p-4 mb-5">
+        <div className="text-sm font-bold mb-1">♻️ بازیابی از فایل بکاپ</div>
+        <p className="text-[11px] text-muted mb-3">
+          یک فایل بکاپ (JSON) انتخاب کن تا داده‌هایش برگردانده شوند. رکوردهای هم‌شناسه بازنویسی و رکوردهای حذف‌شده دوباره ساخته می‌شوند — ولی داده‌های جدیدترِ فعلی پاک نمی‌شوند. برای بازگشتِ کاملِ دیتابیس به یک لحظه‌ی گذشته، از PITRِ سرویس دیتابیس استفاده کن.
+        </p>
+        <input type="file" accept="application/json,.json" onChange={onRestoreFile}
+          className="block w-full text-xs text-muted file:ml-3 file:rounded-lg file:border-0 file:bg-surface2 file:px-3 file:py-2 file:text-ink file:text-xs mb-2" />
+        {restoreConfirm && (
+          <div className="bg-danger/10 border border-danger/40 rounded-lg p-3 mt-2">
+            <p className="text-[11px] text-danger mb-2">
+              فایل بکاپِ <span className="mono">{String(restoreConfirm.exportedAt ?? "").slice(0, 10)}</span> آماده است. مطمئنی بازیابی شود؟ (رکوردهای هم‌شناسه بازنویسی می‌شوند.)
+            </p>
+            <div className="flex gap-2">
+              <button onClick={doRestore} disabled={restoring} className="bg-danger text-white font-bold rounded-lg px-4 py-2 text-sm disabled:opacity-50">
+                {restoring ? "در حال بازیابی..." : "بله، بازیابی کن"}
+              </button>
+              <button onClick={() => setRestoreConfirm(null)} className="bg-surface2 text-muted rounded-lg px-4 py-2 text-sm">لغو</button>
+            </div>
+          </div>
+        )}
+        {restoreMsg && <p className={`text-xs mt-2 ${restoreMsg.ok ? "text-teal" : "text-danger"}`}>{restoreMsg.text}</p>}
       </div>
 
       {/* ── Test-data cleanup ── */}

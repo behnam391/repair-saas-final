@@ -19,6 +19,8 @@ export async function GET() {
 const Schema = z.object({
   kavenegarApiKey: z.string().optional(),
   kavenegarSender: z.string().optional(),
+  telegramBotToken: z.string().optional(),
+  telegramChatId: z.string().optional(),
   smsUseLookup: z.boolean().optional(),
   kavenegarOtpTemplate: z.string().optional(),
   kavenegarIntakeTemplate: z.string().optional(),
