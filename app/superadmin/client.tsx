@@ -115,24 +115,31 @@ export default function SuperAdminClient() {
         </div>
         <button onClick={() => signOut({ callbackUrl: "/superadmin/login" })} className="text-xs text-muted hover:text-danger transition-colors">خروج</button>
       </div>
-      <div className="mb-5 space-y-2.5">
+      <div className="mb-6 space-y-4">
         {NAV_GROUPS.map((g) => (
           <div key={g.label}>
-            <div className="text-[10px] font-bold text-muted mb-1.5">{g.label}</div>
-            <div className="flex flex-wrap gap-2">
-              {g.items.map((it) => (
-                <a
-                  key={it.href}
-                  href={it.href}
-                  className={`text-xs rounded-lg px-3 py-1.5 border transition ${
-                    it.href === "/superadmin"
-                      ? "bg-copper/15 text-copper border-copper/40 font-bold"
-                      : "bg-surface2 border-surface2 text-muted hover:text-ink"
-                  }`}
-                >
-                  {it.icon} {it.label}
-                </a>
-              ))}
+            <div className="text-[11px] font-bold text-muted mb-2 border-r-2 border-copper/50 pr-2">{g.label}</div>
+            {/* Uniform tiles in a fixed 3-column grid so every item is the same
+                size and the columns line up across all groups — tidy, not a
+                ragged row of differently-sized pills. */}
+            <div className="grid grid-cols-3 gap-2">
+              {g.items.map((it) => {
+                const active = it.href === "/superadmin";
+                return (
+                  <a
+                    key={it.href}
+                    href={it.href}
+                    className={`flex flex-col items-center justify-center text-center gap-1.5 rounded-xl px-2 py-3 border min-h-[64px] transition ${
+                      active
+                        ? "bg-copper/15 text-copper border-copper/40 font-bold"
+                        : "bg-surface2 border-surface2 text-ink/80 hover:text-ink hover:border-copper/30"
+                    }`}
+                  >
+                    <span className="text-lg leading-none">{it.icon}</span>
+                    <span className="text-[11px] leading-tight">{it.label}</span>
+                  </a>
+                );
+              })}
             </div>
           </div>
         ))}
