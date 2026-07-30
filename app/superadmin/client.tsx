@@ -28,6 +28,7 @@ const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: s
     { href: "/superadmin/settings", label: "تنظیمات", icon: "⚙️" },
     { href: "/superadmin/external-keys", label: "API سازمان‌ها", icon: "🔌" },
     { href: "/superadmin/errors", label: "خطاها", icon: "🐞" },
+    { href: "/superadmin/maintenance", label: "نگهداری", icon: "🧹" },
   ] },
 ];
 

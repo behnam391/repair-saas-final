@@ -39,6 +39,7 @@ model Shop {
   plan          String   @default("free")
   planExpiresAt DateTime?
   active        Boolean  @default(true) // super admin can suspend a shop
+  isTest        Boolean  @default(false) // super admin can mark a shop as test/demo, for later bulk cleanup
   supportAccessEnabled Boolean @default(false) // shop owner (or super admin, for urgent support cases) can allow platform staff temporary visibility into this shop's admin panel
   // monthly device-intake quota enforced for the "free" plan
   monthlyQuota  Int      @default(10)
