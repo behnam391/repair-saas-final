@@ -91,6 +91,29 @@ export async function deleteShopCascade(shopId: string) {
   );
 }
 
+// Remove one shop customer AND their repair history (tickets + each ticket's
+// history/messages/parts, its repair invoice + items, and its rating), then the
+// customer row. Scoped to shopId so a shop can only ever delete its own. Used by
+// the "force" delete on the customer address book — the normal delete still
+// refuses when there's history, so this only runs on explicit confirmation.
+export async function deleteCustomerCascade(shopId: string, customerId: string) {
+  const tickets = await db.ticket.findMany({ where: { shopId, customerId }, select: { id: true } });
+  const ticketIds = tickets.map((t) => t.id);
+  const invoices = await db.invoice.findMany({ where: { shopId, ticketId: { in: ticketIds } }, select: { id: true } });
+  const invoiceIds = invoices.map((i) => i.id);
+
+  await db.$transaction(async (tx) => {
+    await tx.invoiceItem.deleteMany({ where: { invoiceId: { in: invoiceIds } } });
+    await tx.invoice.deleteMany({ where: { id: { in: invoiceIds } } });
+    await tx.rating.deleteMany({ where: { ticketId: { in: ticketIds } } });
+    await tx.ticketPart.deleteMany({ where: { ticketId: { in: ticketIds } } });
+    await (tx as any).ticketMessage.deleteMany({ where: { ticketId: { in: ticketIds } } });
+    await tx.ticketHistory.deleteMany({ where: { ticketId: { in: ticketIds } } });
+    await tx.ticket.deleteMany({ where: { shopId, customerId } });
+    await tx.customer.deleteMany({ where: { id: customerId, shopId } });
+  });
+}
+
 // Fully remove a nationwide customer account and their data.
 export async function deletePlatformCustomerCascade(customerId: string) {
   await db.$transaction(async (tx) => {

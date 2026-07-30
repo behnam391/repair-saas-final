@@ -232,6 +232,10 @@ model Customer {
   shop      Shop     @relation(fields: [shopId], references: [id])
   name      String
   phone     String
+  // Optional extra info the shop can keep on a customer.
+  email     String?
+  address   String?
+  note      String?  // free-form notes (preferences, history, anything)
   createdAt DateTime @default(now())
 
   tickets   Ticket[]
