@@ -56,11 +56,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        // data-nav-menu gives this the dense, near-opaque "menu glass"
-        // (var(--glass-menu), ~88–92% opaque) used by every other dropdown —
-        // instead of the 7%-opacity bg-surface card, which was almost
-        // invisible over page content on mobile.
-        <div data-nav-menu className="absolute left-0 mt-2 w-72 border border-surface2 rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
+        <div className="absolute left-0 mt-2 w-72 bg-surface border border-surface2 rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
           <div className="p-3 border-b border-surface2 flex items-center justify-between">
             <span className="text-xs font-bold">اعلان‌ها</span>
             {unreadCount > 0 && (

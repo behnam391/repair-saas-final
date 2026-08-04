@@ -3,25 +3,15 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { PROVINCE_NAMES } from "@/lib/iran-locations";
 import LocationPicker from "@/components/LocationPicker";
-import JalaliDatePicker from "@/components/JalaliDatePicker";
 
 const ROLE_LABEL: Record<string, string> = {
   OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی",
 };
 const LANE_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی" };
-// Which repair lane someone works in — separate from role, so an OWNER can
-// also be a technician. "" = coordinator only (does not pick up lane work).
-const SPECIALTY_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی (برد/سی‌پی‌یو)" };
 
-type Staff = { id: string; name: string; phone: string; role: string; specialty?: string | null; active: boolean };
+type Staff = { id: string; name: string; phone: string; role: string; active: boolean };
 type ReportRow = { techId: string; name: string; role: string; closedCount: number; revenue: number };
-type ShopInfo = { id?: string; name: string; type?: string; businessSize?: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null; taxPercent?: number };
-
-const BUSINESS_SIZE_OPTIONS = [
-  { key: "SOLO", label: "تک‌نفره" },
-  { key: "TEAM", label: "تیمی" },
-  { key: "ENTERPRISE", label: "مجموعه بزرگ" },
-] as const;
+type ShopInfo = { id?: string; name: string; type?: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null; taxPercent?: number };
 type Template = { id: string; lane: string; label: string };
 
 export default function AdminPage() {
@@ -29,8 +19,7 @@ export default function AdminPage() {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [report, setReport] = useState<ReportRow[]>([]);
   const [monthRevenue, setMonthRevenue] = useState(0);
-  const [monthlyChart, setMonthlyChart] = useState<{ label: string; repair: number; sale: number; total: number }[]>([]);
-  const [form, setForm] = useState({ name: "", phone: "", password: "", role: "HARDWARE", specialty: "" });
+  const [form, setForm] = useState({ name: "", phone: "", password: "", role: "HARDWARE" });
   const [error, setError] = useState("");
 
   const [shopInfo, setShopInfo] = useState<ShopInfo>({ name: "", address: "", phone: "", plan: "free", bankCardNumber: "", bankAccountNumber: "" });
@@ -64,7 +53,7 @@ export default function AdminPage() {
     if (shopRes.ok) {
       const data = await shopRes.json();
       setShopInfo({
-        id: data.shop.id, name: data.shop.name, type: data.shop.type ?? "REPAIR", businessSize: data.shop.businessSize ?? "SOLO", address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
+        id: data.shop.id, name: data.shop.name, type: data.shop.type ?? "REPAIR", address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
         bankCardNumber: data.shop.bankCardNumber ?? "", bankAccountNumber: data.shop.bankAccountNumber ?? "",
         latitude: data.shop.latitude ?? null, longitude: data.shop.longitude ?? null, province: data.shop.province ?? "",
         taxPercent: data.shop.taxPercent ?? 10,
@@ -79,9 +68,6 @@ export default function AdminPage() {
     }
     if (tplRes.ok) setTemplates((await tplRes.json()).templates ?? []);
     if (platformRes.ok) setNeshanApiKey((await platformRes.json()).neshanApiKey ?? "");
-    fetch("/api/reports/monthly-revenue").then(async (r) => {
-      if (r.ok) setMonthlyChart((await r.json()).months ?? []);
-    });
   }
   useEffect(() => { if (isOwner) load(); }, [isOwner]);
 
@@ -90,14 +76,14 @@ export default function AdminPage() {
     const res = await fetch("/api/staff", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, specialty: form.specialty || null }),
+      body: JSON.stringify(form),
     });
     if (!res.ok) {
       const err = await res.json();
       setError(err.message || "افزودن کارمند ناموفق بود");
       return;
     }
-    setForm({ name: "", phone: "", password: "", role: "HARDWARE", specialty: "" });
+    setForm({ name: "", phone: "", password: "", role: "HARDWARE" });
     load();
   }
 
@@ -108,7 +94,7 @@ export default function AdminPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: shopInfo.name, type: shopInfo.type, businessSize: shopInfo.businessSize, address: shopInfo.address, phone: shopInfo.phone,
+        name: shopInfo.name, type: shopInfo.type, address: shopInfo.address, phone: shopInfo.phone,
         bankCardNumber: shopInfo.bankCardNumber, bankAccountNumber: shopInfo.bankAccountNumber,
         latitude: shopInfo.latitude ?? undefined, longitude: shopInfo.longitude ?? undefined, province: shopInfo.province || undefined,
         taxPercent: shopInfo.taxPercent ?? undefined,
@@ -172,52 +158,12 @@ export default function AdminPage() {
     <div className="p-4 max-w-xl mx-auto">
       <h1 className="display-heading text-lg mb-4">پنل مدیریت</h1>
 
-      <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4 mb-4 shadow-lg shadow-black/20">
+      <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4 mb-6 shadow-lg shadow-black/20">
         <div className="text-xs text-muted mb-1">درآمد ۳۰ روز اخیر</div>
         <div className="text-2xl font-extrabold mono text-copper">{monthRevenue.toLocaleString("fa-IR")} <span className="text-xs font-normal text-ink">تومان</span></div>
       </div>
 
-      {/* ── Monthly revenue chart + Excel exports ─────────────────── */}
-      <Section title="نمودار درآمد و خروجی اکسل" icon="📈" defaultOpen>
-        <div className="text-sm font-bold mb-1">نمودار درآمد ۱۲ ماه اخیر</div>
-        <p className="text-[10px] text-muted mb-3">
-          <span className="text-copper">■</span> فاکتور تعمیر &nbsp;
-          <span className="text-teal">■</span> فروش مستقیم
-        </p>
-        {monthlyChart.length === 0 ? (
-          <p className="text-xs text-muted">در حال بارگذاری...</p>
-        ) : (
-          (() => {
-            const max = Math.max(...monthlyChart.map((m) => m.total), 1);
-            return (
-              <div className="flex items-end gap-1 h-32" dir="ltr">
-                {monthlyChart.map((m, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
-                    <div className="w-full flex flex-col justify-end" style={{ height: "100px" }}
-                      title={`${m.label}: ${m.total.toLocaleString("fa-IR")} تومان (تعمیر ${m.repair.toLocaleString("fa-IR")} · فروش ${m.sale.toLocaleString("fa-IR")})`}>
-                      <div className="w-full rounded-t-sm bg-teal/80" style={{ height: `${(m.sale / max) * 100}px` }} />
-                      <div className={`w-full bg-copper/80 ${m.sale === 0 ? "rounded-t-sm" : ""}`} style={{ height: `${(m.repair / max) * 100}px` }} />
-                    </div>
-                    <div className="text-[8px] text-muted whitespace-nowrap">{m.label}</div>
-                  </div>
-                ))}
-              </div>
-            );
-          })()
-        )}
-
-        <div className="border-t border-surface2 mt-4 pt-3">
-          <div className="text-xs font-bold mb-2">📥 خروجی اکسل (CSV)</div>
-          <div className="flex gap-2 flex-wrap">
-            <a href="/api/reports/export?type=invoices" className="bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors text-xs font-semibold rounded-lg px-3 py-2">فاکتورها</a>
-            <a href="/api/reports/export?type=tickets" className="bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors text-xs font-semibold rounded-lg px-3 py-2">تیکت‌های تعمیر</a>
-            <a href="/api/reports/export?type=inventory" className="bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors text-xs font-semibold rounded-lg px-3 py-2">انبار</a>
-          </div>
-          <p className="text-[10px] text-muted mt-2">فایل CSV با پشتیبانی فارسی — مستقیم در Excel یا Google Sheets باز می‌شود.</p>
-        </div>
-      </Section>
-
-      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-4 flex items-center justify-between">
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6 flex items-center justify-between">
         <div>
           <div className="text-xs text-muted mb-1">سطح احراز هویت</div>
           <div className="text-sm font-bold">
@@ -235,7 +181,9 @@ export default function AdminPage() {
       </div>
 
       {/* Shop info / address / bank settings */}
-      <Section title="اطلاعات مغازه" icon="🏪">
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+        <div className="text-sm font-bold mb-3">اطلاعات مغازه</div>
+
         <label className="block text-xs text-muted mb-2">نوع فعالیت مغازه</label>
         <div className="flex bg-surface2 rounded-lg p-1 mb-4">
           {[
@@ -252,17 +200,6 @@ export default function AdminPage() {
         {(shopInfo.type === "DEALER" || shopInfo.type === "BOTH") && (
           <p className="text-[10px] text-teal mb-3">✅ بخش «خرید و فروش» حالا در نوار بالا فعال است.</p>
         )}
-
-        <label className="block text-xs text-muted mb-2">اندازه کسب‌وکار</label>
-        <div className="flex bg-surface2 rounded-lg p-1 mb-4">
-          {BUSINESS_SIZE_OPTIONS.map((o) => (
-            <button key={o.key} type="button" onClick={() => setShopInfo({ ...shopInfo, businessSize: o.key })}
-              className={`flex-1 text-[11px] font-bold rounded-md py-2 transition ${shopInfo.businessSize === o.key ? "bg-copper text-[#1A1410]" : "text-muted"}`}>
-              {o.label}
-            </button>
-          ))}
-        </div>
-        <p className="text-[10px] text-muted mb-3 -mt-2">همان انتخابی که موقع ثبت‌نام کردید — هر وقت خواستید از تک‌نفره به تیمی (یا برعکس) تغییرش دهید.</p>
 
         <label className="block text-xs text-muted mb-1">نام مغازه</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
@@ -321,12 +258,12 @@ export default function AdminPage() {
         <button onClick={saveShopInfo} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm">
           {shopSaved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
         </button>
-      </Section>
+      </div>
 
       {/* QR self-intake */}
       {shopInfo.id && (
-        <Section title="کد QR پذیرش مشتری" icon="🔳">
-          <div className="text-center">
+        <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6 text-center">
+          <div className="text-sm font-bold mb-1">کد QR پذیرش مشتری</div>
           <p className="text-[11px] text-muted mb-3">این کد را چاپ کرده و در مغازه نصب کنید؛ مشتری با اسکن آن می‌تواند مشخصات دستگاه خود را ثبت کند.</p>
           <img
             src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${typeof window !== "undefined" ? window.location.origin : ""}/kiosk/${shopInfo.id}`)}`}
@@ -334,21 +271,22 @@ export default function AdminPage() {
             className="mx-auto rounded-lg bg-white p-2"
           />
           <p className="text-[10px] text-muted mt-2 mono break-all">/kiosk/{shopInfo.id}</p>
-          </div>
-        </Section>
+        </div>
       )}
 
       {shopInfo.id && (
-        <Section title="صفحه عمومی مغازه" icon="🔗">
+        <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+          <div className="text-sm font-bold mb-1">صفحه عمومی مغازه</div>
           <p className="text-[11px] text-muted mb-2">این لینک را با مشتریان به اشتراک بگذارید — آدرس، تماس، امتیاز و مسیریابی مغازه را نشان می‌دهد.</p>
           <a href={`/shop/${shopInfo.id}`} target="_blank" className="text-copper text-xs mono break-all">
             {typeof window !== "undefined" ? window.location.origin : ""}/shop/{shopInfo.id}
           </a>
-        </Section>
+        </div>
       )}
 
       {/* Favorite brands */}
-      <Section title="برندهای پرکاربرد" icon="⭐">
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+        <div className="text-sm font-bold mb-1">برندهای پرکاربرد</div>
         <p className="text-[11px] text-muted mb-3">برندهایی که تیک بزنید، بالای لیست فرم پذیرش دستگاه نمایش داده می‌شوند.</p>
         <div className="flex flex-wrap gap-1.5">
           {Object.keys(catalog).map((brand) => (
@@ -360,10 +298,11 @@ export default function AdminPage() {
             </button>
           ))}
         </div>
-      </Section>
+      </div>
 
       {/* Issue templates */}
-      <Section title="الگوهای شرح ایراد" icon="📝">
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+        <div className="text-sm font-bold mb-3">الگوهای شرح ایراد</div>
         <div className="flex gap-2 mb-3">
           <select className="bg-surface2 rounded-lg px-2 py-2 text-xs" value={newTemplateLane} onChange={(e) => setNewTemplateLane(e.target.value)}>
             {Object.entries(LANE_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
@@ -385,92 +324,44 @@ export default function AdminPage() {
             </div>
           </div>
         ))}
-      </Section>
+      </div>
 
-      <Section title="تیم و کارکنان" icon="👥">
-        <div className="text-xs font-bold mb-2">افزودن کارمند جدید</div>
+      <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
+        <div className="text-sm font-bold mb-3">افزودن کارمند جدید</div>
         <input placeholder="نام" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
           value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
         <input placeholder="شماره موبایل" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
           value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
         <input placeholder="رمز عبور موقت" type="password" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
           value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-        <label className="block text-[11px] text-muted mb-1">نقش (سطح دسترسی)</label>
-        <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
+        <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
           value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
           {Object.entries(ROLE_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
         </select>
-        <label className="block text-[11px] text-muted mb-1">تخصص تعمیر (اختیاری — این فرد چه چیزی تعمیر می‌کند)</label>
-        <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-1"
-          value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })}>
-          <option value="">— فقط هماهنگی/پذیرش، کار فنی نمی‌کند —</option>
-          {Object.entries(SPECIALTY_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
-        </select>
-        <p className="text-[10px] text-muted mb-3">مثلاً یک مدیر که خودش هم نرم‌افزار کار می‌کند: نقش «مدیر» + تخصص «نرم‌افزار».</p>
         {error && <p className="text-danger text-xs mb-2">{error}</p>}
         <button onClick={addStaff} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm hover:brightness-110 transition">
           افزودن کارمند
         </button>
+      </div>
 
-        <div className="text-xs font-bold mb-2 mt-5">اعضای تیم</div>
-        <div className="space-y-2">
-          {staff.filter((s) => s.active).map((s) => (
-            <StaffRow key={s.id} staff={s} onSaved={load} />
-          ))}
-          {staff.filter((s) => s.active).length === 0 && (
-            <p className="text-[11px] text-muted">عضو فعالی نیست.</p>
-          )}
-        </div>
+      <div className="text-sm font-bold mb-2">اعضای تیم</div>
+      <div className="space-y-2 mb-6">
+        {staff.map((s) => (
+          <StaffRow key={s.id} staff={s} onSaved={load} />
+        ))}
+      </div>
 
-        {staff.some((s) => !s.active) && (
-          <RemovedStaff staff={staff.filter((s) => !s.active)} onRestored={load} />
-        )}
-      </Section>
+      <div className="text-sm font-bold mb-2">گزارش بهره‌وری (دستگاه‌های تحویل‌شده)</div>
+      <div className="space-y-2 mb-6">
+        {report.map((r) => (
+          <div key={r.techId} className="flex justify-between bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs">
+            <span>{r.name} · {ROLE_LABEL[r.role] ?? r.role}</span>
+            <span className="mono">{r.closedCount} دستگاه · {r.revenue.toLocaleString("fa-IR")} تومان</span>
+          </div>
+        ))}
+      </div>
 
-      <Section title="گزارش بهره‌وری" icon="📊">
-        <p className="text-[11px] text-muted mb-2">دستگاه‌های تحویل‌شده توسط هر تعمیرکار</p>
-        <div className="space-y-2">
-          {report.map((r) => (
-            <div key={r.techId} className="flex justify-between bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs">
-              <span>{r.name} · {ROLE_LABEL[r.role] ?? r.role}</span>
-              <span className="mono">{r.closedCount} دستگاه · {r.revenue.toLocaleString("fa-IR")} تومان</span>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <Section title="گزارش حقوق و دستمزد" icon="💵">
-        <PayrollReport />
-      </Section>
-    </div>
-  );
-}
-
-/* Collapsible admin section — same accordion pattern as the ticket lanes:
-   tap the header to open/close, chevron shows state. */
-function Section({
-  title,
-  icon,
-  children,
-  defaultOpen = false,
-}: {
-  title: string;
-  icon: string;
-  children: React.ReactNode;
-  defaultOpen?: boolean;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-  return (
-    <div className="bg-surface border border-surface2 rounded-xl mb-4">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex justify-between items-center px-4 py-3 text-right"
-      >
-        <span className="text-sm font-bold">{icon} {title}</span>
-        <span className={`text-muted text-[10px] transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
-      </button>
-      {open && <div className="px-4 pb-4">{children}</div>}
+      <PayrollReport />
     </div>
   );
 }
@@ -496,15 +387,16 @@ function PayrollReport() {
 
   return (
     <div>
+      <div className="text-sm font-bold mb-2">گزارش حقوق و دستمزد</div>
       <p className="text-[11px] text-muted mb-3">مجموع دستمزد ثبت‌شده هر تعمیرکار در فاکتورهای این بازه (پیش‌فرض: ماه جاری)</p>
       <div className="flex gap-2 mb-3">
         <div className="flex-1">
           <label className="block text-[10px] text-muted mb-1">از تاریخ</label>
-          <JalaliDatePicker className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" value={from} onChange={setFrom} />
+          <input type="date" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" value={from} onChange={(e) => setFrom(e.target.value)} />
         </div>
         <div className="flex-1">
           <label className="block text-[10px] text-muted mb-1">تا تاریخ</label>
-          <JalaliDatePicker className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" value={to} onChange={setTo} />
+          <input type="date" className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" value={to} onChange={(e) => setTo(e.target.value)} />
         </div>
         <button onClick={load} className="self-end bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3 py-1.5">اعمال</button>
       </div>
@@ -528,131 +420,45 @@ function PayrollReport() {
 function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(staff.name);
-  const [phone, setPhone] = useState(staff.phone);
   const [role, setRole] = useState(staff.role);
-  const [specialty, setSpecialty] = useState(staff.specialty ?? "");
-  const [err, setErr] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [deleteMsg, setDeleteMsg] = useState("");
+  const [active, setActive] = useState(staff.active);
 
   async function save() {
-    setErr("");
-    if (!/^09\d{9}$/.test(phone.trim())) { setErr("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
-    const res = await fetch(`/api/staff/${staff.id}`, {
+    await fetch(`/api/staff/${staff.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone: phone.trim(), role, specialty: specialty || null }),
+      body: JSON.stringify({ name, role, active }),
     });
-    if (!res.ok) { const d = await res.json().catch(() => ({})); setErr(d.message || "ذخیره ناموفق بود"); return; }
     setEditing(false);
-    onSaved();
-  }
-
-  async function doDelete() {
-    setDeleting(true);
-    setErr("");
-    const res = await fetch(`/api/staff/${staff.id}`, { method: "DELETE" });
-    const d = await res.json().catch(() => ({}));
-    setDeleting(false);
-    if (!res.ok) { setErr(d.message || "حذف ناموفق بود"); setConfirmDelete(false); return; }
-    // Whether hard-deleted or deactivated, the person now leaves the active
-    // roster; the parent reloads and moves any deactivated row into the
-    // "removed staff" section below.
-    setConfirmDelete(false);
     onSaved();
   }
 
   if (!editing) {
     return (
-      <div className="bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs">
-        <div className="flex justify-between items-center">
-          <span>{staff.name} · {staff.phone}</span>
-          <div className="flex items-center gap-2">
-            <span className="text-muted">
-              {ROLE_LABEL[staff.role] ?? staff.role}
-              {staff.specialty && <span className="text-teal"> · {SPECIALTY_LABEL[staff.specialty] ?? staff.specialty}</span>}
-            </span>
-            <button onClick={() => setEditing(true)} className="text-copper text-[10px] font-semibold">ویرایش</button>
-            {!confirmDelete ? (
-              <button onClick={() => { setConfirmDelete(true); setDeleteMsg(""); }} className="text-danger text-[10px] font-semibold">حذف</button>
-            ) : (
-              <span className="flex items-center gap-1.5">
-                <button onClick={doDelete} disabled={deleting} className="text-danger text-[10px] font-bold disabled:opacity-50">
-                  {deleting ? "..." : "مطمئنید؟ ✕"}
-                </button>
-                <button onClick={() => setConfirmDelete(false)} className="text-muted text-[10px]">انصراف</button>
-              </span>
-            )}
-          </div>
+      <div className={`flex justify-between items-center bg-surface2 border rounded-lg px-3 py-2 text-xs ${staff.active ? "border-surface2" : "border-danger"}`}>
+        <span>{staff.name} · {staff.phone} {!staff.active && <span className="text-danger">(غیرفعال)</span>}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-muted">{ROLE_LABEL[staff.role] ?? staff.role}</span>
+          <button onClick={() => setEditing(true)} className="text-copper text-[10px] font-semibold">ویرایش</button>
         </div>
-        {confirmDelete && <p className="text-[10px] text-muted mt-1.5">این فرد از فهرست تیم حذف و دسترسی‌اش قطع می‌شود؛ سابقه‌ی کارهایش حفظ می‌ماند و در صورت نیاز قابل بازگردانی است.</p>}
-        {err && <p className="text-danger text-[10px] mt-1.5">{err}</p>}
-        {deleteMsg && <p className="text-amber text-[10px] mt-1.5">{deleteMsg}</p>}
       </div>
     );
   }
 
   return (
     <div className="bg-surface2 border border-copper rounded-lg p-3 text-xs space-y-2">
-      <label className="block text-[10px] text-muted">نام</label>
       <input className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={name} onChange={(e) => setName(e.target.value)} />
-      <label className="block text-[10px] text-muted">شماره موبایل (برای ورود)</label>
-      <input className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs mono" dir="ltr" inputMode="tel" maxLength={11}
-        value={phone} onChange={(e) => setPhone(e.target.value)} />
-      <label className="block text-[10px] text-muted">نقش (سطح دسترسی)</label>
       <select className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={role} onChange={(e) => setRole(e.target.value)}>
         {Object.entries(ROLE_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
       </select>
-      <label className="block text-[10px] text-muted">تخصص تعمیر (اختیاری)</label>
-      <select className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={specialty} onChange={(e) => setSpecialty(e.target.value)}>
-        <option value="">— فقط هماهنگی/پذیرش —</option>
-        {Object.entries(SPECIALTY_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
-      </select>
-      {err && <p className="text-danger text-[11px]">{err}</p>}
+      <label className="flex items-center gap-2 text-[11px] text-muted">
+        <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+        حساب فعال باشد
+      </label>
       <div className="flex gap-2">
         <button onClick={save} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">ذخیره</button>
         <button onClick={() => setEditing(false)} className="flex-1 bg-surface rounded-lg py-1.5">انصراف</button>
       </div>
-    </div>
-  );
-}
-
-/* Collapsed list of removed/deactivated staff — kept for history, with a
-   one-click restore that reactivates the account (re-enabling login). */
-function RemovedStaff({ staff, onRestored }: { staff: Staff[]; onRestored: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState<string | null>(null);
-
-  async function restore(id: string) {
-    setBusy(id);
-    await fetch(`/api/staff/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ active: true }),
-    });
-    setBusy(null);
-    onRestored();
-  }
-
-  return (
-    <div className="mt-4 pt-3 border-t border-surface2">
-      <button type="button" onClick={() => setOpen((o) => !o)} className="w-full flex justify-between items-center text-[11px] font-bold text-muted">
-        <span>کارکنان حذف‌شده / غیرفعال ({staff.length.toLocaleString("fa-IR")})</span>
-        <span className={`text-[9px] transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
-      </button>
-      {open && (
-        <div className="space-y-1.5 mt-2">
-          {staff.map((s) => (
-            <div key={s.id} className="flex justify-between items-center bg-surface2/60 border border-surface2 rounded-lg px-3 py-2 text-xs">
-              <span className="text-muted">{s.name} · {s.phone}</span>
-              <button onClick={() => restore(s.id)} disabled={busy === s.id} className="text-teal text-[10px] font-bold disabled:opacity-50">
-                {busy === s.id ? "..." : "بازگردانی"}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

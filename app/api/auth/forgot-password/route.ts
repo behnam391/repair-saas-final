@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { sendSms, sendCodeSms, isSmsConfigured } from "@/lib/sms";
-import { sendEmail, isEmailConfigured } from "@/lib/email";
-import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
+import { sendSms } from "@/lib/sms";
+import { sendEmail } from "@/lib/email";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -24,33 +23,6 @@ export async function POST(req: NextRequest) {
   try {
     const { phone, channel } = Schema.parse(await req.json());
 
-    // Abuse guards (see lib/ratelimit). Kept BEFORE the account lookup so the
-    // throttle behaves identically for existing/non-existing numbers → no leak.
-    const ipLimit = rateLimit(`forgot:ip:${clientIp(req)}`, 8, 10 * 60 * 1000);
-    if (!ipLimit.ok) { const t = tooMany(ipLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
-    const phoneLimit = rateLimit(`forgot:phone:${phone}`, 4, 10 * 60 * 1000);
-    if (!phoneLimit.ok) { const t = tooMany(phoneLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
-
-    // Honest capability check BEFORE looking the account up (so the answer
-    // doesn't depend on whether the phone exists → no information leak).
-    // Without it, users see "code sent" while nothing can actually arrive.
-    // In local development the flow still works: the code is printed to the
-    // server terminal by lib/sms.ts / lib/email.ts.
-    const isDev = process.env.NODE_ENV !== "production";
-    if (!isDev && channel === "sms" && !(await isSmsConfigured())) {
-      return NextResponse.json(
-        { error: "sms_not_configured", message: "سرویس پیامک هنوز روی این سرور فعال نشده است. مدیر پلتفرم باید کلید Kavenegar را در «پنل پلتفرم ← تنظیمات» ثبت کند، یا از گزینه ایمیل استفاده کنید." },
-        { status: 503 }
-      );
-    }
-    if (!isDev && channel === "email" && !(await isEmailConfigured())) {
-      return NextResponse.json(
-        { error: "email_not_configured", message: "سرویس ایمیل هنوز فعال نشده است. مدیر پلتفرم باید تنظیمات SMTP را در «پنل پلتفرم ← تنظیمات» ثبت کند، یا از گزینه پیامک استفاده کنید." },
-        { status: 503 }
-      );
-    }
-    const devHint = isDev && !(channel === "email" ? await isEmailConfigured() : await isSmsConfigured());
-
     const user = await db.user.findUnique({ where: { phone } });
     if (user) {
       const code = generateOtp();
@@ -61,19 +33,14 @@ export async function POST(req: NextRequest) {
         if (channel === "email" && user.email) {
           await sendEmail(user.email, "کد بازیابی رمز عبور", `کد بازیابی رمز عبور شما: ${code}\nاین کد تا ۱۰ دقیقه معتبر است.`);
         } else {
-          await sendCodeSms(phone, code, `کد بازیابی رمز عبور شما: ${code}\nاین کد تا ۱۰ دقیقه معتبر است.`);
+          await sendSms(phone, `کد بازیابی رمز عبور شما: ${code}\nاین کد تا ۱۰ دقیقه معتبر است.`);
         }
       } catch (e) {
         console.error("[forgot-password] failed to send OTP", e);
       }
     }
 
-    return NextResponse.json({
-      ok: true,
-      message: devHint
-        ? "حالت توسعه: سرویس ارسال هنوز تنظیم نشده — کد تأیید در ترمینال سرور (کنسول npm run dev) چاپ شد."
-        : "اگر این شماره ثبت شده باشد، کد تأیید ارسال شد.",
-    });
+    return NextResponse.json({ ok: true, message: "اگر این شماره ثبت شده باشد، کد تأیید ارسال شد." });
   } catch (e) {
     if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input" }, { status: 400 });
     console.error(e);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
+import { requireSession, UnauthorizedError } from "@/lib/tenant";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +14,7 @@ async function assertDealer(shopId: string) {
 
 export async function GET() {
   try {
-    const { shopId } = await requireDeskSession();
+    const { shopId } = await requireSession();
     const items = await db.dealerInventory.findMany({ where: { shopId }, orderBy: { acquiredAt: "desc" } });
     return NextResponse.json({ items });
   } catch (e) {
@@ -26,7 +26,6 @@ export async function GET() {
 const CreateSchema = z.object({
   imei: z.string().optional(),
   deviceModel: z.string().min(1),
-  imageUrl: z.string().optional(),
   condition: z.enum(["WORKING", "DEFECTIVE", "FOR_PARTS"]).default("WORKING"),
   purchasePrice: z.number().int().min(0),
   askingPrice: z.number().int().min(0).optional(),
@@ -37,11 +36,11 @@ const CreateSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const { shopId, userId } = await requireDeskSession();
+    const { shopId, userId } = await requireSession();
     await assertDealer(shopId);
 
     const body = CreateSchema.parse(await req.json());
-    const item = await db.dealerInventory.create({ data: { shopId, ...body, imageUrl: body.imageUrl || null } });
+    const item = await db.dealerInventory.create({ data: { shopId, ...body } });
 
     // Also log the acquisition on the public ownership chain, if we have
     // an IMEI and a named source (so /device-lookup shows the full history).

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
+import { requireSession, UnauthorizedError } from "@/lib/tenant";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -8,10 +8,6 @@ export const dynamic = "force-dynamic";
 const ItemSchema = z.object({
   name: z.string().min(1),
   sku: z.string().optional(),
-  category: z.enum(["PART", "ACCESSORY", "PHONE", "TOOL", "OTHER"]).default("PART"),
-  deviceModel: z.string().optional(),
-  description: z.string().optional(),
-  imageUrl: z.string().optional(),
   quantity: z.number().int().min(0),
   lowStockAt: z.number().int().min(0).default(2),
   costPrice: z.number().int().min(0),
@@ -20,7 +16,7 @@ const ItemSchema = z.object({
 
 export async function GET() {
   try {
-    const { shopId } = await requireDeskSession();
+    const { shopId } = await requireSession();
     const items = await db.inventoryItem.findMany({
       where: { shopId },
       orderBy: { name: "asc" },
@@ -36,16 +32,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { shopId } = await requireDeskSession();
+    const { shopId } = await requireSession();
     const body = ItemSchema.parse(await req.json());
-    const item = await db.inventoryItem.create({
-      data: {
-        shopId, ...body,
-        deviceModel: body.deviceModel || null,
-        description: body.description || null,
-        imageUrl: body.imageUrl || null,
-      },
-    });
+    const item = await db.inventoryItem.create({ data: { shopId, ...body } });
     return NextResponse.json({ item }, { status: 201 });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

@@ -1,7 +1,5 @@
 "use client";
-import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
-import { formatJalaliDate } from "@/lib/jalali";
 
 type Ticket = {
   id: string; no: number; deviceModel: string; lane: string; invoice: any;
@@ -9,10 +7,8 @@ type Ticket = {
 };
 type InvItem = { id: string; name: string; quantity: number; sellPrice: number };
 type Invoice = {
-  id: string; type: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; createdAt: string;
-  customerName: string | null;
-  ticket: { no: number; deviceModel: string; customer: { name: string } } | null;
-  items: { quantity: number; item: { name: string } }[];
+  id: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; createdAt: string;
+  ticket: { no: number; deviceModel: string; customer: { name: string } };
 };
 
 export default function InvoicesPage() {
@@ -135,10 +131,10 @@ export default function InvoicesPage() {
 
             <label className="block text-xs text-muted mb-1">هزینه دستمزد (تومان)</label>
             <input
-              type="text" inputMode="numeric" dir="ltr"
+              type="number"
               className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
               value={laborCost}
-              onChange={(e) => setLaborCost(num(e.target.value))}
+              onChange={(e) => setLaborCost(+e.target.value)}
             />
 
             <div className="flex justify-between items-center mb-2">
@@ -157,10 +153,10 @@ export default function InvoicesPage() {
                   ))}
                 </select>
                 <input
-                  type="text" inputMode="numeric" dir="ltr"
+                  type="number" min={1}
                   className="w-16 bg-surface2 border border-surface2 rounded-lg px-2 py-1.5 text-xs"
                   value={p.quantity}
-                  onChange={(e) => updatePart(idx, "quantity", num(e.target.value))}
+                  onChange={(e) => updatePart(idx, "quantity", +e.target.value)}
                 />
                 <button onClick={() => removePart(idx)} className="text-danger text-xs px-2">✕</button>
               </div>
@@ -193,8 +189,8 @@ export default function InvoicesPage() {
               editingInvoiceId === inv.id ? (
                 <div key={inv.id} className="bg-surface2 border border-copper rounded-lg p-3 text-xs space-y-2">
                   <label className="block text-[11px] text-muted">اجرت تعمیر (تومان)</label>
-                  <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface rounded-lg px-2 py-1.5"
-                    value={editInvoiceForm.laborCost} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, laborCost: num(e.target.value) })} />
+                  <input type="number" className="w-full bg-surface rounded-lg px-2 py-1.5"
+                    value={editInvoiceForm.laborCost} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, laborCost: +e.target.value })} />
                   <label className="flex items-center gap-2 text-[11px] text-muted">
                     <input type="checkbox" checked={editInvoiceForm.applyTax} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, applyTax: e.target.checked })} />
                     اعمال مالیات
@@ -211,29 +207,13 @@ export default function InvoicesPage() {
               ) : (
                 <div key={inv.id} className="bg-surface2 border border-surface2 rounded-lg p-3 text-xs">
                   <div className="flex justify-between">
-                    <span className="font-bold">
-                      {inv.ticket
-                        ? `${inv.ticket.deviceModel} #${inv.ticket.no}`
-                        : `🛒 فروش مستقیم${inv.items.length ? ` (${inv.items.map((it) => it.item.name).slice(0, 2).join("، ")}${inv.items.length > 2 ? "…" : ""})` : ""}`}
-                    </span>
+                    <span className="font-bold">{inv.ticket.deviceModel} #{inv.ticket.no}</span>
                     <span className="mono">{inv.total.toLocaleString("fa-IR")} تومان</span>
                   </div>
-                  <div className="text-muted mt-1">
-                    {inv.ticket?.customer.name ?? inv.customerName ?? "مشتری متفرقه"} · {formatJalaliDate(inv.createdAt)}
-                    {" "}· <span className={inv.paid ? "text-teal" : "text-amber"}>{inv.paid ? "پرداخت‌شده" : "پرداخت‌نشده"}</span>
-                  </div>
+                  <div className="text-muted mt-1">{inv.ticket.customer.name} · {new Date(inv.createdAt).toLocaleDateString("fa-IR")}</div>
                   {inv.taxAmount > 0 && <div className="text-muted mt-0.5">شامل {inv.taxPercent}٪ مالیات ({inv.taxAmount.toLocaleString("fa-IR")} تومان)</div>}
-                  <div className="flex gap-3 mt-2 flex-wrap">
+                  <div className="flex gap-3 mt-2">
                     <a href={`/invoices/${inv.id}/print`} target="_blank" className="text-copper text-[10px] font-semibold">🖨 چاپ</a>
-                    {!inv.paid && (
-                      <button
-                        onClick={() => {
-                          navigator.clipboard?.writeText(`${window.location.origin}/pay/${inv.id}`);
-                        }}
-                        className="text-teal text-[10px] font-semibold" title="لینک صفحه پرداخت آنلاین این فاکتور کپی می‌شود">
-                        💳 کپی لینک پرداخت
-                      </button>
-                    )}
                     <button onClick={() => startInvoiceEdit(inv)} className="text-copper text-[10px] font-semibold">ویرایش</button>
                     <button onClick={() => deleteInvoice(inv.id)} className="text-danger text-[10px] font-semibold">حذف</button>
                   </div>

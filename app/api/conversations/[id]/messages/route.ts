@@ -41,10 +41,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-// A message can be text, an image, or both — but never completely empty.
-const MessageSchema = z
-  .object({ content: z.string().default(""), imageUrl: z.string().optional() })
-  .refine((m) => m.content.trim().length > 0 || !!m.imageUrl, { message: "empty_message" });
+const MessageSchema = z.object({ content: z.string().min(1) });
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -52,9 +49,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const convo = await assertParticipant(params.id, userId);
     if (!convo) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-    const { content, imageUrl } = MessageSchema.parse(await req.json());
+    const { content } = MessageSchema.parse(await req.json());
     const message = await db.message.create({
-      data: { conversationId: params.id, senderId: userId, content: content.trim(), imageUrl: imageUrl || null },
+      data: { conversationId: params.id, senderId: userId, content },
       include: { sender: { select: { name: true } } },
     });
     return NextResponse.json({ message }, { status: 201 });

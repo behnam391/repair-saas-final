@@ -36,8 +36,6 @@ export default function LocationPicker({
         }}
         onInit={(L: any, myMap: any) => {
           setReady(true);
-          setTimeout(() => { try { myMap.invalidateSize(); } catch {} }, 250);
-          setTimeout(() => { try { myMap.invalidateSize(); } catch {} }, 800);
           const marker = L.marker(center, { draggable: true }).addTo(myMap);
           markerRef.current = marker;
 

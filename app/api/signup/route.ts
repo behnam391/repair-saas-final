@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
-import { isPhoneVerifiedForSignup, consumeSignupVerification } from "@/lib/signup-verify";
 import { z } from "zod";
 
 const SignupSchema = z.object({
@@ -33,11 +32,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "phone_taken", message: "این شماره موبایل قبلاً ثبت شده" }, { status: 409 });
     }
 
-    // Require the phone to have been verified via SMS/email code first.
-    if (!(await isPhoneVerifiedForSignup(body.phone))) {
-      return NextResponse.json({ error: "phone_not_verified", message: "ابتدا شماره موبایل را با کد تأیید، تأیید کنید" }, { status: 403 });
-    }
-
     const passwordHash = await bcrypt.hash(body.password, 10);
 
     const shop = await db.$transaction(async (tx) => {
@@ -63,7 +57,6 @@ export async function POST(req: NextRequest) {
       return s;
     });
 
-    await consumeSignupVerification(body.phone);
     return NextResponse.json({ shopId: shop.id }, { status: 201 });
   } catch (e) {
     if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input", details: e.errors }, { status: 400 });

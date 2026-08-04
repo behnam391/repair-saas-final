@@ -23,9 +23,8 @@ export default function ForgotPasswordPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone, channel }),
     });
-    const data = await res.json().catch(() => ({}));
+    const data = await res.json();
     setLoading(false);
-    if (!res.ok) { setError(data.message || "ارسال کد ناموفق بود"); return; }
     setMessage(data.message || "کد ارسال شد");
     setStep(2);
   }

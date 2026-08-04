@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
-import { sendSms, sendIntakeSms, intakeReceivedMessage } from "@/lib/sms";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -39,14 +38,7 @@ export async function GET(req: NextRequest) {
       where: {
         shopId,
         ...(lane ? { lane: lane as any } : {}),
-        // The active board (this endpoint's main use, from tickets/page.tsx)
-        // only ever asks for lane/no status filter — so by default, hide
-        // tickets that already left the workflow (delivered or cancelled).
-        // Without this, a delivered ticket's lane stays "READY" forever
-        // and it would never disappear from the "آماده تحویل" column.
-        // Passing an explicit ?status= (e.g. the history/search page)
-        // always wins and is never restricted here.
-        ...(status ? { status: status as any } : { status: { notIn: ["DELIVERED", "CANCELLED"] } }),
+        ...(status ? { status: status as any } : {}),
         ...(isSpecialist
           ? { OR: [{ assignedToId: userId }, { assignedToId: null, lane: role as any }] }
           : {}),
@@ -144,23 +136,6 @@ export async function POST(req: NextRequest) {
 
       return ticket;
     });
-
-    // Confirmation SMS at intake — mirrors the "ready" / "delivered"
-    // notifications so the customer is kept in the loop from the very
-    // first moment. Never let an SMS hiccup fail the intake itself.
-    try {
-      await sendIntakeSms(result.customer.phone, {
-        shopName: shop.name,
-        ticketNo: result.no,
-        shopPhone: shop.phone,
-        fallback: intakeReceivedMessage(shop.name, result.customer.name, result.no, {
-          deviceModel: result.deviceModel,
-          shopPhone: shop.phone,
-        }),
-      });
-    } catch (smsErr) {
-      console.error("[sms] failed to send intake confirmation", smsErr);
-    }
 
     return NextResponse.json({ ticket: result }, { status: 201 });
   } catch (e) {

@@ -7,15 +7,11 @@ export const dynamic = "force-dynamic";
 
 const Schema = z.object({
   avatarUrl: z.string().optional(),
-  phone: z.string().min(5).optional(),
   email: z.string().optional(),
   gmailId: z.string().optional(),
   nationalId: z.string().optional(),
   birthDate: z.string().optional(), // ISO date string, e.g. "1990-05-12"
   notifyEmail: z.boolean().optional(),
-  // Self-service specialty: lets an owner mark which repair lane they
-  // personally work in without needing a second person to edit them.
-  specialty: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]).nullable().optional(),
 });
 
 export async function GET() {
@@ -25,8 +21,8 @@ export async function GET() {
       where: { id: userId },
       select: {
         id: true, name: true, phone: true, avatarUrl: true, email: true, gmailId: true,
-        nationalId: true, birthDate: true, notifyEmail: true, specialty: true, role: true,
-      } as any,
+        nationalId: true, birthDate: true, notifyEmail: true,
+      },
     });
     return NextResponse.json({ user });
   } catch (e) {
@@ -38,17 +34,10 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const { userId } = await requireSession();
-    const { birthDate, phone, ...rest } = Schema.parse(await req.json());
-
-    if (phone) {
-      const clash = await db.user.findFirst({ where: { phone, id: { not: userId } } });
-      if (clash) return NextResponse.json({ message: "این شماره موبایل قبلاً ثبت شده است" }, { status: 409 });
-    }
-
+    const { birthDate, ...rest } = Schema.parse(await req.json());
     const user = await db.user.update({
       where: { id: userId },
-      data: { ...rest, ...(phone ? { phone } : {}), ...(birthDate ? { birthDate: new Date(birthDate) } : {}) } as any,
-      select: { id: true, name: true },
+      data: { ...rest, ...(birthDate ? { birthDate: new Date(birthDate) } : {}) },
     });
     return NextResponse.json({ user });
   } catch (e) {

@@ -1,36 +1,8 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { signOut } from "next-auth/react";
-import Logo from "@/components/Logo";
-import { formatJalaliDate } from "@/lib/jalali";
 
 const PLAN_LABEL: Record<string, string> = { free: "رایگان", pro: "حرفه‌ای", business: "تجاری" };
-
-// Grouped superadmin navigation. Grouping + wrapping keeps the many
-// destinations tidy and inside the box, instead of one long scrolling row.
-const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: string }[] }[] = [
-  { label: "مدیریت", items: [
-    { href: "/superadmin", label: "مغازه‌ها", icon: "🏪" },
-    { href: "/superadmin/users", label: "کاربران", icon: "👤" },
-    { href: "/superadmin/customers", label: "مشتریان", icon: "👥" },
-  ] },
-  { label: "پشتیبانی و نظارت", items: [
-    { href: "/superadmin/support", label: "پشتیبانی", icon: "🎧" },
-    { href: "/superadmin/conversations", label: "نظارت بر چت‌ها", icon: "💬" },
-    { href: "/superadmin/verification", label: "احراز هویت", icon: "✅" },
-  ] },
-  { label: "بازاریابی", items: [
-    { href: "/superadmin/notifications", label: "اعلان عمومی", icon: "📣" },
-    { href: "/superadmin/ads", label: "تبلیغات", icon: "🖼️" },
-    { href: "/superadmin/gift-codes", label: "کد هدیه", icon: "🎁" },
-  ] },
-  { label: "سیستم", items: [
-    { href: "/superadmin/settings", label: "تنظیمات", icon: "⚙️" },
-    { href: "/superadmin/external-keys", label: "API سازمان‌ها", icon: "🔌" },
-    { href: "/superadmin/errors", label: "خطاها", icon: "🐞" },
-    { href: "/superadmin/maintenance", label: "نگهداری", icon: "🧹" },
-  ] },
-];
 
 type ShopRow = {
   id: string; name: string; plan: string; active: boolean; supportAccessEnabled: boolean; planExpiresAt: string | null;
@@ -74,28 +46,6 @@ export default function SuperAdminClient() {
     load();
   }
 
-  const [giftShop, setGiftShop] = useState<ShopRow | null>(null);
-  async function grantGift(id: string, grantPlan: string, grantMonths: number) {
-    await fetch(`/api/superadmin/shops/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ grantPlan, grantMonths }),
-    });
-    setGiftShop(null);
-    load();
-  }
-
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  async function deleteShop(id: string) {
-    setDeletingId(id);
-    const res = await fetch(`/api/superadmin/shops/${id}`, { method: "DELETE" });
-    setDeletingId(null);
-    setConfirmDelete(null);
-    if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.message || "حذف ناموفق بود"); return; }
-    load();
-  }
-
   const filtered = useMemo(() => {
     return shops.filter((s) => {
       const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase());
@@ -110,40 +60,19 @@ export default function SuperAdminClient() {
   return (
     <div className="min-h-screen p-4 max-w-3xl mx-auto">
       <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-2.5">
-          <Logo size={24} withText={false} />
-          <h1 className="font-extrabold text-lg">پنل مدیریت پلتفرم Peyvo</h1>
-        </div>
+        <h1 className="font-extrabold text-lg">پنل مدیریت پلتفرم</h1>
         <button onClick={() => signOut({ callbackUrl: "/superadmin/login" })} className="text-xs text-muted hover:text-danger transition-colors">خروج</button>
       </div>
-      <div className="mb-6 space-y-4">
-        {NAV_GROUPS.map((g) => (
-          <div key={g.label}>
-            <div className="text-[11px] font-bold text-muted mb-2 border-r-2 border-copper/50 pr-2">{g.label}</div>
-            {/* Uniform tiles in a fixed 3-column grid so every item is the same
-                size and the columns line up across all groups — tidy, not a
-                ragged row of differently-sized pills. */}
-            <div className="grid grid-cols-3 gap-2">
-              {g.items.map((it) => {
-                const active = it.href === "/superadmin";
-                return (
-                  <a
-                    key={it.href}
-                    href={it.href}
-                    className={`flex flex-col items-center justify-center text-center gap-1.5 rounded-xl px-2 py-3 border min-h-[64px] transition ${
-                      active
-                        ? "bg-copper/15 text-copper border-copper/40 font-bold"
-                        : "bg-surface2 border-surface2 text-ink/80 hover:text-ink hover:border-copper/30"
-                    }`}
-                  >
-                    <span className="text-lg leading-none">{it.icon}</span>
-                    <span className="text-[11px] leading-tight">{it.label}</span>
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        ))}
+      <div className="flex gap-3 text-xs mb-5 overflow-x-auto no-scrollbar">
+        <a href="/superadmin" className="text-copper font-semibold whitespace-nowrap">مغازه‌ها</a>
+        <a href="/superadmin/support" className="text-muted hover:text-ink whitespace-nowrap">پشتیبانی</a>
+        <a href="/superadmin/users" className="text-muted hover:text-ink whitespace-nowrap">کاربران</a>
+        <a href="/superadmin/conversations" className="text-muted hover:text-ink whitespace-nowrap">نظارت بر چت‌ها</a>
+        <a href="/superadmin/notifications" className="text-muted hover:text-ink whitespace-nowrap">اعلان عمومی</a>
+        <a href="/superadmin/ads" className="text-muted hover:text-ink whitespace-nowrap">تبلیغات</a>
+        <a href="/superadmin/verification" className="text-muted hover:text-ink whitespace-nowrap">احراز هویت</a>
+        <a href="/superadmin/external-keys" className="text-muted hover:text-ink whitespace-nowrap">API سازمان‌ها</a>
+        <a href="/superadmin/settings" className="text-muted hover:text-ink whitespace-nowrap">تنظیمات API</a>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
@@ -195,7 +124,7 @@ export default function SuperAdminClient() {
                     پلن {PLAN_LABEL[s.plan] ?? s.plan} · {s.userCount} کاربر · {s.ticketCount} تیکت
                   </div>
                   {s.planExpiresAt && (
-                    <div className="text-[11px] text-muted">انقضا: {formatJalaliDate(s.planExpiresAt)}</div>
+                    <div className="text-[11px] text-muted">انقضا: {new Date(s.planExpiresAt).toLocaleDateString("fa-IR")}</div>
                   )}
                   <div className="text-[11px] text-muted">مجموع پرداختی: {s.totalPaid.toLocaleString("fa-IR")} تومان</div>
                 </div>
@@ -212,74 +141,12 @@ export default function SuperAdminClient() {
                   >
                     {s.supportAccessEnabled ? "دسترسی پشتیبانی: فعال" : "دسترسی پشتیبانی: غیرفعال"}
                   </button>
-                  <button
-                    onClick={() => setGiftShop(s)}
-                    className="text-[10px] font-semibold rounded-lg px-2.5 py-1 bg-teal/20 text-teal hover:bg-teal/30 transition"
-                  >
-                    🎁 هدیه اشتراک
-                  </button>
-                  {confirmDelete === s.id ? (
-                    <div className="flex gap-1">
-                      <button onClick={() => deleteShop(s.id)} disabled={deletingId === s.id}
-                        className="text-[10px] font-bold rounded-lg px-2 py-1 bg-danger text-white disabled:opacity-50">
-                        {deletingId === s.id ? "..." : "حذف قطعی"}
-                      </button>
-                      <button onClick={() => setConfirmDelete(null)} className="text-[10px] rounded-lg px-2 py-1 bg-surface text-muted">لغو</button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setConfirmDelete(s.id)}
-                      className="text-[10px] font-semibold rounded-lg px-2.5 py-1 bg-danger/15 text-danger hover:bg-danger/25 transition"
-                    >
-                      🗑 حذف کامل از دیتابیس
-                    </button>
-                  )}
                 </div>
               </div>
-              {confirmDelete === s.id && (
-                <p className="text-[10px] text-danger mt-2">این کار «{s.name}» و همه‌ی داده‌هایش (کاربران، تیکت‌ها، فاکتورها و…) را برای همیشه پاک می‌کند و قابل بازگشت نیست.</p>
-              )}
             </div>
           ))}
         </div>
       )}
-
-      {giftShop && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center px-4" onClick={() => setGiftShop(null)}>
-          <GiftModal shop={giftShop} onClose={() => setGiftShop(null)} onGrant={grantGift} />
-        </div>
-      )}
-    </div>
-  );
-}
-
-function GiftModal({ shop, onClose, onGrant }: { shop: ShopRow; onClose: () => void; onGrant: (id: string, plan: string, months: number) => void }) {
-  const [plan, setPlan] = useState("pro");
-  const [months, setMonths] = useState(1);
-  return (
-    <div className="bg-surface border border-surface2 rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-      <div className="font-bold text-sm mb-1">هدیه اشتراک رایگان</div>
-      <p className="text-[11px] text-muted mb-4">به «{shop.name}» یک اشتراک رایگان می‌دهید (بدون پرداخت). مدت به اشتراک فعلی اضافه می‌شود.</p>
-      <label className="block text-[11px] text-muted mb-1">پلن</label>
-      <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3" value={plan} onChange={(e) => setPlan(e.target.value)}>
-        <option value="pro">حرفه‌ای</option>
-        <option value="business">تجاری</option>
-        <option value="free">بازگشت به رایگان</option>
-      </select>
-      {plan !== "free" && (
-        <>
-          <label className="block text-[11px] text-muted mb-1">مدت</label>
-          <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-4" value={months} onChange={(e) => setMonths(+e.target.value)}>
-            {[1, 2, 3, 6, 12].map((m) => <option key={m} value={m}>{m} ماه</option>)}
-          </select>
-        </>
-      )}
-      <div className="flex gap-2">
-        <button onClick={() => onGrant(shop.id, plan, months)} className="flex-[2] bg-teal text-white font-bold rounded-lg py-2.5 text-sm">
-          {plan === "free" ? "بازگرداندن به پلن رایگان" : "اعطای اشتراک رایگان"}
-        </button>
-        <button onClick={onClose} className="flex-1 bg-surface2 border border-border rounded-lg py-2.5 text-sm">انصراف</button>
-      </div>
     </div>
   );
 }

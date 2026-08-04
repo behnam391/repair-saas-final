@@ -1,214 +1,128 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
-import { formatJalaliDate } from "@/lib/jalali";
+import { useEffect, useState } from "react";
 
-type Cust = {
-  id: string; name: string; phone: string;
-  email: string | null; address: string | null; note: string | null;
-  createdAt: string; _count: { tickets: number };
-};
-
-const PAGE_SIZE = 10;
-const EMPTY = { name: "", phone: "", email: "", address: "", note: "" };
+type Cust = { id: string; name: string; phone: string; createdAt: string; _count: { tickets: number } };
 
 export default function CustomersPage() {
   const [customers, setCustomers] = useState<Cust[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(EMPTY);
-  const [formError, setFormError] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const [toDelete, setToDelete] = useState<Cust | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [editing, setEditing] = useState<Cust | null>(null);
+  const [editForm, setEditForm] = useState({ name: "", phone: "" });
   const [msg, setMsg] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({ name: "", phone: "" });
+  const [addError, setAddError] = useState("");
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    const res = await fetch(`/api/customers?page=${page}&pageSize=${PAGE_SIZE}&q=${encodeURIComponent(search)}`);
-    if (res.ok) {
-      const d = await res.json();
-      setCustomers(d.customers ?? []);
-      setTotal(d.total ?? 0);
-    }
-    setLoading(false);
-  }, [page, search]);
-
-  // Debounced fetch on search/page change.
-  useEffect(() => {
-    const t = setTimeout(() => load(), 250);
-    return () => clearTimeout(t);
-  }, [load]);
-
-  // A new search always starts from page 1.
-  useEffect(() => { setPage(1); }, [search]);
-
-  function openAdd() { setEditingId(null); setForm(EMPTY); setFormError(""); setShowForm(true); }
-  function openEdit(c: Cust) {
-    setEditingId(c.id);
-    setForm({ name: c.name, phone: c.phone, email: c.email ?? "", address: c.address ?? "", note: c.note ?? "" });
-    setFormError(""); setShowForm(true);
+  async function load() {
+    const res = await fetch("/api/customers");
+    if (res.ok) setCustomers((await res.json()).customers ?? []);
   }
+  useEffect(() => { load(); }, []);
 
-  async function saveForm() {
-    setFormError("");
-    if (!form.name.trim() || !form.phone.trim()) { setFormError("نام و شماره تماس لازم است."); return; }
-    setSaving(true);
-    const res = await fetch(editingId ? `/api/customers/${editingId}` : "/api/customers", {
-      method: editingId ? "PATCH" : "POST",
+  async function addCustomer() {
+    setAddError("");
+    if (!newCustomer.name || !newCustomer.phone) return;
+    const res = await fetch("/api/customers", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(newCustomer),
     });
-    setSaving(false);
-    if (!res.ok) { const e = await res.json().catch(() => ({})); setFormError(e.message || "ذخیره ناموفق بود"); return; }
-    setShowForm(false);
+    if (!res.ok) {
+      const err = await res.json();
+      setAddError(err.message || "افزودن ناموفق بود");
+      return;
+    }
+    setNewCustomer({ name: "", phone: "" });
+    setShowAdd(false);
     load();
   }
 
-  async function doDelete() {
-    if (!toDelete) return;
-    setDeleting(true); setMsg("");
-    const force = toDelete._count.tickets > 0;
-    const res = await fetch(`/api/customers/${toDelete.id}${force ? "?force=true" : ""}`, { method: "DELETE" });
-    setDeleting(false);
-    if (!res.ok) { const e = await res.json().catch(() => ({})); setMsg(e.message || "حذف ناموفق بود"); setToDelete(null); return; }
-    setToDelete(null);
-    // If we removed the last row of a non-first page, step back.
-    if (customers.length === 1 && page > 1) setPage(page - 1); else load();
+  const filtered = customers.filter((c) => c.name.includes(search) || c.phone.includes(search));
+
+  function startEdit(c: Cust) {
+    setEditing(c);
+    setEditForm({ name: c.name, phone: c.phone });
+    setMsg("");
   }
 
-  const th = "px-3 py-2 text-right font-bold border border-surface2/60 whitespace-nowrap";
-  const td = "px-3 py-2 border border-surface2/60 align-middle";
+  async function saveEdit() {
+    if (!editing) return;
+    await fetch(`/api/customers/${editing.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editForm),
+    });
+    setEditing(null);
+    load();
+  }
+
+  async function remove(id: string) {
+    const res = await fetch(`/api/customers/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const err = await res.json();
+      setMsg(err.message || "حذف ناموفق بود");
+      return;
+    }
+    load();
+  }
 
   return (
-    <div className="p-4 max-w-3xl mx-auto">
+    <div className="p-4 max-w-xl mx-auto">
       <div className="flex justify-between items-center mb-3">
-        <h1 className="display-heading text-lg">دفترچه مشتریان</h1>
-        <button onClick={openAdd} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3 py-1.5">+ افزودن مشتری</button>
+        <h1 className="display-heading text-lg">مشتریان</h1>
+        <button onClick={() => setShowAdd(true)} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3 py-1.5">+ افزودن مشتری</button>
       </div>
-
+      {showAdd && (
+        <div className="bg-surface border border-surface2 rounded-xl p-4 mb-4 space-y-2">
+          <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="نام مشتری"
+            value={newCustomer.name} onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })} />
+          <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="شماره تماس"
+            value={newCustomer.phone} onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })} />
+          {addError && <p className="text-danger text-xs">{addError}</p>}
+          <div className="flex gap-2">
+            <button onClick={addCustomer} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-2 text-sm">ثبت</button>
+            <button onClick={() => setShowAdd(false)} className="flex-1 bg-surface2 rounded-lg py-2 text-sm">انصراف</button>
+          </div>
+        </div>
+      )}
       <input
         className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
-        placeholder="جستجو با نام یا شماره تماس..."
+        placeholder="جستجو با نام یا شماره..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
       />
       {msg && <p className="text-danger text-xs mb-3">{msg}</p>}
-
-      {/* Excel-style table (scrolls sideways on small screens) */}
-      <div className="overflow-x-auto rounded-xl border border-surface2">
-        <table className="w-full text-xs border-collapse">
-          <thead>
-            <tr className="bg-surface2 text-muted">
-              <th className={th}>#</th>
-              <th className={th}>نام</th>
-              <th className={th}>تلفن</th>
-              <th className={th}>ایمیل</th>
-              <th className={`${th} text-center`}>تعمیر</th>
-              <th className={th}>تاریخ ثبت</th>
-              <th className={`${th} text-center`}>عملیات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td className={`${td} text-center text-muted`} colSpan={7}>در حال بارگذاری...</td></tr>
-            ) : customers.length === 0 ? (
-              <tr><td className={`${td} text-center text-muted py-6`} colSpan={7}>مشتری‌ای پیدا نشد.</td></tr>
+      <div className="space-y-2">
+        {filtered.length === 0 && <p className="text-xs text-muted text-center py-8">مشتری‌ای پیدا نشد.</p>}
+        {filtered.map((c) => (
+          <div key={c.id} className="bg-surface2 border border-surface2 rounded-lg px-3 py-2.5 text-xs">
+            {editing?.id === c.id ? (
+              <div className="space-y-2">
+                <input className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+                <input className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+                <div className="flex gap-2">
+                  <button onClick={saveEdit} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">ذخیره</button>
+                  <button onClick={() => setEditing(null)} className="flex-1 bg-surface rounded-lg py-1.5">انصراف</button>
+                </div>
+              </div>
             ) : (
-              customers.map((c, i) => (
-                <tr key={c.id} className={`${i % 2 ? "bg-surface2/20" : ""} hover:bg-surface2/40`}>
-                  <td className={`${td} text-muted mono`}>{((page - 1) * PAGE_SIZE + i + 1).toLocaleString("fa-IR")}</td>
-                  <td className={`${td} font-semibold`}>
-                    {c.name}
-                    {c.note && <span title={c.note} className="ms-1 text-amber">🗒</span>}
-                  </td>
-                  <td className={`${td} mono`} dir="ltr">{c.phone}</td>
-                  <td className={`${td} text-muted`} dir="ltr">{c.email || "—"}</td>
-                  <td className={`${td} text-center mono`}>{c._count.tickets.toLocaleString("fa-IR")}</td>
-                  <td className={`${td} text-muted whitespace-nowrap`}>{formatJalaliDate(c.createdAt)}</td>
-                  <td className={td}>
-                    <div className="flex gap-2 justify-center">
-                      <button onClick={() => openEdit(c)} title="ویرایش" className="text-copper">✏️</button>
-                      <button onClick={() => setToDelete(c)} title="حذف" className="text-danger">🗑️</button>
-                    </div>
-                  </td>
-                </tr>
-              ))
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="font-bold">{c.name}</div>
+                  <div className="text-muted mt-0.5">{c.phone}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-muted mono">{c._count.tickets} تیکت</span>
+                  <button onClick={() => startEdit(c)} className="text-copper">✏️</button>
+                  <button onClick={() => remove(c.id)} className="text-danger">🗑️</button>
+                </div>
+              </div>
             )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between mt-3 text-xs">
-        <button disabled={page <= 1} onClick={() => setPage(page - 1)}
-          className="rounded-lg px-3 py-1.5 bg-surface2 border border-surface2 disabled:opacity-40">→ قبلی</button>
-        <span className="text-muted">
-          مجموع {total.toLocaleString("fa-IR")} مشتری — صفحه {page.toLocaleString("fa-IR")} از {totalPages.toLocaleString("fa-IR")}
-        </span>
-        <button disabled={page >= totalPages} onClick={() => setPage(page + 1)}
-          className="rounded-lg px-3 py-1.5 bg-surface2 border border-surface2 disabled:opacity-40">بعدی ←</button>
-      </div>
-
-      {/* Add / edit modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center px-4" onClick={() => setShowForm(false)}>
-          <div className="bg-surface border border-surface2 rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <div className="font-bold text-sm mb-3">{editingId ? "ویرایش مشتری" : "افزودن مشتری"}</div>
-            <label className="block text-[11px] text-muted mb-1">نام *</label>
-            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2"
-              value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <label className="block text-[11px] text-muted mb-1">شماره تماس *</label>
-            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2" dir="ltr"
-              value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-            <label className="block text-[11px] text-muted mb-1">ایمیل (اختیاری)</label>
-            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2" dir="ltr"
-              value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-            <label className="block text-[11px] text-muted mb-1">آدرس (اختیاری)</label>
-            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2"
-              value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-            <label className="block text-[11px] text-muted mb-1">یادداشت / اطلاعات اضافی (اختیاری)</label>
-            <textarea rows={3} className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
-              value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
-            {formError && <p className="text-danger text-xs mb-2">{formError}</p>}
-            <div className="flex gap-2">
-              <button onClick={saveForm} disabled={saving} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-2 text-sm disabled:opacity-60">
-                {saving ? "..." : "ذخیره"}
-              </button>
-              <button onClick={() => setShowForm(false)} className="flex-1 bg-surface2 border border-border rounded-lg py-2 text-sm">انصراف</button>
-            </div>
           </div>
-        </div>
-      )}
-
-      {/* Delete confirm */}
-      {toDelete && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center px-4" onClick={() => setToDelete(null)}>
-          <div className="bg-surface border border-danger/40 rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-            <div className="font-bold text-sm mb-1">حذف «{toDelete.name}»؟</div>
-            {toDelete._count.tickets > 0 ? (
-              <p className="text-[11px] text-danger mb-4">
-                این مشتری {toDelete._count.tickets.toLocaleString("fa-IR")} تعمیر ثبت‌شده دارد. با حذف مشتری، آن تعمیرها و فاکتورهایشان هم برای همیشه پاک می‌شوند.
-              </p>
-            ) : (
-              <p className="text-[11px] text-muted mb-4">این مشتری از دفترچه حذف می‌شود.</p>
-            )}
-            <div className="flex gap-2">
-              <button onClick={doDelete} disabled={deleting} className="flex-1 bg-danger text-white font-bold rounded-lg py-2 text-sm disabled:opacity-60">
-                {deleting ? "..." : (toDelete._count.tickets > 0 ? "حذف مشتری و تعمیرها" : "حذف")}
-              </button>
-              <button onClick={() => setToDelete(null)} className="flex-1 bg-surface2 border border-border rounded-lg py-2 text-sm">انصراف</button>
-            </div>
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }

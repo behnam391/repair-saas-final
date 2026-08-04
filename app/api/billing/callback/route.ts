@@ -1,71 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { verifyPayment, parseCallback, collectCallbackParams, type ProviderKey } from "@/lib/payments";
-import { getPricing, extendPlanExpiry, type PlanKey } from "@/lib/plans";
-import { logCaught } from "@/lib/logError";
+import { verifyPayment } from "@/lib/zarinpal";
+import { PLANS, type PlanKey } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
-// /api/billing/callback?subId=...  (+ gateway params)
-// The active gateway redirects the user's browser here after payment. No
-// session requirement (mid-redirect from the gateway), so it trusts only
-// the subId + the stored token + the gateway's own verify response — never
-// the callback's success flag alone. Handles GET (Zarinpal/Zibal) and POST
-// (NextPay) alike.
-async function handle(req: NextRequest) {
+// GET /api/billing/callback?subId=...&Authority=...&Status=OK|NOK
+// Zarinpal redirects the user's browser here after payment. This route
+// has no session requirement (the user is mid-redirect from the gateway),
+// so it trusts only the subId + Zarinpal's own verify response — never
+// the Status query param alone, which is not authoritative.
+export async function GET(req: NextRequest) {
+  const { searchParams } = req.nextUrl;
+  const subId = searchParams.get("subId");
+  const authority = searchParams.get("Authority");
+  const status = searchParams.get("Status");
+
   const origin = req.nextUrl.origin;
-  try {
-    const params = await collectCallbackParams(req);
-    const subId = params.get("subId") || req.nextUrl.searchParams.get("subId");
+  if (!subId || !authority) {
+    return NextResponse.redirect(`${origin}/admin/billing?result=error`);
+  }
 
-    if (!subId) return NextResponse.redirect(`${origin}/admin/billing?result=error`, 303);
+  const sub = await db.subscription.findUnique({ where: { id: subId } });
+  if (!sub || sub.authority !== authority) {
+    return NextResponse.redirect(`${origin}/admin/billing?result=error`);
+  }
 
-    const sub = await db.subscription.findUnique({ where: { id: subId } });
-    if (!sub) return NextResponse.redirect(`${origin}/admin/billing?result=error`, 303);
+  if (status !== "OK") {
+    await db.subscription.update({ where: { id: sub.id }, data: { status: "FAILED" } });
+    return NextResponse.redirect(`${origin}/admin/billing?result=cancelled`);
+  }
 
-    const provider = (((sub as any).paymentProvider as ProviderKey) || "zarinpal");
-    const { token, success } = parseCallback(provider, params);
+  const planInfo = PLANS[sub.plan as PlanKey];
+  // Verify against the actual amount charged (already discounted for
+  // duration at checkout time), not the flat monthly price.
+  const verified = await verifyPayment({ amountToman: sub.amount, authority });
 
-    // The token echoed back by the gateway must match the one we stored at
-    // checkout — guards against a tampered/mismatched callback.
-    if (!token || sub.authority !== token) {
-      return NextResponse.redirect(`${origin}/admin/billing?result=error`, 303);
-    }
+  if (!verified.ok) {
+    await db.subscription.update({ where: { id: sub.id }, data: { status: "FAILED" } });
+    return NextResponse.redirect(`${origin}/admin/billing?result=failed`);
+  }
 
-    if (!success) {
-      await db.subscription.update({ where: { id: sub.id }, data: { status: "FAILED" } });
-      return NextResponse.redirect(`${origin}/admin/billing?result=cancelled`, 303);
-    }
-
-    const pricing = await getPricing();
-    const planInfo = pricing.plans[sub.plan as PlanKey];
-    const verified = await verifyPayment({ provider, amountToman: sub.amount, token });
-
-    if (!verified.ok) {
-      await db.subscription.update({ where: { id: sub.id }, data: { status: "FAILED" } });
-      return NextResponse.redirect(`${origin}/admin/billing?result=failed`, 303);
-    }
-
-    await db.$transaction(async (tx) => {
-      await tx.subscription.update({ where: { id: sub.id }, data: { status: "PAID", refId: verified.refId } });
-
-      const shop = await tx.shop.findUniqueOrThrow({ where: { id: sub.shopId } });
-      const newExpiry = extendPlanExpiry(shop.planExpiresAt, sub.months);
-
-      await tx.shop.update({
-        where: { id: shop.id },
-        data: { plan: sub.plan, planExpiresAt: newExpiry, monthlyQuota: planInfo.monthlyQuota },
-      });
+  await db.$transaction(async (tx) => {
+    await tx.subscription.update({
+      where: { id: sub.id },
+      data: { status: "PAID", refId: verified.refId },
     });
 
-    return NextResponse.redirect(`${origin}/admin/billing?result=success`, 303);
-  } catch (e) {
-    // A crash here can mean money left the customer but the plan wasn't
-    // applied — the highest-value thing to capture in the خطاها panel.
-    await logCaught(e, { source: "payment", path: "/api/billing/callback", method: req.method });
-    return NextResponse.redirect(`${origin}/admin/billing?result=error`, 303);
-  }
-}
+    const shop = await tx.shop.findUniqueOrThrow({ where: { id: sub.shopId } });
+    const now = new Date();
+    // Extend from current expiry if still active, otherwise from now.
+    const base = shop.planExpiresAt && shop.planExpiresAt > now ? shop.planExpiresAt : now;
+    const newExpiry = new Date(base);
+    newExpiry.setMonth(newExpiry.getMonth() + sub.months);
 
-export async function GET(req: NextRequest) { return handle(req); }
-export async function POST(req: NextRequest) { return handle(req); }
+    await tx.shop.update({
+      where: { id: shop.id },
+      data: { plan: sub.plan, planExpiresAt: newExpiry, monthlyQuota: planInfo.monthlyQuota },
+    });
+  });
+
+  return NextResponse.redirect(`${origin}/admin/billing?result=success`);
+}

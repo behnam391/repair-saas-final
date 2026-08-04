@@ -19,16 +19,7 @@ export async function GET() {
 const Schema = z.object({
   kavenegarApiKey: z.string().optional(),
   kavenegarSender: z.string().optional(),
-  telegramBotToken: z.string().optional(),
-  telegramChatId: z.string().optional(),
-  smsUseLookup: z.boolean().optional(),
-  kavenegarOtpTemplate: z.string().optional(),
-  kavenegarIntakeTemplate: z.string().optional(),
-  kavenegarReadyTemplate: z.string().optional(),
   zarinpalMerchantId: z.string().optional(),
-  paymentProvider: z.enum(["zarinpal", "zibal", "nextpay"]).optional(),
-  zibalMerchant: z.string().optional(),
-  nextpayApiKey: z.string().optional(),
   guideUrl: z.string().optional(),
   aboutUsContent: z.string().optional(),
   smtpHost: z.string().optional(),
@@ -37,18 +28,6 @@ const Schema = z.object({
   smtpPassword: z.string().optional(),
   smtpFromAddress: z.string().optional(),
   neshanApiKey: z.string().optional(),
-  enamadId: z.string().optional(),
-  enamadCode: z.string().optional(),
-  fontFamily: z.string().optional(),
-  defaultTheme: z.enum(["dark", "light"]).optional(),
-  // Subscription pricing (toman) and duration discounts (percent).
-  proPriceToman: z.number().int().min(0).optional(),
-  businessPriceToman: z.number().int().min(0).optional(),
-  proQuota: z.number().int().min(0).optional(),
-  businessQuota: z.number().int().min(0).optional(),
-  discount3: z.number().int().min(0).max(100).optional(),
-  discount6: z.number().int().min(0).max(100).optional(),
-  discount12: z.number().int().min(0).max(100).optional(),
 });
 
 export async function PATCH(req: NextRequest) {
@@ -57,8 +36,8 @@ export async function PATCH(req: NextRequest) {
     const body = Schema.parse(await req.json());
     const settings = await db.platformSettings.upsert({
       where: { id: "singleton" },
-      update: body as any,
-      create: { id: "singleton", ...body } as any,
+      update: body,
+      create: { id: "singleton", ...body },
     });
     return NextResponse.json({ settings });
   } catch (e) {

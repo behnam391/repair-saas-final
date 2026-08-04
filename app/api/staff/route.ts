@@ -6,14 +6,11 @@ import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
-const SPECIALTIES = ["HARDWARE", "SOFTWARE", "BOARD"] as const;
-
 const StaffSchema = z.object({
   name: z.string().min(1),
   phone: z.string().min(5),
   password: z.string().min(4),
   role: z.enum(["OWNER", "FRONTDESK", "HARDWARE", "SOFTWARE", "BOARD"]),
-  specialty: z.enum(SPECIALTIES).nullable().optional(),
   avatarUrl: z.string().optional(),
   email: z.string().optional(),
   gmailId: z.string().optional(),
@@ -29,9 +26,9 @@ export async function GET() {
     const staff = await db.user.findMany({
       where: { shopId },
       select: {
-        id: true, name: true, phone: true, role: true, specialty: true, active: true, createdAt: true,
+        id: true, name: true, phone: true, role: true, active: true, createdAt: true,
         avatarUrl: true, email: true, gmailId: true, notifyEmail: true,
-      } as any,
+      },
       orderBy: { createdAt: "asc" },
     });
     return NextResponse.json({ staff });
@@ -52,7 +49,7 @@ export async function POST(req: NextRequest) {
     const { password, birthDate, ...profile } = body;
 
     const user = await db.user.create({
-      data: { shopId, ...profile, ...(birthDate ? { birthDate: new Date(birthDate) } : {}), passwordHash } as any,
+      data: { shopId, ...profile, ...(birthDate ? { birthDate: new Date(birthDate) } : {}), passwordHash },
       select: { id: true, name: true, phone: true, role: true },
     });
     return NextResponse.json({ user }, { status: 201 });
