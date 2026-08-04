@@ -1,15 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { formatJalaliDate } from "@/lib/jalali";
 
 type InvoiceDetail = {
-  id: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; createdAt: string;
+  id: string; type: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; createdAt: string;
+  customerName: string | null; customerPhone: string | null;
   shop: { name: string; address: string | null; phone: string | null; bankCardNumber: string | null; bankAccountNumber: string | null };
   ticket: {
     no: number; deviceModel: string; imei: string | null; issueInitial: string;
     customer: { name: string; phone: string };
     partsUsed: { quantity: number; priceCharged: number; item: { name: string } }[];
-  };
+  } | null;
+  items: { quantity: number; priceCharged: number; item: { name: string } }[];
 };
 
 export default function PrintInvoicePage() {
@@ -39,14 +42,25 @@ export default function PrintInvoicePage() {
         </div>
         <div className="border-t border-b border-gray-300 py-2 my-3 flex justify-between text-xs">
           <span>شماره فاکتور: {invoice.id.slice(0, 8)}</span>
-          <span>تاریخ: {new Date(invoice.createdAt).toLocaleDateString("fa-IR")}</span>
+          <span>تاریخ: {formatJalaliDate(invoice.createdAt)}</span>
         </div>
 
         <div className="text-xs mb-3 space-y-1">
-          <div>مشتری: {invoice.ticket.customer.name} ({invoice.ticket.customer.phone})</div>
-          <div>دستگاه: {invoice.ticket.deviceModel} — کد پیگیری #{invoice.ticket.no}</div>
-          {invoice.ticket.imei && <div>IMEI: {invoice.ticket.imei}</div>}
-          <div>شرح: {invoice.ticket.issueInitial}</div>
+          {invoice.ticket ? (
+            <>
+              <div>مشتری: {invoice.ticket.customer.name} ({invoice.ticket.customer.phone})</div>
+              <div>دستگاه: {invoice.ticket.deviceModel} — کد پیگیری #{invoice.ticket.no}</div>
+              {invoice.ticket.imei && <div>IMEI: {invoice.ticket.imei}</div>}
+              <div>شرح: {invoice.ticket.issueInitial}</div>
+            </>
+          ) : (
+            <>
+              <div>نوع فاکتور: فروش کالا</div>
+              {(invoice.customerName || invoice.customerPhone) && (
+                <div>مشتری: {invoice.customerName ?? ""}{invoice.customerPhone ? ` (${invoice.customerPhone})` : ""}</div>
+              )}
+            </>
+          )}
         </div>
 
         <table className="w-full text-xs border-collapse mb-3">
@@ -57,12 +71,20 @@ export default function PrintInvoicePage() {
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b border-gray-200">
-              <td className="py-1">اجرت تعمیر</td>
-              <td className="text-left py-1">{invoice.laborCost.toLocaleString("fa-IR")}</td>
-            </tr>
-            {invoice.ticket.partsUsed.map((p, i) => (
+            {invoice.laborCost > 0 && (
+              <tr className="border-b border-gray-200">
+                <td className="py-1">اجرت تعمیر</td>
+                <td className="text-left py-1">{invoice.laborCost.toLocaleString("fa-IR")}</td>
+              </tr>
+            )}
+            {(invoice.ticket?.partsUsed ?? []).map((p, i) => (
               <tr key={i} className="border-b border-gray-200">
+                <td className="py-1">{p.item.name} × {p.quantity}</td>
+                <td className="text-left py-1">{p.priceCharged.toLocaleString("fa-IR")}</td>
+              </tr>
+            ))}
+            {invoice.items.map((p, i) => (
+              <tr key={`s${i}`} className="border-b border-gray-200">
                 <td className="py-1">{p.item.name} × {p.quantity}</td>
                 <td className="text-left py-1">{p.priceCharged.toLocaleString("fa-IR")}</td>
               </tr>

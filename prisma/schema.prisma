@@ -39,6 +39,7 @@ model Shop {
   plan          String   @default("free")
   planExpiresAt DateTime?
   active        Boolean  @default(true) // super admin can suspend a shop
+  isTest        Boolean  @default(false) // super admin can mark a shop as test/demo, for later bulk cleanup
   supportAccessEnabled Boolean @default(false) // shop owner (or super admin, for urgent support cases) can allow platform staff temporary visibility into this shop's admin panel
   // monthly device-intake quota enforced for the "free" plan
   monthlyQuota  Int      @default(10)
@@ -46,6 +47,11 @@ model Shop {
   bankCardNumber    String? // shown on invoice/SMS if the shop opts in
   bankAccountNumber String?
   taxPercent    Float    @default(10) // applied to invoice totals; shop can adjust
+  // Prepaid wallet balance (toman). The shop tops this up via the payment
+  // gateway (arbitrary amount) and can then pay subscriptions from it without
+  // going back to the gateway each time. Every change is journaled in
+  // WalletTransaction; this column is the fast-read current total.
+  walletBalance Int      @default(0)
   createdAt     DateTime @default(now())
 
   users         User[]
@@ -68,6 +74,53 @@ model Shop {
   ratings            Rating[]
   partRequests       PartRequest[]
   referencePrices    ReferencePrice[]
+  partnershipsSent     ShopPartnership[] @relation("PartnershipSentBy")
+  partnershipsReceived ShopPartnership[] @relation("PartnershipSentTo")
+  referralsSent        ShopReferral[]    @relation("ReferralFrom")
+  referralsReceived    ShopReferral[]    @relation("ReferralTo")
+  expenses           Expense[]
+  walletTransactions WalletTransaction[]
+}
+
+// ── Shop wallet ledger (کیف پول) ──────────────────────────────
+// One row per money movement on a shop's prepaid wallet. TOPUP rows start
+// PENDING and settle to PAID/FAILED through the payment-gateway callback
+// (mirroring Subscription). SPEND rows (paying a subscription from balance)
+// and REFUND rows are written already-settled. Shop.walletBalance is the
+// running total; balanceAfter snapshots it per row for the ledger view.
+model WalletTransaction {
+  id              String   @id @default(cuid())
+  shopId          String
+  shop            Shop     @relation(fields: [shopId], references: [id])
+  type            String   // "TOPUP" | "SPEND" | "REFUND"
+  amount          Int      // toman, always positive; `type` gives the direction
+  status          String   @default("PENDING") // "PENDING" | "PAID" | "FAILED"
+  note            String?  // e.g. "شارژ کیف پول" or "اشتراک حرفه‌ای ۳ ماهه"
+  paymentProvider String?  // gateway used for a TOPUP
+  authority       String?  // gateway token for a TOPUP
+  refId           String?  // gateway reference once verified
+  balanceAfter    Int?     // wallet balance after this row settled
+  createdAt       DateTime @default(now())
+
+  @@index([shopId, createdAt])
+}
+
+// ── Cash book (دخل و خرج) ────────────────────────────────────
+// The income side of a shop's finances already comes from Invoice totals;
+// this is the missing EXPENSE side (rent, utilities, cash parts buys,
+// wages, misc), so the owner can see true net profit — not just revenue.
+model Expense {
+  id            String   @id @default(cuid())
+  shopId        String
+  shop          Shop     @relation(fields: [shopId], references: [id])
+  amount        Int      // toman
+  category      String   // RENT | WAGE | PARTS | UTILITY | OTHER
+  note          String?
+  createdByName String   // display only — who logged it
+  spentAt       DateTime @default(now()) // when the money was actually spent (owner may backdate)
+  createdAt     DateTime @default(now())
+
+  @@index([shopId, spentAt])
 }
 
 // You — the SaaS owner — sign in separately from every shop's staff.
@@ -96,12 +149,29 @@ model Subscription {
   plan      String             // "pro" | "business"
   months    Int                @default(1) // duration purchased: 1, 3, 6, or 12
   amount    Int                // toman, already discounted for the duration
-  authority String?            // Zarinpal Authority token for this attempt
-  refId     String?            // Zarinpal RefID once verified/paid
+  paymentProvider String?      // "zarinpal" | "zibal" | "nextpay" — which gateway this attempt used
+  authority String?            // gateway transaction token (Zarinpal authority / Zibal trackId / NextPay trans_id)
+  refId     String?            // gateway reference id once verified/paid
   status    SubscriptionStatus @default(PENDING)
   createdAt DateTime           @default(now())
 
   @@index([shopId])
+}
+
+// A gift/discount code the platform admin generates and hands to a shop.
+// Redeeming it grants a free paid subscription for `months` (no payment).
+// Single-use: once redeemed it records which shop and when.
+model GiftCode {
+  id               String    @id @default(cuid())
+  code             String    @unique // shown to the shop, e.g. "PEYVO-9F3K2"
+  plan             String    // "pro" | "business"
+  months           Int       @default(1) // free duration granted on redemption
+  note             String?   // admin's own note: campaign, recipient, reason
+  redeemedByShopId String?   // set when a shop redeems it
+  redeemedAt       DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([redeemedByShopId])
 }
 
 // ── Users (shop staff) ──────────────────────────────────────
@@ -122,6 +192,11 @@ model User {
   phone        String   @unique
   passwordHash String
   role         Role
+  // Which repair lane this person actually works in, INDEPENDENT of role.
+  // Lets an OWNER (or FRONTDESK) also be a technician — e.g. a solo owner
+  // who is the shop's only hardware+software tech. null = coordinator only,
+  // does not personally pick up lane work. One of HARDWARE/SOFTWARE/BOARD.
+  specialty    String?
   active       Boolean  @default(true)
   avatarUrl    String?
   email        String?
@@ -157,6 +232,10 @@ model Customer {
   shop      Shop     @relation(fields: [shopId], references: [id])
   name      String
   phone     String
+  // Optional extra info the shop can keep on a customer.
+  email     String?
+  address   String?
+  note      String?  // free-form notes (preferences, history, anything)
   createdAt DateTime @default(now())
 
   tickets   Ticket[]
@@ -225,9 +304,28 @@ model Ticket {
   history       TicketHistory[]
   invoice       Invoice?
   partsUsed     TicketPart[]
+  messages      TicketMessage[]
 
   @@unique([shopId, no])
   @@index([shopId, lane, status])
+}
+
+// Two-way chat between the customer and the shop, scoped to a single repair
+// ticket. The customer reaches it from "تعمیرهای من"; the shop from the
+// ticket detail. `fromCustomer` marks the author side; `senderUserId` holds
+// the shop staff user id when the shop replies (null for customer messages).
+model TicketMessage {
+  id           String   @id @default(cuid())
+  ticketId     String
+  ticket       Ticket   @relation(fields: [ticketId], references: [id])
+  fromCustomer Boolean  // true = customer wrote it, false = shop staff wrote it
+  senderUserId String?  // shop user id when fromCustomer = false
+  content      String
+  createdAt    DateTime @default(now())
+  readByShop     Boolean @default(false)
+  readByCustomer Boolean @default(false)
+
+  @@index([ticketId])
 }
 
 // Every transition (intake, start, referral, completion) is logged here —
@@ -254,6 +352,14 @@ model InventoryItem {
   shop        Shop     @relation(fields: [shopId], references: [id])
   name        String   // e.g. "LCD سامسونگ A54"
   sku         String?
+  // What kind of stock this is — lets a shop keep EVERYTHING phone-related
+  // in one place, not just repair parts:
+  // "PART" (قطعه) | "ACCESSORY" (لوازم جانبی) | "PHONE" (گوشی/دستگاه) |
+  // "TOOL" (ابزار تعمیر) | "OTHER" (سایر)
+  category    String   @default("PART")
+  deviceModel String?  // which device(s) it fits, e.g. "Samsung A54" — also used by the market↔inventory matcher
+  description String?  // free notes: grade, color, supplier, surplus info...
+  imageUrl    String?  // product photo (uploaded via /api/upload)
   quantity    Int      @default(0)
   lowStockAt  Int      @default(2)
   costPrice   Int      // toman, what the shop paid
@@ -262,6 +368,7 @@ model InventoryItem {
   frequentlyUsed Boolean @default(false) // starred by the shop for quick pick in invoices
 
   usedIn      TicketPart[]
+  soldIn      InvoiceItem[]
 
   @@index([shopId])
 }
@@ -284,18 +391,45 @@ model Invoice {
   id         String   @id @default(cuid())
   shopId     String
   shop       Shop     @relation(fields: [shopId], references: [id])
-  ticketId   String   @unique
-  ticket     Ticket   @relation(fields: [ticketId], references: [id])
+  // "REPAIR" invoices close out a Ticket; "SALE" invoices are direct
+  // over-the-counter sales from inventory (accessories, phones, parts)
+  // with no repair ticket at all — ticketId is null for those.
+  type       String   @default("REPAIR")
+  ticketId   String?  @unique
+  ticket     Ticket?  @relation(fields: [ticketId], references: [id])
+  // Walk-in customer info for SALE invoices (optional — cash sales can be anonymous)
+  customerName  String?
+  customerPhone String?
   laborCost  Int      // toman
-  partsCost  Int      // toman, sum of TicketPart.priceCharged
+  partsCost  Int      // toman, sum of TicketPart/InvoiceItem priceCharged
   technicianWage Int  @default(0) // paid out to the assigned technician
   taxPercent Float    @default(0) // percent applied at invoice time (locked in, in case shop changes rate later)
   taxAmount  Int      @default(0) // toman, computed at invoice time
   total      Int
   paid       Boolean  @default(false)
+  // Online payment by the customer (/pay/[invoiceId]) via the active gateway
+  paymentProvider  String? // "zarinpal" | "zibal" | "nextpay"
+  paymentAuthority String? // gateway transaction token
+  paymentRefId     String?
   createdAt  DateTime @default(now())
 
+  items      InvoiceItem[]
+
   @@index([shopId])
+}
+
+// Line items for direct-SALE invoices (the counterpart of TicketPart,
+// which stays reserved for repair-ticket part consumption).
+model InvoiceItem {
+  id           String        @id @default(cuid())
+  invoiceId    String
+  invoice      Invoice       @relation(fields: [invoiceId], references: [id])
+  itemId       String
+  item         InventoryItem @relation(fields: [itemId], references: [id])
+  quantity     Int           @default(1)
+  priceCharged Int           // toman total for this line, locked in at sale time
+
+  @@index([invoiceId])
 }
 
 // One-time SMS code for the forgot-password flow. Short-lived (10 min)
@@ -310,6 +444,20 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// One-time code that verifies a phone (or email) BEFORE a shop/customer
+// account is created at signup. Keyed by the phone itself (no account exists
+// yet). Short-lived; consumed when the account is finally created.
+model SignupVerification {
+  id         String   @id @default(cuid())
+  identifier String   // the phone number being verified (login key)
+  code       String   // 5-digit numeric OTP
+  verified   Boolean  @default(false)
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([identifier])
 }
 
 // ── Nationwide marketplace ───────────────────────────────────
@@ -349,6 +497,7 @@ model MarketListing {
   title        String
   description  String
   deviceModel  String?         // e.g. "Samsung A54" — makes search precise
+  imageUrl     String?         // photo of the part/product (uploaded via /api/upload)
 
   province     String
   city         String
@@ -388,7 +537,8 @@ model Message {
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   senderId       String
   sender         User         @relation(fields: [senderId], references: [id])
-  content        String
+  content        String       // may be empty when the message is image-only
+  imageUrl       String?      // attached photo (uploaded via /api/upload)
   createdAt      DateTime     @default(now())
 
   @@index([conversationId])
@@ -558,7 +708,30 @@ model PlatformSettings {
   id                  String  @id @default("singleton")
   kavenegarApiKey     String?
   kavenegarSender     String?
+  // Kavenegar OTP/Lookup (سرویس اعتبارسنجی) — when smsUseLookup is on, the
+  // three core transactional messages (verification codes, intake, ready) are
+  // sent via approved templates instead of free-form text, so no dedicated
+  // line is needed. The *Template fields hold the exact approved template
+  // names created in the Kavenegar panel. Off by default: until the templates
+  // exist, sends fall back to free-form so nothing breaks.
+  // Automatic backups to a Telegram bot. When both are set, the daily cron
+  // (/api/cron/backup) sends a full JSON snapshot to this chat via the Bot API.
+  telegramBotToken        String? // from @BotFather
+  telegramChatId          String? // the chat/channel id the backup file is sent to
+  // Android app distribution links, shown on the public /download page and the
+  // landing footer. Set once the APK is built and the store listings are live.
+  androidApkUrl           String? // direct .apk download link (site download)
+  bazaarUrl               String? // Cafe Bazaar (کافه‌بازار) store page
+  myketUrl                String? // Myket (مایکت) store page
+  smsUseLookup            Boolean @default(false)
+  kavenegarOtpTemplate    String? // template for verification/reset codes  (%token = code)
+  kavenegarIntakeTemplate String? // device-received template  (%token=ticket, %token2=phone, %token10=shop)
+  kavenegarReadyTemplate  String? // ready-for-pickup template  (%token=ticket, %token2=price, %token3=phone, %token10=shop)
   zarinpalMerchantId  String?
+  // Which gateway is currently active platform-wide: "zarinpal" | "zibal" | "nextpay".
+  paymentProvider     String? @default("zarinpal")
+  zibalMerchant       String? // Zibal merchant id (or "zibal" for their sandbox)
+  nextpayApiKey       String? // NextPay api_key
   guideUrl            String? // link to an external help/docs site
   aboutUsContent      String? // shown on the built-in /about page
   smtpHost            String?
@@ -567,6 +740,30 @@ model PlatformSettings {
   smtpPassword        String?
   smtpFromAddress     String?
   neshanApiKey        String? // for the interactive location-picker map (react-neshan-map-leaflet)
+  // Enamad (نماد اعتماد الکترونیکی) trust-seal identifiers — public values
+  // shown in the seal markup on public pages. Required by payment gateways
+  // before granting a live درگاه.
+  enamadId            String?
+  enamadCode          String?
+  // Site-wide appearance, changed live from the super-admin panel (no
+  // redeploy). fontFamily is a key into lib/fonts.ts FONT_OPTIONS; the
+  // root layout loads the matching Google-Fonts stylesheet and sets the
+  // --app-font CSS variable. defaultTheme is the initial theme a brand-new
+  // visitor sees ("dark" | "light") before any personal choice is stored.
+  fontFamily          String? @default("vazirmatn")
+  defaultTheme        String? @default("dark")
+  // Subscription pricing overrides (toman / percent), editable from the
+  // super-admin panel so plans can be repriced without a code change. null on
+  // any field = fall back to the code default in lib/plans.ts. Read through
+  // getPricing(), which every price calculation (checkout, gift-quota, the
+  // shop-facing billing page via /api/pricing) goes through.
+  proPriceToman       Int?     // monthly price of the "pro" (حرفه‌ای) plan
+  businessPriceToman  Int?     // monthly price of the "business" (تجاری) plan
+  proQuota            Int?     // monthly device-intake quota granted by "pro"
+  businessQuota       Int?     // monthly device-intake quota granted by "business"
+  discount3           Int?     // % discount for the 3-month commitment
+  discount6           Int?     // % discount for the 6-month commitment
+  discount12          Int?     // % discount for the 12-month commitment
   updatedAt           DateTime @updatedAt
 }
 
@@ -681,16 +878,58 @@ model Rating {
   ticketId      String?  @unique
   technicianId  String?
   technician    User?    @relation(fields: [technicianId], references: [id])
+  // Set when the rating was submitted from the customer dashboard by a
+  // signed-in PlatformCustomer (as opposed to the anonymous post-repair
+  // SMS link, which leaves this null). One direct rating per
+  // (customer, shop) pair is enforced in the API.
+  platformCustomerId String?
+  platformCustomer   PlatformCustomer? @relation(fields: [platformCustomerId], references: [id])
   stars         Int      // 1-5
   comment       String?
   customerPhone String?  // used only to prevent duplicate ratings per ticket, never shown publicly
-  platformCustomerId String? // set when rated from the customer's own dashboard, not the anonymous SMS link
-  platformCustomer   PlatformCustomer? @relation(fields: [platformCustomerId], references: [id])
   createdAt     DateTime @default(now())
 
   @@index([shopId])
   @@index([technicianId])
-  @@unique([shopId, platformCustomerId])
+  @@index([platformCustomerId])
+}
+
+// ── Platform-wide customer accounts ──────────────────────────
+// A NATIONWIDE customer identity, completely separate from the per-shop
+// `Customer` model above (which is just each shop's private address book).
+// A PlatformCustomer signs in through their own login (/customer/login),
+// browses/compares shops, sees their own repair history across ALL shops
+// (matched by phone number), and can rate shops directly from their panel.
+// Deliberately NOT tied to any Shop, so it is never caught by tenant
+// scoping and can never be created through the shop signup flow.
+model PlatformCustomer {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String   @unique
+  passwordHash String
+  email        String?  // optional — enables password recovery via email too
+  province     String?  // used as the default filter for "shops near me"
+  city         String?
+  active       Boolean  @default(true) // platform admin can suspend a customer account
+  createdAt    DateTime @default(now())
+
+  ratings          Rating[]
+  passwordResetTokens CustomerPasswordResetToken[]
+}
+
+// Same 10-minute single-use OTP pattern as PasswordResetToken, but for
+// PlatformCustomer accounts (separate table so the two login systems
+// stay fully independent).
+model CustomerPasswordResetToken {
+  id         String           @id @default(cuid())
+  customerId String
+  customer   PlatformCustomer @relation(fields: [customerId], references: [id])
+  code       String           // 5-digit numeric OTP sent via SMS
+  expiresAt  DateTime
+  used       Boolean          @default(false)
+  createdAt  DateTime         @default(now())
+
+  @@index([customerId])
 }
 
 // ── External government/agency API access ────────────────────
@@ -727,6 +966,7 @@ model DealerInventory {
   shop          Shop              @relation(fields: [shopId], references: [id])
   imei          String?
   deviceModel   String
+  imageUrl      String?           // product photo (uploaded via /api/upload)
   condition     String            @default("WORKING") // "WORKING" | "DEFECTIVE" | "FOR_PARTS"
   purchasePrice Int               // toman, what the dealer paid
   askingPrice   Int?              // toman, listed sale price while in stock
@@ -741,6 +981,94 @@ model DealerInventory {
   soldAt        DateTime?
 
   @@index([shopId, status])
+}
+
+// ── Cross-shop collaboration (partnerships, referrals, commission) ──
+// Deliberately separate from Ticket.lane (which only moves a ticket
+// between HARDWARE/SOFTWARE/BOARD lanes WITHIN one shop). This is for
+// technicians at DIFFERENT, physically separate shops who want to send
+// each other work — e.g. a hardware-only shop referring a software-only
+// job to a partner shop across town, and getting a commission back for it.
+
+enum PartnershipStatus {
+  PENDING   // request sent, other shop hasn't responded yet
+  ACCEPTED  // both shops can now refer customers to each other
+  REJECTED
+  ENDED     // either shop cut off an active partnership later
+}
+
+// A standing collaboration link between two shops. Any staff member at
+// either shop (not just the OWNER) can send/accept these — this is meant
+// to be usable directly by the technicians who'll actually refer work,
+// not gated behind manager approval.
+model ShopPartnership {
+  id                String            @id @default(cuid())
+  requestedByShopId String
+  requestedByShop   Shop              @relation("PartnershipSentBy", fields: [requestedByShopId], references: [id])
+  targetShopId      String
+  targetShop        Shop              @relation("PartnershipSentTo", fields: [targetShopId], references: [id])
+  status            PartnershipStatus @default(PENDING)
+  note              String?           // optional message sent along with the request
+  createdByName     String            // display only — which staff member sent it
+  createdAt         DateTime          @default(now())
+  respondedAt       DateTime?
+
+  referrals         ShopReferral[]
+
+  @@unique([requestedByShopId, targetShopId])
+  @@index([targetShopId, status])
+  @@index([requestedByShopId, status])
+}
+
+enum ReferralStatus {
+  SENT      // referring shop created it, receiving shop hasn't acted yet
+  ACCEPTED  // receiving shop took the customer in and opened their own ticket
+  DECLINED
+  COMPLETED // receiving shop finished the job — commission now applies
+}
+
+enum CommissionStatus {
+  NONE    // no commission expected for this referral
+  PENDING // amount recorded, not yet settled
+  PAID
+}
+
+// A cross-shop hand-off of a customer/device. The receiving shop is NOT
+// given access to the referring shop's ticket/customer records (tenant
+// isolation stays intact) — instead this carries plain copied-over
+// details, and accepting it creates a brand-new Ticket + Customer inside
+// the receiving shop exactly like a normal intake would.
+model ShopReferral {
+  id             String            @id @default(cuid())
+  partnershipId  String
+  partnership    ShopPartnership   @relation(fields: [partnershipId], references: [id])
+  fromShopId     String
+  fromShop       Shop              @relation("ReferralFrom", fields: [fromShopId], references: [id])
+  toShopId       String
+  toShop         Shop              @relation("ReferralTo", fields: [toShopId], references: [id])
+
+  customerName   String
+  customerPhone  String
+  deviceModel    String?
+  issueNote      String?
+  suggestedLane  String?           // "HARDWARE" | "SOFTWARE" | "BOARD" — hint only, receiving shop can re-refer internally afterward
+
+  status         ReferralStatus    @default(SENT)
+  resultTicketId String?           // the Ticket the receiving shop opened upon accepting
+
+  commissionType    String?           // "PERCENT" | "FLAT" — arrangement suggested when the referral was sent
+  commissionValue   Int?              // percent (0-100) or flat toman, per commissionType — a suggestion only
+  commissionAmount  Int?              // toman, final figure entered by the receiving shop when marked COMPLETED
+  commissionStatus  CommissionStatus  @default(NONE)
+  commissionPaidAt  DateTime?
+
+  createdByName  String            // display only — which staff member at fromShop created this
+  createdAt      DateTime          @default(now())
+  respondedAt    DateTime?
+  completedAt    DateTime?
+
+  @@index([fromShopId, status])
+  @@index([toShopId, status])
 }
 
 // ── Platform support impersonation ────────────────────────────
@@ -761,33 +1089,32 @@ model ImpersonationToken {
   @@index([userId])
 }
 
-// ── Platform customer accounts (cross-shop, not staff) ────────
-// Separate identity system from the per-shop `Customer` table above
-// (which just tracks a repair customer within one shop's records). This
-// is a real login for end customers to browse shops nationwide and rate
-// them from their own dashboard, independent of any single shop.
-model PlatformCustomer {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String   @unique
-  createdAt DateTime @default(now())
+// ── Error log (خطاها) ─────────────────────────────────────────
+// A lightweight, self-hosted error database so the platform owner can
+// see WHAT broke in production and WHERE, straight from the super-admin
+// panel — no external Sentry account needed. Deliberately has NO foreign
+// keys to Shop/User: a logging write must NEVER fail or cascade because
+// of a missing/invalid id, so shopId/userId are plain best-effort strings.
+// Written from three places: server API catch blocks (lib/logError.ts),
+// the React error boundaries (app/error.tsx, app/global-error.tsx), and
+// the browser window error listeners (components/ClientErrorReporter.tsx),
+// the latter two via the public POST /api/log-error intake.
+model ErrorLog {
+  id         String   @id @default(cuid())
+  source     String   @default("server") // "server" | "client" | "payment" | "boundary"
+  level      String   @default("error")  // "error" | "warn" | "fatal"
+  message    String                       // short human summary / error message
+  stack      String?                      // full stack trace or extra detail (can be long)
+  digest     String?                      // Next.js error-boundary digest, when present
+  path       String?                      // URL path / route where it happened
+  method     String?                      // HTTP method, for server errors
+  shopId     String?                      // best-effort tenant tag (NOT a foreign key)
+  userId     String?                      // best-effort actor tag (NOT a foreign key)
+  userAgent  String?                      // browser UA, for client errors
+  context    String?                      // small JSON blob of extra key/values
+  resolved   Boolean  @default(false)     // super admin ticks these off once handled
+  createdAt  DateTime @default(now())
 
-  otpCodes  CustomerOtp[]
-  ratings   Rating[]
-}
-
-// OTP for customer login — same passwordless pattern as PasswordResetToken,
-// but scoped by phone rather than an existing userId (a customer's very
-// first login IS their signup).
-model CustomerOtp {
-  id                 String            @id @default(cuid())
-  phone              String
-  code               String
-  expiresAt          DateTime
-  used               Boolean           @default(false)
-  createdAt          DateTime          @default(now())
-  platformCustomerId String?
-  platformCustomer   PlatformCustomer? @relation(fields: [platformCustomerId], references: [id])
-
-  @@index([phone])
+  @@index([resolved, createdAt])
+  @@index([source, createdAt])
 }

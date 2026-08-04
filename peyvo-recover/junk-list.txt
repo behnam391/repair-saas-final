@@ -1,0 +1,10 @@
+:(literal)app/api/customer/auth/request-otp/route.ts
+:(literal)app/api/customer/ratings/route.ts
+:(literal)app/api/customer/shops/[id]/route.ts
+:(literal)app/customer/layout.tsx
+:(literal)app/customer/shops/[id]/page.tsx
+:(literal)app/customer/shops/page.tsx
+:(literal)components/CustomerLogoutButton.tsx
+:(literal)cd
+:(literal)npx
+:(literal)desktop.ini
