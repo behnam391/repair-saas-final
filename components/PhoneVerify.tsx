@@ -6,6 +6,7 @@
  * verified. Re-verification is required if the phone changes.
  */
 import { useEffect, useState } from "react";
+import OtpInput from "@/components/OtpInput";
 
 export default function PhoneVerify({
   phone,
@@ -23,6 +24,16 @@ export default function PhoneVerify({
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
+  // Bumped on every rejected code so the OTP boxes shake again.
+  const [errNonce, setErrNonce] = useState(0);
+  const [cooldown, setCooldown] = useState(0);
+
+  // Resend cooldown tick.
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
 
   const valid = /^09\d{9}$/.test(phone.trim());
   const isVerified = !!verifiedPhone && verifiedPhone === phone.trim();
@@ -42,22 +53,23 @@ export default function PhoneVerify({
     });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
-    if (res.ok) { setSent(true); setMsg(data.message || "کد ارسال شد."); }
+    if (res.ok) { setSent(true); setCooldown(60); setMsg(data.message || "کد ارسال شد."); }
     else setErr(data.message || "ارسال کد ناموفق بود");
   }
 
-  async function verify() {
+  async function verify(codeArg?: string) {
+    const c = (codeArg ?? code).trim();
     setErr(""); setMsg("");
     setBusy(true);
     const res = await fetch("/api/auth/signup/verify-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: phone.trim(), code: code.trim() }),
+      body: JSON.stringify({ phone: phone.trim(), code: c }),
     });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
     if (res.ok) { setVerifiedPhone(phone.trim()); setMsg(""); }
-    else setErr(data.message || "کد نادرست است");
+    else { setErr(data.message || "کد نادرست است"); setErrNonce((n) => n + 1); }
   }
 
   if (isVerified) {
@@ -88,19 +100,26 @@ export default function PhoneVerify({
         </button>
       ) : (
         <>
-          <div className="flex gap-2">
-            <input
-              value={code} onChange={(e) => setCode(e.target.value)}
-              inputMode="numeric" dir="ltr" maxLength={5} placeholder="کد ۵ رقمی"
-              className="flex-1 min-w-0 bg-surface border border-border rounded-lg px-3 py-2 text-sm mono text-center"
-            />
-            <button type="button" onClick={verify} disabled={busy || code.trim().length < 4}
-              className="bg-teal text-white font-bold rounded-lg px-4 text-xs disabled:opacity-50 shrink-0">
-              تأیید
-            </button>
-          </div>
-          <button type="button" onClick={sendCode} disabled={busy} className="text-[10px] text-muted">
-            ارسال مجدد کد
+          <p className="text-[10px] text-muted text-center">کد ۵ رقمی ارسال‌شده را وارد کنید</p>
+          <OtpInput
+            value={code}
+            onChange={(v) => { setCode(v); if (err) setErr(""); }}
+            length={5}
+            autoFocus
+            disabled={busy}
+            error={!!err}
+            errorNonce={errNonce}
+            /* Typing the last digit submits — no extra tap needed. */
+            onComplete={(v) => verify(v)}
+            className="py-1"
+          />
+          <button type="button" onClick={() => verify()} disabled={busy || code.length < 5}
+            className="w-full bg-teal text-white font-bold rounded-lg py-2 text-xs disabled:opacity-50">
+            {busy ? "..." : "تأیید کد"}
+          </button>
+          <button type="button" onClick={sendCode} disabled={busy || cooldown > 0}
+            className="w-full text-[10px] text-muted disabled:opacity-60">
+            {cooldown > 0 ? `ارسال مجدد کد تا ${cooldown} ثانیه دیگر` : "ارسال مجدد کد"}
           </button>
         </>
       )}

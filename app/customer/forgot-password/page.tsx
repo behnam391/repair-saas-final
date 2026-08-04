@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import OtpInput from "@/components/OtpInput";
 
 export default function CustomerForgotPasswordPage() {
   const router = useRouter();
@@ -84,9 +85,16 @@ export default function CustomerForgotPasswordPage() {
 
         {step === 2 && (
           <>
-            <label className="block text-xs text-muted mb-1">کد ۵ رقمی</label>
-            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm mono tracking-widest text-center"
-              value={code} onChange={(e) => setCode(e.target.value)} maxLength={5} />
+            <label className="block text-xs text-muted mb-2">کد ۵ رقمی</label>
+            <OtpInput
+              value={code}
+              onChange={(v) => { setCode(v); if (error) setError(""); }}
+              length={5}
+              autoFocus
+              disabled={loading}
+              error={!!error}
+              className="mb-4"
+            />
             <label className="block text-xs text-muted mb-1">رمز عبور جدید (حداقل ۶ کاراکتر)</label>
             <input type="password" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm"
               value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />

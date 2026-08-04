@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import OtpInput from "@/components/OtpInput";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -23,8 +24,9 @@ export default function ForgotPasswordPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone, channel }),
     });
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     setLoading(false);
+    if (!res.ok) { setError(data.message || "ارسال کد ناموفق بود"); return; }
     setMessage(data.message || "کد ارسال شد");
     setStep(2);
   }
@@ -79,12 +81,15 @@ export default function ForgotPasswordPage() {
         ) : (
           <>
             {message && <p className="text-teal text-xs mb-3">{message}</p>}
-            <label className="block text-xs text-muted mb-1">کد ۵ رقمی</label>
-            <input
-              className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm mono"
+            <label className="block text-xs text-muted mb-2">کد ۵ رقمی</label>
+            <OtpInput
               value={code}
-              onChange={(e) => setCode(e.target.value)}
-              maxLength={5}
+              onChange={(v) => { setCode(v); if (error) setError(""); }}
+              length={5}
+              autoFocus
+              disabled={loading}
+              error={!!error}
+              className="mb-4"
             />
             <label className="block text-xs text-muted mb-1">رمز عبور جدید</label>
             <input

@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import CustomerNav from "@/components/CustomerNav";
+import { CustomerBottomNav } from "@/components/BottomNav";
 import Logo from "@/components/Logo";
 
 export const dynamic = "force-dynamic";
@@ -29,7 +30,8 @@ export default async function CustomerPanelLayout({ children }: { children: Reac
         </div>
         <div className="brand-underline -mx-4 mt-3" />
       </header>
-      <main className="page-enter">{children}</main>
+      <main className="page-enter pb-[96px] md:pb-0">{children}</main>
+      <CustomerBottomNav />
     </div>
   );
 }

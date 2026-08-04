@@ -2,54 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-/* ── Design tokens ─────────────────────────────────────────
-   Grounded in the electronics-repair workbench: a dark PCB-blue
-   night backdrop, hot-solder copper as the primary accent, a
-   circuit-trace teal as the secondary signal color. */
+/* ── Peyvo Glass design tokens ────────────────────────────────
+   Glassmorphism identity built on the Peyvo brand: deep night-blue
+   backdrop with ambient blue→green light blooms (sampled from the
+   logo: #008AE9 → #62BE38), translucent frosted surfaces, soft
+   glass borders.
+   Accent colors are stored as RGB triples (--rgb-*) so Tailwind's
+   opacity modifiers work; --color-* composes them for plain CSS. */
 :root,
 [data-theme="dark"] {
-  --color-bg: #10121A;
-  --color-surface: #1A1D28;
-  --color-surface2: #232733;
-  --color-copper: #E08A3E;
-  --color-copper-deep: #B5622A;
-  --color-teal: #35C9A5;
-  --color-amber: #E7B84F;
-  --color-danger: #E0574A;
-  --color-muted: #8A90A3;
-  --color-ink: #F1F2F6;
-  --color-border: #2B2F3D;
+  /* Tell the browser this is a dark UI so NATIVE widgets (the <select>
+     dropdown list, checkboxes, scrollbars) render dark too — without this,
+     Windows/Chrome paints the options popup white while the inherited text
+     color stays near-white, making options invisible until hovered. */
+  color-scheme: dark;
+
+  --rgb-copper: 53 169 255;        /* Peyvo blue, lifted for dark bg */
+  --rgb-copper-deep: 0 114 201;
+  --rgb-teal: 111 209 63;          /* Peyvo green, lifted */
+  --rgb-amber: 255 194 75;
+  --rgb-danger: 255 107 94;
+  --rgb-muted: 148 164 194;
+  --rgb-ink: 242 246 252;
+
+  --color-bg: #0A0F1E;
+  --color-surface: rgba(148, 178, 255, 0.07);
+  --color-surface2: rgba(148, 178, 255, 0.12);
+  --color-border: rgba(160, 190, 255, 0.16);
+
+  --color-copper: rgb(var(--rgb-copper));
+  --color-copper-deep: rgb(var(--rgb-copper-deep));
+  --color-teal: rgb(var(--rgb-teal));
+  --color-amber: rgb(var(--rgb-amber));
+  --color-danger: rgb(var(--rgb-danger));
+  --color-muted: rgb(var(--rgb-muted));
+  --color-ink: rgb(var(--rgb-ink));
+
+  --glass-header: rgba(10, 15, 30, 0.55);
+  --glass-menu: rgba(15, 23, 46, 0.88);
+  --glass-sheet: rgba(13, 19, 38, 0.72);
+  --glass-highlight: rgba(255, 255, 255, 0.09);
+  --glass-shadow: 0 8px 28px rgba(2, 6, 20, 0.35);
+  --bloom-blue: rgba(0, 138, 233, 0.22);
+  --bloom-green: rgba(98, 190, 56, 0.13);
 }
 
 [data-theme="light"] {
-  --color-bg: #F6F4EF;
-  --color-surface: #FFFFFF;
-  --color-surface2: #EFEBE2;
-  --color-copper: #C06B28;
-  --color-copper-deep: #9A521E;
-  --color-teal: #1F7E68;
-  --color-amber: #B87F1E;
-  --color-danger: #B23A2E;
-  --color-muted: #6B7078;
-  --color-ink: #191B22;
-  --color-border: #E4DFD3;
+  color-scheme: light;
+
+  --rgb-copper: 0 119 214;
+  --rgb-copper-deep: 0 92 168;
+  --rgb-teal: 63 154 30;
+  --rgb-amber: 169 123 20;
+  --rgb-danger: 194 59 46;
+  --rgb-muted: 90 107 133;
+  --rgb-ink: 19 32 58;
+
+  --color-bg: #EDF3FB;
+  --color-surface: rgba(255, 255, 255, 0.62);
+  --color-surface2: rgba(255, 255, 255, 0.82);
+  --color-border: rgba(19, 45, 90, 0.14);
+
+  --color-copper: rgb(var(--rgb-copper));
+  --color-copper-deep: rgb(var(--rgb-copper-deep));
+  --color-teal: rgb(var(--rgb-teal));
+  --color-amber: rgb(var(--rgb-amber));
+  --color-danger: rgb(var(--rgb-danger));
+  --color-muted: rgb(var(--rgb-muted));
+  --color-ink: rgb(var(--rgb-ink));
+
+  --glass-header: rgba(244, 249, 255, 0.6);
+  --glass-menu: rgba(255, 255, 255, 0.92);
+  --glass-sheet: rgba(248, 251, 255, 0.78);
+  --glass-highlight: rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 8px 28px rgba(30, 60, 110, 0.12);
+  --bloom-blue: rgba(0, 138, 233, 0.16);
+  --bloom-green: rgba(98, 190, 56, 0.14);
+}
+
+html, body {
+  /* Never let a stray wide element make the whole page scroll sideways —
+     that's what pushed the header/logout half off-screen on phones. */
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
   background: var(--color-bg);
   color: var(--color-ink);
-  font-family: 'Vazirmatn', sans-serif;
+  /* --app-font is set by the root layout from the super-admin font choice
+     (lib/fonts.ts). Falls back to Vazirmatn, which globals always loads. */
+  font-family: var(--app-font, 'Vazirmatn'), sans-serif;
   transition: background-color .2s ease, color .2s ease;
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(224,138,62,0.10) 1px, transparent 0);
-  background-size: 22px 22px;
 }
-[data-theme="light"] body {
-  background-image:
-    radial-gradient(circle at 1px 1px, rgba(192,107,40,0.12) 1px, transparent 0);
-  background-size: 22px 22px;
+
+/* Ambient light blooms behind everything — a fixed layer so the frosted
+   surfaces always have brand-colored light to refract, and scrolling
+   feels like moving over one continuous backdrop. (A fixed pseudo-element
+   is more reliable than background-attachment: fixed in mobile WebViews.) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1000px 640px at 88% -12%, var(--bloom-blue), transparent 62%),
+    radial-gradient(820px 560px at -12% 34%, var(--bloom-green), transparent 58%),
+    radial-gradient(760px 540px at 52% 112%, var(--bloom-blue), transparent 60%);
 }
 
 .mono { font-family: 'JetBrains Mono', monospace; }
@@ -57,27 +119,87 @@ body {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Display heading treatment — tighter tracking, heavier weight,
-   used for page titles so they read as a brand voice, not body text. */
+/* Display heading treatment — brand voice for page titles. */
 .display-heading {
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(90deg, var(--color-ink), var(--color-copper) 140%);
+  background: linear-gradient(90deg, var(--color-ink), var(--color-copper) 150%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-/* ── Global visual polish ────────────────────────────────── */
-[class*="bg-surface"] {
-  box-shadow: 0 1px 2px rgba(0,0,0,.22), 0 1px 1px rgba(0,0,0,.10);
+/* ── Frosted glass surfaces ───────────────────────────────────
+   Every card/panel in the app uses bg-surface; the token itself is
+   translucent, and this rule adds the frost (blur) + a top light edge.
+   bg-surface2 (inputs, hover chips, subtle fills) stays un-blurred to
+   avoid nested backdrop-filter cost on long lists. */
+[class*="bg-surface"]:not([class*="bg-surface2"]) {
+  backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
 }
-[data-theme="light"] [class*="bg-surface"] {
-  box-shadow: 0 1px 3px rgba(20,22,27,.08), 0 1px 1px rgba(20,22,27,.04);
+
+/* Floating dropdown menus need to stay readable over busy content —
+   give them a denser glass than in-flow cards. */
+[data-nav-menu] {
+  background: var(--glass-menu) !important;
+  backdrop-filter: blur(22px) saturate(1.6);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  border-color: var(--color-border) !important;
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 16px 42px rgba(2, 6, 20, 0.45);
 }
-button[class*="bg-copper"], button[class*="bg-teal"] {
+
+/* Full-screen mobile nav sheet — near-opaque so it stays readable
+   regardless of what's behind it (blur is a bonus, not a dependency). */
+.nav-sheet {
+  background: var(--glass-sheet);
+  backdrop-filter: blur(30px) saturate(1.8);
+  -webkit-backdrop-filter: blur(30px) saturate(1.8);
+  box-shadow: -24px 0 60px rgba(2, 6, 20, 0.5);
+  border-inline-start: 1px solid var(--glass-highlight);
+}
+
+/* Sticky app header — the strongest frost in the system. */
+.glass-header,
+header.sticky {
+  background: var(--glass-header) !important;
+  backdrop-filter: blur(20px) saturate(1.7);
+  -webkit-backdrop-filter: blur(20px) saturate(1.7);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ── Buttons ──────────────────────────────────────────────────
+   Primary actions get the brand gradient (blue) / (green) with white
+   text — overrides the legacy dark text-[#1A1410] utility used on the
+   old copper theme, so no per-page edits are needed. */
+button[class*="bg-copper"], a[class*="bg-copper"] {
+  color: #fff !important;
+  background-image: linear-gradient(135deg, rgb(var(--rgb-copper)), rgb(var(--rgb-copper-deep)));
+  border: none;
+}
+button[class*="bg-teal"], a[class*="bg-teal"] {
+  color: #fff !important;
+  background-image: linear-gradient(135deg, rgb(var(--rgb-teal)), rgb(var(--rgb-teal) / 0.75));
+}
+/* ...but tinted chips/badges (bg-copper/15 etc.) are NOT solid buttons —
+   let them keep their own text color and stay translucent. */
+button[class*="bg-copper/"], a[class*="bg-copper/"],
+button[class*="bg-teal/"], a[class*="bg-teal/"] {
+  color: inherit !important;
+  background-image: none;
+}
+button[class*="bg-copper"], button[class*="bg-teal"],
+a[class*="bg-copper"], a[class*="bg-teal"] {
   transition: transform .12s ease, filter .15s ease, box-shadow .15s ease;
-  background-image: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0) 60%);
+}
+button[class*="bg-copper"]:not([class*="bg-copper/"]),
+a[class*="bg-copper"]:not([class*="bg-copper/"]) {
+  box-shadow: 0 6px 18px rgb(var(--rgb-copper) / 0.35);
+}
+button[class*="bg-teal"]:not([class*="bg-teal/"]),
+a[class*="bg-teal"]:not([class*="bg-teal/"]) {
+  box-shadow: 0 6px 18px rgb(var(--rgb-teal) / 0.30);
 }
 button[class*="bg-copper"]:hover, button[class*="bg-teal"]:hover {
   filter: brightness(1.08);
@@ -86,18 +208,31 @@ button[class*="bg-copper"]:hover, button[class*="bg-teal"]:hover {
 button[class*="bg-copper"]:active, button[class*="bg-teal"]:active {
   transform: translateY(0);
 }
+
 input:focus, textarea:focus, select:focus {
-  outline: 2px solid var(--color-copper);
+  outline: 2px solid rgb(var(--rgb-copper) / 0.75);
   outline-offset: 1px;
 }
-::selection { background: var(--color-copper); color: #fff; }
+input, textarea, select { color: var(--color-ink); }
+/* Belt-and-braces for the options popup: explicit solid colors (the
+   translucent surface tokens would compose unpredictably in the native
+   dropdown, so use the opaque page background). */
+select option {
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+}
+::selection { background: rgb(var(--rgb-copper) / 0.85); color: #fff; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-thumb { background: var(--color-surface2); border-radius: 8px; }
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--rgb-muted) / 0.35);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgb(var(--rgb-muted) / 0.55); }
 ::-webkit-scrollbar-track { background: transparent; }
 
 /* ── Repair-tag card signature ───────────────────────────────
-   Ticket cards get a punch-hole + perforated stub edge, like a
-   real workshop repair tag clipped to a device. */
+   Ticket cards keep their punch-hole + colored stub edge — now with
+   brand-blue as the default state color. */
 .repair-tag {
   position: relative;
   border-inline-start: 3px solid var(--color-copper);
@@ -122,10 +257,307 @@ input:focus, textarea:focus, select:focus {
 .repair-tag.tag-awaiting { border-inline-start-color: var(--color-danger); }
 .repair-tag.tag-awaiting::before { border-color: var(--color-danger); }
 
-/* Global print rules: hide the app chrome (header/nav/ad banner) on any
-   page, so print-friendly pages (like invoice printing) look clean
-   without needing to render outside the normal dashboard layout. */
+/* ── Peyvo brand line ─────────────────────────────────────────
+   Thin gradient trace under the sticky header, sampled from the logo
+   (blue → green). */
+.brand-underline {
+  height: 2px;
+  background: linear-gradient(90deg, #008AE9, #62BE38);
+  opacity: .8;
+}
+
+/* Clickable cards lift and glow with brand light on hover. */
+.card-hover {
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgb(var(--rgb-copper) / 0.55);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 10px 30px rgb(var(--rgb-copper) / 0.16);
+}
+
+/* Telegram-style mobile drawer: slides in from the right (same side as the
+   منو button), overlay fades. */
+@keyframes peyvo-drawer-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes peyvo-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.drawer-enter { animation: peyvo-drawer-in .24s ease-out; }
+.drawer-fade { animation: peyvo-fade .24s ease-out; }
+.drawer-head {
+  background: linear-gradient(135deg, #008AE9, #2FA84F 90%);
+}
+
+/* ── Leaflet / Neshan map guards ──────────────────────────────
+   The glass theme's global `* { transition }` and the ambient blur/
+   transform layers make Leaflet tiles animate their repositioning on
+   zoom — which shows as the map flashing then going blank. Kill all
+   transitions/filters inside the map, and give the pane a dark fallback
+   so a momentarily-missing tile reads as map-colored, not white. */
+.leaflet-container,
+.leaflet-container * {
+  transition: none !important;
+  animation: none !important;
+}
+.leaflet-container {
+  background: #0e1524 !important;
+}
+.leaflet-tile { will-change: auto !important; }
+.leaflet-pane img,
+.leaflet-tile { filter: none !important; }
+
+/* Gentle content fade-in on route change. */
+@keyframes peyvo-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-enter { animation: peyvo-fade-in .28s ease; }
+
+/* Stat tiles — frosted numeric cards with a corner light bloom. */
+.stat-tile {
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(14px) saturate(1.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+}
+.stat-tile::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: -20px;
+  top: -20px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--rgb-copper) / 0.22), transparent 70%);
+}
+
+/* Empty-state placeholder. */
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--color-muted);
+  font-size: 13px;
+  border: 1px dashed var(--color-border);
+  border-radius: 14px;
+}
+
+/* ── Liquid ("melting") bottom navigation ─────────────────────
+   Mobile-only floating nav. The visible bar and the active-tab blob live
+   in one layer that has an SVG gooey filter applied, so when the blob
+   slides between tabs it stretches and re-merges like a drop of liquid.
+   Labels/icons render in a SEPARATE, unfiltered layer above it — running
+   text through a blur+contrast filter would smear it.
+   The filter needs solid paint to work on, so the bar is opaque here
+   instead of frosted glass (backdrop-filter and url() filters don't mix). */
+:root,
+[data-theme="dark"] {
+  --bnav-bar: rgba(16, 24, 46, 0.97);
+  --bnav-ring: rgba(160, 190, 255, 0.16);
+  --bnav-shadow: 0 14px 38px rgba(2, 6, 20, 0.55);
+}
+[data-theme="light"] {
+  --bnav-bar: rgba(255, 255, 255, 0.97);
+  --bnav-ring: rgba(19, 45, 90, 0.10);
+  --bnav-shadow: 0 14px 34px rgba(30, 60, 110, 0.18);
+}
+
+.peyvo-bnav-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 120;
+  /* Keep clear of the Android gesture bar / iOS home indicator. */
+  padding: 0 12px calc(10px + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+.peyvo-bnav {
+  position: relative;
+  height: 64px;
+  max-width: 520px;
+  margin: 0 auto;
+  pointer-events: auto;
+}
+/* Drop shadow lives outside the filtered layer — a filtered shadow gets
+   eaten by the goo contrast pass. */
+.peyvo-bnav-shadow {
+  position: absolute;
+  inset: 10px 6px 4px;
+  border-radius: 26px;
+  box-shadow: var(--bnav-shadow);
+}
+.peyvo-bnav-liquid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: -26px;             /* headroom so the raised blob isn't clipped */
+  filter: url(#peyvo-goo);
+  pointer-events: none;
+}
+.peyvo-bnav-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 64px;
+  border-radius: 26px;
+  background: var(--bnav-bar);
+}
+.peyvo-bnav-blob {
+  position: absolute;
+  top: 12px;
+  left: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: 9999px;
+  background: linear-gradient(140deg, rgb(var(--rgb-copper)), rgb(var(--rgb-teal)));
+}
+/* The lagging second blob is what creates the stretched "melt" while the
+   indicator travels; it catches up and merges when the spring settles. */
+.peyvo-bnav-blob.is-trail {
+  top: 17px;
+  width: 42px;
+  height: 42px;
+}
+.peyvo-bnav-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+  border: 1px solid var(--bnav-ring);
+  pointer-events: none;
+}
+.peyvo-bnav-items {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: stretch;
+}
+.peyvo-bnav-item {
+  flex: 1 1 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-muted);
+  -webkit-tap-highlight-color: transparent;
+}
+.peyvo-bnav-item.is-active { color: rgb(var(--rgb-copper)); }
+.peyvo-bnav-label {
+  position: absolute;
+  bottom: 7px;
+  font-size: 9.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+/* Low-power / motion-sensitive mode: no goo, no trailing blob, no travel. */
+@media (prefers-reduced-motion: reduce) {
+  .peyvo-bnav-liquid { filter: none; }
+  .peyvo-bnav-blob.is-trail { display: none; }
+}
+
+/* ── OTP / verification-code slots ───────────────────────────── */
+.otp-slot {
+  position: relative;
+  width: clamp(40px, 16vw, 48px);
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 800;
+  background: var(--color-surface2);
+  border: 1px solid var(--color-border);
+  color: var(--color-ink);
+  overflow: hidden;
+}
+.otp-slot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: linear-gradient(160deg, var(--glass-highlight), transparent 62%);
+  pointer-events: none;
+}
+.otp-slot.is-filled { border-color: rgb(var(--rgb-copper) / 0.55); }
+.otp-slot.is-active {
+  border-color: rgb(var(--rgb-copper));
+  box-shadow: 0 0 0 3px rgb(var(--rgb-copper) / 0.18), 0 8px 22px rgb(var(--rgb-copper) / 0.22);
+}
+.otp-slot.is-ok {
+  border-color: rgb(var(--rgb-teal));
+  box-shadow: 0 0 0 3px rgb(var(--rgb-teal) / 0.18);
+}
+.otp-slot.is-err {
+  border-color: rgb(var(--rgb-danger));
+  box-shadow: 0 0 0 3px rgb(var(--rgb-danger) / 0.16);
+}
+.otp-caret {
+  position: absolute;
+  width: 2px;
+  height: 22px;
+  border-radius: 2px;
+  background: rgb(var(--rgb-copper));
+}
+
+/* ── Shimmer skeleton (loading placeholders) ─────────────────── */
+@keyframes peyvo-shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%); }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface2);
+  border-radius: 12px;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, var(--glass-highlight), transparent);
+  animation: peyvo-shimmer 1.4s infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; }
+}
+
+/* ── Reduced-motion safety net for the scroll-reveal wrappers ──
+   The markup is identical for everyone (that's what keeps hydration happy);
+   this is what actually neutralises the entrance animation. It also means
+   revealed content is never left invisible if JS is slow or fails, since the
+   wrappers ship with inline opacity:0 from framer-motion. */
+@media (prefers-reduced-motion: reduce) {
+  .peyvo-anim {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Global print rules: kill the glass (translucent surfaces print as
+   mud) and hide app chrome so invoices come out clean. */
 @media print {
   header, .no-print { display: none !important; }
   body { background: white !important; color: black !important; }
+  body::before { display: none !important; }
+  :root, [data-theme="dark"], [data-theme="light"] {
+    --color-surface: #ffffff;
+    --color-surface2: #f3f4f6;
+    --color-border: #d7dbe3;
+  }
+  [class*="bg-surface"], .stat-tile {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
 }
