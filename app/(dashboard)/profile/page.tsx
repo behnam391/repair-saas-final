@@ -1,13 +1,19 @@
 "use client";
 import { useEffect, useState } from "react";
+import ImageUploader from "@/components/ImageUploader";
+import JalaliDatePicker from "@/components/JalaliDatePicker";
+
+const SPECIALTY_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی (برد/سی‌پی‌یو)" };
 
 export default function ProfilePage() {
   const [form, setForm] = useState({
-    avatarUrl: "", email: "", gmailId: "", nationalId: "", birthDate: "",
-    notifyEmail: false,
+    avatarUrl: "", phone: "", email: "", gmailId: "", nationalId: "", birthDate: "",
+    notifyEmail: false, specialty: "",
   });
   const [name, setName] = useState("");
+  const [roleLabel, setRoleLabel] = useState("");
   const [saved, setSaved] = useState(false);
+  const [saveErr, setSaveErr] = useState("");
 
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "" });
   const [pwMsg, setPwMsg] = useState("");
@@ -18,24 +24,29 @@ export default function ProfilePage() {
     if (res.ok) {
       const data = await res.json();
       setName(data.user.name);
+      const ROLE_FA: Record<string, string> = { OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی" };
+      setRoleLabel(ROLE_FA[data.user.role] ?? data.user.role ?? "");
       setForm({
-        avatarUrl: data.user.avatarUrl ?? "", email: data.user.email ?? "", gmailId: data.user.gmailId ?? "",
+        avatarUrl: data.user.avatarUrl ?? "", phone: data.user.phone ?? "", email: data.user.email ?? "", gmailId: data.user.gmailId ?? "",
         nationalId: data.user.nationalId ?? "",
         birthDate: data.user.birthDate ? data.user.birthDate.slice(0, 10) : "",
         notifyEmail: data.user.notifyEmail,
+        specialty: data.user.specialty ?? "",
       });
     }
   }
   useEffect(() => { load(); }, []);
 
   async function save() {
-    setSaved(false);
+    setSaved(false); setSaveErr("");
+    if (form.phone && !/^09\d{9}$/.test(form.phone.trim())) { setSaveErr("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
     const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, specialty: form.specialty || null }),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
+    else { const d = await res.json().catch(() => ({})); setSaveErr(d.message || "ذخیره ناموفق بود"); }
   }
 
   async function changePassword() {
@@ -62,11 +73,11 @@ export default function ProfilePage() {
         <div className="text-sm font-bold">{name}</div>
       </div>
 
-      <label className="block text-xs text-muted mb-1">آدرس عکس پروفایل (لینک تصویر)</label>
-      <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-1"
-        placeholder="https://..."
-        value={form.avatarUrl} onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })} />
-      <p className="text-[10px] text-muted mb-3">فعلاً فقط لینک تصویر پشتیبانی می‌شود؛ آپلود مستقیم فایل به‌زودی اضافه می‌شود.</p>
+      <ImageUploader
+        label="عکس پروفایل"
+        value={form.avatarUrl}
+        onChange={(url) => setForm({ ...form, avatarUrl: url })}
+      />
 
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div>
@@ -76,10 +87,24 @@ export default function ProfilePage() {
         </div>
         <div>
           <label className="block text-xs text-muted mb-1">تاریخ تولد</label>
-          <input type="date" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mono"
-            value={form.birthDate} onChange={(e) => setForm({ ...form, birthDate: e.target.value })} />
+          <JalaliDatePicker className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm"
+            value={form.birthDate} onChange={(v) => setForm({ ...form, birthDate: v })} />
         </div>
       </div>
+
+      <label className="block text-xs text-muted mb-1">شماره موبایل (برای ورود)</label>
+      <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono" dir="ltr" inputMode="tel" maxLength={11}
+        placeholder="09xxxxxxxxx" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+
+      <label className="block text-xs text-muted mb-1">
+        تخصص من {roleLabel && <span className="text-muted">— نقش: {roleLabel}</span>}
+      </label>
+      <select className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-1"
+        value={form.specialty} onChange={(e) => setForm({ ...form, specialty: e.target.value })}>
+        <option value="">— فقط هماهنگی/پذیرش، کار فنی نمی‌کنم —</option>
+        {Object.entries(SPECIALTY_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+      </select>
+      <p className="text-[10px] text-muted mb-3">اگر خودتان هم گوشی تعمیر می‌کنید (مثلاً مدیری که نرم‌افزار هم کار می‌کند)، تخصص‌تان را انتخاب کنید.</p>
 
       <label className="block text-xs text-muted mb-1">ایمیل</label>
       <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
@@ -93,6 +118,7 @@ export default function ProfilePage() {
         اطلاع‌رسانی از طریق ایمیل/جیمیل فعال باشد
       </label>
 
+      {saveErr && <p className="text-danger text-xs mb-2">{saveErr}</p>}
       <button onClick={save} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
         {saved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
       </button>
@@ -110,6 +136,11 @@ export default function ProfilePage() {
         <button onClick={changePassword} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm">
           تغییر رمز عبور
         </button>
+        <p className="text-[11px] text-muted text-center mt-3">
+          رمز فعلی را به خاطر ندارید؟{" "}
+          <a href="/forgot-password" className="text-copper font-semibold">بازیابی با کد پیامکی/ایمیل</a>
+          {" "}(اول از سیستم خارج شوید، بعد کد دریافت کنید)
+        </p>
       </div>
     </div>
   );

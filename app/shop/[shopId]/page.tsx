@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 type ShopPublic = {
   name: string; address: string | null; phone: string | null; landlinePhone: string | null;
@@ -11,9 +11,17 @@ type ShopPublic = {
 
 export default function ShopLandingPage() {
   const params = useParams();
+  const router = useRouter();
   const shopId = params.shopId as string;
   const [shop, setShop] = useState<ShopPublic | null>(null);
   const [notFound, setNotFound] = useState(false);
+
+  function goBack() {
+    // Prefer real history; fall back to the customer panel so the user is
+    // never stranded on this standalone page with no way back.
+    if (typeof window !== "undefined" && window.history.length > 1) router.back();
+    else router.push("/customer");
+  }
 
   useEffect(() => {
     fetch(`/api/public/shops/${shopId}`).then((r) => {
@@ -22,11 +30,19 @@ export default function ShopLandingPage() {
     }).then((d) => d && setShop(d.shop));
   }, [shopId]);
 
-  if (notFound) return <div className="min-h-screen flex items-center justify-center text-sm text-muted">این مغازه یافت نشد.</div>;
+  if (notFound) return (
+    <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-sm text-muted">
+      این مغازه یافت نشد.
+      <button onClick={goBack} className="bg-surface2 border border-border rounded-lg px-4 py-2 text-xs">→ بازگشت</button>
+    </div>
+  );
   if (!shop) return null;
 
   return (
     <div className="min-h-screen p-4 max-w-md mx-auto">
+      <button onClick={goBack} className="flex items-center gap-1 text-xs text-muted mb-3 bg-surface2 border border-border rounded-lg px-3 py-2">
+        → بازگشت
+      </button>
       <div className="bg-surface border-t-2 border-t-copper border-x border-b border-surface2 rounded-2xl p-6 text-center">
         <h1 className="display-heading text-xl mb-1">{shop.name}</h1>
         {shop.verificationLevel === 3 && (

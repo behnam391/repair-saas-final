@@ -1,7 +1,10 @@
 "use client";
+import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import PatternLockInput from "@/components/PatternLockInput";
+import ComboBox from "@/components/ComboBox";
+import TicketChat from "@/components/TicketChat";
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار" },
@@ -36,6 +39,10 @@ export default function TicketsPage() {
   const [openTicket, setOpenTicket] = useState<Ticket | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [toast, setToast] = useState("");
+  const [query, setQuery] = useState("");
+  // Mobile accordion: which lanes are collapsed. Starts empty (all open);
+  // only affects narrow screens — desktop always shows every column.
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
   async function load() {
     setLoading(true);
@@ -82,19 +89,62 @@ export default function TicketsPage() {
         </button>
       </div>
 
+      {/* Search — filters every lane live by device, customer, number, or issue. */}
+      <div className="relative mb-3">
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="🔍 جستجو: مدل گوشی، نام مشتری، شماره تیکت..."
+          className="w-full bg-surface2 border border-border rounded-xl px-3 py-2.5 text-sm"
+        />
+        {query && (
+          <button
+            onClick={() => setQuery("")}
+            className="absolute left-2 top-1/2 -translate-y-1/2 text-muted text-xs bg-surface rounded-full w-6 h-6"
+            title="پاک کردن"
+          >
+            ✕
+          </button>
+        )}
+      </div>
+
       {loading ? (
         <p className="text-muted text-sm text-center py-10">در حال بارگذاری...</p>
       ) : (
-        <div className="flex gap-3 overflow-x-auto pb-3">
+        /* Mobile: lanes stack vertically (each collapsible). Desktop (sm+):
+           classic side-by-side columns. */
+        <div className="flex flex-col gap-3 sm:flex-row sm:gap-3 sm:overflow-x-auto pb-3">
           {LANES.map((lane) => {
-            const items = tickets.filter((t) => t.lane === lane.key);
+            const q = query.trim().toLowerCase();
+            const items = tickets.filter(
+              (t) =>
+                t.lane === lane.key &&
+                (!q ||
+                  t.deviceModel.toLowerCase().includes(q) ||
+                  t.customer.name.toLowerCase().includes(q) ||
+                  t.customer.phone.includes(q) ||
+                  String(t.no).includes(q) ||
+                  (t.issueInitial ?? "").toLowerCase().includes(q))
+            );
+            const isCollapsed = !!collapsed[lane.key];
             return (
-              <div key={lane.key} className="flex-none w-[84vw] sm:w-72 bg-surface border border-surface2 rounded-2xl">
-                <div className="flex justify-between items-center px-3 py-2.5 border-b border-surface2">
+              <div key={lane.key} className="w-full sm:flex-none sm:w-72 bg-surface border border-surface2 rounded-2xl">
+                {/* The whole lane header is a collapse toggle — on every
+                    screen size (web and phone alike). */}
+                <button
+                  type="button"
+                  onClick={() => setCollapsed((c) => ({ ...c, [lane.key]: !c[lane.key] }))}
+                  className={`w-full flex justify-between items-center px-3 py-2.5 text-right ${
+                    isCollapsed ? "" : "border-b border-surface2"
+                  }`}
+                >
                   <span className="font-bold text-[13px]">{lane.label}</span>
-                  <span className="mono text-xs text-muted">{items.length}</span>
-                </div>
-                <div className="p-2.5 flex flex-col gap-2.5 max-h-[70vh] overflow-y-auto">
+                  <span className="flex items-center gap-2">
+                    <span className={`mono text-xs ${items.length > 0 ? "text-copper font-bold" : "text-muted"}`}>{items.length}</span>
+                    <span className={`text-muted text-[10px] transition-transform ${isCollapsed ? "" : "rotate-180"}`}>▼</span>
+                  </span>
+                </button>
+                <div className={`${isCollapsed ? "hidden" : "flex"} p-2.5 flex-col gap-2.5 max-h-[70vh] overflow-y-auto`}>
                   {items.length === 0 && (
                     <div className="text-muted text-xs text-center py-6 border border-dashed border-surface2 rounded-lg">
                       دستگاهی در این مرحله نیست
@@ -104,7 +154,7 @@ export default function TicketsPage() {
                     <button
                       key={t.id}
                       onClick={() => setOpenTicket(t)}
-                      className={`repair-tag ${t.status === "READY" ? "tag-ready" : t.status === "AWAITING_APPROVAL" ? "tag-awaiting" : t.status === "IN_PROGRESS" ? "tag-progress" : ""} text-right bg-surface2 rounded-xl p-3 pr-4 hover:brightness-110 transition`}
+                      className={`repair-tag card-hover ${t.status === "READY" ? "tag-ready" : t.status === "AWAITING_APPROVAL" ? "tag-awaiting" : t.status === "IN_PROGRESS" ? "tag-progress" : ""} text-right bg-surface2 rounded-xl p-3 pr-4 hover:brightness-110 transition`}
                     >
                       <div className="flex justify-between text-xs">
                         <span className="font-bold">{t.deviceModel}</span>
@@ -185,8 +235,8 @@ function TicketDetail({
   onTransition: (id: string, action: string, targetLane?: string, extra?: Record<string, any>) => void;
 }) {
   const [referOpen, setReferOpen] = useState(false);
-  const [targetLane, setTargetLane] = useState("SOFTWARE");
   const [readyOpen, setReadyOpen] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [includeCard, setIncludeCard] = useState(false);
 
@@ -196,6 +246,9 @@ function TicketDetail({
   const [approvedCost, setApprovedCost] = useState(ticket.technicianReportedCost ?? 0);
   const [wage, setWage] = useState(0);
   const isOwner = myRole === "OWNER";
+
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelNote, setCancelNote] = useState("");
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50" onClick={onClose}>
@@ -224,6 +277,22 @@ function TicketDetail({
 
         <ReferralFlow history={ticket.history} currentLane={ticket.lane} />
 
+        {/* Customer chat — collapsible, so the ticket detail stays compact. */}
+        <div className="mb-4">
+          <button
+            onClick={() => setShowChat((v) => !v)}
+            className="w-full flex items-center justify-between bg-surface2 border border-border rounded-xl px-3 py-2.5 text-xs font-bold"
+          >
+            <span>💬 گفتگو با مشتری</span>
+            <span className={`text-muted text-[10px] transition-transform ${showChat ? "rotate-180" : ""}`}>▼</span>
+          </button>
+          {showChat && (
+            <div className="bg-surface2/50 border border-border border-t-0 rounded-b-xl p-2 -mt-1">
+              <TicketChat endpoint={`/api/tickets/${ticket.id}/messages`} iAmCustomer={false} />
+            </div>
+          )}
+        </div>
+
         <div className="space-y-2.5 mb-5">
           {ticket.history.map((h, i) => (
             <div key={i} className="bg-surface2 border border-surface2 rounded-lg p-2.5">
@@ -247,11 +316,11 @@ function TicketDetail({
             {isOwner ? (
               <div className="space-y-2 mt-2">
                 <label className="block text-[11px] text-muted">مبلغ نهایی تأییدشده (تومان)</label>
-                <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
-                  value={approvedCost} onChange={(e) => setApprovedCost(+e.target.value)} />
+                <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={approvedCost} onChange={(e) => setApprovedCost(num(e.target.value))} />
                 <label className="block text-[11px] text-muted">دستمزد این تعمیرکار (تومان)</label>
-                <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
-                  value={wage} onChange={(e) => setWage(+e.target.value)} />
+                <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={wage} onChange={(e) => setWage(num(e.target.value))} />
                 <div className="flex gap-2">
                   <button
                     onClick={() => onTransition(ticket.id, "approve-cost", undefined, { approvedCost, technicianWage: wage })}
@@ -294,8 +363,8 @@ function TicketDetail({
             {submitOpen && (
               <div className="bg-surface2 border border-surface2 rounded-lg p-3 mt-2.5 space-y-2">
                 <label className="block text-[11px] text-muted">هزینه پیشنهادی (تومان)</label>
-                <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
-                  value={reportedCost} onChange={(e) => setReportedCost(+e.target.value)} />
+                <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={reportedCost} onChange={(e) => setReportedCost(num(e.target.value))} />
                 <label className="block text-[11px] text-muted">یادداشت برای مدیر (قطعات مصرفی و...)</label>
                 <textarea className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
                   value={reportNote} onChange={(e) => setReportNote(e.target.value)} />
@@ -309,8 +378,8 @@ function TicketDetail({
             {readyOpen && (
               <div className="bg-surface2 border border-surface2 rounded-lg p-3 mt-2.5 space-y-2">
                 <label className="block text-[11px] text-muted">قیمت حدودی/نهایی (تومان) — در پیامک به مشتری درج می‌شود</label>
-                <input type="number" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
-                  value={estimatedCost} onChange={(e) => setEstimatedCost(+e.target.value)} />
+                <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                  value={estimatedCost} onChange={(e) => setEstimatedCost(num(e.target.value))} />
                 <label className="flex items-center gap-2 text-[11px] text-muted">
                   <input type="checkbox" checked={includeCard} onChange={(e) => setIncludeCard(e.target.checked)} />
                   ارسال شماره کارت مغازه در همین پیامک
@@ -323,22 +392,20 @@ function TicketDetail({
               </div>
             )}
             {referOpen && (
-              <div className="flex gap-2 mt-2.5">
-                <select
-                  value={targetLane}
-                  onChange={(e) => setTargetLane(e.target.value)}
-                  className="flex-1 bg-surface2 border border-surface2 rounded-lg px-2 text-xs"
-                >
+              <div className="bg-surface2 border border-surface2 rounded-xl p-3 mt-2.5">
+                <div className="text-[11px] text-muted mb-2 font-bold">به کدام بخش ارجاع شود؟</div>
+                <div className="flex flex-col gap-2">
                   {LANES.filter((l) => l.key !== ticket.lane && l.key !== "READY").map((l) => (
-                    <option key={l.key} value={l.key}>{l.label}</option>
+                    <button
+                      key={l.key}
+                      onClick={() => onTransition(ticket.id, "refer", l.key)}
+                      className="w-full flex items-center justify-between bg-surface border border-border rounded-xl px-4 py-3 text-sm font-bold hover:border-copper active:bg-copper/15 transition"
+                    >
+                      <span>{l.label}</span>
+                      <span className="text-copper">←</span>
+                    </button>
                   ))}
-                </select>
-                <button
-                  onClick={() => onTransition(ticket.id, "refer", targetLane)}
-                  className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-4"
-                >
-                  ارجاع
-                </button>
+                </div>
               </div>
             )}
           </>
@@ -347,6 +414,39 @@ function TicketDetail({
             ثبت تحویل به مشتری
           </button>
         )}
+
+        {/* Available at any stage before the device is actually delivered —
+            covers both "customer changed their mind mid-repair" and any
+            other reason the shop needs to close the ticket without
+            finishing it. */}
+        <div className="mt-3 pt-3 border-t border-surface2">
+          {!cancelOpen ? (
+            <button onClick={() => setCancelOpen(true)} className="w-full text-danger text-[11px] font-semibold py-1">
+              انصراف از تعمیر و بازگشت دستگاه به مشتری
+            </button>
+          ) : (
+            <div className="bg-danger/10 border border-danger/40 rounded-lg p-3 space-y-2">
+              <div className="text-[11px] font-bold text-danger">ثبت انصراف و بازگشت دستگاه</div>
+              <p className="text-[10px] text-muted">این تیکت بسته می‌شود و از تابلوی فعال حذف می‌شود؛ بعداً از «سابقه و جستجو» با وضعیت «لغوشده» قابل مشاهده است.</p>
+              <textarea
+                className="w-full bg-surface border border-surface2 rounded-lg px-2 py-1.5 text-xs"
+                placeholder="دلیل انصراف (اختیاری)"
+                value={cancelNote}
+                onChange={(e) => setCancelNote(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onTransition(ticket.id, "cancel", undefined, { note: cancelNote || undefined })}
+                  className="flex-1 bg-danger text-white text-xs font-bold rounded-lg py-2">
+                  بله، دستگاه بازگردانده شد
+                </button>
+                <button onClick={() => setCancelOpen(false)} className="flex-1 bg-surface border border-surface2 text-xs font-semibold rounded-lg py-2">
+                  انصراف از این کار
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -359,11 +459,31 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
   });
   const [collectPasscode, setCollectPasscode] = useState(false);
   const [error, setError] = useState("");
+  // Step wizard: 1=customer, 2=device, 3=issue+confirm — keeps the intake
+  // form short and phone-friendly instead of one long scroll.
+  const [step, setStep] = useState(1);
+  const STEPS = ["مشتری", "دستگاه", "ایراد", "تأیید"];
+
+  function nextStep() {
+    setError("");
+    if (step === 1 && (!form.customerName.trim() || !form.customerPhone.trim())) {
+      setError("نام و شماره تماس مشتری را وارد کنید");
+      return;
+    }
+    if (step === 1 && !/^09\d{9}$/.test(form.customerPhone.trim())) {
+      setError("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد");
+      return;
+    }
+    if (step === 2 && !form.deviceModel.trim()) {
+      setError("برند و مدل دستگاه را انتخاب کنید");
+      return;
+    }
+    setStep(step + 1);
+  }
 
   const [catalog, setCatalog] = useState<Record<string, string[]>>({});
   const [favoriteBrands, setFavoriteBrands] = useState<string[]>([]);
   const [brand, setBrand] = useState("");
-  const [modelMode, setModelMode] = useState<"select" | "custom">("select");
   const [templates, setTemplates] = useState<{ id: string; lane: string; label: string }[]>([]);
 
   useEffect(() => {
@@ -398,69 +518,83 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
   return (
     <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50" onClick={onClose}>
       <div className="bg-surface w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="font-extrabold text-base mb-1">پذیرش دستگاه جدید</div>
-        <div className="text-xs text-muted mb-4">اطلاعات مشتری و دستگاه را وارد کنید</div>
+        <div className="font-extrabold text-base mb-3">پذیرش دستگاه جدید</div>
 
-        {[
-          ["نام مشتری", "customerName", "text"],
-          ["شماره تماس", "customerPhone", "tel"],
-        ].map(([label, key, type]) => (
-          <div className="mb-3" key={key}>
-            <label className="block text-xs text-muted mb-1">{label}</label>
-            <input
-              type={type}
-              className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-              value={(form as any)[key]}
-              onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-            />
-          </div>
-        ))}
+        {/* Step indicator */}
+        <div className="flex items-center gap-1.5 mb-5">
+          {STEPS.map((label, i) => {
+            const n = i + 1;
+            const state = n < step ? "done" : n === step ? "active" : "next";
+            return (
+              <div key={label} className="flex items-center gap-1.5 flex-1">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
+                  state === "done" ? "bg-teal text-white" : state === "active" ? "bg-copper text-white" : "bg-surface2 text-muted"
+                }`}>
+                  {state === "done" ? "✓" : n}
+                </div>
+                <span className={`text-[10px] whitespace-nowrap ${state === "active" ? "font-bold" : "text-muted"}`}>{label}</span>
+                {i < STEPS.length - 1 && <div className={`h-px flex-1 ${n < step ? "bg-teal" : "bg-surface2"}`} />}
+              </div>
+            );
+          })}
+        </div>
 
+        {step === 1 && (<>
+        <div className="mb-3">
+          <label className="block text-xs text-muted mb-1">نام مشتری</label>
+          <input
+            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+            value={form.customerName}
+            onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+          />
+        </div>
+        <div className="mb-3">
+          <label className="block text-xs text-muted mb-1">شماره تماس</label>
+          <input
+            inputMode="tel" dir="ltr" maxLength={11} placeholder="09xxxxxxxxx"
+            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+            value={form.customerPhone}
+            onChange={(e) => setForm({ ...form, customerPhone: e.target.value })}
+          />
+        </div>
+        </>)}
+
+        {step === 2 && (<>
         <label className="block text-xs text-muted mb-1">برند گوشی</label>
-        <select
-          className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
-          value={brand}
-          onChange={(e) => { setBrand(e.target.value); setForm({ ...form, deviceModel: "" }); setModelMode("select"); }}
-        >
-          <option value="">انتخاب برند...</option>
-          {brandList.map((b) => <option key={b} value={b}>{b}{favoriteBrands.includes(b) ? " ⭐" : ""}</option>)}
-          <option value="__custom__">سایر / برند دیگر</option>
-        </select>
+        <div className="mb-3">
+          <ComboBox
+            value={brand}
+            onChange={(v) => { setBrand(v); setForm({ ...form, deviceModel: "" }); }}
+            options={brandList}
+            starred={favoriteBrands}
+            placeholder="انتخاب یا تایپ برند..."
+          />
+        </div>
 
-        {brand === "__custom__" ? (
-          <div className="mb-3">
-            <label className="block text-xs text-muted mb-1">نام برند و مدل (دستی)</label>
-            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-              value={form.deviceModel} onChange={(e) => setForm({ ...form, deviceModel: e.target.value })}
-              placeholder="مثلاً: Tecno Spark 10" />
-          </div>
-        ) : brand ? (
+        {brand && (
           <div className="mb-3">
             <label className="block text-xs text-muted mb-1">مدل</label>
-            {modelMode === "select" ? (
-              <select
-                className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-                value={form.deviceModel}
-                onChange={(e) => e.target.value === "__custom__" ? setModelMode("custom") : setForm({ ...form, deviceModel: e.target.value })}
-              >
-                <option value="">انتخاب مدل...</option>
-                {modelsForBrand.map((m) => <option key={m} value={`${brand} ${m}`}>{m}</option>)}
-                <option value="__custom__">مدل دیگر / نوشتن دستی</option>
-              </select>
-            ) : (
-              <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-                value={form.deviceModel} onChange={(e) => setForm({ ...form, deviceModel: e.target.value })}
-                placeholder={`${brand} ...`} />
-            )}
+            <ComboBox
+              value={
+                form.deviceModel.startsWith(`${brand} `)
+                  ? form.deviceModel.slice(brand.length + 1)
+                  : form.deviceModel
+              }
+              onChange={(m) => setForm({ ...form, deviceModel: m ? `${brand} ${m}` : "" })}
+              options={modelsForBrand}
+              placeholder="انتخاب یا تایپ مدل..."
+            />
           </div>
-        ) : null}
+        )}
 
         <div className="mb-1">
           <label className="block text-xs text-muted mb-1">IMEI (اختیاری)</label>
           <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
             value={form.imei} onChange={(e) => setForm({ ...form, imei: e.target.value })} />
         </div>
+        </>)}
 
+        {step === 3 && (<>
         <div className="mb-2">
           <label className="block text-xs text-muted mb-1">ارجاع اولیه به</label>
           <select
@@ -504,7 +638,9 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
             onChange={(e) => setForm({ ...form, customerDamageNotes: e.target.value })}
           />
         </div>
+        </>)}
 
+        {step === 4 && (<>
         <label className="flex items-center gap-2 text-xs text-muted mb-2">
           <input type="checkbox" checked={collectPasscode} onChange={(e) => setCollectPasscode(e.target.checked)} />
           دریافت رمز عبور صفحه گوشی از مشتری (برای تست بعد از تعمیر)
@@ -558,12 +694,31 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
             ))}
           </div>
         </div>
+        </>)}
 
         {error && <p className="text-danger text-xs mb-3">{error}</p>}
 
-        <button onClick={submit} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
-          ثبت پذیرش
-        </button>
+        {/* Wizard navigation */}
+        <div className="flex gap-2">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={() => { setError(""); setStep(step - 1); }}
+              className="flex-1 bg-surface2 border border-border font-bold rounded-lg py-2.5 text-sm"
+            >
+              → قبلی
+            </button>
+          )}
+          {step < STEPS.length ? (
+            <button type="button" onClick={nextStep} className="flex-[2] bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
+              بعدی ←
+            </button>
+          ) : (
+            <button onClick={submit} className="flex-[2] bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
+              ✓ ثبت پذیرش
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

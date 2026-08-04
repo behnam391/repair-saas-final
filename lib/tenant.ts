@@ -15,6 +15,11 @@ export async function requireSession() {
   const session = await getServerSession(authOptions);
   if (!session?.user) throw new UnauthorizedError("Not signed in");
   const user = session.user as any;
+  // Customer / platform-admin sessions carry no shopId — reject them here
+  // explicitly so a shop-scoped route can never run with shopId=undefined.
+  if (user.isCustomer || user.isSuperAdmin || !user.shopId) {
+    throw new UnauthorizedError("Not a shop session");
+  }
   return {
     userId: user.id as string,
     shopId: user.shopId as string,
@@ -30,25 +35,41 @@ export function requireRole(role: string, allowed: string[]) {
 }
 
 /**
+ * Shop session that ALSO requires a "desk" role (OWNER or FRONTDESK) —
+ * i.e. the customer/money/inventory side of the shop. Repair-only
+ * technicians (HARDWARE/SOFTWARE/BOARD) are rejected. This is the
+ * server-side counterpart to the role-based nav hiding: it stops a
+ * technician from reaching these endpoints by typing the URL directly.
+ */
+export async function requireDeskSession() {
+  const s = await requireSession();
+  if (!["OWNER", "FRONTDESK"].includes(s.role)) {
+    throw new UnauthorizedError(`Role ${s.role} not permitted for this section`);
+  }
+  return s;
+}
+
+/**
  * For platform-owner-only routes (/api/superadmin/*). Completely separate
  * from requireSession — a shop user's session will never satisfy this,
  * and this function never returns a shopId, so it can't be misused to
  * accidentally scope a tenant query.
  */
+/**
+ * For customer-panel routes (/api/customer/*). The nationwide-customer
+ * counterpart of requireSession — never returns a shopId, and a shop or
+ * platform-admin session will never satisfy it.
+ */
+export async function requireCustomer() {
+  const session = await getServerSession(authOptions);
+  const user = session?.user as any;
+  if (!user?.isCustomer) throw new UnauthorizedError("Not a customer session");
+  return { customerId: user.id as string, name: user.name as string, phone: user.phone as string };
+}
+
 export async function requireSuperAdmin() {
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
   if (!user?.isSuperAdmin) throw new UnauthorizedError("Not a platform admin");
   return { adminId: user.id as string, name: user.name as string };
-}
-
-/**
- * For customer-dashboard-only routes (/api/customer/*). A platform
- * customer is never a shop staff member and never carries a shopId.
- */
-export async function requireCustomerSession() {
-  const session = await getServerSession(authOptions);
-  const user = session?.user as any;
-  if (!user?.isCustomer) throw new UnauthorizedError("Not signed in as a customer");
-  return { customerId: user.id as string, name: user.name as string };
 }

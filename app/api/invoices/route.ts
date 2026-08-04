@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
+import { sendSms } from "@/lib/sms";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -16,10 +17,13 @@ const InvoiceSchema = z.object({
 // GET /api/invoices — list invoices for the signed-in shop, newest first.
 export async function GET() {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const invoices = await db.invoice.findMany({
       where: { shopId },
-      include: { ticket: { include: { customer: true } } },
+      include: {
+        ticket: { include: { customer: true } },
+        items: { include: { item: { select: { name: true } } } },
+      },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ invoices });
@@ -33,7 +37,7 @@ export async function GET() {
 // current inventory sell prices, deducts stock, and produces the invoice.
 export async function POST(req: NextRequest) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const body = InvoiceSchema.parse(await req.json());
 
     const ticket = await db.ticket.findFirst({ where: { id: body.ticketId, shopId } });
@@ -85,6 +89,22 @@ export async function POST(req: NextRequest) {
 
       return inv;
     });
+
+    // SMS the customer their invoice + online payment link (fire-and-forget;
+    // silently skipped when no SMS provider is configured).
+    try {
+      const customer = await db.customer.findUnique({ where: { id: ticket.customerId } });
+      if (customer?.phone) {
+        const origin = req.nextUrl.origin;
+        sendSms(
+          customer.phone,
+          `${shop.name}\n${customer.name} عزیز، فاکتور تعمیر دستگاه شما (کد پیگیری #${ticket.no}) به مبلغ ${invoice.total.toLocaleString("fa-IR")} تومان صادر شد.\nمشاهده و پرداخت آنلاین: ${origin}/pay/${invoice.id}`,
+          shop.smsSenderName ?? undefined
+        ).catch((e) => console.error("[invoices] sms failed", e));
+      }
+    } catch (e) {
+      console.error("[invoices] payment-link sms skipped", e);
+    }
 
     return NextResponse.json({ invoice }, { status: 201 });
   } catch (e) {

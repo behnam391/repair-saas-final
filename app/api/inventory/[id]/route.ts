@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +8,10 @@ export const dynamic = "force-dynamic";
 const UpdateSchema = z.object({
   name: z.string().min(1).optional(),
   sku: z.string().optional(),
+  category: z.enum(["PART", "ACCESSORY", "PHONE", "TOOL", "OTHER"]).optional(),
+  deviceModel: z.string().nullable().optional(),
+  description: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
   quantity: z.number().int().min(0).optional(),
   lowStockAt: z.number().int().min(0).optional(),
   costPrice: z.number().int().min(0).optional(),
@@ -18,12 +22,18 @@ const UpdateSchema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const item = await db.inventoryItem.findFirst({ where: { id: params.id, shopId } });
     if (!item) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
     const body = UpdateSchema.parse(await req.json());
-    const updated = await db.inventoryItem.update({ where: { id: item.id }, data: body });
+    const data = {
+      ...body,
+      deviceModel: body.deviceModel === undefined ? undefined : body.deviceModel || null,
+      description: body.description === undefined ? undefined : body.description || null,
+      imageUrl: body.imageUrl === undefined ? undefined : body.imageUrl || null,
+    };
+    const updated = await db.inventoryItem.update({ where: { id: item.id }, data });
     return NextResponse.json({ item: updated });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -34,7 +44,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { shopId } = await requireSession();
+    const { shopId } = await requireDeskSession();
     const item = await db.inventoryItem.findFirst({ where: { id: params.id, shopId } });
     if (!item) return NextResponse.json({ error: "not_found" }, { status: 404 });
 

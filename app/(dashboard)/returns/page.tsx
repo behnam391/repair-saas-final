@@ -1,5 +1,7 @@
 "use client";
+import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
+import { formatJalaliDate } from "@/lib/jalali";
 
 type Ret = {
   id: string; deviceModel: string; customerName: string; reason: string; refundAmount: number | null;
@@ -66,8 +68,8 @@ export default function ReturnsPage() {
           value={form.customerPhone} onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
         <textarea className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="دلیل مرجوعی"
           value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} />
-        <input type="number" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="مبلغ بازگشتی (تومان، اختیاری)"
-          value={form.refundAmount} onChange={(e) => setForm({ ...form, refundAmount: +e.target.value })} />
+        <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm" placeholder="مبلغ بازگشتی (تومان، اختیاری)"
+          value={form.refundAmount} onChange={(e) => setForm({ ...form, refundAmount: num(e.target.value) })} />
         <button onClick={submit} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">ثبت مرجوعی</button>
       </div>
 
@@ -78,7 +80,7 @@ export default function ReturnsPage() {
               <input className="w-full bg-surface rounded-lg px-2 py-1.5" value={editForm.deviceModel} onChange={(e) => setEditForm({ ...editForm, deviceModel: e.target.value })} />
               <input className="w-full bg-surface rounded-lg px-2 py-1.5" value={editForm.customerName} onChange={(e) => setEditForm({ ...editForm, customerName: e.target.value })} />
               <textarea className="w-full bg-surface rounded-lg px-2 py-1.5" value={editForm.reason} onChange={(e) => setEditForm({ ...editForm, reason: e.target.value })} />
-              <input type="number" className="w-full bg-surface rounded-lg px-2 py-1.5" value={editForm.refundAmount} onChange={(e) => setEditForm({ ...editForm, refundAmount: +e.target.value })} />
+              <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface rounded-lg px-2 py-1.5" value={editForm.refundAmount} onChange={(e) => setEditForm({ ...editForm, refundAmount: num(e.target.value) })} />
               <input className="w-full bg-surface rounded-lg px-2 py-1.5" placeholder="یادداشت حل مشکل" value={editForm.resolutionNote} onChange={(e) => setEditForm({ ...editForm, resolutionNote: e.target.value })} />
               <div className="flex gap-2">
                 <button onClick={() => saveEdit(r.id)} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">ذخیره</button>
@@ -94,7 +96,7 @@ export default function ReturnsPage() {
               <div className="text-muted mt-1">{r.reason}</div>
               {r.resolutionNote && <div className="text-teal mt-1">✔ {r.resolutionNote}</div>}
               <div className="flex justify-between items-center mt-2">
-                <div className="text-[10px] text-muted">{new Date(r.createdAt).toLocaleDateString("fa-IR")}</div>
+                <div className="text-[10px] text-muted">{formatJalaliDate(r.createdAt)}</div>
                 <div className="flex gap-2">
                   <button onClick={() => startEdit(r)} className="text-copper text-[10px] font-semibold">ویرایش</button>
                   <button onClick={() => toggleResolved(r)} className={`text-[10px] font-semibold ${r.resolved ? "text-muted" : "text-teal"}`}>

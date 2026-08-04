@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 const UpdateSchema = z.object({
   name: z.string().min(2).optional(),
   type: z.enum(["REPAIR", "DEALER", "BOTH"]).optional(),
+  businessSize: z.enum(["SOLO", "TEAM", "ENTERPRISE"]).optional(),
   address: z.string().optional(),
   phone: z.string().optional(),
   bankCardNumber: z.string().optional(),
@@ -26,7 +27,7 @@ export async function GET() {
     const shop = await db.shop.findUniqueOrThrow({
       where: { id: shopId },
       select: {
-        id: true, name: true, address: true, phone: true, plan: true, type: true, bankCardNumber: true, bankAccountNumber: true,
+        id: true, name: true, address: true, phone: true, plan: true, planExpiresAt: true, type: true, bankCardNumber: true, bankAccountNumber: true,
         landlinePhone: true, businessSize: true, specialties: true, verificationLevel: true, verificationRequestedAt: true,
         latitude: true, longitude: true, province: true, taxPercent: true,
       },

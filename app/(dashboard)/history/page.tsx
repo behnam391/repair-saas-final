@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import { formatJalaliDate } from "@/lib/jalali";
+import JalaliDatePicker from "@/components/JalaliDatePicker";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "در صف", IN_PROGRESS: "در حال انجام", AWAITING_APPROVAL: "منتظر تأیید",
@@ -53,11 +55,11 @@ export default function HistoryPage() {
         <div className="flex gap-2">
           <div className="flex-1">
             <label className="block text-[10px] text-muted mb-1">از تاریخ</label>
-            <input type="date" className="w-full bg-surface2 rounded-lg px-2 py-2 text-xs" value={from} onChange={(e) => setFrom(e.target.value)} />
+            <JalaliDatePicker className="w-full bg-surface2 rounded-lg px-2 py-2 text-xs" value={from} onChange={setFrom} />
           </div>
           <div className="flex-1">
             <label className="block text-[10px] text-muted mb-1">تا تاریخ</label>
-            <input type="date" className="w-full bg-surface2 rounded-lg px-2 py-2 text-xs" value={to} onChange={(e) => setTo(e.target.value)} />
+            <JalaliDatePicker className="w-full bg-surface2 rounded-lg px-2 py-2 text-xs" value={to} onChange={setTo} />
           </div>
         </div>
         <button onClick={search} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">جستجو</button>
@@ -80,7 +82,7 @@ export default function HistoryPage() {
                 {r.imei && <div className="mono text-muted mt-0.5">IMEI: {r.imei}</div>}
                 <div className="text-[#C7CAD1] mt-1">{r.issueInitial}</div>
                 <div className="text-[10px] text-muted mt-1">
-                  {r.assignedTo?.name && `تعمیرکار: ${r.assignedTo.name} · `}{new Date(r.createdAt).toLocaleDateString("fa-IR")}
+                  {r.assignedTo?.name && `تعمیرکار: ${r.assignedTo.name} · `}{formatJalaliDate(r.createdAt)}
                 </div>
               </div>
             ))}

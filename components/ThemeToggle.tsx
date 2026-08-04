@@ -5,9 +5,14 @@ export default function ThemeToggle() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
-    const saved = (localStorage.getItem("theme") as "dark" | "light") || "dark";
-    setTheme(saved);
-    document.documentElement.setAttribute("data-theme", saved);
+    // A personal choice (localStorage) wins; otherwise keep whatever the
+    // server already rendered on <html> — that's the platform default theme
+    // set in the root layout — instead of hardcoding "dark" here.
+    const saved = localStorage.getItem("theme") as "dark" | "light" | null;
+    const current = (document.documentElement.getAttribute("data-theme") as "dark" | "light") || "dark";
+    const initial = saved || current;
+    setTheme(initial);
+    document.documentElement.setAttribute("data-theme", initial);
   }, []);
 
   function toggle() {
