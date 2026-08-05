@@ -44,6 +44,14 @@ export function AuthShell({
         </section>
 
         <aside className="auth-aside">
+          <div className="auth-repair-scene" aria-hidden>
+            <div className="auth-repair-image" />
+            <div className="auth-loupe-glow" />
+            <div className="auth-bench-scan" />
+            <i className="auth-spark auth-spark-one" />
+            <i className="auth-spark auth-spark-two" />
+            <i className="auth-spark auth-spark-three" />
+          </div>
           <div className="auth-aside-grid" aria-hidden />
           <div className="auth-demo-card auth-demo-card-back">
             <span>رضایت مشتری</span><strong>۹۴٪</strong><i />

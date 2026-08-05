@@ -423,8 +423,16 @@ select option {
 .auth-switch { text-align: center; color: var(--color-muted); font-size: 11px; }
 .auth-alt { text-align: center; margin-top: 2px; padding: 12px; border-radius: 13px; background: var(--color-surface); color: var(--color-muted); font-size: 10.5px; }
 .auth-security { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 18px; color: rgb(var(--rgb-muted) / .72); font-size: 9.5px; }
-.auth-aside { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 42px; background: linear-gradient(160deg, var(--auth-soft), rgb(5 12 25 / .36)); border-right: 1px solid var(--color-border); }
-.auth-aside::after { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle at 50% 26%, var(--auth-soft), transparent 42%); }
+.auth-aside { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; padding: 42px; background: #050d18; border-right: 1px solid var(--color-border); }
+.auth-aside::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to bottom, transparent 35%, rgba(3,9,18,.58) 65%, rgba(3,9,18,.97) 100%); pointer-events: none; }
+.auth-aside::after { content: ""; position: absolute; inset: 0; z-index: -1; background: radial-gradient(circle at 50% 26%, var(--auth-soft), transparent 45%); mix-blend-mode: screen; pointer-events: none; }
+.auth-repair-scene { position: absolute; inset: 0; z-index: -3; overflow: hidden; pointer-events: none; }
+.auth-repair-image { position: absolute; inset: -4%; background: url('/images/auth-repair-technician.png') center 27% / cover no-repeat; filter: saturate(.9) contrast(1.04); transform-origin: 52% 32%; animation: auth-repair-camera 12s ease-in-out infinite alternate; }
+.auth-repair-scene::after { content: ""; position: absolute; inset: 0; background: linear-gradient(110deg, rgba(4,12,24,.22), transparent 44%, rgba(43,185,222,.08) 52%, transparent 60%); transform: translateX(-115%); animation: auth-workbench-shimmer 7s ease-in-out infinite; }
+.auth-loupe-glow { position: absolute; width: 175px; height: 175px; top: 15%; left: 12%; border-radius: 50%; background: radial-gradient(circle, rgba(255,225,159,.17), rgba(70,205,255,.07) 42%, transparent 70%); filter: blur(8px); animation: auth-loupe-pulse 3.2s ease-in-out infinite; }
+.auth-bench-scan { position: absolute; width: 72%; height: 2px; top: 45%; left: 14%; opacity: 0; background: linear-gradient(90deg, transparent, var(--auth-accent), rgba(255,255,255,.85), transparent); box-shadow: 0 0 14px var(--auth-accent); animation: auth-bench-scan 5.5s ease-in-out infinite; }
+.auth-spark { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #9deaff; box-shadow: 0 0 8px #55d8ff, 0 0 14px var(--auth-accent); opacity: 0; animation: auth-spark-rise 4.2s ease-out infinite; }
+.auth-spark-one { top: 43%; left: 48%; }.auth-spark-two { top: 46%; left: 58%; animation-delay: -1.4s; }.auth-spark-three { top: 40%; left: 68%; animation-delay: -2.8s; }
 .auth-aside-grid { position: absolute; inset: 0; opacity: .16; background-image: linear-gradient(var(--auth-accent) 1px, transparent 1px), linear-gradient(90deg, var(--auth-accent) 1px, transparent 1px); background-size: 34px 34px; mask-image: radial-gradient(circle at 50% 30%, #000, transparent 68%); }
 .auth-demo-card { position: absolute; border: 1px solid rgba(255,255,255,.12); background: rgba(10,16,32,.62); backdrop-filter: blur(18px); box-shadow: 0 22px 50px rgba(0,0,0,.25), inset 0 1px rgba(255,255,255,.08); }
 .auth-demo-card-main { top: 82px; right: 44px; width: 245px; height: 168px; border-radius: 23px; padding: 20px; transform: rotate(-2deg); }
@@ -457,6 +465,11 @@ select option {
 @keyframes auth-card-float { 0%,100% { transform: rotate(-2deg) translateY(0); } 50% { transform: rotate(0deg) translateY(-10px); } }
 @keyframes auth-card-float-back { 0%,100% { transform: rotate(7deg) translateY(0); } 50% { transform: rotate(4deg) translateY(9px); } }
 @keyframes auth-field-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(5px); } 50% { transform: translateX(-5px); } 75% { transform: translateX(3px); } }
+@keyframes auth-repair-camera { 0% { transform: scale(1.03) translate3d(-1%,0,0); } 50% { transform: scale(1.075) translate3d(1%,-1%,0); } 100% { transform: scale(1.045) translate3d(0,1%,0); } }
+@keyframes auth-workbench-shimmer { 0%,28% { transform: translateX(-115%); opacity: 0; } 42% { opacity: .9; } 60%,100% { transform: translateX(115%); opacity: 0; } }
+@keyframes auth-loupe-pulse { 0%,100% { opacity: .48; transform: scale(.9); } 50% { opacity: 1; transform: scale(1.12); } }
+@keyframes auth-bench-scan { 0%,30% { opacity: 0; transform: translateY(-18px) scaleX(.7); } 45% { opacity: .55; } 70%,100% { opacity: 0; transform: translateY(90px) scaleX(1); } }
+@keyframes auth-spark-rise { 0%,45% { opacity: 0; transform: translate3d(0,8px,0) scale(.4); } 55% { opacity: .9; } 78% { opacity: .35; } 100% { opacity: 0; transform: translate3d(8px,-34px,0) scale(1.2); } }
 @media (max-width: 760px) {
   .auth-scene { display: block; padding: 68px 15px 22px; overflow-y: auto; }
   .auth-home-link { top: 22px; right: 20px; }
@@ -466,7 +479,7 @@ select option {
   .auth-brand { margin-bottom: 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .auth-scene::after, .auth-orb, .auth-demo-card-main, .auth-demo-card-back, .auth-field > div::before { animation: none !important; }
+  .auth-scene::after, .auth-orb, .auth-demo-card-main, .auth-demo-card-back, .auth-field > div::before, .auth-repair-image, .auth-repair-scene::after, .auth-loupe-glow, .auth-bench-scan, .auth-spark { animation: none !important; }
 }
 
 /* Stat tiles — frosted numeric cards with a corner light bloom. */
