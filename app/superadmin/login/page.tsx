@@ -11,15 +11,18 @@ export default function SuperAdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginState, setLoginState] = useState<"idle" | "checking" | "success" | "error">("idle");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setLoginState("checking");
     setError("");
     const res = await signIn("platform-credentials", { phone: normalizePhone(phone), password, redirect: false });
     setLoading(false);
-    if (res?.error) { setError("اطلاعات ورود اشتباه است"); return; }
-    router.push("/superadmin");
+    if (res?.error) { setLoginState("error"); setError("اطلاعات ورود اشتباه است"); return; }
+    setLoginState("success");
+    window.setTimeout(() => router.push("/superadmin"), 700);
   }
 
   return (
@@ -28,7 +31,7 @@ export default function SuperAdminLoginPage() {
       asideItems={["نمای جامع تمام فروشگاه‌ها", "کنترل اشتراک و احراز هویت", "گزارش‌ها و تنظیمات مرکزی"]}>
       <form onSubmit={submit} className="auth-form">
         <PhoneField value={phone} onChange={(v) => setPhone(toLatinDigits(v))} />
-        <PasswordField value={password} onChange={setPassword} />
+        <PasswordField value={password} status={loginState} onChange={(v) => { setPassword(v); setLoginState("idle"); }} />
         {error && <div className="auth-error">{error}</div>}
         <AuthSubmit loading={loading}>ورود امن</AuthSubmit>
         <div className="auth-alt">این بخش فقط برای مدیر اصلی پلتفرم در دسترس است.</div>

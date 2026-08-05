@@ -11,18 +11,22 @@ export default function CustomerLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginState, setLoginState] = useState<"idle" | "checking" | "success" | "error">("idle");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setLoginState("checking");
     setError("");
     const res = await signIn("customer-credentials", { phone: normalizePhone(phone), password, redirect: false });
     setLoading(false);
     if (res?.error) {
+      setLoginState("error");
       setError("شماره موبایل یا رمز عبور اشتباه است");
       return;
     }
-    router.push("/customer");
+    setLoginState("success");
+    window.setTimeout(() => router.push("/customer"), 700);
   }
 
   return (
@@ -31,7 +35,7 @@ export default function CustomerLoginPage() {
       asideItems={["مشاهده سوابق تعمیر", "گفت‌وگوی مستقیم با تعمیرگاه", "امتیازها و انتخاب آگاهانه"]}>
       <form onSubmit={handleSubmit} className="auth-form">
         <PhoneField value={phone} onChange={(v) => setPhone(toLatinDigits(v))} />
-        <PasswordField value={password} onChange={setPassword} />
+        <PasswordField value={password} status={loginState} onChange={(v) => { setPassword(v); setLoginState("idle"); }} />
         <div className="auth-form-meta"><span /><a href="/customer/forgot-password">رمز را فراموش کردم</a></div>
         {error && <div className="auth-error">{error}</div>}
         <AuthSubmit loading={loading}>ورود به حساب</AuthSubmit>

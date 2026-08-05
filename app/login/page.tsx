@@ -12,20 +12,24 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loginState, setLoginState] = useState<"idle" | "checking" | "success" | "error">("idle");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setLoginState("checking");
     setError("");
     // normalizePhone, not the raw field: a Persian-digit or space-padded
     // number matches no row and the user gets told their password is wrong.
     const res = await signIn("shop-credentials", { phone: normalizePhone(phone), password, redirect: false });
     setLoading(false);
     if (res?.error) {
+      setLoginState("error");
       setError("شماره موبایل یا رمز عبور اشتباه است");
       return;
     }
-    router.push("/tickets");
+    setLoginState("success");
+    window.setTimeout(() => router.push("/tickets"), 700);
   }
 
   return (
@@ -34,7 +38,7 @@ export default function LoginPage() {
       asideItems={["وضعیت لحظه‌ای تعمیرها", "فاکتور، انبار و گزارش مالی", "ارتباط ساده با مشتری"]}>
       <form onSubmit={handleSubmit} className="auth-form">
         <PhoneField value={phone} onChange={(v) => setPhone(toLatinDigits(v))} />
-        <PasswordField value={password} onChange={setPassword} />
+        <PasswordField value={password} status={loginState} onChange={(v) => { setPassword(v); setLoginState("idle"); }} />
         <div className="auth-form-meta"><label><input type="checkbox" /> مرا به خاطر بسپار</label><a href="/forgot-password">رمز را فراموش کردم</a></div>
         {error && <div className="auth-error">{error}</div>}
         <AuthSubmit loading={loading}>ورود به پنل</AuthSubmit>

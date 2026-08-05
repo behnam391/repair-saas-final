@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { ReactNode, useState } from "react";
-import { ArrowLeft, Eye, EyeOff, LockKeyhole, ShieldCheck, Smartphone } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole, ShieldCheck, Smartphone, XCircle } from "lucide-react";
 import Logo from "@/components/Logo";
+import { motion } from "framer-motion";
 
 type Accent = "blue" | "green" | "violet";
 
@@ -75,16 +76,21 @@ export function PhoneField({ value, onChange }: { value: string; onChange: (v: s
   );
 }
 
-export function PasswordField({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+export function PasswordField({ value, onChange, status = "idle" }: { value: string; onChange: (v: string) => void; status?: "idle" | "checking" | "success" | "error" }) {
   const [show, setShow] = useState(false);
   return (
     <label className="auth-field">
       <span>رمز عبور</span>
-      <div>
+      <div className={`auth-password-box is-${status}`}>
         <LockKeyhole size={18} />
         <input value={value} onChange={(e) => onChange(e.target.value)} type={show ? "text" : "password"} dir="ltr" placeholder="رمز عبور خود را وارد کنید" autoComplete="current-password" />
+        {status === "checking" && <LoaderCircle size={18} className="auth-status-icon is-checking" />}
+        {status === "success" && <CheckCircle2 size={19} className="auth-status-icon is-success" />}
+        {status === "error" && <XCircle size={19} className="auth-status-icon is-error" />}
         <button type="button" onClick={() => setShow(!show)} aria-label={show ? "پنهان کردن رمز" : "نمایش رمز"}>{show ? <EyeOff size={17} /> : <Eye size={17} />}</button>
       </div>
+      {status === "success" && <motion.small className="auth-field-result is-success" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>اطلاعات تأیید شد؛ در حال ورود...</motion.small>}
+      {status === "error" && <motion.small className="auth-field-result is-error" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}>رمز یا شماره موبایل صحیح نیست</motion.small>}
     </label>
   );
 }
