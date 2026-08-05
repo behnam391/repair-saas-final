@@ -7,6 +7,7 @@ import JalaliDatePicker from "@/components/JalaliDatePicker";
 import { AnimatedNumber, Reveal } from "@/components/Motion";
 import { motion } from "framer-motion";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
+import { BarChart3, ChevronDown, CircleDollarSign, LayoutDashboard, Settings2, Store, UsersRound, Wrench } from "lucide-react";
 
 const ROLE_LABEL: Record<string, string> = {
   OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی",
@@ -33,6 +34,7 @@ export default function AdminPage() {
   const [report, setReport] = useState<ReportRow[]>([]);
   const [monthRevenue, setMonthRevenue] = useState(0);
   const [monthlyChart, setMonthlyChart] = useState<{ label: string; repair: number; sale: number; total: number }[]>([]);
+  const [adminTab, setAdminTab] = useState<"overview" | "shop" | "workflow" | "team" | "finance">("overview");
   const [form, setForm] = useState({ name: "", phone: "", password: "", role: "HARDWARE", specialty: "" });
   const [error, setError] = useState("");
 
@@ -175,11 +177,31 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <h1 className="display-heading text-lg mb-4">پنل مدیریت</h1>
+    <div className="admin-workspace p-3 sm:p-5 max-w-[1280px] mx-auto">
+      <div className="admin-workspace-head">
+        <div><div className="dashboard-kicker"><span /> مرکز کنترل</div><h1>پنل مدیریت</h1><p>تنظیمات، تیم و گزارش‌های کسب‌وکار شما</p></div>
+        <div className="admin-plan-badge"><span /> پلن {shopInfo.plan === "free" ? "رایگان" : shopInfo.plan}</div>
+      </div>
+
+      <nav className="admin-tabs" aria-label="بخش‌های مدیریت">
+        {([
+          ["overview", "نمای کلی", LayoutDashboard],
+          ["shop", "فروشگاه", Store],
+          ["workflow", "فرآیند تعمیر", Wrench],
+          ["team", "تیم و دسترسی", UsersRound],
+          ["finance", "گزارش‌های مالی", CircleDollarSign],
+        ] as const).map(([key, label, Icon]) => (
+          <button key={key} onClick={() => setAdminTab(key)} className={adminTab === key ? "is-active" : ""}>
+            <Icon size={17} /><span>{label}</span>
+          </button>
+        ))}
+      </nav>
+
+      <div className="admin-tab-content">
+      {adminTab === "overview" && <>
 
       <Reveal className="mb-4">
-        <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4 shadow-lg shadow-black/20">
+        <div className="admin-revenue-hero">
           <div className="text-xs text-muted mb-1">درآمد ۳۰ روز اخیر</div>
           <div className="text-2xl font-extrabold mono text-copper"><AnimatedNumber value={monthRevenue} /> <span className="text-xs font-normal text-ink">تومان</span></div>
         </div>
@@ -247,8 +269,10 @@ export default function AdminPage() {
           </button>
         )}
       </div>
+      </>}
 
       {/* Shop info / address / bank settings */}
+      {adminTab === "shop" && <>
       <Section title="اطلاعات مغازه" icon="🏪">
         <label className="block text-xs text-muted mb-2">نوع فعالیت مغازه</label>
         <div className="flex bg-surface2 rounded-lg p-1 mb-4">
@@ -360,8 +384,10 @@ export default function AdminPage() {
           </a>
         </Section>
       )}
+      </>}
 
       {/* Favorite brands */}
+      {adminTab === "workflow" && <>
       <Section title="برندهای پرکاربرد" icon="⭐">
         <p className="text-[11px] text-muted mb-3">برندهایی که تیک بزنید، بالای لیست فرم پذیرش دستگاه نمایش داده می‌شوند.</p>
         <div className="flex flex-wrap gap-1.5">
@@ -400,7 +426,9 @@ export default function AdminPage() {
           </div>
         ))}
       </Section>
+      </>}
 
+      {adminTab === "team" && <>
       <Section title="تیم و کارکنان" icon="👥">
         <div className="text-xs font-bold mb-2">افزودن کارمند جدید</div>
         <input placeholder="نام" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
@@ -441,7 +469,9 @@ export default function AdminPage() {
           <RemovedStaff staff={staff.filter((s) => !s.active)} onRestored={load} />
         )}
       </Section>
+      </>}
 
+      {adminTab === "finance" && <>
       <Section title="گزارش بهره‌وری" icon="📊">
         <p className="text-[11px] text-muted mb-2">دستگاه‌های تحویل‌شده توسط هر تعمیرکار</p>
         <div className="space-y-2">
@@ -457,6 +487,8 @@ export default function AdminPage() {
       <Section title="گزارش حقوق و دستمزد" icon="💵">
         <PayrollReport />
       </Section>
+      </>}
+      </div>
     </div>
   );
 }
@@ -476,16 +508,16 @@ function Section({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className="bg-surface border border-surface2 rounded-xl mb-4">
+    <div className="admin-section">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex justify-between items-center px-4 py-3 text-right"
+        className="admin-section-head"
       >
-        <span className="text-sm font-bold">{icon} {title}</span>
-        <span className={`text-muted text-[10px] transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
+        <span><i>{icon}</i><b>{title}</b></span>
+        <ChevronDown size={16} className={`text-muted transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-      {open && <div className="px-4 pb-4">{children}</div>}
+      {open && <div className="admin-section-body">{children}</div>}
     </div>
   );
 }

@@ -740,6 +740,31 @@ select option {
 .intake-button { min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 7px; border-radius: 13px; font-size: 11px; font-weight: 900; }
 .intake-button.is-back { flex: 1; color: var(--color-muted); background: var(--color-surface2); border: 1px solid var(--color-border); }
 .intake-button.is-next { flex: 2; color: white; background: linear-gradient(135deg,rgb(var(--rgb-copper)),rgb(var(--rgb-copper-deep))); box-shadow: 0 8px 20px rgb(var(--rgb-copper) / .2); }
+
+/* Management control center */
+.admin-workspace-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 2px 20px; }
+.admin-workspace-head h1 { font-size: clamp(22px,3vw,31px); font-weight: 900; letter-spacing: -.035em; margin-top: 5px; }
+.admin-workspace-head p { color: var(--color-muted); font-size: 11px; margin-top: 6px; }
+.admin-plan-badge { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 12px; color: var(--color-muted); background: var(--color-surface); border: 1px solid var(--color-border); font-size: 10px; font-weight: 800; }
+.admin-plan-badge span { width: 7px; height: 7px; border-radius: 50%; background: var(--color-teal); box-shadow: 0 0 0 4px rgb(var(--rgb-teal) / .1); }
+.admin-tabs { position: sticky; top: 72px; z-index: 15; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 5px; margin-bottom: 16px; padding: 6px; border-radius: 18px; background: var(--glass-menu); border: 1px solid var(--color-border); backdrop-filter: blur(20px); box-shadow: 0 10px 28px rgba(2,6,20,.14), inset 0 1px var(--glass-highlight); }
+.admin-tabs button { min-height: 45px; display: flex; align-items: center; justify-content: center; gap: 7px; border-radius: 13px; color: var(--color-muted); font-size: 10.5px; font-weight: 800; }
+.admin-tabs button:hover { color: var(--color-ink); background: var(--color-surface); }
+.admin-tabs button.is-active { color: white; background: linear-gradient(135deg,rgb(var(--rgb-copper)),rgb(var(--rgb-copper-deep))); box-shadow: 0 8px 20px rgb(var(--rgb-copper) / .22); }
+.admin-tab-content { animation: peyvo-fade-in .22s ease-out; }
+.admin-revenue-hero { position: relative; overflow: hidden; min-height: 105px; display: flex; flex-direction: column; justify-content: center; padding: 20px; border-radius: 22px; background: linear-gradient(125deg,rgb(var(--rgb-copper) / .14),var(--color-surface) 58%); border: 1px solid rgb(var(--rgb-copper) / .18); box-shadow: inset 0 1px var(--glass-highlight); }
+.admin-revenue-hero::after { content: ""; position: absolute; left: -30px; top: -50px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle,rgb(var(--rgb-copper) / .18),transparent 67%); }
+.admin-section { overflow: hidden; margin-bottom: 12px; border-radius: 20px; background: var(--color-surface); border: 1px solid var(--color-border); box-shadow: inset 0 1px var(--glass-highlight); }
+.admin-section-head { width: 100%; min-height: 62px; display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; text-align: right; }
+.admin-section-head > span { display: flex; align-items: center; gap: 10px; }
+.admin-section-head i { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 12px; background: rgb(var(--rgb-copper) / .10); font-style: normal; font-size: 16px; }
+.admin-section-head b { font-size: 12px; }
+.admin-section-body { padding: 4px 17px 17px; }
+.admin-section-body input, .admin-section-body textarea, .admin-section-body select { border: 1px solid var(--color-border); }
+@media (min-width: 900px) {
+  .admin-tab-content { max-width: 900px; margin: 0 auto; }
+  .admin-section-body { padding: 8px 22px 22px; }
+}
 @media (max-width: 700px) {
   .dashboard-hero { align-items: center; }
   .dashboard-hero p { display: none; }
@@ -755,6 +780,12 @@ select option {
   .ticket-action-grid { grid-template-columns: 1fr; }
   .intake-step-content { min-height: 280px; }
   .intake-navigation { bottom: -15px; margin: 16px -15px -15px; padding: 12px 15px calc(12px + env(safe-area-inset-bottom)); }
+  .admin-workspace-head p { display: none; }
+  .admin-plan-badge { padding: 7px 10px; }
+  .admin-tabs { top: 104px; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: -3px; }
+  .admin-tabs::-webkit-scrollbar { display: none; }
+  .admin-tabs button { min-width: 105px; padding: 0 10px; scroll-snap-align: start; }
+  .admin-tabs button span { white-space: nowrap; }
 }
 
 /* Global print rules: kill the glass (translucent surfaces print as
