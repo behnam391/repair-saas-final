@@ -339,9 +339,25 @@ select option {
   background-size: 44px 44px;
   mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 72%, transparent);
 }
-.auth-orb { position: absolute; z-index: -2; border-radius: 999px; filter: blur(5px); pointer-events: none; }
+.auth-scene::after {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  width: 72vw;
+  height: 72vw;
+  min-width: 720px;
+  min-height: 720px;
+  top: 50%;
+  left: 50%;
+  border-radius: 43% 57% 62% 38% / 45% 38% 62% 55%;
+  background: conic-gradient(from 30deg, rgba(66,133,244,.11), rgba(234,67,53,.07), rgba(251,188,5,.07), rgba(52,168,83,.10), rgba(66,133,244,.11));
+  filter: blur(65px);
+  animation: auth-aurora 18s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.auth-orb { position: absolute; z-index: -2; border-radius: 999px; filter: blur(5px); pointer-events: none; animation: auth-orb-drift 11s ease-in-out infinite alternate; }
 .auth-orb-one { width: 420px; height: 420px; top: -210px; right: -100px; background: radial-gradient(circle, var(--auth-soft), transparent 70%); }
-.auth-orb-two { width: 520px; height: 520px; bottom: -300px; left: -120px; background: radial-gradient(circle, rgb(var(--rgb-teal) / .10), transparent 70%); }
+.auth-orb-two { width: 520px; height: 520px; bottom: -300px; left: -120px; background: radial-gradient(circle, rgb(var(--rgb-teal) / .10), transparent 70%); animation-delay: -5s; animation-direction: alternate-reverse; }
 .auth-home-link {
   position: absolute; top: 22px; right: 28px; display: inline-flex; align-items: center; gap: 7px;
   color: var(--color-muted); font-size: 12px; font-weight: 600; z-index: 2;
@@ -364,11 +380,21 @@ select option {
 .auth-field { display: grid; gap: 7px; }
 .auth-field > span { font-size: 11px; color: var(--color-muted); font-weight: 700; }
 .auth-field > div {
-  height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-radius: 15px;
+  position: relative; isolation: isolate; height: 52px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-radius: 15px;
   border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-muted);
   box-shadow: inset 0 1px 0 var(--glass-highlight); transition: border-color .2s, box-shadow .2s, transform .2s;
 }
-.auth-field > div:focus-within { border-color: var(--auth-accent); box-shadow: 0 0 0 4px var(--auth-soft), inset 0 1px 0 var(--glass-highlight); transform: translateY(-1px); color: var(--auth-accent); }
+.auth-field > div::before {
+  content: ""; position: absolute; z-index: -2; inset: -2px; border-radius: 17px; opacity: 0;
+  background: conic-gradient(from var(--led-angle), #4285f4 0 18%, #8b5cf6 25%, #ea4335 40%, #fbbc05 58%, #34a853 76%, #00bcd4 90%, #4285f4 100%);
+  transition: opacity .22s ease; animation: auth-led-spin 2.4s linear infinite;
+}
+.auth-field > div::after {
+  content: ""; position: absolute; z-index: -1; inset: 0; border-radius: 14px; background: color-mix(in srgb,var(--color-bg) 88%,transparent); pointer-events: none;
+}
+.auth-field > div:focus-within { border-color: transparent; box-shadow: 0 0 0 4px rgba(66,133,244,.07), 0 8px 28px rgba(66,133,244,.10); transform: translateY(-1px); color: #7ab4ff; }
+.auth-field > div:focus-within::before { opacity: 1; box-shadow: 0 0 12px rgba(66,133,244,.30), 0 0 22px rgba(52,168,83,.12); }
+.auth-field > div > * { position: relative; z-index: 1; }
 .auth-field input { min-width: 0; flex: 1; height: 100%; outline: none !important; background: transparent; font-size: 13px; color: var(--color-ink); }
 .auth-field input::placeholder { color: rgb(var(--rgb-muted) / .6); }
 .auth-field button { display: grid; place-items: center; padding: 4px; color: var(--color-muted); }
@@ -394,7 +420,8 @@ select option {
 .auth-aside-grid { position: absolute; inset: 0; opacity: .16; background-image: linear-gradient(var(--auth-accent) 1px, transparent 1px), linear-gradient(90deg, var(--auth-accent) 1px, transparent 1px); background-size: 34px 34px; mask-image: radial-gradient(circle at 50% 30%, #000, transparent 68%); }
 .auth-demo-card { position: absolute; border: 1px solid rgba(255,255,255,.12); background: rgba(10,16,32,.62); backdrop-filter: blur(18px); box-shadow: 0 22px 50px rgba(0,0,0,.25), inset 0 1px rgba(255,255,255,.08); }
 .auth-demo-card-main { top: 82px; right: 44px; width: 245px; height: 168px; border-radius: 23px; padding: 20px; transform: rotate(-2deg); }
-.auth-demo-card-back { top: 48px; left: 22px; width: 128px; height: 86px; border-radius: 18px; padding: 14px; transform: rotate(7deg); z-index: 1; }
+.auth-demo-card-main { animation: auth-card-float 6s ease-in-out infinite; }
+.auth-demo-card-back { top: 48px; left: 22px; width: 128px; height: 86px; border-radius: 18px; padding: 14px; transform: rotate(7deg); z-index: 1; animation: auth-card-float-back 7s ease-in-out -2s infinite; }
 .auth-demo-card-back span { display: block; color: #aebbd0; font-size: 9px; }
 .auth-demo-card-back strong { display: block; color: white; font-size: 22px; margin-top: 3px; }
 .auth-demo-card-back i { display: block; height: 4px; width: 80%; margin-top: 7px; border-radius: 9px; background: var(--auth-gradient); }
@@ -411,6 +438,16 @@ select option {
 .auth-feature-list div { display: flex; align-items: center; gap: 8px; color: #dce5f4; font-size: 10.5px; }
 .auth-feature-list span { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 7px; background: var(--auth-soft); color: var(--auth-accent); font-weight: 900; }
 @keyframes auth-spin { to { transform: rotate(360deg); } }
+@property --led-angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes auth-led-spin { to { --led-angle: 360deg; } }
+@keyframes auth-aurora {
+  0% { transform: translate(-50%,-50%) rotate(0deg) scale(.86); border-radius: 43% 57% 62% 38% / 45% 38% 62% 55%; }
+  50% { transform: translate(-47%,-53%) rotate(110deg) scale(1.04); border-radius: 62% 38% 44% 56% / 38% 58% 42% 62%; }
+  100% { transform: translate(-53%,-47%) rotate(220deg) scale(.92); border-radius: 48% 52% 35% 65% / 57% 36% 64% 43%; }
+}
+@keyframes auth-orb-drift { from { transform: translate3d(-25px,-8px,0) scale(.92); } to { transform: translate3d(45px,38px,0) scale(1.12); } }
+@keyframes auth-card-float { 0%,100% { transform: rotate(-2deg) translateY(0); } 50% { transform: rotate(0deg) translateY(-10px); } }
+@keyframes auth-card-float-back { 0%,100% { transform: rotate(7deg) translateY(0); } 50% { transform: rotate(4deg) translateY(9px); } }
 @media (max-width: 760px) {
   .auth-scene { display: block; padding: 68px 15px 22px; overflow-y: auto; }
   .auth-home-link { top: 22px; right: 20px; }
@@ -418,6 +455,9 @@ select option {
   .auth-aside { display: none; }
   .auth-form-panel { min-height: calc(100vh - 92px); padding: 30px 24px 24px; justify-content: center; }
   .auth-brand { margin-bottom: 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-scene::after, .auth-orb, .auth-demo-card-main, .auth-demo-card-back, .auth-field > div::before { animation: none !important; }
 }
 
 /* Stat tiles — frosted numeric cards with a corner light bloom. */
