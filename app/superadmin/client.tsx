@@ -1,40 +1,14 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { signOut } from "next-auth/react";
-import Logo from "@/components/Logo";
 import { formatJalaliDate } from "@/lib/jalali";
 import { useToast } from "@/components/ToastProvider";
 import type { LucideIcon } from "lucide-react";
-import { Activity, BadgeCheck, BellRing, Bug, CircleDollarSign, CircleUserRound, DatabaseBackup, Gift, Headphones, KeyRound, LayoutDashboard, LogOut, MessageCircle, MoreVertical, Search, Settings2, ShieldCheck, Store, UsersRound } from "lucide-react";
+import { Activity, BadgeCheck, CircleDollarSign, Gift, Headphones, MoreVertical, Search, ShieldCheck, Store } from "lucide-react";
 
 const PLAN_LABEL: Record<string, string> = { free: "رایگان", pro: "حرفه‌ای", business: "تجاری" };
 
 // Grouped superadmin navigation. Grouping + wrapping keeps the many
 // destinations tidy and inside the box, instead of one long scrolling row.
-const NAV_GROUPS: { label: string; items: { href: string; label: string; Icon: LucideIcon }[] }[] = [
-  { label: "مدیریت", items: [
-    { href: "/superadmin", label: "مغازه‌ها", Icon: Store },
-    { href: "/superadmin/users", label: "کاربران", Icon: CircleUserRound },
-    { href: "/superadmin/customers", label: "مشتریان", Icon: UsersRound },
-  ] },
-  { label: "پشتیبانی و نظارت", items: [
-    { href: "/superadmin/support", label: "پشتیبانی", Icon: Headphones },
-    { href: "/superadmin/conversations", label: "نظارت بر چت‌ها", Icon: MessageCircle },
-    { href: "/superadmin/verification", label: "احراز هویت", Icon: BadgeCheck },
-  ] },
-  { label: "بازاریابی", items: [
-    { href: "/superadmin/notifications", label: "اعلان عمومی", Icon: BellRing },
-    { href: "/superadmin/ads", label: "تبلیغات", Icon: LayoutDashboard },
-    { href: "/superadmin/gift-codes", label: "کد هدیه", Icon: Gift },
-  ] },
-  { label: "سیستم", items: [
-    { href: "/superadmin/settings", label: "تنظیمات", Icon: Settings2 },
-    { href: "/superadmin/external-keys", label: "API سازمان‌ها", Icon: KeyRound },
-    { href: "/superadmin/errors", label: "خطاها", Icon: Bug },
-    { href: "/superadmin/maintenance", label: "نگهداری", Icon: DatabaseBackup },
-  ] },
-];
-
 type ShopRow = {
   id: string; name: string; plan: string; active: boolean; supportAccessEnabled: boolean; planExpiresAt: string | null;
   userCount: number; ticketCount: number; totalPaid: number; createdAt: string;
@@ -116,22 +90,8 @@ export default function SuperAdminClient() {
   const paidCount = shops.filter((s) => s.plan !== "free").length;
 
   return (
-    <div className="super-shell">
-      <aside className="super-sidebar">
-        <div className="super-brand"><div><Logo size={25} withText={false} /></div><span><b>Peyvo</b><small>Platform console</small></span></div>
-        <nav>
-          {NAV_GROUPS.map((g) => <div className="super-nav-group" key={g.label}><small>{g.label}</small>{g.items.map((it) => {
-            const active = it.href === "/superadmin";
-            return <a key={it.href} href={it.href} className={active ? "is-active" : ""}><it.Icon size={17} /><span>{it.label}</span>{active && <i />}</a>;
-          })}</div>)}
-        </nav>
-        <button onClick={() => signOut({ callbackUrl: "/superadmin/login" })} className="super-logout"><LogOut size={16} /> خروج امن</button>
-      </aside>
-
-      <main className="super-main">
+    <>
         <header className="super-topbar"><div><span className="super-live"><i /> سیستم آنلاین</span><h1>مرکز فرماندهی پلتفرم</h1><p>عملکرد کل اکوسیستم Peyvo در یک نگاه</p></div><div className="super-admin-avatar"><ShieldCheck size={19} /><span><b>مدیر پلتفرم</b><small>دسترسی کامل</small></span></div></header>
-
-        <div className="super-mobile-nav">{NAV_GROUPS.flatMap((g) => g.items).map((it) => <a key={it.href} href={it.href} className={it.href === "/superadmin" ? "is-active" : ""}><it.Icon size={16} /><span>{it.label}</span></a>)}</div>
 
         <section className="super-kpis">
           <SuperKpi icon={Store} label="کل فروشگاه‌ها" value={shops.length.toLocaleString("fa-IR")} hint={`${activeCount.toLocaleString("fa-IR")} فروشگاه فعال`} tone="blue" />
@@ -154,14 +114,13 @@ export default function SuperAdminClient() {
             </article>)}
           </div>}
         </section>
-      </main>
 
       {giftShop && (
         <div className="ticket-modal-backdrop" onClick={() => setGiftShop(null)}>
           <GiftModal shop={giftShop} onClose={() => setGiftShop(null)} onGrant={grantGift} />
         </div>
       )}
-    </div>
+    </>
   );
 }
 
