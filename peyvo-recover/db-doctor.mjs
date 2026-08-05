@@ -1,15 +1,18 @@
 /**
- * peyvo db-doctor — فقط می‌خوانَد. هیچ چیزی را تغییر نمی‌دهد.
+ * peyvo db-doctor - READ ONLY. Changes nothing.
  *
- * اجرا:  node peyvo-recover/db-doctor.mjs
+ *   node peyvo-recover/db-doctor.mjs
  *
- * ساختار واقعیِ دیتابیس را با schema.prisma مقایسه می‌کند و می‌گوید
- * دقیقاً چه ستون‌ها و جدول‌هایی گم شده‌اند.
+ * Compares the real database structure against schema.prisma and reports
+ * exactly which columns and tables are missing.
+ *
+ * Output is English on purpose: Windows cmd.exe cannot render right-to-left
+ * text, so Persian output comes out reversed and unreadable there.
  */
 import { readFileSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 
-// ---- خواندن DATABASE_URL از .env اگر در محیط نبود ----------------------
+// ---- load DATABASE_URL from .env if not already in the environment -------
 if (!process.env.DATABASE_URL) {
   for (const f of [".env.local", ".env"]) {
     try {
@@ -17,7 +20,7 @@ if (!process.env.DATABASE_URL) {
         const m = line.match(/^\s*(?:export\s+)?DATABASE_URL\s*=\s*(.*)\s*$/);
         if (m) {
           process.env.DATABASE_URL = m[1].trim().replace(/^["']|["']$/g, "");
-          console.log(`(DATABASE_URL از ${f} خوانده شد)`);
+          console.log(`(DATABASE_URL loaded from ${f})`);
           break;
         }
       }
@@ -26,12 +29,24 @@ if (!process.env.DATABASE_URL) {
   }
 }
 if (!process.env.DATABASE_URL) {
-  console.error("❌ DATABASE_URL پیدا نشد. یا در .env بگذار یا این‌طور اجرا کن:");
-  console.error('   DATABASE_URL="postgres://..." node peyvo-recover/db-doctor.mjs');
+  console.error("\nERROR: DATABASE_URL not found.");
+  console.error("Put it in .env, or run:");
+  console.error('  $env:DATABASE_URL="postgres://..." ; node peyvo-recover/db-doctor.mjs\n');
   process.exit(1);
 }
 
-// ستون‌هایی که فایل زیپ از schema حذف کرده بود:
+/** Show host/db but never the password. */
+const maskUrl = (u) => {
+  try {
+    const x = new URL(u);
+    return `${x.protocol}//${x.username ? x.username + ":***@" : ""}${x.host}${x.pathname}`;
+  } catch {
+    return "(could not parse DATABASE_URL)";
+  }
+};
+console.log(`Target: ${maskUrl(process.env.DATABASE_URL)}`);
+
+// Columns the corrupted zip schema deleted:
 const EXPECTED_COLUMNS = {
   User: ["specialty"],
   PlatformCustomer: ["passwordHash", "email", "province", "city", "active"],
@@ -42,18 +57,17 @@ const EXPECTED_COLUMNS = {
   DealerInventory: ["imageUrl"],
 };
 
-// جدول‌هایی که باید وجود داشته باشند:
+// Tables that must exist:
 const EXPECTED_TABLES = [
   "InvoiceItem", "CustomerPasswordResetToken", "Expense", "WalletTransaction",
   "GiftCode", "TicketMessage", "SignupVerification", "ErrorLog",
   "ShopPartnership", "ShopReferral",
 ];
 
-// جدولی که فقط فایل زیپ ساخته بود و در schema درست وجود ندارد:
+// Table the zip created that the real schema has no use for:
 const JUNK_TABLES = ["CustomerOtp"];
 
 const db = new PrismaClient({ log: [] });
-
 const has = (set, t, c) => set.has(`${t}.${c}`);
 
 try {
@@ -68,41 +82,41 @@ try {
   const cols = new Set(colRows.map((r) => `${r.table_name}.${r.column_name}`));
   const tables = new Set(tabRows.map((r) => r.table_name));
 
-  console.log("\n══════════ گزارش وضعیت دیتابیس پیوو ══════════\n");
+  console.log("\n========== peyvo database report ==========\n");
 
-  // ---- ستون‌های گم‌شده -------------------------------------------------
+  // ---- missing columns --------------------------------------------------
   const missingCols = [];
   for (const [table, list] of Object.entries(EXPECTED_COLUMNS)) {
     if (!tables.has(table)) continue;
     for (const c of list) if (!has(cols, table, c)) missingCols.push(`${table}.${c}`);
   }
 
-  console.log("۱) ستون‌های گم‌شده");
+  console.log("1) MISSING COLUMNS");
   if (missingCols.length === 0) {
-    console.log("   ✅ همه‌ی ستون‌ها سرِ جایشان هستند.");
+    console.log("   OK - every expected column is present.");
   } else {
-    for (const c of missingCols) console.log(`   ❌ ${c}`);
+    for (const c of missingCols) console.log(`   MISSING  ${c}`);
   }
 
-  // ---- جدول‌های گم‌شده -------------------------------------------------
+  // ---- missing tables ---------------------------------------------------
   const missingTables = EXPECTED_TABLES.filter((t) => !tables.has(t));
-  console.log("\n۲) جدول‌های گم‌شده");
+  console.log("\n2) MISSING TABLES");
   if (missingTables.length === 0) {
-    console.log("   ✅ همه‌ی جدول‌ها موجودند.");
+    console.log("   OK - every expected table is present.");
   } else {
-    for (const t of missingTables) console.log(`   ❌ ${t}`);
+    for (const t of missingTables) console.log(`   MISSING  ${t}`);
   }
 
-  // ---- جدول‌های اضافیِ زیپ ---------------------------------------------
+  // ---- junk tables left behind by the zip -------------------------------
   const junk = JUNK_TABLES.filter((t) => tables.has(t));
-  console.log("\n۳) جدول‌های اضافیِ فایل زیپ");
+  console.log("\n3) LEFTOVER TABLES FROM THE ZIP");
   if (junk.length === 0) {
-    console.log("   ✅ چیزی اضافه نشده.");
+    console.log("   OK - nothing extra.");
   } else {
-    for (const t of junk) console.log(`   ⚠️  ${t} (ساخته‌ی زیپ — بی‌استفاده)`);
+    for (const t of junk) console.log(`   EXTRA    ${t}  (created by the zip, unused)`);
   }
 
-  // ---- شمارش رکوردها --------------------------------------------------
+  // ---- row counts -------------------------------------------------------
   const count = async (sql) => {
     try {
       const r = await db.$queryRawUnsafe(sql);
@@ -112,49 +126,54 @@ try {
     }
   };
 
-  console.log("\n۴) داده‌ها");
+  console.log("\n4) DATA");
   const users = await count(`SELECT COUNT(*)::int AS n FROM "User"`);
-  console.log(`   کاربران مغازه (User): ${users ?? "—"}`);
+  console.log(`   User (shop staff): ${users ?? "-"}`);
   if (has(cols, "User", "passwordHash")) {
     const bad = await count(
       `SELECT COUNT(*)::int AS n FROM "User" WHERE "passwordHash" IS NULL OR "passwordHash" = ''`
     );
-    console.log(`     از این تعداد، بدون رمز: ${bad ?? "—"}`);
+    console.log(`     of those, with no password: ${bad ?? "-"}`);
   } else {
-    console.log("     ❌ ستون User.passwordHash اصلاً وجود ندارد!");
+    console.log("     PROBLEM: column User.passwordHash does not exist at all!");
   }
 
   if (tables.has("PlatformCustomer")) {
     const pc = await count(`SELECT COUNT(*)::int AS n FROM "PlatformCustomer"`);
-    console.log(`   مشتریان پلتفرم (PlatformCustomer): ${pc ?? "—"}`);
+    console.log(`   PlatformCustomer: ${pc ?? "-"}`);
     if (has(cols, "PlatformCustomer", "passwordHash")) {
       const bad = await count(
         `SELECT COUNT(*)::int AS n FROM "PlatformCustomer" WHERE "passwordHash" IS NULL OR "passwordHash" = ''`
       );
-      console.log(`     از این تعداد، بدون رمز: ${bad ?? "—"}`);
+      console.log(`     of those, with no password: ${bad ?? "-"}`);
     } else {
-      console.log("     ❌ ستون PlatformCustomer.passwordHash حذف شده — رمزها از بین رفته‌اند.");
+      console.log("     PROBLEM: PlatformCustomer.passwordHash was dropped - customer passwords are gone.");
     }
   }
 
   for (const t of ["Shop", "Ticket", "Invoice", "InventoryItem", "PlatformAdmin"]) {
-    if (tables.has(t)) console.log(`   ${t}: ${(await count(`SELECT COUNT(*)::int AS n FROM "${t}"`)) ?? "—"}`);
+    if (tables.has(t)) console.log(`   ${t}: ${(await count(`SELECT COUNT(*)::int AS n FROM "${t}"`)) ?? "-"}`);
   }
 
-  // ---- نتیجه‌گیری ------------------------------------------------------
-  console.log("\n══════════ نتیجه ══════════\n");
+  // ---- verdict ----------------------------------------------------------
+  console.log("\n========== VERDICT ==========\n");
   if (missingCols.length === 0 && missingTables.length === 0) {
-    console.log("دیتابیس با schema هماهنگ است. مشکلِ ورود جای دیگری است —");
-    console.log("خروجی همین فایل را برایم بفرست تا ادامه بدهیم.");
+    console.log("Database matches the schema. The login problem is somewhere else -");
+    console.log("send me this output and we keep digging.");
   } else {
-    console.log("دیتابیس با schema هماهنگ نیست. کدِ سایت ستون‌هایی را می‌خواهد");
-    console.log("که در دیتابیس نیستند، برای همین هر ورودی خطا می‌دهد و پیام");
-    console.log('«رمز عبور اشتباه است» نشان داده می‌شود.');
-    console.log("\nقدم بعدی:  node peyvo-recover/db-fix.mjs");
+    console.log("Database does NOT match the schema. The live code asks for columns");
+    console.log("that no longer exist, so every login throws and the page shows");
+    console.log('"wrong phone or password".');
+    console.log("\nNext:  node peyvo-recover/db-fix.mjs");
   }
   console.log("");
 } catch (e) {
-  console.error("\n❌ خطا در اتصال یا اجرای پرس‌وجو:\n", e.message, "\n");
+  console.error("\nERROR while connecting or querying:\n");
+  console.error(e.message);
+  console.error("\nCommon causes:");
+  console.error("  - DATABASE_URL points at a local database, not the Vercel one");
+  console.error("  - the connection string is missing ?sslmode=require");
+  console.error("  - wrong password / database name\n");
   process.exitCode = 1;
 } finally {
   await db.$disconnect();
