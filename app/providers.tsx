@@ -1,6 +1,7 @@
 "use client";
 import { SessionProvider } from "next-auth/react";
 import { MotionConfig } from "framer-motion";
+import { ToastProvider } from "@/components/ToastProvider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -11,7 +12,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           server sends and the markup the browser hydrates stay identical.
           (Branching the JSX on useReducedMotion() instead would break
           hydration, because the server can't know the user's setting.) */}
-      <MotionConfig reducedMotion="user">{children}</MotionConfig>
+      <MotionConfig reducedMotion="user"><ToastProvider>{children}</ToastProvider></MotionConfig>
     </SessionProvider>
   );
 }

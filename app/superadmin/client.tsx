@@ -3,32 +3,35 @@ import { useEffect, useMemo, useState } from "react";
 import { signOut } from "next-auth/react";
 import Logo from "@/components/Logo";
 import { formatJalaliDate } from "@/lib/jalali";
+import { useToast } from "@/components/ToastProvider";
+import type { LucideIcon } from "lucide-react";
+import { Activity, BadgeCheck, BellRing, Bug, CircleDollarSign, CircleUserRound, DatabaseBackup, Gift, Headphones, KeyRound, LayoutDashboard, LogOut, MessageCircle, MoreVertical, Search, Settings2, ShieldCheck, Store, UsersRound } from "lucide-react";
 
 const PLAN_LABEL: Record<string, string> = { free: "رایگان", pro: "حرفه‌ای", business: "تجاری" };
 
 // Grouped superadmin navigation. Grouping + wrapping keeps the many
 // destinations tidy and inside the box, instead of one long scrolling row.
-const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: string }[] }[] = [
+const NAV_GROUPS: { label: string; items: { href: string; label: string; Icon: LucideIcon }[] }[] = [
   { label: "مدیریت", items: [
-    { href: "/superadmin", label: "مغازه‌ها", icon: "🏪" },
-    { href: "/superadmin/users", label: "کاربران", icon: "👤" },
-    { href: "/superadmin/customers", label: "مشتریان", icon: "👥" },
+    { href: "/superadmin", label: "مغازه‌ها", Icon: Store },
+    { href: "/superadmin/users", label: "کاربران", Icon: CircleUserRound },
+    { href: "/superadmin/customers", label: "مشتریان", Icon: UsersRound },
   ] },
   { label: "پشتیبانی و نظارت", items: [
-    { href: "/superadmin/support", label: "پشتیبانی", icon: "🎧" },
-    { href: "/superadmin/conversations", label: "نظارت بر چت‌ها", icon: "💬" },
-    { href: "/superadmin/verification", label: "احراز هویت", icon: "✅" },
+    { href: "/superadmin/support", label: "پشتیبانی", Icon: Headphones },
+    { href: "/superadmin/conversations", label: "نظارت بر چت‌ها", Icon: MessageCircle },
+    { href: "/superadmin/verification", label: "احراز هویت", Icon: BadgeCheck },
   ] },
   { label: "بازاریابی", items: [
-    { href: "/superadmin/notifications", label: "اعلان عمومی", icon: "📣" },
-    { href: "/superadmin/ads", label: "تبلیغات", icon: "🖼️" },
-    { href: "/superadmin/gift-codes", label: "کد هدیه", icon: "🎁" },
+    { href: "/superadmin/notifications", label: "اعلان عمومی", Icon: BellRing },
+    { href: "/superadmin/ads", label: "تبلیغات", Icon: LayoutDashboard },
+    { href: "/superadmin/gift-codes", label: "کد هدیه", Icon: Gift },
   ] },
   { label: "سیستم", items: [
-    { href: "/superadmin/settings", label: "تنظیمات", icon: "⚙️" },
-    { href: "/superadmin/external-keys", label: "API سازمان‌ها", icon: "🔌" },
-    { href: "/superadmin/errors", label: "خطاها", icon: "🐞" },
-    { href: "/superadmin/maintenance", label: "نگهداری", icon: "🧹" },
+    { href: "/superadmin/settings", label: "تنظیمات", Icon: Settings2 },
+    { href: "/superadmin/external-keys", label: "API سازمان‌ها", Icon: KeyRound },
+    { href: "/superadmin/errors", label: "خطاها", Icon: Bug },
+    { href: "/superadmin/maintenance", label: "نگهداری", Icon: DatabaseBackup },
   ] },
 ];
 
@@ -38,6 +41,7 @@ type ShopRow = {
 };
 
 export default function SuperAdminClient() {
+  const { showToast } = useToast();
   const [shops, setShops] = useState<ShopRow[]>([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -57,30 +61,33 @@ export default function SuperAdminClient() {
   useEffect(() => { load(); }, []);
 
   async function toggleActive(id: string, current: boolean) {
-    await fetch(`/api/superadmin/shops/${id}`, {
+    const res = await fetch(`/api/superadmin/shops/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ active: !current }),
     });
+    showToast(res.ok ? { title: current ? "فروشگاه تعلیق شد" : "فروشگاه فعال شد", type: "success" } : { title: "تغییر وضعیت انجام نشد", type: "error" });
     load();
   }
 
   async function toggleSupportAccess(id: string, current: boolean) {
-    await fetch(`/api/superadmin/shops/${id}`, {
+    const res = await fetch(`/api/superadmin/shops/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ supportAccessEnabled: !current }),
     });
+    showToast(res.ok ? { title: "دسترسی پشتیبانی به‌روزرسانی شد", type: "success" } : { title: "به‌روزرسانی ناموفق بود", type: "error" });
     load();
   }
 
   const [giftShop, setGiftShop] = useState<ShopRow | null>(null);
   async function grantGift(id: string, grantPlan: string, grantMonths: number) {
-    await fetch(`/api/superadmin/shops/${id}`, {
+    const res = await fetch(`/api/superadmin/shops/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ grantPlan, grantMonths }),
     });
+    showToast(res.ok ? { title: "اشتراک هدیه اعمال شد", message: "مدت جدید به حساب فروشگاه اضافه شد.", type: "success" } : { title: "اعطای اشتراک ناموفق بود", type: "error" });
     setGiftShop(null);
     load();
   }
@@ -92,7 +99,8 @@ export default function SuperAdminClient() {
     const res = await fetch(`/api/superadmin/shops/${id}`, { method: "DELETE" });
     setDeletingId(null);
     setConfirmDelete(null);
-    if (!res.ok) { const d = await res.json().catch(() => ({})); alert(d.message || "حذف ناموفق بود"); return; }
+    if (!res.ok) { const d = await res.json().catch(() => ({})); showToast({ title: "حذف ناموفق بود", message: d.message, type: "error" }); return; }
+    showToast({ title: "فروشگاه حذف شد", message: "تمام داده‌های وابسته پاک شدند.", type: "warning" });
     load();
   }
 
@@ -108,149 +116,57 @@ export default function SuperAdminClient() {
   const paidCount = shops.filter((s) => s.plan !== "free").length;
 
   return (
-    <div className="min-h-screen p-4 max-w-3xl mx-auto">
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-2.5">
-          <Logo size={24} withText={false} />
-          <h1 className="font-extrabold text-lg">پنل مدیریت پلتفرم Peyvo</h1>
-        </div>
-        <button onClick={() => signOut({ callbackUrl: "/superadmin/login" })} className="text-xs text-muted hover:text-danger transition-colors">خروج</button>
-      </div>
-      <div className="mb-6 space-y-4">
-        {NAV_GROUPS.map((g) => (
-          <div key={g.label}>
-            <div className="text-[11px] font-bold text-muted mb-2 border-r-2 border-copper/50 pr-2">{g.label}</div>
-            {/* Uniform tiles in a fixed 3-column grid so every item is the same
-                size and the columns line up across all groups — tidy, not a
-                ragged row of differently-sized pills. */}
-            <div className="grid grid-cols-3 gap-2">
-              {g.items.map((it) => {
-                const active = it.href === "/superadmin";
-                return (
-                  <a
-                    key={it.href}
-                    href={it.href}
-                    className={`flex flex-col items-center justify-center text-center gap-1.5 rounded-xl px-2 py-3 border min-h-[64px] transition ${
-                      active
-                        ? "bg-copper/15 text-copper border-copper/40 font-bold"
-                        : "bg-surface2 border-surface2 text-ink/80 hover:text-ink hover:border-copper/30"
-                    }`}
-                  >
-                    <span className="text-lg leading-none">{it.icon}</span>
-                    <span className="text-[11px] leading-tight">{it.label}</span>
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="super-shell">
+      <aside className="super-sidebar">
+        <div className="super-brand"><div><Logo size={25} withText={false} /></div><span><b>Peyvo</b><small>Platform console</small></span></div>
+        <nav>
+          {NAV_GROUPS.map((g) => <div className="super-nav-group" key={g.label}><small>{g.label}</small>{g.items.map((it) => {
+            const active = it.href === "/superadmin";
+            return <a key={it.href} href={it.href} className={active ? "is-active" : ""}><it.Icon size={17} /><span>{it.label}</span>{active && <i />}</a>;
+          })}</div>)}
+        </nav>
+        <button onClick={() => signOut({ callbackUrl: "/superadmin/login" })} className="super-logout"><LogOut size={16} /> خروج امن</button>
+      </aside>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-        <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4">
-          <div className="text-xs text-muted mb-1">تعداد مغازه‌ها</div>
-          <div className="text-xl font-extrabold mono">{shops.length}</div>
-        </div>
-        <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4">
-          <div className="text-xs text-muted mb-1">مغازه‌های فعال</div>
-          <div className="text-xl font-extrabold mono text-teal">{activeCount}</div>
-        </div>
-        <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4">
-          <div className="text-xs text-muted mb-1">مشترکین پولی</div>
-          <div className="text-xl font-extrabold mono text-copper">{paidCount}</div>
-        </div>
-        <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-4">
-          <div className="text-xs text-muted mb-1">کل درآمد اشتراک</div>
-          <div className="text-xl font-extrabold mono">{totalRevenue.toLocaleString("fa-IR")}</div>
-        </div>
-      </div>
+      <main className="super-main">
+        <header className="super-topbar"><div><span className="super-live"><i /> سیستم آنلاین</span><h1>مرکز فرماندهی پلتفرم</h1><p>عملکرد کل اکوسیستم Peyvo در یک نگاه</p></div><div className="super-admin-avatar"><ShieldCheck size={19} /><span><b>مدیر پلتفرم</b><small>دسترسی کامل</small></span></div></header>
 
-      <div className="flex gap-2 mb-4">
-        <input
-          className="flex-1 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-          placeholder="جستجوی نام مغازه..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <select className="bg-surface2 border border-surface2 rounded-lg px-2 text-sm" value={planFilter} onChange={(e) => setPlanFilter(e.target.value)}>
-          <option value="">همه پلن‌ها</option>
-          <option value="free">رایگان</option>
-          <option value="pro">حرفه‌ای</option>
-          <option value="business">تجاری</option>
-        </select>
-      </div>
+        <div className="super-mobile-nav">{NAV_GROUPS.flatMap((g) => g.items).map((it) => <a key={it.href} href={it.href} className={it.href === "/superadmin" ? "is-active" : ""}><it.Icon size={16} /><span>{it.label}</span></a>)}</div>
 
-      {loading ? (
-        <p className="text-muted text-sm">در حال بارگذاری...</p>
-      ) : filtered.length === 0 ? (
-        <p className="text-muted text-sm text-center py-8">موردی یافت نشد.</p>
-      ) : (
-        <div className="space-y-2">
-          {filtered.map((s) => (
-            <div key={s.id} className={`bg-surface2 border rounded-xl p-3.5 ${s.active ? "border-surface2" : "border-danger"}`}>
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="font-bold text-sm">{s.name}</div>
-                  <div className="text-[11px] text-muted mt-0.5">
-                    پلن {PLAN_LABEL[s.plan] ?? s.plan} · {s.userCount} کاربر · {s.ticketCount} تیکت
-                  </div>
-                  {s.planExpiresAt && (
-                    <div className="text-[11px] text-muted">انقضا: {formatJalaliDate(s.planExpiresAt)}</div>
-                  )}
-                  <div className="text-[11px] text-muted">مجموع پرداختی: {s.totalPaid.toLocaleString("fa-IR")} تومان</div>
-                </div>
-                <div className="flex flex-col gap-1.5 shrink-0">
-                  <button
-                    onClick={() => toggleActive(s.id, s.active)}
-                    className={`text-[11px] font-semibold rounded-lg px-2.5 py-1.5 transition ${s.active ? "bg-danger/20 text-danger hover:bg-danger/30" : "bg-teal/20 text-teal hover:bg-teal/30"}`}
-                  >
-                    {s.active ? "تعلیق" : "فعال‌سازی"}
-                  </button>
-                  <button
-                    onClick={() => toggleSupportAccess(s.id, s.supportAccessEnabled)}
-                    className={`text-[10px] font-semibold rounded-lg px-2.5 py-1 transition ${s.supportAccessEnabled ? "bg-copper/20 text-copper" : "bg-surface text-muted"}`}
-                  >
-                    {s.supportAccessEnabled ? "دسترسی پشتیبانی: فعال" : "دسترسی پشتیبانی: غیرفعال"}
-                  </button>
-                  <button
-                    onClick={() => setGiftShop(s)}
-                    className="text-[10px] font-semibold rounded-lg px-2.5 py-1 bg-teal/20 text-teal hover:bg-teal/30 transition"
-                  >
-                    🎁 هدیه اشتراک
-                  </button>
-                  {confirmDelete === s.id ? (
-                    <div className="flex gap-1">
-                      <button onClick={() => deleteShop(s.id)} disabled={deletingId === s.id}
-                        className="text-[10px] font-bold rounded-lg px-2 py-1 bg-danger text-white disabled:opacity-50">
-                        {deletingId === s.id ? "..." : "حذف قطعی"}
-                      </button>
-                      <button onClick={() => setConfirmDelete(null)} className="text-[10px] rounded-lg px-2 py-1 bg-surface text-muted">لغو</button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setConfirmDelete(s.id)}
-                      className="text-[10px] font-semibold rounded-lg px-2.5 py-1 bg-danger/15 text-danger hover:bg-danger/25 transition"
-                    >
-                      🗑 حذف کامل از دیتابیس
-                    </button>
-                  )}
-                </div>
-              </div>
-              {confirmDelete === s.id && (
-                <p className="text-[10px] text-danger mt-2">این کار «{s.name}» و همه‌ی داده‌هایش (کاربران، تیکت‌ها، فاکتورها و…) را برای همیشه پاک می‌کند و قابل بازگشت نیست.</p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+        <section className="super-kpis">
+          <SuperKpi icon={Store} label="کل فروشگاه‌ها" value={shops.length.toLocaleString("fa-IR")} hint={`${activeCount.toLocaleString("fa-IR")} فروشگاه فعال`} tone="blue" />
+          <SuperKpi icon={Activity} label="نرخ فعالیت" value={`${shops.length ? Math.round(activeCount / shops.length * 100) : 0}٪`} hint="وضعیت سلامت شبکه" tone="green" />
+          <SuperKpi icon={BadgeCheck} label="مشترکین پولی" value={paidCount.toLocaleString("fa-IR")} hint="حرفه‌ای و تجاری" tone="violet" />
+          <SuperKpi icon={CircleDollarSign} label="درآمد اشتراک" value={totalRevenue.toLocaleString("fa-IR")} hint="تومان · مجموع پرداخت" tone="amber" />
+        </section>
+
+        <section className="super-panel">
+          <div className="super-panel-head"><div><h2>مدیریت فروشگاه‌ها</h2><p>{filtered.length.toLocaleString("fa-IR")} نتیجه از {shops.length.toLocaleString("fa-IR")} فروشگاه</p></div><div className="super-filter"><Search size={16} /><input placeholder="جستجوی نام فروشگاه..." value={search} onChange={(e) => setSearch(e.target.value)} /><select value={planFilter} onChange={(e) => setPlanFilter(e.target.value)}><option value="">همه پلن‌ها</option><option value="free">رایگان</option><option value="pro">حرفه‌ای</option><option value="business">تجاری</option></select></div></div>
+
+          {loading ? <div className="super-loading">{[1,2,3].map((i) => <i key={i} className="skeleton" />)}</div> : filtered.length === 0 ? <div className="empty-state">فروشگاهی با این مشخصات پیدا نشد.</div> : <div className="super-shop-grid">
+            {filtered.map((s) => <article key={s.id} className={`super-shop-card ${!s.active ? "is-suspended" : ""}`}>
+              <div className="super-shop-title"><span><Store size={18} /></span><div><h3>{s.name}</h3><p>عضویت از {formatJalaliDate(s.createdAt)}</p></div><button aria-label="عملیات"><MoreVertical size={17} /></button></div>
+              <div className="super-shop-meta"><span className={`plan-${s.plan}`}>پلن {PLAN_LABEL[s.plan] ?? s.plan}</span><span className={s.active ? "is-online" : "is-offline"}><i />{s.active ? "فعال" : "معلق"}</span></div>
+              <div className="super-shop-numbers"><div><b>{s.userCount.toLocaleString("fa-IR")}</b><small>کاربر</small></div><div><b>{s.ticketCount.toLocaleString("fa-IR")}</b><small>تیکت</small></div><div><b>{s.totalPaid.toLocaleString("fa-IR")}</b><small>پرداختی</small></div></div>
+              {s.planExpiresAt && <div className="super-expire">انقضای اشتراک: <b>{formatJalaliDate(s.planExpiresAt)}</b></div>}
+              <div className="super-shop-actions"><button onClick={() => toggleActive(s.id, s.active)} className={s.active ? "is-danger" : "is-success"}>{s.active ? "تعلیق" : "فعال‌سازی"}</button><button onClick={() => toggleSupportAccess(s.id, s.supportAccessEnabled)} className={s.supportAccessEnabled ? "is-active" : ""}><Headphones size={14} /> پشتیبانی</button><button onClick={() => setGiftShop(s)}><Gift size={14} /> هدیه</button></div>
+              {confirmDelete === s.id ? <div className="super-delete-confirm"><p>«{s.name}» و تمام داده‌هایش برای همیشه حذف شود؟</p><div><button onClick={() => deleteShop(s.id)} disabled={deletingId === s.id}>{deletingId === s.id ? "در حال حذف..." : "حذف قطعی"}</button><button onClick={() => setConfirmDelete(null)}>انصراف</button></div></div> : <button onClick={() => setConfirmDelete(s.id)} className="super-delete-link">حذف کامل فروشگاه</button>}
+            </article>)}
+          </div>}
+        </section>
+      </main>
 
       {giftShop && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center px-4" onClick={() => setGiftShop(null)}>
+        <div className="ticket-modal-backdrop" onClick={() => setGiftShop(null)}>
           <GiftModal shop={giftShop} onClose={() => setGiftShop(null)} onGrant={grantGift} />
         </div>
       )}
     </div>
   );
+}
+
+function SuperKpi({ icon: Icon, label, value, hint, tone }: { icon: LucideIcon; label: string; value: string; hint: string; tone: string }) {
+  return <div className={`super-kpi is-${tone}`}><span><Icon size={20} /></span><div><small>{label}</small><b>{value}</b><p>{hint}</p></div></div>;
 }
 
 function GiftModal({ shop, onClose, onGrant }: { shop: ShopRow; onClose: () => void; onGrant: (id: string, plan: string, months: number) => void }) {
