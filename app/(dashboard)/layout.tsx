@@ -28,15 +28,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen">
-      <header className="glass-header sticky top-0 z-20 px-4 py-3">
+      <header className="glass-header app-topbar sticky top-0 z-20 px-4">
         {/* Mobile: two tiers — identity + actions on the first line, nav on its
             own swipeable line below. Desktop (md+): everything on one row. */}
-        <div className="flex items-center justify-between gap-3 flex-wrap md:flex-nowrap">
+        <div className="max-w-[1600px] mx-auto min-h-[70px] flex items-center justify-between gap-3 flex-wrap md:flex-nowrap">
           <div className="flex items-center gap-2.5 shrink-0">
-            <Logo size={26} withText={false} />
+            <div className="app-brand-mark"><Logo size={25} withText={false} /></div>
             <div>
-              <div className="display-heading text-sm leading-tight">{user.shopName}</div>
-              <div className="text-[11px] text-muted">{user.name} · {roleLabel(user.role)}</div>
+              <div className="font-extrabold text-sm leading-tight">{user.shopName}</div>
+              <div className="text-[10px] text-muted mt-1 flex items-center gap-1.5"><span className="app-online-dot" />{user.name} · {roleLabel(user.role)}</div>
             </div>
           </div>
           <DashboardNav
@@ -46,13 +46,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
             shopName={user.shopName}
             userName={`${user.name} · ${roleLabel(user.role)}`}
           />
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             <ThemeToggle />
             <NotificationBell />
             <LogoutButton />
           </div>
         </div>
-        <div className="brand-underline -mx-4 mt-3" />
+        <div className="brand-underline -mx-4" />
       </header>
       {user.isImpersonated && (
         <div className="no-print bg-danger/15 border-b border-danger/40 text-danger text-xs px-4 py-2 text-center font-semibold">

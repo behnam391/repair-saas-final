@@ -4,8 +4,15 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { LogoMark } from "./Logo";
 import { canSeeNav } from "@/lib/permissions";
+import type { LucideIcon } from "lucide-react";
+import {
+  BadgeHelp, BarChart3, Boxes, ChevronDown, CircleUserRound, Clock3, FileText,
+  Handshake, Headphones, History, House, Info, Landmark, Menu, MessageCircle,
+  PackageSearch, QrCode, ReceiptText, RotateCcw, ShoppingBag, Store, UsersRound,
+  WalletCards, Wrench,
+} from "lucide-react";
 
-type NavItem = { href: string; label: string; icon: string; external?: boolean };
+type NavItem = { href: string; label: string; Icon: LucideIcon; external?: boolean };
 type NavGroup = { label: string; items: NavItem[] };
 
 export default function DashboardNav({
@@ -64,46 +71,46 @@ export default function DashboardNav({
     {
       label: "عملیات",
       items: [
-        { href: "/inventory", label: "انبار قطعات", icon: "📦" },
-        { href: "/sales", label: "فروش مستقیم", icon: "🛒" },
-        { href: "/invoices", label: "فاکتورها", icon: "🧾" },
-        { href: "/returns", label: "مرجوعی", icon: "🔁" },
-        { href: "/pending-intakes", label: "پذیرش QR", icon: "🔳" },
+        { href: "/inventory", label: "انبار قطعات", Icon: Boxes },
+        { href: "/sales", label: "فروش مستقیم", Icon: ShoppingBag },
+        { href: "/invoices", label: "فاکتورها", Icon: ReceiptText },
+        { href: "/returns", label: "مرجوعی", Icon: RotateCcw },
+        { href: "/pending-intakes", label: "پذیرش QR", Icon: QrCode },
       ],
     },
     {
       label: "ارتباطات",
       items: [
-        { href: "/market", label: "بازار سراسری", icon: "🌐" },
-        { href: "/chats", label: "چت‌ها", icon: "💬" },
-        { href: "/device-lookup", label: "پرونده گوشی", icon: "🔎" },
-        { href: "/collaboration", label: "همکاری مغازه‌ها", icon: "🤝" },
+        { href: "/market", label: "بازار سراسری", Icon: Store },
+        { href: "/chats", label: "چت‌ها", Icon: MessageCircle },
+        { href: "/device-lookup", label: "پرونده گوشی", Icon: PackageSearch },
+        { href: "/collaboration", label: "همکاری مغازه‌ها", Icon: Handshake },
       ],
     },
     {
       label: "مشتریان",
       items: [
-        { href: "/customers", label: "دفترچه مشتریان", icon: "👥" },
-        { href: "/history", label: "سابقه و جستجو", icon: "🕘" },
+        { href: "/customers", label: "دفترچه مشتریان", Icon: UsersRound },
+        { href: "/history", label: "سابقه و جستجو", Icon: History },
       ],
     },
     {
       label: "من",
       items: [
-        { href: "/profile", label: "پروفایل من", icon: "👤" },
-        { href: "/support", label: "پشتیبانی", icon: "🎧" },
-        ...(guideUrl ? [{ href: guideUrl, label: "راهنمای سایت", icon: "📘", external: true }] : []),
-        { href: "/about", label: "درباره ما", icon: "ℹ️" },
+        { href: "/profile", label: "پروفایل من", Icon: CircleUserRound },
+        { href: "/support", label: "پشتیبانی", Icon: Headphones },
+        ...(guideUrl ? [{ href: guideUrl, label: "راهنمای سایت", Icon: BadgeHelp, external: true }] : []),
+        { href: "/about", label: "درباره ما", Icon: Info },
       ],
     },
     ...(role === "OWNER"
       ? [{
           label: "مدیریت",
           items: [
-            { href: "/admin", label: "پنل مدیریت", icon: "📊" },
-            { href: "/expenses", label: "دخل و خرج", icon: "🧮" },
-            { href: "/admin/billing", label: "اشتراک و پرداخت", icon: "💳" },
-            { href: "/admin/wallet", label: "کیف پول", icon: "👛" },
+            { href: "/admin", label: "پنل مدیریت", Icon: BarChart3 },
+            { href: "/expenses", label: "دخل و خرج", Icon: Landmark },
+            { href: "/admin/billing", label: "اشتراک و پرداخت", Icon: FileText },
+            { href: "/admin/wallet", label: "کیف پول", Icon: WalletCards },
           ],
         }]
       : []),
@@ -125,17 +132,17 @@ export default function DashboardNav({
       <div className="flex md:hidden items-center gap-1.5 w-full order-last pt-1">
         <button
           onClick={() => setMobileOpen(true)}
-          className="bg-surface2 border border-border text-ink font-bold rounded-full px-3.5 py-1.5 text-xs"
+          className="app-nav-trigger"
         >
-          ☰ منو
+          <Menu size={15} /> منو
         </button>
         <div className="flex items-center gap-1.5 ms-auto">
-          <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1.5 whitespace-nowrap text-xs">
-            🏠 صفحه اصلی
+          <Link href="/tickets" className="app-nav-quick is-primary">
+            <House size={14} /> صفحه اصلی
           </Link>
           {showDealer && (
-            <Link href="/dealer" className="bg-teal/15 text-teal font-bold rounded-full px-3 py-1.5 whitespace-nowrap text-xs">
-              💰 خرید و فروش
+            <Link href="/dealer" className="app-nav-quick">
+              <ShoppingBag size={14} /> خرید و فروش
             </Link>
           )}
         </div>
@@ -159,9 +166,9 @@ export default function DashboardNav({
 
             {/* Quick actions */}
             <nav className="py-1.5">
-              <DrawerRow href="/tickets" icon="🏠" label="صفحه اصلی" onGo={() => setMobileOpen(false)} bold />
+              <DrawerRow href="/tickets" Icon={House} label="صفحه اصلی" onGo={() => setMobileOpen(false)} bold />
               {showDealer && (
-                <DrawerRow href="/dealer" icon="💰" label="خرید و فروش" onGo={() => setMobileOpen(false)} bold />
+                <DrawerRow href="/dealer" Icon={ShoppingBag} label="خرید و فروش" onGo={() => setMobileOpen(false)} bold />
               )}
 
               {visibleGroups.map((g) => (
@@ -172,7 +179,7 @@ export default function DashboardNav({
                     <DrawerRow
                       key={item.href}
                       href={item.href}
-                      icon={item.icon}
+                      Icon={item.Icon}
                       label={item.label}
                       external={item.external}
                       onGo={() => setMobileOpen(false)}
@@ -188,12 +195,12 @@ export default function DashboardNav({
 
       {/* ── Desktop (md+): unchanged — centered pills with dropdown groups. */}
       <div ref={containerRef} className="hidden md:flex items-center gap-1 flex-1 justify-center flex-wrap">
-        <Link href="/tickets" className="bg-copper/15 text-copper font-bold rounded-full px-3 py-1 whitespace-nowrap text-xs">
-          🏠 صفحه اصلی
+        <Link href="/tickets" className="app-nav-quick is-primary">
+          <House size={14} /> صفحه اصلی
         </Link>
         {showDealer && (
-          <Link href="/dealer" className="bg-teal/15 text-teal font-bold rounded-full px-3 py-1 whitespace-nowrap text-xs">
-            💰 خرید و فروش
+          <Link href="/dealer" className="app-nav-quick">
+            <ShoppingBag size={14} /> خرید و فروش
           </Link>
         )}
 
@@ -202,11 +209,11 @@ export default function DashboardNav({
             key={g.label}
             ref={(el) => { btnRefs.current[g.label] = el; }}
             onClick={() => toggleGroup(g.label)}
-            className={`text-xs font-bold rounded-lg px-2.5 py-1.5 whitespace-nowrap transition border-b-2 ${
-              openGroup === g.label ? "bg-surface2 text-ink border-copper" : "text-ink hover:bg-surface2 border-transparent"
+            className={`app-nav-group ${
+              openGroup === g.label ? "is-open" : ""
             }`}
           >
-            {g.label} ▾
+            {g.label} <ChevronDown size={13} className={`transition-transform ${openGroup === g.label ? "rotate-180" : ""}`} />
           </button>
         ))}
       </div>
@@ -223,13 +230,13 @@ export default function DashboardNav({
             item.external ? (
               <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer"
                 onClick={() => setOpenGroup(null)}
-                className="block px-3 py-2 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
-                {item.icon} {item.label} ↗
+                className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
+                <item.Icon size={16} /> {item.label} ↗
               </a>
             ) : (
               <Link key={item.href} href={item.href} onClick={() => setOpenGroup(null)}
-                className="block px-3 py-2 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
-                {item.icon} {item.label}
+                className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
+                <item.Icon size={16} /> {item.label}
               </Link>
             )
           )}
@@ -243,14 +250,14 @@ export default function DashboardNav({
 /* One flat Telegram-style drawer row: icon bubble + label. */
 function DrawerRow({
   href,
-  icon,
+  Icon,
   label,
   onGo,
   external,
   bold,
 }: {
   href: string;
-  icon: string;
+  Icon: LucideIcon;
   label: string;
   onGo: () => void;
   external?: boolean;
@@ -259,7 +266,7 @@ function DrawerRow({
   const cls = `flex items-center gap-3 px-4 py-2.5 text-[13px] active:bg-surface2 ${bold ? "font-bold" : ""}`;
   const inner = (
     <>
-      <span className="w-8 h-8 rounded-xl bg-surface2 flex items-center justify-center text-[15px] shrink-0">{icon}</span>
+      <span className="w-8 h-8 rounded-xl bg-surface2 flex items-center justify-center text-copper shrink-0"><Icon size={16} /></span>
       <span className="flex-1">{label}</span>
       {external && <span className="text-muted text-[10px]">↗</span>}
     </>

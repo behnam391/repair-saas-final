@@ -6,12 +6,13 @@ import PatternLockInput from "@/components/PatternLockInput";
 import ComboBox from "@/components/ComboBox";
 import TicketChat from "@/components/TicketChat";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
+import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Check, ChevronDown, CircuitBoard, Clock3, Cpu, GitBranch, LockKeyhole, MessageCircle, Play, Plus, Search, ShieldCheck, Smartphone, UserRound, Wrench, X } from "lucide-react";
 
 const LANES = [
-  { key: "HARDWARE", label: "سخت‌افزار" },
-  { key: "SOFTWARE", label: "نرم‌افزار" },
-  { key: "BOARD", label: "تخصصی (برد/هارد)" },
-  { key: "READY", label: "آماده تحویل" },
+  { key: "HARDWARE", label: "سخت‌افزار", hint: "تعمیرات فیزیکی", Icon: Wrench, tone: "blue" },
+  { key: "SOFTWARE", label: "نرم‌افزار", hint: "فلش و بازیابی", Icon: Cpu, tone: "violet" },
+  { key: "BOARD", label: "تخصصی", hint: "برد و هارد", Icon: CircuitBoard, tone: "amber" },
+  { key: "READY", label: "آماده تحویل", hint: "تکمیل‌شده", Icon: BadgeCheck, tone: "green" },
 ] as const;
 
 type Ticket = {
@@ -44,6 +45,9 @@ export default function TicketsPage() {
   // Mobile accordion: which lanes are collapsed. Starts empty (all open);
   // only affects narrow screens — desktop always shows every column.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const activeCount = tickets.filter((t) => t.lane !== "READY").length;
+  const readyCount = tickets.filter((t) => t.lane === "READY").length;
+  const waitingCount = tickets.filter((t) => t.status === "AWAITING_APPROVAL").length;
 
   async function load() {
     setLoading(true);
@@ -79,32 +83,43 @@ export default function TicketsPage() {
   }
 
   return (
-    <div className="p-3">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="display-heading text-lg">تیکت‌های تعمیر</h1>
+    <div className="dashboard-page p-3 sm:p-5 max-w-[1600px] mx-auto">
+      <div className="dashboard-hero">
+        <div>
+          <div className="dashboard-kicker"><span /> میز کار امروز</div>
+          <h1>مدیریت تعمیرها</h1>
+          <p>پذیرش، پیگیری و تحویل دستگاه‌ها در یک جریان منظم</p>
+        </div>
         <button
           onClick={() => setShowNew(true)}
-          className="bg-copper text-[#1A1410] font-bold text-xs rounded-lg px-4 py-2"
+          className="dashboard-primary-action"
         >
-          + پذیرش دستگاه
+          <Plus size={18} /> پذیرش دستگاه
         </button>
       </div>
 
+      <div className="dashboard-stats">
+        <div className="dashboard-stat"><span className="is-blue"><Smartphone size={18} /></span><div><b>{tickets.length.toLocaleString("fa-IR")}</b><small>کل دستگاه‌ها</small></div></div>
+        <div className="dashboard-stat"><span className="is-violet"><Wrench size={18} /></span><div><b>{activeCount.toLocaleString("fa-IR")}</b><small>در حال انجام</small></div></div>
+        <div className="dashboard-stat"><span className="is-amber"><Clock3 size={18} /></span><div><b>{waitingCount.toLocaleString("fa-IR")}</b><small>منتظر تأیید</small></div></div>
+        <div className="dashboard-stat"><span className="is-green"><BadgeCheck size={18} /></span><div><b>{readyCount.toLocaleString("fa-IR")}</b><small>آماده تحویل</small></div></div>
+      </div>
+
       {/* Search — filters every lane live by device, customer, number, or issue. */}
-      <div className="relative mb-3">
+      <div className="dashboard-toolbar">
+        <Search size={18} />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="🔍 جستجو: مدل گوشی، نام مشتری، شماره تیکت..."
-          className="w-full bg-surface2 border border-border rounded-xl px-3 py-2.5 text-sm"
+          placeholder="جستجوی مدل گوشی، نام مشتری یا شماره تیکت..."
         />
         {query && (
           <button
             onClick={() => setQuery("")}
-            className="absolute left-2 top-1/2 -translate-y-1/2 text-muted text-xs bg-surface rounded-full w-6 h-6"
+            className="dashboard-search-clear"
             title="پاک کردن"
           >
-            ✕
+            <X size={14} />
           </button>
         )}
       </div>
@@ -129,23 +144,23 @@ export default function TicketsPage() {
             );
             const isCollapsed = !!collapsed[lane.key];
             return (
-              <div key={lane.key} className="w-full sm:flex-none sm:w-72 bg-surface border border-surface2 rounded-2xl">
+              <div key={lane.key} className={`ticket-lane lane-${lane.tone} w-full sm:flex-1 sm:min-w-[260px]`}>
                 {/* The whole lane header is a collapse toggle — on every
                     screen size (web and phone alike). */}
                 <button
                   type="button"
                   onClick={() => setCollapsed((c) => ({ ...c, [lane.key]: !c[lane.key] }))}
-                  className={`w-full flex justify-between items-center px-3 py-2.5 text-right ${
+                  className={`ticket-lane-head ${
                     isCollapsed ? "" : "border-b border-surface2"
                   }`}
                 >
-                  <span className="font-bold text-[13px]">{lane.label}</span>
+                  <span className="flex items-center gap-2.5"><i><lane.Icon size={16} /></i><span><b>{lane.label}</b><small>{lane.hint}</small></span></span>
                   <span className="flex items-center gap-2">
                     <span className={`mono text-xs ${items.length > 0 ? "text-copper font-bold" : "text-muted"}`}>{items.length}</span>
                     <span className={`text-muted text-[10px] transition-transform ${isCollapsed ? "" : "rotate-180"}`}>▼</span>
                   </span>
                 </button>
-                <div className={`${isCollapsed ? "hidden" : "flex"} p-2.5 flex-col gap-2.5 max-h-[70vh] overflow-y-auto`}>
+                <div className={`${isCollapsed ? "hidden" : "flex"} p-2.5 flex-col gap-2.5 max-h-[62vh] overflow-y-auto`}>
                   {items.length === 0 && (
                     <div className="text-muted text-xs text-center py-6 border border-dashed border-surface2 rounded-lg">
                       دستگاهی در این مرحله نیست
@@ -155,7 +170,7 @@ export default function TicketsPage() {
                     <button
                       key={t.id}
                       onClick={() => setOpenTicket(t)}
-                      className={`repair-tag card-hover ${t.status === "READY" ? "tag-ready" : t.status === "AWAITING_APPROVAL" ? "tag-awaiting" : t.status === "IN_PROGRESS" ? "tag-progress" : ""} text-right bg-surface2 rounded-xl p-3 pr-4 hover:brightness-110 transition`}
+                      className={`ticket-card repair-tag card-hover ${t.status === "READY" ? "tag-ready" : t.status === "AWAITING_APPROVAL" ? "tag-awaiting" : t.status === "IN_PROGRESS" ? "tag-progress" : ""}`}
                     >
                       <div className="flex justify-between text-xs">
                         <span className="font-bold">{t.deviceModel}</span>
@@ -252,18 +267,20 @@ function TicketDetail({
   const [cancelNote, setCancelNote] = useState("");
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50" onClick={onClose}>
+    <div className="ticket-modal-backdrop" onClick={onClose}>
       <div
-        className="bg-surface w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5 max-h-[88vh] overflow-y-auto"
+        className="ticket-detail-modal"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="font-extrabold text-base">
-          {ticket.deviceModel} <span className="mono text-muted text-xs">#{ticket.no}</span>
+        <div className="ticket-modal-head">
+          <div className="ticket-modal-device"><span><Smartphone size={20} /></span><div><h2>{ticket.deviceModel}</h2><p><UserRound size={12} />{ticket.customer.name} · {ticket.customer.phone}</p></div></div>
+          <div className="flex items-center gap-2"><span className="ticket-number">#{ticket.no}</span><button onClick={onClose} className="ticket-modal-close"><X size={18} /></button></div>
         </div>
-        <div className="text-xs text-muted mb-4">{ticket.customer.name} · {ticket.customer.phone}</div>
+
+        <div className="ticket-modal-body">
 
         {(ticket.devicePasscode || ticket.customerDamageNotes) && (
-          <div className="bg-surface2 border border-surface2 rounded-lg p-2.5 mb-4 space-y-1.5">
+          <div className="ticket-private-note">
             {ticket.devicePasscode && (
               <div className="text-xs">
                 <span className="text-muted">رمز گوشی ({ticket.devicePasscodeType === "PATTERN" ? "الگو" : ticket.devicePasscodeType === "PASSWORD" ? "پسورد" : "پین"}): </span>
@@ -279,13 +296,13 @@ function TicketDetail({
         <ReferralFlow history={ticket.history} currentLane={ticket.lane} />
 
         {/* Customer chat — collapsible, so the ticket detail stays compact. */}
-        <div className="mb-4">
+        <div className="ticket-chat-block">
           <button
             onClick={() => setShowChat((v) => !v)}
-            className="w-full flex items-center justify-between bg-surface2 border border-border rounded-xl px-3 py-2.5 text-xs font-bold"
+            className="ticket-section-trigger"
           >
-            <span>💬 گفتگو با مشتری</span>
-            <span className={`text-muted text-[10px] transition-transform ${showChat ? "rotate-180" : ""}`}>▼</span>
+            <span><MessageCircle size={16} /> گفتگو با مشتری</span>
+            <ChevronDown size={15} className={`text-muted transition-transform ${showChat ? "rotate-180" : ""}`} />
           </button>
           {showChat && (
             <div className="bg-surface2/50 border border-border border-t-0 rounded-b-xl p-2 -mt-1">
@@ -294,9 +311,10 @@ function TicketDetail({
           )}
         </div>
 
-        <div className="space-y-2.5 mb-5">
+        <div className="ticket-history-list">
+          <div className="ticket-section-label"><Clock3 size={14} /> تاریخچه فعالیت</div>
           {ticket.history.map((h, i) => (
-            <div key={i} className="bg-surface2 border border-surface2 rounded-lg p-2.5">
+            <div key={i} className="ticket-history-item">
               <div className="text-[13px] font-bold">{h.action}</div>
               <div className="text-[11px] mono text-muted mt-0.5">
                 {h.tech?.name} · {new Date(h.createdAt).toLocaleString("fa-IR")}
@@ -344,20 +362,20 @@ function TicketDetail({
 
         {ticket.lane !== "READY" ? (
           <>
-            <div className="flex gap-2 flex-wrap">
-              <button onClick={() => onTransition(ticket.id, "start")} className="flex-1 bg-copper text-[#1A1410] text-xs font-bold rounded-lg py-2.5">
-                شروع/ادامه کار
+            <div className="ticket-action-grid">
+              <button onClick={() => onTransition(ticket.id, "start")} className="ticket-action is-primary">
+                <Play size={15} /> شروع/ادامه کار
               </button>
-              <button onClick={() => setReferOpen((v) => !v)} className="flex-1 bg-surface2 border border-surface2 text-xs font-semibold rounded-lg py-2.5">
-                ارجاع به بخش دیگر
+              <button onClick={() => setReferOpen((v) => !v)} className="ticket-action">
+                <GitBranch size={15} /> ارجاع به بخش دیگر
               </button>
               {isOwner ? (
-                <button onClick={() => setReadyOpen((v) => !v)} className="flex-1 bg-teal text-[#0E211E] text-xs font-bold rounded-lg py-2.5">
-                  تکمیل و آماده تحویل
+                <button onClick={() => setReadyOpen((v) => !v)} className="ticket-action is-success">
+                  <BadgeCheck size={15} /> تکمیل و آماده تحویل
                 </button>
               ) : (
-                <button onClick={() => setSubmitOpen((v) => !v)} className="flex-1 bg-teal text-[#0E211E] text-xs font-bold rounded-lg py-2.5">
-                  ثبت هزینه برای تأیید مدیر
+                <button onClick={() => setSubmitOpen((v) => !v)} className="ticket-action is-success">
+                  <Banknote size={15} /> ثبت هزینه برای تأیید مدیر
                 </button>
               )}
             </div>
@@ -448,6 +466,7 @@ function TicketDetail({
             </div>
           )}
         </div>
+        </div>
       </div>
     </div>
   );
@@ -518,30 +537,33 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-surface w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl p-5 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-        <div className="font-extrabold text-base mb-3">پذیرش دستگاه جدید</div>
+    <div className="ticket-modal-backdrop" onClick={onClose}>
+      <div className="intake-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="ticket-modal-head">
+          <div className="ticket-modal-device"><span><Plus size={20} /></span><div><h2>پذیرش دستگاه جدید</h2><p>اطلاعات را مرحله‌به‌مرحله ثبت کنید</p></div></div>
+          <button onClick={onClose} className="ticket-modal-close"><X size={18} /></button>
+        </div>
+
+        <div className="intake-modal-body">
 
         {/* Step indicator */}
-        <div className="flex items-center gap-1.5 mb-5">
+        <div className="intake-stepper">
           {STEPS.map((label, i) => {
             const n = i + 1;
             const state = n < step ? "done" : n === step ? "active" : "next";
             return (
-              <div key={label} className="flex items-center gap-1.5 flex-1">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                  state === "done" ? "bg-teal text-white" : state === "active" ? "bg-copper text-white" : "bg-surface2 text-muted"
-                }`}>
-                  {state === "done" ? "✓" : n}
-                </div>
-                <span className={`text-[10px] whitespace-nowrap ${state === "active" ? "font-bold" : "text-muted"}`}>{label}</span>
-                {i < STEPS.length - 1 && <div className={`h-px flex-1 ${n < step ? "bg-teal" : "bg-surface2"}`} />}
+              <div key={label} className={`intake-step is-${state}`}>
+                <div>{state === "done" ? <Check size={13} /> : n}</div>
+                <span>{label}</span>
+                {i < STEPS.length - 1 && <i />}
               </div>
             );
           })}
         </div>
 
+        <div className="intake-step-content">
         {step === 1 && (<>
+        <div className="intake-content-title"><UserRound size={18} /><div><b>اطلاعات مشتری</b><small>مشخصات صاحب دستگاه را وارد کنید</small></div></div>
         <div className="mb-3">
           <label className="block text-xs text-muted mb-1">نام مشتری</label>
           <input
@@ -562,6 +584,7 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
         </>)}
 
         {step === 2 && (<>
+        <div className="intake-content-title"><Smartphone size={18} /><div><b>مشخصات دستگاه</b><small>برند، مدل و شناسه دستگاه</small></div></div>
         <label className="block text-xs text-muted mb-1">برند گوشی</label>
         <div className="mb-3">
           <ComboBox
@@ -597,6 +620,7 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
         </>)}
 
         {step === 3 && (<>
+        <div className="intake-content-title"><Wrench size={18} /><div><b>شرح ایراد</b><small>دستگاه به بخش مناسب ارجاع می‌شود</small></div></div>
         <div className="mb-2">
           <label className="block text-xs text-muted mb-1">ارجاع اولیه به</label>
           <select
@@ -643,6 +667,7 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
         </>)}
 
         {step === 4 && (<>
+        <div className="intake-content-title"><ShieldCheck size={18} /><div><b>تأیید نهایی</b><small>امنیت دستگاه و نحوه پذیرش</small></div></div>
         <label className="flex items-center gap-2 text-xs text-muted mb-2">
           <input type="checkbox" checked={collectPasscode} onChange={(e) => setCollectPasscode(e.target.checked)} />
           دریافت رمز عبور صفحه گوشی از مشتری (برای تست بعد از تعمیر)
@@ -698,28 +723,30 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
         </div>
         </>)}
 
-        {error && <p className="text-danger text-xs mb-3">{error}</p>}
+        {error && <div className="auth-error mb-3">{error}</div>}
+        </div>
 
         {/* Wizard navigation */}
-        <div className="flex gap-2">
+        <div className="intake-navigation">
           {step > 1 && (
             <button
               type="button"
               onClick={() => { setError(""); setStep(step - 1); }}
-              className="flex-1 bg-surface2 border border-border font-bold rounded-lg py-2.5 text-sm"
+              className="intake-button is-back"
             >
-              → قبلی
+              <ArrowRight size={16} /> قبلی
             </button>
           )}
           {step < STEPS.length ? (
-            <button type="button" onClick={nextStep} className="flex-[2] bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
-              بعدی ←
+            <button type="button" onClick={nextStep} className="intake-button is-next">
+              بعدی <ArrowLeft size={16} />
             </button>
           ) : (
-            <button onClick={submit} className="flex-[2] bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
-              ✓ ثبت پذیرش
+            <button onClick={submit} className="intake-button is-next">
+              <Check size={16} /> ثبت پذیرش
             </button>
           )}
+        </div>
         </div>
       </div>
     </div>

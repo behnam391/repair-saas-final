@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Bell } from "lucide-react";
 
 type Notif = { id: string; title: string; message: string; link: string | null; read: boolean; createdAt: string; isBroadcast: boolean };
 
@@ -44,10 +45,10 @@ export default function NotificationBell() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="relative text-xs text-muted hover:text-ink transition-colors"
+        className="app-icon-button relative"
         aria-label="اعلان‌ها"
       >
-        🔔
+        <Bell size={17} />
         {unreadCount > 0 && (
           <span className="absolute -top-1.5 -left-2 bg-danger text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
             {unreadCount > 9 ? "9+" : unreadCount}
