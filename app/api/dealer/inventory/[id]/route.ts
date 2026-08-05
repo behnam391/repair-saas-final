@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +9,7 @@ export const dynamic = "force-dynamic";
 const SellSchema = z.object({
   soldPrice: z.number().int().min(0),
   buyerName: z.string().min(1),
-  buyerPhone: z.string().optional(),
+  buyerPhone: z.preprocess(preprocessPhone, z.string().optional()),
 });
 
 // PATCH /api/dealer/inventory/:id — mark an in-stock phone as sold. Also

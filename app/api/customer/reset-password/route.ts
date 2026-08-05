@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import { preprocessPhone, preprocessDigits } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
 const Schema = z.object({
-  phone: z.string().min(5),
-  code: z.string().length(5),
+  phone: z.preprocess(preprocessPhone, z.string().min(5)),
+  code: z.preprocess(preprocessDigits, z.string().length(5)),
   newPassword: z.string().min(6),
 });
 

@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
 import { sendSms, sendIntakeSms, intakeReceivedMessage } from "@/lib/sms";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
 const CreateTicketSchema = z.object({
   customerName: z.string().min(1),
-  customerPhone: z.string().min(5),
+  // Every repair-status SMS goes here. A number stored as ۰۹… is not a
+  // number Kavenegar can deliver to. See lib/phone.ts.
+  customerPhone: z.preprocess(preprocessPhone, z.string().min(5)),
   deviceModel: z.string().min(1),
   imei: z.string().optional(),
   issueInitial: z.string().min(1),

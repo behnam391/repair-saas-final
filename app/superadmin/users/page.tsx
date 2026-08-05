@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 
 type U = { id: string; name: string; phone: string; email: string | null; role: string; active: boolean; shop: { name: string; supportAccessEnabled: boolean } };
 
@@ -26,11 +27,13 @@ export default function SuperAdminUsersPage() {
 
   async function saveEdit(id: string) {
     setEditErr("");
-    if (!/^09\d{9}$/.test(editForm.phone.trim())) { setEditErr("شماره باید ۱۱ رقمی و با ۰۹ باشد"); return; }
+    // This is the fix-a-locked-out-owner screen — the number it writes has
+    // to be the exact form the login page looks up. See lib/phone.ts.
+    if (!isValidMobile(editForm.phone)) { setEditErr("شماره باید ۱۱ رقمی و با ۰۹ باشد"); return; }
     const res = await fetch(`/api/superadmin/users/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editForm.name, phone: editForm.phone.trim() }),
+      body: JSON.stringify({ name: editForm.name, phone: normalizePhone(editForm.phone) }),
     });
     if (res.ok) {
       const { user } = await res.json();
@@ -112,7 +115,7 @@ export default function SuperAdminUsersPage() {
                 <input className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs" placeholder="نام"
                   value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
                 <input className="w-full bg-surface2 rounded-lg px-2 py-1.5 text-xs mono" dir="ltr" inputMode="tel" maxLength={11} placeholder="شماره موبایل"
-                  value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+                  value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: toLatinDigits(e.target.value) })} />
                 {editErr && <p className="text-danger text-[10px]">{editErr}</p>}
                 <div className="flex gap-2">
                   <button onClick={() => saveEdit(u.id)} className="flex-1 bg-teal text-white text-xs font-bold rounded-lg py-1.5">ذخیره</button>

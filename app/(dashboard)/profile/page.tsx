@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import ImageUploader from "@/components/ImageUploader";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
+import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 
 const SPECIALTY_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی (برد/سی‌پی‌یو)" };
 
@@ -39,11 +40,12 @@ export default function ProfilePage() {
 
   async function save() {
     setSaved(false); setSaveErr("");
-    if (form.phone && !/^09\d{9}$/.test(form.phone.trim())) { setSaveErr("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
+    // Changing this changes how I log in from now on. See lib/phone.ts.
+    if (form.phone && !isValidMobile(form.phone)) { setSaveErr("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
     const res = await fetch("/api/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, specialty: form.specialty || null }),
+      body: JSON.stringify({ ...form, phone: normalizePhone(form.phone), specialty: form.specialty || null }),
     });
     if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
     else { const d = await res.json().catch(() => ({})); setSaveErr(d.message || "ذخیره ناموفق بود"); }
@@ -94,7 +96,7 @@ export default function ProfilePage() {
 
       <label className="block text-xs text-muted mb-1">شماره موبایل (برای ورود)</label>
       <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono" dir="ltr" inputMode="tel" maxLength={11}
-        placeholder="09xxxxxxxxx" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+        placeholder="09xxxxxxxxx" value={form.phone} onChange={(e) => setForm({ ...form, phone: toLatinDigits(e.target.value) })} />
 
       <label className="block text-xs text-muted mb-1">
         تخصص من {roleLabel && <span className="text-muted">— نقش: {roleLabel}</span>}

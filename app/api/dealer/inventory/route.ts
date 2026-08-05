@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -31,7 +32,7 @@ const CreateSchema = z.object({
   purchasePrice: z.number().int().min(0),
   askingPrice: z.number().int().min(0).optional(),
   sourceName: z.string().optional(),
-  sourcePhone: z.string().optional(),
+  sourcePhone: z.preprocess(preprocessPhone, z.string().optional()),
   notes: z.string().optional(),
 });
 

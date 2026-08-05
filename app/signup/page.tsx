@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
 import PhoneVerify from "@/components/PhoneVerify";
+import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 
 const BUSINESS_SIZE_OPTIONS = [
   { key: "SOLO", label: "تک‌نفره", desc: "خودم یک‌تنه همه‌کار را انجام می‌دهم" },
@@ -57,16 +58,19 @@ export default function SignupPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!/^09\d{9}$/.test(form.phone.trim())) {
+    // The phone is the login key. Sign up with ۰۹… and the account is
+    // unreachable at the login page forever. See lib/phone.ts.
+    if (!isValidMobile(form.phone)) {
       setError("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد");
       return;
     }
+    const phone = normalizePhone(form.phone);
     if (!phoneVerified) { setError("ابتدا شماره موبایل را با کد تأیید کنید"); return; }
     setLoading(true);
     const res = await fetch("/api/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, phone }),
     });
     if (!res.ok) {
       const err = await res.json();
@@ -75,7 +79,7 @@ export default function SignupPage() {
       return;
     }
     const signInRes = await signIn("shop-credentials", {
-      phone: form.phone, password: form.password, redirect: false,
+      phone, password: form.password, redirect: false,
     });
     setLoading(false);
     if (signInRes?.error) { setError("ثبت‌نام شد ولی ورود خودکار ناموفق بود، لطفاً وارد شوید"); return; }
@@ -189,7 +193,7 @@ export default function SignupPage() {
             <label className="block text-xs text-muted mb-1">شماره موبایل</label>
             <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
               inputMode="tel" dir="ltr" maxLength={11} placeholder="09xxxxxxxxx"
-              value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              value={form.phone} onChange={(e) => setForm({ ...form, phone: toLatinDigits(e.target.value) })} />
           </div>
           <PhoneVerify phone={form.phone} email={undefined} onChange={setPhoneVerified} />
           <div className="mb-2">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -8,7 +9,7 @@ export const dynamic = "force-dynamic";
 const Schema = z.object({
   deviceModel: z.string().min(1).optional(),
   customerName: z.string().min(1).optional(),
-  customerPhone: z.string().optional(),
+  customerPhone: z.preprocess(preprocessPhone, z.string().optional()),
   reason: z.string().min(1).optional(),
   refundAmount: z.number().int().optional(),
   resolved: z.boolean().optional(),

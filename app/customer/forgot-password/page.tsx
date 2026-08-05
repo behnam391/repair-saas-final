@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import OtpInput from "@/components/OtpInput";
+import { toLatinDigits } from "@/lib/phone";
 
 export default function CustomerForgotPasswordPage() {
   const router = useRouter();
@@ -61,7 +62,8 @@ export default function CustomerForgotPasswordPage() {
 
         <label className="block text-xs text-muted mb-1">شماره موبایل</label>
         <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm mono"
-          value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="09xxxxxxxxx"
+          /* Farsi keyboard → Latin as you type. See lib/phone.ts. */
+          value={phone} onChange={(e) => setPhone(toLatinDigits(e.target.value))} placeholder="09xxxxxxxxx"
           inputMode="tel" dir="ltr" maxLength={11} disabled={step === 2} />
 
         {step === 1 && (

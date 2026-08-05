@@ -7,6 +7,7 @@
  */
 import { useEffect, useState } from "react";
 import OtpInput from "@/components/OtpInput";
+import { normalizePhone, isValidMobile } from "@/lib/phone";
 
 export default function PhoneVerify({
   phone,
@@ -35,8 +36,14 @@ export default function PhoneVerify({
     return () => clearTimeout(t);
   }, [cooldown]);
 
-  const valid = /^09\d{9}$/.test(phone.trim());
-  const isVerified = !!verifiedPhone && verifiedPhone === phone.trim();
+  // Compare and send the CANONICAL number, never the raw field. A Persian
+  // keyboard types ۰۹…, which fails /^09\d{9}$/ outright — the send button
+  // would stay dead forever under "شماره موبایل معتبر وارد کنید", and the
+  // code would be stored against a number the user can never match later.
+  // See lib/phone.ts.
+  const valid = isValidMobile(phone);
+  const canonical = normalizePhone(phone);
+  const isVerified = !!verifiedPhone && verifiedPhone === canonical;
 
   // Tell the parent whenever verified state changes; reset if phone changes.
   useEffect(() => { onChange(isVerified); /* eslint-disable-next-line */ }, [isVerified, phone]);
@@ -49,7 +56,7 @@ export default function PhoneVerify({
     const res = await fetch("/api/auth/signup/send-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: phone.trim(), channel, email }),
+      body: JSON.stringify({ phone: canonical, channel, email }),
     });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
@@ -64,11 +71,11 @@ export default function PhoneVerify({
     const res = await fetch("/api/auth/signup/verify-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: phone.trim(), code: c }),
+      body: JSON.stringify({ phone: canonical, code: c }),
     });
     const data = await res.json().catch(() => ({}));
     setBusy(false);
-    if (res.ok) { setVerifiedPhone(phone.trim()); setMsg(""); }
+    if (res.ok) { setVerifiedPhone(canonical); setMsg(""); }
     else { setErr(data.message || "کد نادرست است"); setErrNonce((n) => n + 1); }
   }
 

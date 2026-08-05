@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import PatternLockInput from "@/components/PatternLockInput";
 import ComboBox from "@/components/ComboBox";
+import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 
 export default function KioskPage() {
   const params = useParams();
@@ -53,11 +54,16 @@ export default function KioskPage() {
       setError("لطفاً همه فیلدهای ضروری را پر کنید");
       return;
     }
-    if (!/^09\d{9}$/.test(form.customerPhone)) {
+    if (!isValidMobile(form.customerPhone)) {
       setError("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد");
       return;
     }
-    const payload = { ...form, devicePasscode: collectPasscode ? form.devicePasscode : "" };
+    // The shop texts this number when the repair is ready. See lib/phone.ts.
+    const payload = {
+      ...form,
+      customerPhone: normalizePhone(form.customerPhone),
+      devicePasscode: collectPasscode ? form.devicePasscode : "",
+    };
     const res = await fetch(`/api/kiosk/${shopId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -131,7 +137,7 @@ export default function KioskPage() {
             className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
             inputMode="tel" dir="ltr" maxLength={11} placeholder="09xxxxxxxxx"
             value={form.customerPhone}
-            onChange={(e) => setForm({ ...form, customerPhone: e.target.value })} />
+            onChange={(e) => setForm({ ...form, customerPhone: toLatinDigits(e.target.value) })} />
         </div>
 
         <div className="mb-3">

@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { preprocessPhone, preprocessDigits } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
 const Schema = z.object({
-  phone: z.string().regex(/^09\d{9}$/),
-  code: z.string().min(4).max(6),
+  phone: z.preprocess(preprocessPhone, z.string().regex(/^09\d{9}$/)),
+  // The OTP arrives as Latin digits but gets retyped on a Farsi keyboard.
+  code: z.preprocess(preprocessDigits, z.string().min(4).max(6)),
 });
 
 // POST /api/auth/signup/verify-code — checks the code for a phone and marks

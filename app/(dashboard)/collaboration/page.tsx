@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { formatJalaliDate } from "@/lib/jalali";
 import ComboBox from "@/components/ComboBox";
+import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 
 const LANE_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی" };
 const PARTNERSHIP_STATUS_LABEL: Record<string, string> = { PENDING: "در انتظار پاسخ", ACCEPTED: "فعال", REJECTED: "رد شده", ENDED: "پایان‌یافته" };
@@ -298,13 +299,13 @@ function ReferralForm({
     setError("");
     if (!partnershipId) { setError("یک همکار انتخاب کنید"); return; }
     if (!customerName.trim() || !customerPhone.trim()) { setError("نام و شماره مشتری را وارد کنید"); return; }
-    if (!/^09\d{9}$/.test(customerPhone.trim())) { setError("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
+    if (!isValidMobile(customerPhone)) { setError("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
     setBusy(true);
     const res = await fetch("/api/collaboration/referrals", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        partnershipId, customerName: customerName.trim(), customerPhone: customerPhone.trim(),
+        partnershipId, customerName: customerName.trim(), customerPhone: normalizePhone(customerPhone),
         deviceModel: brand ? `${brand}${model ? " " + model : ""}` : undefined,
         issueNote: issueNote || undefined,
         suggestedLane: suggestedLane || undefined,
@@ -333,7 +334,7 @@ function ReferralForm({
         <div>
           <label className="block text-xs text-muted mb-1">شماره تماس</label>
           <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono" dir="ltr" inputMode="tel" maxLength={11}
-            placeholder="09xxxxxxxxx" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
+            placeholder="09xxxxxxxxx" value={customerPhone} onChange={(e) => setCustomerPhone(toLatinDigits(e.target.value))} />
         </div>
       </div>
 

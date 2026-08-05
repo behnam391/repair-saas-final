@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { isPhoneVerifiedForSignup, consumeSignupVerification } from "@/lib/signup-verify";
+import { preprocessPhone, normalizeOptionalPhone } from "@/lib/phone";
 import { z } from "zod";
 
 const SignupSchema = z.object({
@@ -14,7 +15,8 @@ const SignupSchema = z.object({
   ownerName: z.string().min(2),
   nationalId: z.string().optional(),
   birthDate: z.string().optional(),
-  phone: z.string().min(5),
+  // Canonical form or the account becomes unreachable at login. See lib/phone.ts.
+  phone: z.preprocess(preprocessPhone, z.string().min(5)),
   password: z.string().min(4),
 });
 
@@ -46,7 +48,7 @@ export async function POST(req: NextRequest) {
           name: body.shopName,
           type: body.shopType,
           address: body.address,
-          landlinePhone: body.landlinePhone,
+          landlinePhone: normalizeOptionalPhone(body.landlinePhone),
           businessSize: body.businessSize,
           specialties: body.specialties.join(","),
           plan: "free",

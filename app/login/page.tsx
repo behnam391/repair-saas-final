@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import EnamadBadge from "@/components/EnamadBadge";
+import { toLatinDigits, normalizePhone } from "@/lib/phone";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -16,7 +17,9 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const res = await signIn("shop-credentials", { phone, password, redirect: false });
+    // normalizePhone, not the raw field: a Persian-digit or space-padded
+    // number matches no row and the user gets told their password is wrong.
+    const res = await signIn("shop-credentials", { phone: normalizePhone(phone), password, redirect: false });
     setLoading(false);
     if (res?.error) {
       setError("شماره موبایل یا رمز عبور اشتباه است");
@@ -34,9 +37,10 @@ export default function LoginPage() {
 
         <label className="block text-xs text-muted mb-1">شماره موبایل</label>
         <input
-          className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm"
+          className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm mono"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => setPhone(toLatinDigits(e.target.value))}
+          inputMode="tel" dir="ltr" maxLength={11}
           placeholder="09xxxxxxxxx"
         />
 

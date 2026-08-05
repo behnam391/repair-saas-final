@@ -3,6 +3,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
+import { toLatinDigits, normalizePhone } from "@/lib/phone";
 
 export default function CustomerLoginPage() {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function CustomerLoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const res = await signIn("customer-credentials", { phone, password, redirect: false });
+    const res = await signIn("customer-credentials", { phone: normalizePhone(phone), password, redirect: false });
     setLoading(false);
     if (res?.error) {
       setError("شماره موبایل یا رمز عبور اشتباه است");
@@ -37,7 +38,7 @@ export default function CustomerLoginPage() {
         <input
           className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm mono"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => setPhone(toLatinDigits(e.target.value))}
           inputMode="tel" dir="ltr" maxLength={11}
           placeholder="09xxxxxxxxx"
         />

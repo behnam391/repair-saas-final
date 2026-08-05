@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { sendSms } from "@/lib/sms";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,8 @@ const Line = z.object({ itemId: z.string(), quantity: z.number().int().min(1) })
 const SaleSchema = z.object({
   items: z.array(Line).min(1),
   customerName: z.string().optional(),
-  customerPhone: z.string().optional(),
+  // The invoice SMS destination. See lib/phone.ts.
+  customerPhone: z.preprocess(preprocessPhone, z.string().optional()),
   applyTax: z.boolean().default(true),
   // optional manual override per line is intentionally NOT supported —
   // prices are locked from inventory sellPrice so staff can't undercut

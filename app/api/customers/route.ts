@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +39,10 @@ export async function GET(req: NextRequest) {
 
 const CreateSchema = z.object({
   name: z.string().min(1),
-  phone: z.string().min(5),
+  // The shop's customer book is matched to the nationwide customer account
+  // by phone ALONE, and it is what SMS is sent to — a Persian-digit number
+  // here silently breaks both. See lib/phone.ts.
+  phone: z.preprocess(preprocessPhone, z.string().min(5)),
   email: z.string().optional(),
   address: z.string().optional(),
   note: z.string().optional(),

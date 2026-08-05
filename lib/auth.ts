@@ -2,6 +2,7 @@ import { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
+import { normalizePhone } from "./phone";
 
 // Every signed-in shop user is locked to exactly one shop. The session token
 // carries shopId + role so API routes can scope every query without an
@@ -22,8 +23,11 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.phone || !credentials?.password) return null;
 
+        // Normalize BEFORE the lookup. A Persian-digit phone (۰۹…) or a
+        // pasted trailing space would otherwise match no row at all, and the
+        // page would blame the password. See lib/phone.ts.
         const user = await db.user.findUnique({
-          where: { phone: credentials.phone },
+          where: { phone: normalizePhone(credentials.phone) },
           include: { shop: true },
         });
         if (!user || !user.active) return null;
@@ -51,7 +55,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.phone || !credentials?.password) return null;
 
-        const admin = await db.platformAdmin.findUnique({ where: { phone: credentials.phone } });
+        const admin = await db.platformAdmin.findUnique({ where: { phone: normalizePhone(credentials.phone) } });
         if (!admin) return null;
 
         const valid = await bcrypt.compare(credentials.password, admin.passwordHash);
@@ -74,7 +78,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.phone || !credentials?.password) return null;
 
-        const customer = await db.platformCustomer.findUnique({ where: { phone: credentials.phone } });
+        const customer = await db.platformCustomer.findUnique({ where: { phone: normalizePhone(credentials.phone) } });
         if (!customer || !customer.active) return null; // suspended by platform admin
 
         const valid = await bcrypt.compare(credentials.password, customer.passwordHash);

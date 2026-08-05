@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { formatJalaliDate } from "@/lib/jalali";
+import { toLatinDigits } from "@/lib/phone";
 
 type Cust = {
   id: string; name: string; phone: string;
@@ -166,8 +167,11 @@ export default function CustomersPage() {
             <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2"
               value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             <label className="block text-[11px] text-muted mb-1">شماره تماس *</label>
-            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2" dir="ltr"
-              value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono" dir="ltr"
+              inputMode="tel" placeholder="09xxxxxxxxx"
+              /* This is what SMS is sent to, and what links the customer to
+                 their own account. Latin digits only. See lib/phone.ts. */
+              value={form.phone} onChange={(e) => setForm({ ...form, phone: toLatinDigits(e.target.value) })} />
             <label className="block text-[11px] text-muted mb-1">ایمیل (اختیاری)</label>
             <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2" dir="ltr"
               value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />

@@ -3,12 +3,16 @@ import { db } from "@/lib/db";
 import { sendSms, sendCodeSms, isSmsConfigured } from "@/lib/sms";
 import { sendEmail, isEmailConfigured } from "@/lib/email";
 import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
 const Schema = z.object({
-  phone: z.string().regex(/^09\d{9}$/, "شماره موبایل معتبر نیست"),
+  // preprocess → the code is stored against the CANONICAL number, so it is
+  // still found when the person later types the same number with a different
+  // keyboard. See lib/phone.ts.
+  phone: z.preprocess(preprocessPhone, z.string().regex(/^09\d{9}$/, "شماره موبایل معتبر نیست")),
   channel: z.enum(["sms", "email"]).default("sms"),
   email: z.string().email().optional().or(z.literal("")),
 });

@@ -6,6 +6,7 @@ import LocationPicker from "@/components/LocationPicker";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
 import { AnimatedNumber, Reveal } from "@/components/Motion";
 import { motion } from "framer-motion";
+import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 
 const ROLE_LABEL: Record<string, string> = {
   OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی",
@@ -89,10 +90,13 @@ export default function AdminPage() {
 
   async function addStaff() {
     setError("");
+    // This phone becomes the employee's login. Saved as ۰۹… they could never
+    // sign in, and the login page would blame their password. See lib/phone.ts.
+    if (!isValidMobile(form.phone)) { setError("شماره موبایل کارمند باید ۱۱ رقمی و با ۰۹ باشد"); return; }
     const res = await fetch("/api/staff", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, specialty: form.specialty || null }),
+      body: JSON.stringify({ ...form, phone: normalizePhone(form.phone), specialty: form.specialty || null }),
     });
     if (!res.ok) {
       const err = await res.json();
@@ -289,13 +293,13 @@ export default function AdminPage() {
           value={shopInfo.address ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, address: e.target.value })} />
         <label className="block text-xs text-muted mb-1">تلفن مغازه</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
-          value={shopInfo.phone ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, phone: e.target.value })} />
+          value={shopInfo.phone ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, phone: toLatinDigits(e.target.value) })} />
         <label className="block text-xs text-muted mb-1">شماره کارت (برای درج در فاکتور/پیامک)</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono"
-          value={shopInfo.bankCardNumber ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, bankCardNumber: e.target.value })} />
+          value={shopInfo.bankCardNumber ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, bankCardNumber: toLatinDigits(e.target.value) })} />
         <label className="block text-xs text-muted mb-1">شماره حساب</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono"
-          value={shopInfo.bankAccountNumber ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, bankAccountNumber: e.target.value })} />
+          value={shopInfo.bankAccountNumber ?? ""} onChange={(e) => setShopInfo({ ...shopInfo, bankAccountNumber: toLatinDigits(e.target.value) })} />
 
         <label className="block text-xs text-muted mb-1">درصد مالیات بر خدمات (پیش‌فرض ۱۰٪)</label>
         <input type="number" step="0.5" min="0" max="100" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono"
@@ -401,8 +405,9 @@ export default function AdminPage() {
         <div className="text-xs font-bold mb-2">افزودن کارمند جدید</div>
         <input placeholder="نام" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
           value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <input placeholder="شماره موبایل" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
-          value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+        <input placeholder="09xxxxxxxxx" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono"
+          dir="ltr" inputMode="tel" maxLength={11}
+          value={form.phone} onChange={(e) => setForm({ ...form, phone: toLatinDigits(e.target.value) })} />
         <input placeholder="رمز عبور موقت" type="password" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2"
           value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         <label className="block text-[11px] text-muted mb-1">نقش (سطح دسترسی)</label>
@@ -548,11 +553,11 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
 
   async function save() {
     setErr("");
-    if (!/^09\d{9}$/.test(phone.trim())) { setErr("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
+    if (!isValidMobile(phone)) { setErr("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
     const res = await fetch(`/api/staff/${staff.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone: phone.trim(), role, specialty: specialty || null }),
+      body: JSON.stringify({ name, phone: normalizePhone(phone), role, specialty: specialty || null }),
     });
     if (!res.ok) { const d = await res.json().catch(() => ({})); setErr(d.message || "ذخیره ناموفق بود"); return; }
     setEditing(false);
@@ -609,7 +614,7 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
       <input className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={name} onChange={(e) => setName(e.target.value)} />
       <label className="block text-[10px] text-muted">شماره موبایل (برای ورود)</label>
       <input className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs mono" dir="ltr" inputMode="tel" maxLength={11}
-        value={phone} onChange={(e) => setPhone(e.target.value)} />
+        value={phone} onChange={(e) => setPhone(toLatinDigits(e.target.value))} />
       <label className="block text-[10px] text-muted">نقش (سطح دسترسی)</label>
       <select className="w-full bg-surface rounded-lg px-2 py-1.5 text-xs" value={role} onChange={(e) => setRole(e.target.value)}>
         {Object.entries(ROLE_LABEL).map(([val, label]) => <option key={val} value={val}>{label}</option>)}

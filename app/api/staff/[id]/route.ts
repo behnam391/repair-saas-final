@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, requireRole, UnauthorizedError } from "@/lib/tenant";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
 const UpdateSchema = z.object({
   name: z.string().min(1).optional(),
-  phone: z.string().min(5).optional(),
+  phone: z.preprocess(preprocessPhone, z.string().min(5).optional()),
   role: z.enum(["OWNER", "FRONTDESK", "HARDWARE", "SOFTWARE", "BOARD"]).optional(),
   specialty: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]).nullable().optional(),
   active: z.boolean().optional(),

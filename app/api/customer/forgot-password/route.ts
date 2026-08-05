@@ -3,11 +3,15 @@ import { db } from "@/lib/db";
 import { sendSms, sendCodeSms, isSmsConfigured } from "@/lib/sms";
 import { sendEmail, isEmailConfigured } from "@/lib/email";
 import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
-const Schema = z.object({ phone: z.string().min(5), channel: z.enum(["sms", "email"]).default("sms") });
+const Schema = z.object({
+  phone: z.preprocess(preprocessPhone, z.string().min(5)),
+  channel: z.enum(["sms", "email"]).default("sms"),
+});
 
 function generateOtp() {
   return String(Math.floor(10000 + Math.random() * 90000)); // 5 digits

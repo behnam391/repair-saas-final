@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, requireRole, UnauthorizedError } from "@/lib/tenant";
+import { preprocessPhone, preprocessDigits } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -10,10 +11,13 @@ const UpdateSchema = z.object({
   type: z.enum(["REPAIR", "DEALER", "BOTH"]).optional(),
   businessSize: z.enum(["SOLO", "TEAM", "ENTERPRISE"]).optional(),
   address: z.string().optional(),
-  phone: z.string().optional(),
-  bankCardNumber: z.string().optional(),
-  bankAccountNumber: z.string().optional(),
-  landlinePhone: z.string().optional(),
+  // Digits only, Latin only: the shop phone becomes a `tel:` link and an SMS
+  // destination, and a card number typed as ۶۰۳۷… is not a card number at
+  // all — the payout would simply fail. See lib/phone.ts.
+  phone: z.preprocess(preprocessPhone, z.string().optional()),
+  bankCardNumber: z.preprocess(preprocessDigits, z.string().optional()),
+  bankAccountNumber: z.preprocess(preprocessDigits, z.string().optional()),
+  landlinePhone: z.preprocess(preprocessDigits, z.string().optional()),
   province: z.string().optional(),
   supportAccessEnabled: z.boolean().optional(),
   latitude: z.number().optional(),

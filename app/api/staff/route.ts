@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, requireRole, UnauthorizedError } from "@/lib/tenant";
 import bcrypt from "bcryptjs";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,8 @@ const SPECIALTIES = ["HARDWARE", "SOFTWARE", "BOARD"] as const;
 
 const StaffSchema = z.object({
   name: z.string().min(1),
-  phone: z.string().min(5),
+  // Canonical form, or this employee can never log in. See lib/phone.ts.
+  phone: z.preprocess(preprocessPhone, z.string().min(5)),
   password: z.string().min(4),
   role: z.enum(["OWNER", "FRONTDESK", "HARDWARE", "SOFTWARE", "BOARD"]),
   specialty: z.enum(SPECIALTIES).nullable().optional(),

@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import PatternLockInput from "@/components/PatternLockInput";
 import ComboBox from "@/components/ComboBox";
 import TicketChat from "@/components/TicketChat";
+import { toLatinDigits, isValidMobile } from "@/lib/phone";
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار" },
@@ -470,7 +471,8 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
       setError("نام و شماره تماس مشتری را وارد کنید");
       return;
     }
-    if (step === 1 && !/^09\d{9}$/.test(form.customerPhone.trim())) {
+    // Every repair-status SMS goes to this number. See lib/phone.ts.
+    if (step === 1 && !isValidMobile(form.customerPhone)) {
       setError("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد");
       return;
     }
@@ -554,7 +556,7 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
             inputMode="tel" dir="ltr" maxLength={11} placeholder="09xxxxxxxxx"
             className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
             value={form.customerPhone}
-            onChange={(e) => setForm({ ...form, customerPhone: e.target.value })}
+            onChange={(e) => setForm({ ...form, customerPhone: toLatinDigits(e.target.value) })}
           />
         </div>
         </>)}

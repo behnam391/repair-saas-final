@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { IRAN_PROVINCES, PROVINCE_NAMES } from "@/lib/iran-locations";
 import PhoneVerify from "@/components/PhoneVerify";
+import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 
 export default function CustomerSignupPage() {
   const router = useRouter();
@@ -17,14 +18,17 @@ export default function CustomerSignupPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!/^09\d{9}$/.test(form.phone)) { setError("شماره موبایل باید با 09 شروع شود و ۱۱ رقم باشد"); return; }
+    // The phone is the login key — sign up with ۰۹… and the account can
+    // never be logged into again. See lib/phone.ts.
+    if (!isValidMobile(form.phone)) { setError("شماره موبایل باید با 09 شروع شود و ۱۱ رقم باشد"); return; }
+    const phone = normalizePhone(form.phone);
     if (!phoneVerified) { setError("ابتدا شماره موبایل را با کد تأیید کنید"); return; }
     if (form.password.length < 6) { setError("رمز عبور باید حداقل ۶ کاراکتر باشد"); return; }
     setLoading(true);
     const res = await fetch("/api/customer/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify({ ...form, phone }),
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -33,7 +37,7 @@ export default function CustomerSignupPage() {
       return;
     }
     // sign straight in so the customer lands in their panel with no extra step
-    await signIn("customer-credentials", { phone: form.phone, password: form.password, redirect: false });
+    await signIn("customer-credentials", { phone, password: form.password, redirect: false });
     router.push("/customer");
   }
 
@@ -52,7 +56,7 @@ export default function CustomerSignupPage() {
         <label className="block text-xs text-muted mb-1">شماره موبایل</label>
         <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-2 text-sm mono"
           placeholder="09xxxxxxxxx" inputMode="tel" dir="ltr" maxLength={11}
-          value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          value={form.phone} onChange={(e) => setForm({ ...form, phone: toLatinDigits(e.target.value) })} />
 
         <PhoneVerify phone={form.phone} email={form.email} onChange={setPhoneVerified} />
 

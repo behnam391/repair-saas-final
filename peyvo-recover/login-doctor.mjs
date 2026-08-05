@@ -318,24 +318,48 @@ try {
 
   if (verdict.startsWith("THIS LOGIN WORKS")) {
     console.log("  So the account is correct and the password is correct - against THIS");
-    console.log("  database. If the website still rejects you, the website is reading a");
-    console.log("  DIFFERENT database.\n");
-    console.log("  Prove it in 30 seconds, without changing anything:\n");
-    console.log("    1. Open  https://peyvo.ir/signup  in your browser");
-    console.log("    2. Start a new shop signup and put in this same phone number:");
+    console.log("  database. If the website still rejects you, the cause is one of two");
+    console.log("  things, in this order of likelihood.\n");
+
+    console.log("  ---- 1. THE PHONE FIELD IN THE BROWSER (most likely) ----\n");
+    console.log("  The row in the database is stored with LATIN digits:");
     console.log(`         ${normalizeDigits(phoneTyped)}`);
-    console.log("    3. Try to move to the next step and read the message:\n");
-    console.log("       the red error meaning THIS NUMBER IS ALREADY REGISTERED");
-    console.log("           -> the website DOES see your account. Same database.");
-    console.log("       anything else (it asks for an SMS code, or just continues)");
-    console.log("           -> the website does NOT see your account. The DATABASE_URL");
-    console.log("              in Vercel points at a different database than the one");
-    console.log("              you set in this shell. That is the whole problem.\n");
-    console.log("    This creates nothing. Signup stops before it writes anything.\n");
-    console.log("    Then: vercel.com -> your project -> Settings -> Environment");
-    console.log("    Variables -> Production DATABASE_URL. Compare its host with:");
+    console.log("  Until the fix is deployed, the login page compares what you type");
+    console.log("  CHARACTER BY CHARACTER against that. A Farsi keyboard produces");
+    console.log("  Persian digits, which look almost the same to you but are different");
+    console.log("  characters, so no row is found - and the page then blames your");
+    console.log("  PASSWORD even though the password is fine.\n");
+    console.log("  Test it right now, no deploy needed:");
+    console.log("    - open the login page");
+    console.log("    - switch the keyboard to English BEFORE touching the phone field,");
+    console.log("      or paste the number from the line above");
+    console.log("    - type the password with the English layout too");
+    console.log("    - if you get in, that was it.\n");
+
+    console.log("  ---- 2. VERCEL IS READING A DIFFERENT DATABASE ----\n");
+    console.log("  Only worth checking if step 1 did not get you in. Run this in");
+    console.log("  PowerShell exactly as written - it asks the LIVE server whether it");
+    console.log("  can see your account:\n");
+    console.log("    $b = @{ phone = \'" + normalizeDigits(phoneTyped) + "\'; password = \'x\'; name = \'x\';");
+    console.log("            shopName = \'x\'; code = \'00000\' } | ConvertTo-Json");
+    console.log("    try { Invoke-WebRequest -Uri https://peyvo.ir/api/signup -Method POST \`");
+    console.log("        -ContentType \'application/json\' -Body $b }");
+    console.log("    catch { $_.Exception.Response.StatusCode.value__ }\n");
+    console.log("  Read the number it prints:\n");
+    console.log("    409  -> the live site DOES see your account. Same database.");
+    console.log("            The problem is what you are typing. Go back to step 1.");
+    console.log("    403  -> the live site does NOT see your account. Vercel is");
+    console.log("            pointed at a different database. That is the problem.");
+    console.log("    500  -> the live site cannot reach any database at all.\n");
+    console.log("  This writes nothing. The request is rejected before it saves.\n");
+    console.log("  Do NOT use the signup page in the browser for this - it stops at");
+    console.log("  the SMS step (503) because the SMS settings were wiped too, so it");
+    console.log("  never reaches the check we need.\n");
+    console.log("  If you get 403: vercel.com -> your project -> Settings ->");
+    console.log("  Environment Variables -> Production DATABASE_URL. Compare its host");
+    console.log("  with:");
     console.log(`         ${host}`);
-    console.log("    Do NOT paste the value to me. Just say same or different.\n");
+    console.log("  Do NOT paste the value to me. Just say same or different.\n");
   } else {
     console.log("  Fix the point above and try again. Nothing here was changed.\n");
   }

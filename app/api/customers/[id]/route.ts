@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { deleteCustomerCascade } from "@/lib/cascade";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
 const Schema = z.object({
   name: z.string().min(1).optional(),
-  phone: z.string().min(5).optional(),
+  phone: z.preprocess(preprocessPhone, z.string().min(5).optional()),
   email: z.string().optional(),
   address: z.string().optional(),
   note: z.string().optional(),

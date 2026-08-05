@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -8,9 +9,11 @@ export const dynamic = "force-dynamic";
 const TxSchema = z.object({
   deviceModel: z.string().min(1),
   sellerName: z.string().min(1),
-  sellerPhone: z.string().optional(),
+  // Part of the device's public ownership chain — a later owner searches it
+  // to trace the phone, so it has to be stored one way only. See lib/phone.ts.
+  sellerPhone: z.preprocess(preprocessPhone, z.string().optional()),
   buyerName: z.string().min(1),
-  buyerPhone: z.string().optional(),
+  buyerPhone: z.preprocess(preprocessPhone, z.string().optional()),
   price: z.number().int().optional(),
   note: z.string().optional(),
 });

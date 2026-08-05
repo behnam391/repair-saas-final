@@ -2,13 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { DEVICE_BRANDS } from "@/lib/device-catalog";
 import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
 const Schema = z.object({
   customerName: z.string().min(1),
-  customerPhone: z.string().min(5),
+  // The customer types this on a kiosk tablet, very often with a Farsi
+  // keyboard. It is the number the shop calls back and texts. See lib/phone.ts.
+  customerPhone: z.preprocess(preprocessPhone, z.string().min(5)),
   deviceModel: z.string().min(1),
   imei: z.string().optional(),
   issueDescription: z.string().min(1),

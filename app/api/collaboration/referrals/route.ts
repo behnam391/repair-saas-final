@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { notifyUser } from "@/lib/notify";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +10,8 @@ export const dynamic = "force-dynamic";
 const CreateSchema = z.object({
   partnershipId: z.string().min(1),
   customerName: z.string().min(1),
-  customerPhone: z.string().min(5),
+  // Handed to the other shop to contact the customer. See lib/phone.ts.
+  customerPhone: z.preprocess(preprocessPhone, z.string().min(5)),
   deviceModel: z.string().optional(),
   issueNote: z.string().optional(),
   suggestedLane: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]).optional(),

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
 const Schema = z.object({
   avatarUrl: z.string().optional(),
-  phone: z.string().min(5).optional(),
+  phone: z.preprocess(preprocessPhone, z.string().min(5).optional()),
   email: z.string().optional(),
   gmailId: z.string().optional(),
   nationalId: z.string().optional(),
