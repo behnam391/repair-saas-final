@@ -434,18 +434,6 @@ select option {
 .auth-spark { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #9deaff; box-shadow: 0 0 8px #55d8ff, 0 0 14px var(--auth-accent); opacity: 0; animation: auth-spark-rise 4.2s ease-out infinite; }
 .auth-spark-one { top: 43%; left: 48%; }.auth-spark-two { top: 46%; left: 58%; animation-delay: -1.4s; }.auth-spark-three { top: 40%; left: 68%; animation-delay: -2.8s; }
 .auth-aside-grid { position: absolute; inset: 0; opacity: .16; background-image: linear-gradient(var(--auth-accent) 1px, transparent 1px), linear-gradient(90deg, var(--auth-accent) 1px, transparent 1px); background-size: 34px 34px; mask-image: radial-gradient(circle at 50% 30%, #000, transparent 68%); }
-.auth-demo-card { position: absolute; border: 1px solid rgba(255,255,255,.12); background: rgba(10,16,32,.62); backdrop-filter: blur(18px); box-shadow: 0 22px 50px rgba(0,0,0,.25), inset 0 1px rgba(255,255,255,.08); }
-.auth-demo-card-main { top: 82px; right: 44px; width: 245px; height: 168px; border-radius: 23px; padding: 20px; transform: rotate(-2deg); }
-.auth-demo-card-main { animation: auth-card-float 6s ease-in-out infinite; }
-.auth-demo-card-back { top: 48px; left: 22px; width: 128px; height: 86px; border-radius: 18px; padding: 14px; transform: rotate(7deg); z-index: 1; animation: auth-card-float-back 7s ease-in-out -2s infinite; }
-.auth-demo-card-back span { display: block; color: #aebbd0; font-size: 9px; }
-.auth-demo-card-back strong { display: block; color: white; font-size: 22px; margin-top: 3px; }
-.auth-demo-card-back i { display: block; height: 4px; width: 80%; margin-top: 7px; border-radius: 9px; background: var(--auth-gradient); }
-.auth-mini-top { display: flex; justify-content: space-between; color: #b8c3d6; font-size: 9px; }
-.auth-mini-top b { color: var(--auth-accent); padding: 3px 7px; border-radius: 9px; background: var(--auth-soft); }
-.auth-mini-value { margin-top: 13px; color: white; font-size: 22px; font-weight: 900; }
-.auth-mini-chart { direction: ltr; height: 55px; display: flex; align-items: end; gap: 6px; margin-top: 12px; }
-.auth-mini-chart i { flex: 1; border-radius: 5px 5px 2px 2px; background: var(--auth-gradient); opacity: .9; }
 .auth-aside-copy { position: relative; z-index: 2; }
 .auth-aside-kicker { color: var(--auth-accent); font: 700 9px 'JetBrains Mono', monospace; letter-spacing: .14em; }
 .auth-aside h2 { color: white; font-size: 21px; line-height: 1.6; font-weight: 900; margin: 7px 0; }
@@ -462,8 +450,6 @@ select option {
   100% { transform: translate(-53%,-47%) rotate(220deg) scale(.92); border-radius: 48% 52% 35% 65% / 57% 36% 64% 43%; }
 }
 @keyframes auth-orb-drift { from { transform: translate3d(-25px,-8px,0) scale(.92); } to { transform: translate3d(45px,38px,0) scale(1.12); } }
-@keyframes auth-card-float { 0%,100% { transform: rotate(-2deg) translateY(0); } 50% { transform: rotate(0deg) translateY(-10px); } }
-@keyframes auth-card-float-back { 0%,100% { transform: rotate(7deg) translateY(0); } 50% { transform: rotate(4deg) translateY(9px); } }
 @keyframes auth-field-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(5px); } 50% { transform: translateX(-5px); } 75% { transform: translateX(3px); } }
 @keyframes auth-repair-camera { 0% { transform: scale(1.03) translate3d(-1%,0,0); } 50% { transform: scale(1.075) translate3d(1%,-1%,0); } 100% { transform: scale(1.045) translate3d(0,1%,0); } }
 @keyframes auth-workbench-shimmer { 0%,28% { transform: translateX(-115%); opacity: 0; } 42% { opacity: .9; } 60%,100% { transform: translateX(115%); opacity: 0; } }
@@ -479,7 +465,7 @@ select option {
   .auth-brand { margin-bottom: 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .auth-scene::after, .auth-orb, .auth-demo-card-main, .auth-demo-card-back, .auth-field > div::before, .auth-repair-image, .auth-repair-scene::after, .auth-loupe-glow, .auth-bench-scan, .auth-spark { animation: none !important; }
+  .auth-scene::after, .auth-orb, .auth-field > div::before, .auth-repair-image, .auth-repair-scene::after, .auth-loupe-glow, .auth-bench-scan, .auth-spark { animation: none !important; }
 }
 
 /* Stat tiles — frosted numeric cards with a corner light bloom. */

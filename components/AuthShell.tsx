@@ -53,14 +53,6 @@ export function AuthShell({
             <i className="auth-spark auth-spark-three" />
           </div>
           <div className="auth-aside-grid" aria-hidden />
-          <div className="auth-demo-card auth-demo-card-back">
-            <span>رضایت مشتری</span><strong>۹۴٪</strong><i />
-          </div>
-          <div className="auth-demo-card auth-demo-card-main">
-            <div className="auth-mini-top"><span>نمای کلی امروز</span><b>زنده</b></div>
-            <div className="auth-mini-value">۱۲ دستگاه</div>
-            <div className="auth-mini-chart">{[42,64,48,82,71,95,76].map((h, i) => <i key={i} style={{ height: `${h}%` }} />)}</div>
-          </div>
           <div className="auth-aside-copy">
             <div className="auth-aside-kicker">PEYVO WORKSPACE</div>
             <h2>{asideTitle}</h2>
