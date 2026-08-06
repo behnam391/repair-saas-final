@@ -6,17 +6,26 @@ import Link from "next/link";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
 import PhoneVerify from "@/components/PhoneVerify";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, ArrowRight, Building2, Check, ChevronLeft, CircuitBoard, Code2, Crown, Eye, EyeOff, LockKeyhole, MonitorSmartphone, ShieldCheck, ShoppingBag, Smartphone, Sparkles, Store, UserRound, UsersRound, Wrench } from "lucide-react";
+import Logo from "@/components/Logo";
 
 const BUSINESS_SIZE_OPTIONS = [
-  { key: "SOLO", label: "تک‌نفره", desc: "خودم یک‌تنه همه‌کار را انجام می‌دهم" },
-  { key: "TEAM", label: "تیمی", desc: "من و چند کارمند، هرکدام روی تخصص خودمان" },
-  { key: "ENTERPRISE", label: "مجموعه بزرگ", desc: "کارمندان زیاد، چند شعبه/بخش" },
+  { key: "SOLO", label: "استودیوی شخصی", eyebrow: "فقط خودم", desc: "برای تعمیرکار مستقلی که پذیرش، تعمیر و تحویل را خودش مدیریت می‌کند.", meta: "۱ نفر", icon: UserRound, popular: false },
+  { key: "TEAM", label: "تعمیرگاه در حال رشد", eyebrow: "انتخاب محبوب", desc: "برای تیمی که پذیرش و تعمیرات بین چند نفر و چند تخصص تقسیم می‌شود.", meta: "۲ تا ۱۰ نفر", icon: UsersRound, popular: true },
+  { key: "ENTERPRISE", label: "مرکز خدمات حرفه‌ای", eyebrow: "ساختار پیشرفته", desc: "برای مجموعه‌های بزرگ با چند بخش، نقش‌های متعدد یا شعبه‌های مختلف.", meta: "+۱۰ نفر", icon: Building2, popular: false },
 ] as const;
 
 const SPECIALTY_OPTIONS = [
-  { key: "HARDWARE", label: "سخت‌افزار" },
-  { key: "SOFTWARE", label: "نرم‌افزار" },
-  { key: "BOARD", label: "تخصصی (برد/هارد)" },
+  { key: "HARDWARE", label: "سخت‌افزار", desc: "قطعات، نمایشگر و باتری", icon: Wrench },
+  { key: "SOFTWARE", label: "نرم‌افزار", desc: "فلش، بازیابی و تنظیمات", icon: Code2 },
+  { key: "BOARD", label: "برد تخصصی", desc: "برد، هارد و میکروسولدری", icon: CircuitBoard },
+];
+
+const ACTIVITY_OPTIONS = [
+  { key: "REPAIR", label: "خدمات تعمیرات", desc: "پذیرش دستگاه، گردش تعمیر و تحویل", icon: Wrench },
+  { key: "DEALER", label: "خرید و فروش", desc: "مدیریت معاملات و موجودی دستگاه", icon: ShoppingBag },
+  { key: "BOTH", label: "مرکز کامل موبایل", desc: "تعمیرات و خریدوفروش در کنار هم", icon: Store },
 ];
 
 // Step wizard: 1=کسب‌وکار، 2=مغازه، 3=مدیر، 4=موبایل و رمز — same visual
@@ -34,6 +43,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [step, setStep] = useState(1);
+  const [showPassword, setShowPassword] = useState(false);
 
   function toggleSpecialty(key: string) {
     setForm((f) => ({
@@ -86,151 +96,65 @@ export default function SignupPage() {
     router.push("/tickets");
   }
 
+  const selectedModel = BUSINESS_SIZE_OPTIONS.find((option) => option.key === form.businessSize)!;
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8">
-      <form onSubmit={step === STEPS.length ? submit : (e) => e.preventDefault()} className="w-full max-w-md bg-surface border-t-2 border-t-copper border-x border-b border-surface2 rounded-2xl p-6">
-        <h1 className="display-heading text-xl mb-1">ثبت‌نام مغازه جدید</h1>
-        <p className="text-xs text-muted mb-5">با پلن رایگان شروع کنید، هر زمان می‌توانید ارتقا دهید</p>
+    <main className="signup-scene">
+      <div className="signup-ambient" aria-hidden><i /><i /><i /></div>
+      <Link href="/" className="signup-home"><ArrowRight size={15} /> بازگشت به سایت</Link>
 
-        {/* Step indicator — same visual language as the device-intake wizard */}
-        <div className="flex items-center gap-1.5 mb-6">
-          {STEPS.map((label, i) => {
-            const n = i + 1;
-            const state = n < step ? "done" : n === step ? "active" : "next";
-            return (
-              <div key={label} className="flex items-center gap-1.5 flex-1">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                  state === "done" ? "bg-teal text-white" : state === "active" ? "bg-copper text-white" : "bg-surface2 text-muted"
-                }`}>
-                  {state === "done" ? "✓" : n}
+      <div className="signup-shell">
+        <aside className="signup-rail">
+          <Logo size={31} textClassName="text-xl" />
+          <div className="signup-rail-copy">
+            <span>راه‌اندازی فضای کاری</span>
+            <h2>چند قدم تا یک<br />تعمیرگاه هوشمند.</h2>
+            <p>پیوو براساس مدل کاری شما، فضای مناسب و ابزارهای موردنیازتان را آماده می‌کند.</p>
+          </div>
+          <div className="signup-steps">
+            {STEPS.map((label, index) => {
+              const number = index + 1;
+              const state = number < step ? "done" : number === step ? "active" : "next";
+              return <button type="button" key={label} disabled={number > step} onClick={() => number < step && setStep(number)} className={`is-${state}`}><i>{state === "done" ? <Check size={14} /> : number}</i><span><strong>{label}</strong><small>{["مدل و نوع فعالیت", "مشخصات فضای کاری", "اطلاعات مدیر", "امنیت و تأیید"][index]}</small></span></button>;
+            })}
+          </div>
+          <div className="signup-rail-security"><ShieldCheck size={15} /><span><strong>اطلاعات شما امن است</strong><small>رمزگذاری و محافظت‌شده</small></span></div>
+        </aside>
+
+        <form onSubmit={step === STEPS.length ? submit : (e) => e.preventDefault()} className="signup-form-panel">
+          <div className="signup-mobile-progress"><span>مرحله {step} از {STEPS.length}</span><i><b style={{ width: `${step * 25}%` }} /></i></div>
+          <AnimatePresence mode="wait">
+            <motion.div key={step} className="signup-step-content" initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: .28 }}>
+              {step === 1 && <>
+                <div className="signup-heading"><span><Sparkles size={14} /> شخصی‌سازی فضای شما</span><h1>کدام مدل به کار شما نزدیک‌تر است؟</h1><p>این انتخاب فقط چیدمان اولیه را مشخص می‌کند و هر زمان قابل تغییر است.</p></div>
+                <div className="signup-model-grid">
+                  {BUSINESS_SIZE_OPTIONS.map((option) => { const Icon = option.icon; const active = form.businessSize === option.key; return <button key={option.key} type="button" onClick={() => setForm({ ...form, businessSize: option.key })} className={active ? "active" : ""}><div className="signup-model-top"><i><Icon size={20} /></i>{active && <span><Check size={13} /></span>}</div><small>{option.eyebrow}</small><strong>{option.label}</strong><p>{option.desc}</p><em>{option.meta}</em>{option.popular && <b>پیشنهاد پیوو</b>}</button>; })}
                 </div>
-                <span className={`text-[10px] whitespace-nowrap ${state === "active" ? "font-bold" : "text-muted"}`}>{label}</span>
-                {i < STEPS.length - 1 && <div className={`h-px flex-1 ${n < step ? "bg-teal" : "bg-surface2"}`} />}
-              </div>
-            );
-          })}
-        </div>
 
-        {step === 1 && (<>
-          <label className="block text-xs text-muted mb-2">نوع کسب‌وکار شما</label>
-          <div className="flex bg-surface2 rounded-lg p-1 mb-4">
-            {BUSINESS_SIZE_OPTIONS.map((o) => (
-              <button key={o.key} type="button" onClick={() => setForm({ ...form, businessSize: o.key })}
-                className={`flex-1 text-xs font-bold rounded-md py-2 transition ${form.businessSize === o.key ? "bg-copper text-[#1A1410]" : "text-muted"}`}>
-                {o.label}
-              </button>
-            ))}
+                <div className="signup-subsection"><div><strong>حوزه فعالیت شما</strong><small>کدام بخش‌ها را مدیریت می‌کنید؟</small></div></div>
+                <div className="signup-activity-grid">
+                  {ACTIVITY_OPTIONS.map((option) => { const Icon = option.icon; const active = form.shopType === option.key; return <button key={option.key} type="button" onClick={() => setForm({ ...form, shopType: option.key })} className={active ? "active" : ""}><i><Icon size={18} /></i><span><strong>{option.label}</strong><small>{option.desc}</small></span>{active && <Check size={15} />}</button>; })}
+                </div>
+
+                {form.shopType !== "DEALER" && <motion.div className="signup-specialties" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}><div className="signup-subsection"><div><strong>تخصص‌های فعال</strong><small>یک یا چند مورد را انتخاب کنید</small></div></div><div className="signup-specialty-grid">{SPECIALTY_OPTIONS.map((option) => { const Icon = option.icon; const active = form.specialties.includes(option.key); return <button key={option.key} type="button" onClick={() => toggleSpecialty(option.key)} className={active ? "active" : ""}><Icon size={17} /><span><strong>{option.label}</strong><small>{option.desc}</small></span>{active && <Check size={14} />}</button>; })}</div></motion.div>}
+              </>}
+
+              {step === 2 && <><div className="signup-heading"><span><Store size={14} /> هویت کسب‌وکار</span><h1>فضای کاری‌تان را معرفی کنید</h1><p>این اطلاعات در پنل و ارتباط با مشتریان نمایش داده می‌شود.</p></div><div className="signup-fields"><label><span>نام فروشگاه یا تعمیرگاه</span><div><Store size={18} /><input autoFocus value={form.shopName} onChange={(e) => setForm({ ...form, shopName: e.target.value })} placeholder="مثلاً موبایل مرکزی" /></div></label><label><span>آدرس <small>اختیاری</small></span><div><MonitorSmartphone size={18} /><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="شهر، خیابان و پلاک" /></div></label><label><span>تلفن ثابت <small>اختیاری</small></span><div><Smartphone size={18} /><input dir="ltr" value={form.landlinePhone} onChange={(e) => setForm({ ...form, landlinePhone: toLatinDigits(e.target.value) })} placeholder="021xxxxxxxx" /></div></label></div><div className="signup-summary"><Crown size={17} /><span><small>فضای انتخاب‌شده</small><strong>{selectedModel.label} · {ACTIVITY_OPTIONS.find((x) => x.key === form.shopType)?.label}</strong></span></div></>}
+
+              {step === 3 && <><div className="signup-heading"><span><UserRound size={14} /> مدیر فضای کاری</span><h1>حساب مدیر را بسازید</h1><p>این حساب دسترسی مالک و مدیریت کامل فضای کاری را خواهد داشت.</p></div><div className="signup-fields"><label><span>نام و نام خانوادگی مدیر</span><div><UserRound size={18} /><input autoFocus value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} placeholder="نام کامل شما" /></div></label><div className="signup-field-row"><label><span>کد ملی</span><div><ShieldCheck size={18} /><input dir="ltr" inputMode="numeric" value={form.nationalId} onChange={(e) => setForm({ ...form, nationalId: toLatinDigits(e.target.value) })} placeholder="۱۰ رقم" /></div></label><label><span>تاریخ تولد</span><JalaliDatePicker className="signup-date-input" value={form.birthDate} onChange={(value) => setForm({ ...form, birthDate: value })} /></label></div></div></>}
+
+              {step === 4 && <><div className="signup-heading"><span><LockKeyhole size={14} /> ورود امن</span><h1>آخرین قدم؛ تأیید هویت</h1><p>شماره موبایل شما، شناسه ورود به فضای مدیریت خواهد بود.</p></div><div className="signup-fields"><label><span>شماره موبایل مدیر</span><div><Smartphone size={18} /><input autoFocus inputMode="tel" dir="ltr" maxLength={11} placeholder="0912 345 6789" value={form.phone} onChange={(e) => setForm({ ...form, phone: toLatinDigits(e.target.value) })} /></div></label><div className="signup-verification"><PhoneVerify phone={form.phone} email={undefined} onChange={setPhoneVerified} /></div><label><span>رمز عبور</span><div><LockKeyhole size={18} /><input type={showPassword ? "text" : "password"} dir="ltr" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="حداقل ۸ کاراکتر" /><button type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label></div></>}
+            </motion.div>
+          </AnimatePresence>
+
+          {error && <motion.p className="signup-error" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}>{error}</motion.p>}
+          <div className="signup-navigation">
+            {step > 1 && <button type="button" className="signup-prev" onClick={() => { setError(""); setStep(step - 1); }}><ArrowRight size={17} /> مرحله قبل</button>}
+            {step < STEPS.length ? <button type="button" className="signup-next" onClick={nextStep}>ادامه مسیر <ArrowLeft size={18} /></button> : <button type="submit" disabled={loading || !phoneVerified} className="signup-next">{loading ? "در حال ساخت فضای شما..." : !phoneVerified ? "ابتدا شماره را تأیید کنید" : "ساخت فضای کاری"}<ChevronLeft size={18} /></button>}
           </div>
-          <p className="text-[11px] text-muted mb-5 -mt-2">
-            {BUSINESS_SIZE_OPTIONS.find((o) => o.key === form.businessSize)?.desc}
-          </p>
-
-          <label className="block text-xs text-muted mb-2">نوع فعالیت</label>
-          <div className="flex bg-surface2 rounded-lg p-1 mb-4">
-            {[
-              ["REPAIR", "تعمیرگاه"],
-              ["DEALER", "خرید و فروش"],
-              ["BOTH", "هر دو"],
-            ].map(([val, label]) => (
-              <button key={val} type="button" onClick={() => setForm({ ...form, shopType: val })}
-                className={`flex-1 text-xs font-bold rounded-md py-2 transition ${form.shopType === val ? "bg-copper text-[#1A1410]" : "text-muted"}`}>
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <label className="block text-xs text-muted mb-2">تخصص‌های مغازه (می‌توانید چند مورد انتخاب کنید)</label>
-          <div className="flex flex-wrap gap-1.5">
-            {SPECIALTY_OPTIONS.map((s) => (
-              <button key={s.key} type="button" onClick={() => toggleSpecialty(s.key)}
-                className={`text-[11px] rounded-full px-3 py-1.5 border transition ${form.specialties.includes(s.key) ? "bg-copper text-[#1A1410] border-copper" : "bg-surface2 border-surface2 text-muted"}`}>
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </>)}
-
-        {step === 2 && (<>
-          {[
-            ["نام مغازه/تعمیرگاه", "shopName"],
-            ["آدرس مغازه (اختیاری)", "address"],
-            ["تلفن ثابت مغازه (اختیاری)", "landlinePhone"],
-          ].map(([label, key]) => (
-            <div key={key} className="mb-3">
-              <label className="block text-xs text-muted mb-1">{label}</label>
-              <input
-                className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-                value={(form as any)[key]}
-                onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-              />
-            </div>
-          ))}
-        </>)}
-
-        {step === 3 && (<>
-          <p className="text-[11px] text-muted mb-3">اطلاعات مدیر (برای احراز هویت و بازیابی حساب)</p>
-          <div className="mb-3">
-            <label className="block text-xs text-muted mb-1">نام شما (مدیر)</label>
-            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-              value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs text-muted mb-1">کد ملی</label>
-              <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
-                value={form.nationalId} onChange={(e) => setForm({ ...form, nationalId: e.target.value })} />
-            </div>
-            <div>
-              <label className="block text-xs text-muted mb-1">تاریخ تولد</label>
-              <JalaliDatePicker className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-                value={form.birthDate} onChange={(v) => setForm({ ...form, birthDate: v })} />
-            </div>
-          </div>
-        </>)}
-
-        {step === 4 && (<>
-          <div className="mb-2">
-            <label className="block text-xs text-muted mb-1">شماره موبایل</label>
-            <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
-              inputMode="tel" dir="ltr" maxLength={11} placeholder="09xxxxxxxxx"
-              value={form.phone} onChange={(e) => setForm({ ...form, phone: toLatinDigits(e.target.value) })} />
-          </div>
-          <PhoneVerify phone={form.phone} email={undefined} onChange={setPhoneVerified} />
-          <div className="mb-2">
-            <label className="block text-xs text-muted mb-1">رمز عبور</label>
-            <input type="password" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-              value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-          </div>
-        </>)}
-
-        {error && <p className="text-danger text-xs mb-3 mt-3">{error}</p>}
-
-        {/* Wizard navigation */}
-        <div className="flex gap-2 mt-5">
-          {step > 1 && (
-            <button
-              type="button"
-              onClick={() => { setError(""); setStep(step - 1); }}
-              className="flex-1 bg-surface2 border border-border font-bold rounded-lg py-2.5 text-sm"
-            >
-              → قبلی
-            </button>
-          )}
-          {step < STEPS.length ? (
-            <button type="button" onClick={nextStep} className="flex-[2] bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
-              بعدی ←
-            </button>
-          ) : (
-            <button type="submit" disabled={loading || !phoneVerified} className="flex-[2] bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm disabled:opacity-60">
-              {loading ? "در حال ثبت‌نام..." : !phoneVerified ? "ابتدا شماره را تأیید کنید" : "ثبت‌نام و ورود"}
-            </button>
-          )}
-        </div>
-
-        <p className="text-[11px] text-muted text-center mt-4">
-          قبلاً ثبت‌نام کرده‌اید؟ <Link href="/login" className="text-copper">ورود</Link>
-        </p>
-      </form>
-    </div>
+          <p className="signup-login">قبلاً حساب ساخته‌اید؟ <Link href="/login">وارد شوید</Link></p>
+        </form>
+      </div>
+    </main>
   );
 }
