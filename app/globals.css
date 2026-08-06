@@ -463,6 +463,11 @@ select option {
   .auth-aside { display: none; }
   .auth-form-panel { min-height: calc(100vh - 92px); padding: 30px 24px 24px; justify-content: center; }
   .auth-brand { margin-bottom: 24px; }
+  .auth-field > div::before { display: none; animation: none; }
+  .auth-field > div:focus-within { border-color: var(--auth-accent); box-shadow: 0 0 0 3px var(--auth-soft); transform: none; }
+  .auth-password-box.is-checking { border-color: var(--auth-accent); box-shadow: none !important; }
+  .auth-password-box.is-success { border-color: var(--color-teal); box-shadow: none !important; }
+  .auth-password-box.is-error { border-color: var(--color-danger); box-shadow: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   .auth-scene::after, .auth-orb, .auth-field > div::before, .auth-repair-image, .auth-repair-scene::after, .auth-loupe-glow, .auth-bench-scan, .auth-spark { animation: none !important; }
