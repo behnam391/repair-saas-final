@@ -457,9 +457,11 @@ select option {
 @keyframes auth-bench-scan { 0%,30% { opacity: 0; transform: translateY(-18px) scaleX(.7); } 45% { opacity: .55; } 70%,100% { opacity: 0; transform: translateY(90px) scaleX(1); } }
 @keyframes auth-spark-rise { 0%,45% { opacity: 0; transform: translate3d(0,8px,0) scale(.4); } 55% { opacity: .9; } 78% { opacity: .35; } 100% { opacity: 0; transform: translate3d(8px,-34px,0) scale(1.2); } }
 @media (max-width: 760px) {
-  .auth-scene { display: block; padding: 68px 15px 22px; overflow-y: auto; }
+  .auth-scene { display: block; padding: 68px 15px 22px; overflow-y: auto; background: var(--color-bg); }
+  .auth-scene::before, .auth-scene::after { content: none; display: none; animation: none; }
+  .auth-orb { display: none; animation: none; }
   .auth-home-link { top: 22px; right: 20px; }
-  .auth-shell { display: block; min-height: 0; border-radius: 26px; }
+  .auth-shell { display: block; min-height: 0; border-radius: 26px; backdrop-filter: none; background: var(--color-bg); box-shadow: 0 14px 40px rgba(2,6,20,.18); }
   .auth-aside { display: none; }
   .auth-form-panel { min-height: calc(100vh - 92px); padding: 30px 24px 24px; justify-content: center; }
   .auth-brand { margin-bottom: 24px; }
