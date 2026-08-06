@@ -460,6 +460,16 @@ model SignupVerification {
   @@index([identifier])
 }
 
+// Distributed request throttling shared by all Vercel instances.
+model RateLimitBucket {
+  key       String   @id
+  count     Int
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+}
+
 // ── Nationwide marketplace ───────────────────────────────────
 // Unlike every other model above, these are NOT shop-isolated on read —
 // any signed-in technician from any shop can see listings from any other
@@ -791,6 +801,11 @@ model AdBanner {
   imageUrl    String
   linkUrl     String?
   displayType String   @default("BANNER") // "BANNER" (inline strip) | "POPUP" (closable overlay, once per session)
+  title       String?
+  description String?
+  ctaLabel    String?
+  startsAt    DateTime?
+  endsAt      DateTime?
   active      Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())

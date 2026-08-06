@@ -57,9 +57,9 @@ export async function POST(req: NextRequest, { params }: { params: { shopId: str
   try {
     // Public, unauthenticated endpoint — throttle per IP and per shop so a
     // QR link can't be spammed to flood a shop's pending list.
-    const ipLimit = rateLimit(`kiosk:ip:${clientIp(req)}`, 12, 10 * 60 * 1000);
+    const ipLimit = await rateLimit(`kiosk:ip:${clientIp(req)}`, 12, 10 * 60 * 1000);
     if (!ipLimit.ok) { const t = tooMany(ipLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
-    const shopLimit = rateLimit(`kiosk:shop:${params.shopId}`, 40, 10 * 60 * 1000);
+    const shopLimit = await rateLimit(`kiosk:shop:${params.shopId}`, 40, 10 * 60 * 1000);
     if (!shopLimit.ok) { const t = tooMany(shopLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
 
     const shop = await db.shop.findUnique({ where: { id: params.shopId } });

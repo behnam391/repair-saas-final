@@ -9,21 +9,34 @@ import DashboardNav from "@/components/DashboardNav";
 import { ShopBottomNav } from "@/components/BottomNav";
 import Logo from "@/components/Logo";
 import { db } from "@/lib/db";
+import OnboardingChecklist, { type OnboardingItem } from "@/components/OnboardingChecklist";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect("/login");
-  const user = session.user as any;
+  const user = session.user;
+  if (!user.shopId || !user.role) redirect("/login");
 
   let guideUrl: string | null = null;
   let shopType: string | null = null;
+  let onboardingItems: OnboardingItem[] = [];
   try {
     const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } });
     guideUrl = settings?.guideUrl ?? null;
-    const shop = await db.shop.findUnique({ where: { id: user.shopId }, select: { type: true } });
+    const [shop, staffCount, customerCount, ticketCount] = await Promise.all([
+      db.shop.findUnique({ where: { id: user.shopId }, select: { type: true, address: true, bankCardNumber: true } }),
+      db.user.count({ where: { shopId: user.shopId } }), db.customer.count({ where: { shopId: user.shopId } }), db.ticket.count({ where: { shopId: user.shopId } }),
+    ]);
     shopType = shop?.type ?? null;
+    if (user.role === "OWNER") onboardingItems = [
+      { label: "تکمیل مشخصات تعمیرگاه", href: "/admin", done: !!shop?.address },
+      { label: "افزودن اولین همکار", href: "/admin", done: staffCount > 1 },
+      { label: "ثبت اولین مشتری", href: "/customers", done: customerCount > 0 },
+      { label: "ایجاد اولین پذیرش", href: "/tickets", done: ticketCount > 0 },
+      { label: "تنظیم اطلاعات پرداخت", href: "/admin", done: !!shop?.bankCardNumber },
+    ];
   } catch {}
 
   return (
@@ -60,6 +73,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       )}
       <div className="no-print"><AdBanner /></div>
+      {onboardingItems.length > 0 && <OnboardingChecklist items={onboardingItems} />}
       {/* Bottom padding on mobile only — that's where the floating nav sits. */}
       <main className="page-enter pb-[96px] md:pb-0">{children}</main>
       <ShopBottomNav role={user.role} />

@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 // directly via lib/logError.ts and never comes through this endpoint.
 export async function POST(req: NextRequest) {
   const ip = clientIp(req);
-  const rl = rateLimit(`log-error:${ip}`, 30, 60_000);
+  const rl = await rateLimit(`log-error:${ip}`, 30, 60_000);
   if (!rl.ok) return NextResponse.json({ ok: false }, { status: 429 });
 
   let body: any = {};

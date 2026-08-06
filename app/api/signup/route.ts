@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { isPhoneVerifiedForSignup, consumeSignupVerification } from "@/lib/signup-verify";
 import { preprocessPhone, normalizeOptionalPhone } from "@/lib/phone";
 import { z } from "zod";
+import { strongPassword } from "@/lib/security";
 
 const SignupSchema = z.object({
   shopName: z.string().min(2),
@@ -17,7 +18,7 @@ const SignupSchema = z.object({
   birthDate: z.string().optional(),
   // Canonical form or the account becomes unreachable at login. See lib/phone.ts.
   phone: z.preprocess(preprocessPhone, z.string().min(5)),
-  password: z.string().min(4),
+  password: strongPassword,
 });
 
 // POST /api/signup — public, no auth required. Anyone can create a new

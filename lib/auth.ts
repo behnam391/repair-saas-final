@@ -148,14 +148,14 @@ export const authOptions: NextAuthOptions = {
         try {
           const fresh = await db.user.findUnique({
             where: { id: token.sub as string },
-            select: { active: true, role: true, specialty: true, shop: { select: { active: true } } } as any,
+            select: { active: true, role: true, specialty: true, shop: { select: { active: true } } },
           });
-          if (!fresh || !fresh.active || !(fresh as any).shop?.active) {
+          if (!fresh || !fresh.active || !fresh.shop.active) {
             token.disabled = true;
           } else {
             token.disabled = false;
             token.role = fresh.role;
-            token.specialty = (fresh as any).specialty ?? null;
+            token.specialty = fresh.specialty ?? null;
           }
         } catch (e) {
           console.error("[auth] session revalidation failed, keeping existing token", e);

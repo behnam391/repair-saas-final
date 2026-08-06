@@ -41,13 +41,16 @@ async function handle(req: NextRequest) {
 
     // Credit the wallet atomically and snapshot the resulting balance on the row.
     await db.$transaction(async (tx) => {
-      const shop = await (tx as any).shop.findUniqueOrThrow({ where: { id: txn.shopId } });
-      const newBalance = (shop.walletBalance ?? 0) + txn.amount;
-      await (tx as any).shop.update({ where: { id: txn.shopId }, data: { walletBalance: newBalance } });
-      await (tx as any).walletTransaction.update({
-        where: { id: txn.id },
-        data: { status: "PAID", refId: verified.refId ?? null, balanceAfter: newBalance },
+      const claimed = await (tx as any).walletTransaction.updateMany({
+        where: { id: txn.id, status: { not: "PAID" } },
+        data: { status: "PAID", refId: verified.refId ?? null },
       });
+      if (claimed.count === 0) return;
+      const shop = await (tx as any).shop.update({
+        where: { id: txn.shopId },
+        data: { walletBalance: { increment: txn.amount } },
+      });
+      await (tx as any).walletTransaction.update({ where: { id: txn.id }, data: { balanceAfter: shop.walletBalance } });
     });
 
     return NextResponse.redirect(`${origin}/admin/wallet?result=success`, 303);

@@ -42,8 +42,8 @@ async function handle(req: NextRequest) {
       return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=failed`, 303);
     }
 
-    await db.invoice.update({
-      where: { id: invoice.id },
+    await db.invoice.updateMany({
+      where: { id: invoice.id, paid: false },
       data: { paid: true, paymentRefId: verified.refId ?? null },
     });
 

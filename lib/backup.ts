@@ -20,11 +20,7 @@ export const BACKUP_MODELS = [
 export async function buildBackupJson(stamp: string): Promise<{ json: string; filename: string }> {
   const models: Record<string, unknown> = {};
   for (const m of BACKUP_MODELS) {
-    try {
-      models[m] = await (db as any)[m].findMany();
-    } catch {
-      models[m] = { error: "unavailable" };
-    }
+    models[m] = await (db as any)[m].findMany();
   }
   const json = JSON.stringify({ app: "peyvo", version: 1, exportedAt: stamp, models }, null, 2);
   const filename = `peyvo-backup-${stamp.slice(0, 10)}.json`;

@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { preprocessPhone, preprocessDigits } from "@/lib/phone";
 import { z } from "zod";
+import { strongPassword, verifyOtp } from "@/lib/security";
+import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -11,13 +13,15 @@ const Schema = z.object({
   // would match otherwise. See lib/phone.ts.
   phone: z.preprocess(preprocessPhone, z.string().min(5)),
   code: z.preprocess(preprocessDigits, z.string().length(5)),
-  newPassword: z.string().min(4),
+  newPassword: strongPassword,
 });
 
 // POST /api/auth/reset-password — verify the OTP and set the new password.
 export async function POST(req: NextRequest) {
   try {
     const { phone, code, newPassword } = Schema.parse(await req.json());
+    const attemptLimit = await rateLimit(`reset-password:${clientIp(req)}:${phone}`, 6, 10 * 60 * 1000);
+    if (!attemptLimit.ok) { const t = tooMany(attemptLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
 
     const user = await db.user.findUnique({ where: { phone } });
     if (!user) {
@@ -25,10 +29,10 @@ export async function POST(req: NextRequest) {
     }
 
     const token = await db.passwordResetToken.findFirst({
-      where: { userId: user.id, code, used: false, expiresAt: { gt: new Date() } },
+      where: { userId: user.id, used: false, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: "desc" },
     });
-    if (!token) {
+    if (!token || !verifyOtp(phone, code, token.code)) {
       return NextResponse.json({ error: "invalid_code", message: "کد نامعتبر یا منقضی شده است." }, { status: 400 });
     }
 

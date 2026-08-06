@@ -27,7 +27,7 @@ export default function TicketChat({ endpoint, iAmCustomer }: { endpoint: string
 
   useEffect(() => {
     load();
-    const iv = setInterval(load, 6000); // light polling — good enough for chat
+    const iv = setInterval(() => { if (!document.hidden) load(); }, 10000);
     return () => clearInterval(iv);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endpoint]);

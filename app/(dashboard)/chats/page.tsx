@@ -51,7 +51,7 @@ export default function ChatsPage() {
   useEffect(() => {
     if (!activeId) return;
     loadMessages(activeId);
-    const interval = setInterval(() => loadMessages(activeId), 4000); // simple polling, no websockets
+    const interval = setInterval(() => { if (!document.hidden) loadMessages(activeId); }, 8000);
     return () => clearInterval(interval);
   }, [activeId]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);

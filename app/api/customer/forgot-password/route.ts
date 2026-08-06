@@ -5,6 +5,7 @@ import { sendEmail, isEmailConfigured } from "@/lib/email";
 import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
+import { generateOtp, hashOtp } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +13,6 @@ const Schema = z.object({
   phone: z.preprocess(preprocessPhone, z.string().min(5)),
   channel: z.enum(["sms", "email"]).default("sms"),
 });
-
-function generateOtp() {
-  return String(Math.floor(10000 + Math.random() * 90000)); // 5 digits
-}
 
 // POST /api/customer/forgot-password — customer-account counterpart of the
 // staff forgot-password flow. The account is always looked up by phone;
@@ -27,9 +24,9 @@ export async function POST(req: NextRequest) {
   try {
     const { phone, channel } = Schema.parse(await req.json());
 
-    const ipLimit = rateLimit(`cforgot:ip:${clientIp(req)}`, 8, 10 * 60 * 1000);
+    const ipLimit = await rateLimit(`cforgot:ip:${clientIp(req)}`, 8, 10 * 60 * 1000);
     if (!ipLimit.ok) { const t = tooMany(ipLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
-    const phoneLimit = rateLimit(`cforgot:phone:${phone}`, 4, 10 * 60 * 1000);
+    const phoneLimit = await rateLimit(`cforgot:phone:${phone}`, 4, 10 * 60 * 1000);
     if (!phoneLimit.ok) { const t = tooMany(phoneLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
 
     // Honest capability check BEFORE the account lookup — no info leak,
@@ -55,7 +52,8 @@ export async function POST(req: NextRequest) {
     if (customer) {
       const code = generateOtp();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      await db.customerPasswordResetToken.create({ data: { customerId: customer.id, code, expiresAt } });
+      await db.customerPasswordResetToken.updateMany({ where: { customerId: customer.id, used: false }, data: { used: true } });
+      await db.customerPasswordResetToken.create({ data: { customerId: customer.id, code: hashOtp(phone, code), expiresAt } });
       try {
         if (channel === "email" && customer.email) {
           await sendEmail(customer.email, "کد بازیابی رمز عبور", `کد بازیابی رمز عبور شما: ${code}\nاین کد تا ۱۰ دقیقه معتبر است.`);

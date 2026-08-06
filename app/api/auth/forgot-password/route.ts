@@ -5,6 +5,7 @@ import { sendEmail, isEmailConfigured } from "@/lib/email";
 import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
+import { generateOtp, hashOtp } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -12,10 +13,6 @@ const Schema = z.object({
   phone: z.preprocess(preprocessPhone, z.string().min(5)),
   channel: z.enum(["sms", "email"]).default("sms"),
 });
-
-function generateOtp() {
-  return String(Math.floor(10000 + Math.random() * 90000)); // 5 digits
-}
 
 // POST /api/auth/forgot-password — no auth required (that's the point).
 // Account lookup is always by phone (the unique login key); the OTP code
@@ -30,9 +27,9 @@ export async function POST(req: NextRequest) {
 
     // Abuse guards (see lib/ratelimit). Kept BEFORE the account lookup so the
     // throttle behaves identically for existing/non-existing numbers → no leak.
-    const ipLimit = rateLimit(`forgot:ip:${clientIp(req)}`, 8, 10 * 60 * 1000);
+    const ipLimit = await rateLimit(`forgot:ip:${clientIp(req)}`, 8, 10 * 60 * 1000);
     if (!ipLimit.ok) { const t = tooMany(ipLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
-    const phoneLimit = rateLimit(`forgot:phone:${phone}`, 4, 10 * 60 * 1000);
+    const phoneLimit = await rateLimit(`forgot:phone:${phone}`, 4, 10 * 60 * 1000);
     if (!phoneLimit.ok) { const t = tooMany(phoneLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
 
     // Honest capability check BEFORE looking the account up (so the answer
@@ -59,7 +56,8 @@ export async function POST(req: NextRequest) {
     if (user) {
       const code = generateOtp();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-      await db.passwordResetToken.create({ data: { userId: user.id, code, expiresAt } });
+      await db.passwordResetToken.updateMany({ where: { userId: user.id, used: false }, data: { used: true } });
+      await db.passwordResetToken.create({ data: { userId: user.id, code: hashOtp(phone, code), expiresAt } });
 
       try {
         if (channel === "email" && user.email) {

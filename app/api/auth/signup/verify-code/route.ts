@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { preprocessPhone, preprocessDigits } from "@/lib/phone";
 import { z } from "zod";
+import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
+import { verifyOtp } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +19,13 @@ const Schema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const { phone, code } = Schema.parse(await req.json());
+    const attemptLimit = await rateLimit(`verify-signup:${clientIp(req)}:${phone}`, 6, 10 * 60 * 1000);
+    if (!attemptLimit.ok) { const t = tooMany(attemptLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
     const rec = await db.signupVerification.findFirst({
-      where: { identifier: phone, code: code.trim() },
+      where: { identifier: phone, verified: false },
       orderBy: { createdAt: "desc" },
     });
-    if (!rec) return NextResponse.json({ message: "کد وارد شده نادرست است" }, { status: 400 });
+    if (!rec || !verifyOtp(phone, code.trim(), rec.code)) return NextResponse.json({ message: "کد وارد شده نادرست است" }, { status: 400 });
     if (rec.expiresAt < new Date()) return NextResponse.json({ message: "کد منقضی شده — دوباره کد بگیرید" }, { status: 400 });
 
     await db.signupVerification.update({ where: { id: rec.id }, data: { verified: true } });

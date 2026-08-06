@@ -5,6 +5,7 @@ import { sendEmail, isEmailConfigured } from "@/lib/email";
 import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
+import { generateOtp, hashOtp } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -17,10 +18,6 @@ const Schema = z.object({
   email: z.string().email().optional().or(z.literal("")),
 });
 
-function generateOtp() {
-  return String(Math.floor(10000 + Math.random() * 90000)); // 5 digits
-}
-
 // POST /api/auth/signup/send-code — sends a verification code to the phone
 // (SMS) or a given email, BEFORE the account is created. Reuses the same
 // SMS/email infrastructure as password reset.
@@ -31,9 +28,9 @@ export async function POST(req: NextRequest) {
     // Abuse guards: per-IP burst limit + per-phone limit (in-memory), plus a
     // DB-backed 60s per-phone cooldown that holds even across instances — the
     // real protection against someone draining the SMS credit.
-    const ipLimit = rateLimit(`sendcode:ip:${clientIp(req)}`, 8, 10 * 60 * 1000);
+    const ipLimit = await rateLimit(`sendcode:ip:${clientIp(req)}`, 8, 10 * 60 * 1000);
     if (!ipLimit.ok) { const t = tooMany(ipLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
-    const phoneLimit = rateLimit(`sendcode:phone:${phone}`, 4, 10 * 60 * 1000);
+    const phoneLimit = await rateLimit(`sendcode:phone:${phone}`, 4, 10 * 60 * 1000);
     if (!phoneLimit.ok) { const t = tooMany(phoneLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
 
     const recent = await db.signupVerification.findFirst({
@@ -60,7 +57,7 @@ export async function POST(req: NextRequest) {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     // Clear any previous codes for this phone, then store the fresh one.
     await db.signupVerification.deleteMany({ where: { identifier: phone } });
-    await db.signupVerification.create({ data: { identifier: phone, code, expiresAt } });
+    await db.signupVerification.create({ data: { identifier: phone, code: hashOtp(phone, code), expiresAt } });
 
     try {
       const text = `کد تأیید ثبت‌نام شما در Peyvo: ${code}\nاین کد تا ۱۰ دقیقه معتبر است.`;
@@ -68,6 +65,8 @@ export async function POST(req: NextRequest) {
       else await sendCodeSms(phone, code, text);
     } catch (e) {
       console.error("[signup] failed to send OTP", e);
+      await db.signupVerification.deleteMany({ where: { identifier: phone } });
+      return NextResponse.json({ error: "delivery_failed", message: "ارسال کد ناموفق بود؛ لطفاً روش دیگری را انتخاب کنید یا کمی بعد دوباره تلاش کنید." }, { status: 502 });
     }
 
     return NextResponse.json({

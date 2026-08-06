@@ -4,13 +4,14 @@ import bcrypt from "bcryptjs";
 import { isPhoneVerifiedForSignup, consumeSignupVerification } from "@/lib/signup-verify";
 import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
+import { strongPassword } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
 const Schema = z.object({
   name: z.string().min(2),
   phone: z.preprocess(preprocessPhone, z.string().regex(/^09\d{9}$/, "شماره موبایل معتبر نیست")),
-  password: z.string().min(6),
+  password: strongPassword,
   email: z.string().email("ایمیل معتبر نیست").optional().or(z.literal("")),
   province: z.string().optional(),
   city: z.string().optional(),

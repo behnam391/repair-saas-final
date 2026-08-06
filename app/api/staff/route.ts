@@ -4,6 +4,7 @@ import { requireSession, requireRole, UnauthorizedError } from "@/lib/tenant";
 import bcrypt from "bcryptjs";
 import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
+import { strongPassword } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ const StaffSchema = z.object({
   name: z.string().min(1),
   // Canonical form, or this employee can never log in. See lib/phone.ts.
   phone: z.preprocess(preprocessPhone, z.string().min(5)),
-  password: z.string().min(4),
+  password: strongPassword,
   role: z.enum(["OWNER", "FRONTDESK", "HARDWARE", "SOFTWARE", "BOARD"]),
   specialty: z.enum(SPECIALTIES).nullable().optional(),
   avatarUrl: z.string().optional(),

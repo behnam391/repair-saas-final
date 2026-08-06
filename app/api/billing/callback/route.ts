@@ -47,7 +47,11 @@ async function handle(req: NextRequest) {
     }
 
     await db.$transaction(async (tx) => {
-      await tx.subscription.update({ where: { id: sub.id }, data: { status: "PAID", refId: verified.refId } });
+      const claimed = await tx.subscription.updateMany({
+        where: { id: sub.id, status: { not: "PAID" } },
+        data: { status: "PAID", refId: verified.refId },
+      });
+      if (claimed.count === 0) return;
 
       const shop = await tx.shop.findUniqueOrThrow({ where: { id: sub.shopId } });
       const newExpiry = extendPlanExpiry(shop.planExpiresAt, sub.months);

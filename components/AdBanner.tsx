@@ -36,10 +36,10 @@ export default function AdBanner() {
         <div className="mx-3 mt-3 rounded-xl overflow-hidden border border-surface2 h-20 bg-surface2">
           {banners[index % banners.length].linkUrl ? (
             <a href={banners[index % banners.length].linkUrl!} target="_blank" rel="noopener noreferrer">
-              <img src={banners[index % banners.length].imageUrl} alt="تبلیغ" className="w-full h-full object-cover" />
+              <img src={banners[index % banners.length].imageUrl} alt="تبلیغ" loading="lazy" decoding="async" className="w-full h-full object-cover" />
             </a>
           ) : (
-            <img src={banners[index % banners.length].imageUrl} alt="تبلیغ" className="w-full h-full object-cover" />
+            <img src={banners[index % banners.length].imageUrl} alt="تبلیغ" loading="lazy" decoding="async" className="w-full h-full object-cover" />
           )}
         </div>
       )}

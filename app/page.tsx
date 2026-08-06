@@ -30,7 +30,7 @@ const steps = [
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
-  const user = session?.user as any;
+  const user = session?.user;
   if (user?.isSuperAdmin) redirect("/superadmin");
   if (user?.isCustomer) redirect("/customer");
   if (user?.shopId) redirect("/tickets");

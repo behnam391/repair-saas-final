@@ -16,7 +16,12 @@ export async function GET() {
   }
 }
 
-const Schema = z.object({ imageUrl: z.string().min(1), linkUrl: z.string().optional(), displayType: z.enum(["BANNER", "POPUP"]).default("BANNER"), sortOrder: z.number().int().default(0) });
+const Schema = z.object({
+  imageUrl: z.string().min(1), linkUrl: z.string().optional(),
+  displayType: z.enum(["BANNER", "POPUP", "LANDING"]).default("BANNER"),
+  title: z.string().max(100).optional(), description: z.string().max(300).optional(), ctaLabel: z.string().max(40).optional(),
+  startsAt: z.coerce.date().optional(), endsAt: z.coerce.date().optional(), sortOrder: z.number().int().default(0),
+});
 
 export async function POST(req: NextRequest) {
   try {

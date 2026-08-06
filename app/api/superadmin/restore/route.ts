@@ -28,33 +28,33 @@ const RESTORE_ORDER = [
 export async function POST(req: NextRequest) {
   try {
     await requireSuperAdmin();
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    if (contentLength > 50 * 1024 * 1024) return NextResponse.json({ error: "backup_too_large" }, { status: 413 });
     const body = await req.json().catch(() => null);
     const models = body?.models;
-    if (!models || typeof models !== "object") {
+    if (body?.app !== "peyvo" || body?.version !== 1 || !body?.exportedAt || !models || typeof models !== "object") {
       return NextResponse.json({ error: "invalid_backup", message: "فایل بکاپ نامعتبر است." }, { status: 400 });
     }
 
     const summary: Record<string, { restored: number; failed: number }> = {};
     let totalRestored = 0, totalFailed = 0;
 
-    for (const m of RESTORE_ORDER) {
-      const rows = models[m];
-      if (!Array.isArray(rows)) continue;
-      let restored = 0, failed = 0;
-      for (const row of rows) {
-        if (!row || typeof row !== "object" || !(row as any).id) { failed++; continue; }
-        try {
+    await db.$transaction(async (tx) => {
+      for (const m of RESTORE_ORDER) {
+        const rows = models[m];
+        if (rows === undefined) continue;
+        if (!Array.isArray(rows)) throw new Error(`Invalid rows for model ${m}`);
+        let restored = 0;
+        for (const row of rows) {
+          if (!row || typeof row !== "object" || !(row as any).id) throw new Error(`Invalid row in model ${m}`);
           const { id, ...rest } = row as any;
-          await (db as any)[m].upsert({ where: { id }, create: row, update: rest });
+          await (tx as any)[m].upsert({ where: { id }, create: row, update: rest });
           restored++;
-        } catch {
-          failed++;
         }
+        if (restored) summary[m] = { restored, failed: 0 };
+        totalRestored += restored;
       }
-      if (restored || failed) summary[m] = { restored, failed };
-      totalRestored += restored;
-      totalFailed += failed;
-    }
+    }, { maxWait: 10_000, timeout: 120_000 });
 
     return NextResponse.json({ ok: true, totalRestored, totalFailed, summary });
   } catch (e) {

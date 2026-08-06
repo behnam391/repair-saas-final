@@ -1,0 +1,6 @@
+ALTER TABLE "AdBanner"
+ADD COLUMN "title" TEXT,
+ADD COLUMN "description" TEXT,
+ADD COLUMN "ctaLabel" TEXT,
+ADD COLUMN "startsAt" TIMESTAMP(3),
+ADD COLUMN "endsAt" TIMESTAMP(3);

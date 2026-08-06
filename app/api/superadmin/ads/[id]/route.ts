@@ -5,7 +5,7 @@ import { z } from "zod";
 
 export const dynamic = "force-dynamic";
 
-const Schema = z.object({ active: z.boolean().optional() });
+const Schema = z.object({ active: z.boolean().optional(), sortOrder: z.number().int().optional(), startsAt: z.coerce.date().nullable().optional(), endsAt: z.coerce.date().nullable().optional() });
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {

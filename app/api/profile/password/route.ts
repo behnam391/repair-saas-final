@@ -3,10 +3,11 @@ import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { strongPassword } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
-const Schema = z.object({ currentPassword: z.string().min(1), newPassword: z.string().min(4) });
+const Schema = z.object({ currentPassword: z.string().min(1), newPassword: strongPassword });
 
 // PATCH /api/profile/password — works for any signed-in user (staff or owner).
 export async function PATCH(req: NextRequest) {

@@ -20,7 +20,7 @@ export default function NotificationBell() {
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 15000);
+    const interval = setInterval(() => { if (!document.hidden) load(); }, 30000);
     return () => clearInterval(interval);
   }, []);
 

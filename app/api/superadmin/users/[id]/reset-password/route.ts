@@ -3,10 +3,11 @@ import { db } from "@/lib/db";
 import { requireSuperAdmin, UnauthorizedError } from "@/lib/tenant";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { strongPassword } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
-const Schema = z.object({ newPassword: z.string().min(4) });
+const Schema = z.object({ newPassword: strongPassword });
 
 // PATCH /api/superadmin/users/:id/reset-password — for support cases where
 // a user can't receive the SMS OTP (lost phone number). The platform admin

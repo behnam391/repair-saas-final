@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { randomBytes } from "crypto";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
+import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,14 @@ const ALLOWED: Record<string, string> = {
   "image/webp": "webp",
   "image/gif": "gif",
 };
+
+function hasValidImageSignature(type: string, bytes: Uint8Array): boolean {
+  if (type === "image/jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (type === "image/png") return bytes.slice(0, 8).every((v, i) => v === [0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a][i]);
+  if (type === "image/gif") return new TextDecoder().decode(bytes.slice(0, 6)) === "GIF87a" || new TextDecoder().decode(bytes.slice(0, 6)) === "GIF89a";
+  if (type === "image/webp") return new TextDecoder().decode(bytes.slice(0, 4)) === "RIFF" && new TextDecoder().decode(bytes.slice(8, 12)) === "WEBP";
+  return false;
+}
 
 // POST /api/upload — real image upload (multipart/form-data, field "file").
 // Any signed-in identity may upload (shop staff for avatars, platform admin
@@ -29,6 +38,9 @@ const ALLOWED: Record<string, string> = {
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const userId = (session.user as { id?: string }).id || clientIp(req);
+  const uploadLimit = await rateLimit(`upload:${userId}`, 20, 60 * 60 * 1000);
+  if (!uploadLimit.ok) { const t = tooMany(uploadLimit.retryAfterSec); return NextResponse.json({ message: t.message }, { status: t.status }); }
 
   let file: File | null = null;
   try {
@@ -46,6 +58,11 @@ export async function POST(req: NextRequest) {
   }
   if (file.size > MAX_BYTES) {
     return NextResponse.json({ error: "too_large", message: "حداکثر حجم مجاز ۴ مگابایت است" }, { status: 400 });
+  }
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (!hasValidImageSignature(file.type, bytes)) {
+    return NextResponse.json({ error: "invalid_image", message: "محتوای فایل با فرمت تصویر انتخاب‌شده مطابقت ندارد" }, { status: 400 });
   }
 
   const filename = `${Date.now()}-${randomBytes(6).toString("hex")}.${ext}`;
@@ -94,7 +111,6 @@ export async function POST(req: NextRequest) {
   try {
     const dir = path.join(process.cwd(), "public", "uploads");
     await mkdir(dir, { recursive: true });
-    const bytes = Buffer.from(await file.arrayBuffer());
     await writeFile(path.join(dir, filename), bytes);
     return NextResponse.json({
       url: `/uploads/${filename}`,
