@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import EnamadBadge from "@/components/EnamadBadge";
+import LandingShowcase from "@/components/LandingShowcase";
 
 export const dynamic = "force-dynamic";
 
@@ -103,6 +104,23 @@ export default async function Home() {
         <div><strong>یک پنل، تمام تعمیرگاه</strong><span>از لحظه پذیرش تا تحویل دستگاه</span></div>
         <div className="landing-proof-items">
           <span><Clock3 /> پیگیری لحظه‌ای</span><span><ShieldCheck /> اطلاعات امن</span><span><Headphones /> پشتیبانی واقعی</span><span><CircleDollarSign /> حسابداری دقیق</span>
+        </div>
+      </section>
+
+      <LandingShowcase />
+
+      <section className="landing-intelligence">
+        <div className="landing-intelligence-copy">
+          <span><Sparkles size={14} /> هوشمندی در خدمت تعمیرگاه</span>
+          <h2>پیوو فقط ثبت نمی‌کند؛<br /><em>به شما دید می‌دهد.</em></h2>
+          <p>اطلاعات پراکنده را به نشانه‌های قابل‌فهم تبدیل کنید؛ ببینید کدام مرحله کند شده، چه قطعه‌ای رو به اتمام است و امروز باید روی چه چیزی تمرکز کنید.</p>
+          <div className="landing-intelligence-tags"><span>تشخیص گلوگاه</span><span>هشدار موجودی</span><span>دید مالی</span></div>
+        </div>
+        <div className="landing-ai-console">
+          <div className="landing-ai-top"><span><i /> مرکز هوشمندی پیوو</span><b>LIVE</b></div>
+          <div className="landing-ai-prompt"><Sparkles size={16} /><div><small>پیشنهاد امروز</small><strong>سه دستگاه بیش از میانگین زمان تعمیر منتظر مانده‌اند.</strong></div></div>
+          <div className="landing-ai-metrics"><article><small>فشار کاری</small><strong>۷۲٪</strong><i><b style={{ width: "72%" }} /></i></article><article><small>سلامت جریان</small><strong>عالی</strong><i><b style={{ width: "91%" }} /></i></article></div>
+          <div className="landing-ai-action"><span>اولویت پیشنهادی</span><strong>بررسی تعمیرات بخش برد</strong><button>مشاهده جزئیات <ChevronLeft size={14} /></button></div>
         </div>
       </section>
 
