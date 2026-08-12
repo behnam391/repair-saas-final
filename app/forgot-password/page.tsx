@@ -14,12 +14,13 @@ export default function ForgotPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [errorField, setErrorField] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function requestCode(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError(""); setErrorField("");
     const res = await fetch("/api/auth/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -43,7 +44,7 @@ export default function ForgotPasswordPage() {
     });
     const data = await res.json();
     setLoading(false);
-    if (!res.ok) { setError(data.message || "کد نامعتبر است"); return; }
+    if (!res.ok) { setErrorField(data.field || (data.error === "invalid_code" ? "code" : "")); setError(data.message || "اطلاعات واردشده معتبر نیست"); return; }
     router.push("/login");
   }
 
@@ -94,10 +95,10 @@ export default function ForgotPasswordPage() {
               length={5}
               autoFocus
               disabled={loading}
-              error={!!error}
+              error={!!error && errorField === "code"}
               className="mb-4"
             />
-            <label className="block text-xs text-muted mb-1">رمز عبور جدید</label>
+            <label className="block text-xs text-muted mb-1">رمز عبور جدید (حداقل ۸ کاراکتر، شامل حرف و عدد)</label>
             <input
               type="password"
               className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm"

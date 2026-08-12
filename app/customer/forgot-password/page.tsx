@@ -13,11 +13,12 @@ export default function CustomerForgotPasswordPage() {
   const [newPassword, setNewPassword] = useState("");
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
+  const [errorField, setErrorField] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function requestCode(e: React.FormEvent) {
     e.preventDefault();
-    setError(""); setMsg(""); setLoading(true);
+    setError(""); setErrorField(""); setMsg(""); setLoading(true);
     const res = await fetch("/api/customer/forgot-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -47,7 +48,8 @@ export default function CustomerForgotPasswordPage() {
       setTimeout(() => router.push("/customer/login"), 1500);
     } else {
       const data = await res.json().catch(() => ({}));
-      setError(data.message || "کد نامعتبر یا منقضی شده است");
+      setErrorField(data.field || (data.error === "invalid_code" ? "code" : ""));
+      setError(data.message || "اطلاعات واردشده معتبر نیست");
     }
   }
 
@@ -94,10 +96,10 @@ export default function CustomerForgotPasswordPage() {
               length={5}
               autoFocus
               disabled={loading}
-              error={!!error}
+              error={!!error && errorField === "code"}
               className="mb-4"
             />
-            <label className="block text-xs text-muted mb-1">رمز عبور جدید (حداقل ۶ کاراکتر)</label>
+            <label className="block text-xs text-muted mb-1">رمز عبور جدید (حداقل ۸ کاراکتر، شامل حرف و عدد)</label>
             <input type="password" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 mb-4 text-sm"
               value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
           </>

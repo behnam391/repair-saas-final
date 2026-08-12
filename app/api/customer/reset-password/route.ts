@@ -44,7 +44,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input" }, { status: 400 });
+    if (e instanceof z.ZodError) {
+      const issue = e.issues[0];
+      const field = issue?.path[0] === "newPassword" ? "newPassword" : issue?.path[0] === "code" ? "code" : "input";
+      return NextResponse.json({ error: "invalid_input", field, message: issue?.message || "اطلاعات واردشده معتبر نیست." }, { status: 400 });
+    }
     console.error(e);
     return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
