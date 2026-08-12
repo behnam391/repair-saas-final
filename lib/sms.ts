@@ -136,6 +136,9 @@ export async function sendReadySms(
       token10: clip(args.shopName, 25),
     });
   }
+  if (cfg.enabled && !cfg.ready) {
+    throw new Error("Kavenegar ready Lookup template is not configured");
+  }
   return sendSms(to, args.fallback);
 }
 

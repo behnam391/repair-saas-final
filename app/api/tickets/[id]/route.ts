@@ -35,6 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     let updated;
+    let sms: { sent: boolean; message?: string } | undefined;
 
     switch (body.action) {
       case "submit-for-approval": {
@@ -168,9 +169,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
               cardNumber: t.shop.bankCardNumber,
             }),
           });
+          sms = { sent: true };
         } catch (smsErr) {
           // Don't fail the whole request if SMS delivery fails — log and continue.
           console.error("[sms] failed to notify customer", smsErr);
+          sms = { sent: false, message: "دستگاه آماده‌تحویل ثبت شد، اما پیامک ارسال نشد. الگوی آماده‌تحویل کاوه‌نگار را بررسی کنید." };
         }
         break;
       }
@@ -223,7 +226,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       }
     }
 
-    return NextResponse.json({ ticket: updated });
+    return NextResponse.json({ ticket: updated, sms });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input", details: e.errors }, { status: 400 });

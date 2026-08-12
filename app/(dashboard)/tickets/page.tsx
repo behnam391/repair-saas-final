@@ -77,9 +77,10 @@ export default function TicketsPage() {
       flash(err.message || "خطایی رخ داد");
       return;
     }
+    const result = await res.json().catch(() => ({}));
     await load();
     setOpenTicket(null);
-    if (action === "ready") flash("📩 پیامک آماده‌تحویل برای مشتری ارسال شد");
+    if (action === "ready") flash(result.sms?.sent ? "📩 پیامک آماده‌تحویل برای مشتری ارسال شد" : result.sms?.message || "دستگاه آماده‌تحویل ثبت شد، اما پیامک ارسال نشد");
   }
 
   return (
