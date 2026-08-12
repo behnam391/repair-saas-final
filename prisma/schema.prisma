@@ -733,6 +733,10 @@ model PlatformSettings {
   androidApkUrl           String? // direct .apk download link (site download)
   bazaarUrl               String? // Cafe Bazaar (کافه‌بازار) store page
   myketUrl                String? // Myket (مایکت) store page
+  // Cafe Bazaar services. Stored server-side; never expose through public APIs.
+  // The RSA public key is used only when Bazaar in-app billing is implemented.
+  bazaarRsaPublicKey      String?
+  bazaarDynamicDiscountKey String?
   smsUseLookup            Boolean @default(false)
   kavenegarOtpTemplate    String? // template for verification/reset codes  (%token = code)
   kavenegarIntakeTemplate String? // device-received template  (%token=ticket, %token2=phone, %token10=shop)

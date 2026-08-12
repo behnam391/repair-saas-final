@@ -24,6 +24,8 @@ const Schema = z.object({
   androidApkUrl: z.string().optional(),
   bazaarUrl: z.string().optional(),
   myketUrl: z.string().optional(),
+  bazaarRsaPublicKey: z.string().max(10000).optional(),
+  bazaarDynamicDiscountKey: z.string().max(2000).optional(),
   smsUseLookup: z.boolean().optional(),
   kavenegarOtpTemplate: z.string().optional(),
   kavenegarIntakeTemplate: z.string().optional(),

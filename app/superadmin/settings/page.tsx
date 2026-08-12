@@ -29,6 +29,7 @@ export default function SuperAdminSettingsPage() {
     smtpHost: "", smtpPort: 587, smtpUser: "", smtpPassword: "", smtpFromAddress: "",
     neshanApiKey: "", enamadId: "", enamadCode: "",
     androidApkUrl: "", bazaarUrl: "", myketUrl: "",
+    bazaarRsaPublicKey: "", bazaarDynamicDiscountKey: "",
     fontFamily: "vazirmatn", defaultTheme: "dark",
     proPriceToman: 490000, businessPriceToman: 990000,
     proQuota: 200, businessQuota: 100000,
@@ -79,6 +80,8 @@ export default function SuperAdminSettingsPage() {
       androidApkUrl: d.settings?.androidApkUrl ?? "",
       bazaarUrl: d.settings?.bazaarUrl ?? "",
       myketUrl: d.settings?.myketUrl ?? "",
+      bazaarRsaPublicKey: d.settings?.bazaarRsaPublicKey ?? "",
+      bazaarDynamicDiscountKey: d.settings?.bazaarDynamicDiscountKey ?? "",
       fontFamily: d.settings?.fontFamily ?? "vazirmatn",
       defaultTheme: d.settings?.defaultTheme ?? "dark",
       // effective = stored value, or the code default when never set
@@ -331,6 +334,24 @@ export default function SuperAdminSettingsPage() {
         <label className="block text-[11px] text-muted mb-1">کلید API نکست‌پی {form.paymentProvider === "nextpay" && <span className="text-teal">(فعال)</span>}</label>
         <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" dir="ltr"
           value={form.nextpayApiKey} onChange={(e) => setForm({ ...form, nextpayApiKey: e.target.value })} />
+
+        <div className="border-t border-surface2 mt-5 pt-4">
+          <div className="text-sm font-bold mb-1">🛍️ سرویس‌های کافه‌بازار</div>
+          <p className="text-[10px] text-muted leading-5 mb-3">
+            این کلیدها برای پرداخت درون‌برنامه‌ای و تخفیف پویای بازار نگهداری می‌شوند. ثبت آن‌ها به‌تنهایی این امکانات را فعال نمی‌کند و اطلاعات از بخش عمومی سایت نمایش داده نمی‌شود.
+          </p>
+          <label className="block text-[11px] font-bold mb-1">کلید عمومی RSA کافه‌بازار</label>
+          <textarea dir="ltr" rows={6} spellCheck={false}
+            placeholder="-----BEGIN PUBLIC KEY-----"
+            className="w-full resize-y bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs mono mb-3"
+            value={form.bazaarRsaPublicKey} onChange={(e) => setForm({ ...form, bazaarRsaPublicKey: e.target.value })} />
+          <label className="block text-[11px] font-bold mb-1">کلید تخفیف پویا</label>
+          <input type="password" dir="ltr" autoComplete="off"
+            placeholder="کلید دریافت‌شده از پنل توسعه‌دهندگان بازار"
+            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+            value={form.bazaarDynamicDiscountKey} onChange={(e) => setForm({ ...form, bazaarDynamicDiscountKey: e.target.value })} />
+          <p className="text-[9px] text-amber mt-2">کلید خصوصی امضای APK را در این قسمت وارد نکنید.</p>
+        </div>
       </div>
       )}
 
