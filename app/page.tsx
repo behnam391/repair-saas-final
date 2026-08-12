@@ -10,6 +10,7 @@ import {
 import Logo from "@/components/Logo";
 import EnamadBadge from "@/components/EnamadBadge";
 import EnamadServerBadge from "@/components/EnamadServerBadge";
+import ZarinpalTrustBadge from "@/components/ZarinpalTrustBadge";
 import LandingShowcase from "@/components/LandingShowcase";
 
 export const dynamic = "force-dynamic";
@@ -160,10 +161,17 @@ export default async function Home() {
           <p>هویت صاحب امتیاز و دامنه پیوو توسط مرکز توسعه تجارت الکترونیکی بررسی شده است. برای مشاهده جزئیات اعتبار، روی نشان اعتماد کلیک کنید.</p>
           <div><i><Check size={13} /> دامنه ثبت‌شده</i><i><Check size={13} /> هویت تأییدشده</i><i><Check size={13} /> ارتباط امن</i></div>
         </div>
-        <div className="landing-seal-card">
-          <EnamadServerBadge />
-          <strong>نماد اعتماد الکترونیکی</strong>
-          <small>قابل استعلام از سامانه رسمی اینماد</small>
+        <div className="landing-seal-cards">
+          <div className="landing-seal-card">
+            <EnamadServerBadge />
+            <strong>نماد اعتماد الکترونیکی</strong>
+            <small>قابل استعلام از سامانه رسمی اینماد</small>
+          </div>
+          <div className="landing-seal-card">
+            <ZarinpalTrustBadge />
+            <strong>درگاه پرداخت زرین‌پال</strong>
+            <small>مشاهده اعتبار درگاه برای همین دامنه</small>
+          </div>
         </div>
       </section>
 
