@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import EnamadBadge from "@/components/EnamadBadge";
+import EnamadServerBadge from "@/components/EnamadServerBadge";
 import LandingShowcase from "@/components/LandingShowcase";
 
 export const dynamic = "force-dynamic";
@@ -149,6 +150,20 @@ export default async function Home() {
           <div className="landing-final-orb" aria-hidden />
           <span>وقت یک تغییر حرفه‌ای است</span><h2>تعمیرگاه آینده‌ات را<br />همین امروز بساز.</h2><p>رایگان شروع کن، امکانات پیوو را امتحان کن و هر زمان آماده بودی ارتقا بده.</p>
           <Link href="/signup" className="landing-primary-btn">شروع رایگان پیوو <ArrowLeft size={18} /></Link>
+        </div>
+      </section>
+
+      <section className="landing-trust-seal" aria-labelledby="trust-title">
+        <div className="landing-trust-copy">
+          <span><ShieldCheck size={15} /> مجوزها و اعتماد</span>
+          <h2 id="trust-title">خرید و استفاده با خیال راحت</h2>
+          <p>هویت صاحب امتیاز و دامنه پیوو توسط مرکز توسعه تجارت الکترونیکی بررسی شده است. برای مشاهده جزئیات اعتبار، روی نشان اعتماد کلیک کنید.</p>
+          <div><i><Check size={13} /> دامنه ثبت‌شده</i><i><Check size={13} /> هویت تأییدشده</i><i><Check size={13} /> ارتباط امن</i></div>
+        </div>
+        <div className="landing-seal-card">
+          <EnamadServerBadge />
+          <strong>نماد اعتماد الکترونیکی</strong>
+          <small>قابل استعلام از سامانه رسمی اینماد</small>
         </div>
       </section>
 
