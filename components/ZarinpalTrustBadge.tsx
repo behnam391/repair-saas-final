@@ -14,7 +14,9 @@ export default function ZarinpalTrustBadge() {
   return (
     <div className="zarinpal-prominent">
       <a href={trustUrl} target="_blank" rel="noopener" aria-label="مشاهده اعتبار درگاه پرداخت زرین‌پال پیوو">
-        <img src="https://cdn.zarinpal.com/badges/trustLogo/1.png" alt="درگاه پرداخت معتبر زرین‌پال" width="118" height="118" />
+        <span className="zarinpal-logo-frame">
+          <img src="https://cdn.zarinpal.com/badges/trustLogo/1.png" alt="درگاه پرداخت معتبر زرین‌پال" width="60" height="85" />
+        </span>
       </a>
     </div>
   );
