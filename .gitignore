@@ -17,6 +17,10 @@
 *.log
 npm-debug.log*
 
+# Android build output is ignored, except for the signed APK deliberately
+# published from public/downloads.
+/android/app/build/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

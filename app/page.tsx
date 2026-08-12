@@ -176,8 +176,14 @@ export default async function Home() {
       </section>
 
       <footer className="landing-footer">
-        <div className="landing-footer-top"><div><Logo size={27} /><p>سامانه یکپارچه مدیریت تعمیرگاه‌های موبایل</p></div><div className="landing-footer-links"><Link href="/download">دانلود اپلیکیشن</Link><Link href="/about">درباره ما</Link><Link href="/terms">قوانین</Link><Link href="/privacy">حریم خصوصی</Link><Link href="/refund">بازگشت وجه</Link></div><EnamadBadge /></div>
-        <div className="landing-footer-bottom"><span>© ۱۴۰۵ پیوو؛ تمام حقوق محفوظ است.</span><span>ساخته‌شده برای تعمیرکاران حرفه‌ای ایران</span></div>
+        <div className="landing-footer-top">
+          <div className="landing-footer-brand"><Logo size={32} /><p>سامانه یکپارچه مدیریت تعمیرگاه؛ از پذیرش دستگاه تا تحویل، فاکتور و ارتباط با مشتری.</p><Link href="/download" className="landing-footer-app">دانلود اپلیکیشن اندروید <ArrowLeft size={15} /></Link></div>
+          <div className="landing-footer-column"><strong>پیوو</strong><Link href="/about">درباره ما</Link><Link href="/#features">امکانات سامانه</Link><Link href="/signup">شروع رایگان</Link></div>
+          <div className="landing-footer-column"><strong>پشتیبانی</strong><Link href="/support">ارتباط با پشتیبانی</Link><Link href="/download">دانلود اپلیکیشن</Link><Link href="/login">ورود به پنل</Link></div>
+          <div className="landing-footer-column"><strong>قوانین و اعتماد</strong><Link href="/terms">شرایط استفاده</Link><Link href="/privacy">حریم خصوصی</Link><Link href="/refund">بازگشت وجه</Link></div>
+          <div className="landing-footer-trust"><EnamadBadge /><span>کسب‌وکار دارای هویت تأییدشده</span></div>
+        </div>
+        <div className="landing-footer-bottom"><span>© ۱۴۰۵ پیوو؛ تمامی حقوق محفوظ است.</span><span>زیرساخت حرفه‌ای برای تعمیرکاران ایران</span></div>
       </footer>
     </main>
   );

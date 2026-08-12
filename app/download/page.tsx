@@ -14,7 +14,7 @@ export default async function DownloadPage() {
   } catch {
     // fall through to the "coming soon" state
   }
-  const apk = s?.androidApkUrl || "";
+  const apk = s?.androidApkUrl || "/downloads/peyvo-android-v1.0.apk";
   const bazaar = s?.bazaarUrl || "";
   const myket = s?.myketUrl || "";
   const anything = apk || bazaar || myket;
