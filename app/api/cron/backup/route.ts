@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { buildBackupJson, sendBackupToTelegram } from "@/lib/backup";
 import { logCaught } from "@/lib/logError";
+import { decryptSecret } from "@/lib/crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +20,15 @@ export async function GET(req: NextRequest) {
     if (!s?.telegramBotToken || !s?.telegramChatId) {
       return NextResponse.json({ ok: false, skipped: "telegram_not_configured" });
     }
+    // Bot token is stored encrypted at rest; decrypt only here, at point of use.
+    const botToken = decryptSecret(s.telegramBotToken);
+    if (!botToken) {
+      return NextResponse.json({ ok: false, skipped: "telegram_token_unreadable" });
+    }
     const stamp = new Date().toISOString();
     const { json, filename } = await buildBackupJson(stamp);
     const r = await sendBackupToTelegram(
-      s.telegramBotToken, s.telegramChatId, json, filename,
+      botToken, s.telegramChatId, json, filename,
       `🗄️ بکاپ خودکار پیوو — ${stamp.slice(0, 10)}`
     );
     if (!r.ok) await logCaught(new Error(r.error || "telegram send failed"), { source: "server", path: "/api/cron/backup" });

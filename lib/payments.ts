@@ -13,6 +13,7 @@
 //   NextPay  — token code -1 (success); verify code 0 (success); token = trans_id; ref = Shaparak_Ref_Id.
 
 import { db } from "./db";
+import { decryptSecret } from "./crypto";
 import { requestPayment as zpRequest, verifyPayment as zpVerify } from "./zarinpal";
 
 export type ProviderKey = "zarinpal" | "zibal" | "nextpay";
@@ -33,8 +34,9 @@ async function getConfig() {
   const provider = ((s?.paymentProvider || process.env.PAYMENT_PROVIDER || "zarinpal") as ProviderKey);
   return {
     provider: (["zarinpal", "zibal", "nextpay"].includes(provider) ? provider : "zarinpal") as ProviderKey,
-    zibalMerchant: s?.zibalMerchant || process.env.ZIBAL_MERCHANT || "",
-    nextpayApiKey: s?.nextpayApiKey || process.env.NEXTPAY_API_KEY || "",
+    // Stored encrypted at rest; decryptSecret passes legacy plaintext through.
+    zibalMerchant: decryptSecret(s?.zibalMerchant) || process.env.ZIBAL_MERCHANT || "",
+    nextpayApiKey: decryptSecret(s?.nextpayApiKey) || process.env.NEXTPAY_API_KEY || "",
   };
 }
 

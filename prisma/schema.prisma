@@ -1137,3 +1137,20 @@ model ErrorLog {
   @@index([resolved, createdAt])
   @@index([source, createdAt])
 }
+
+// ── Passcode access audit (Phase 1 security) ──────────────────
+// One row is written every time a staff member reveals a customer's device
+// passcode via GET /api/tickets/:id/passcode. Like ErrorLog, this table
+// deliberately has NO foreign keys to Shop/User/Ticket: an audit write must
+// never fail or cascade because of a missing/invalid id, so shopId/ticketId/
+// userId are plain best-effort strings.
+model PasscodeAccessLog {
+  id        String   @id @default(cuid())
+  shopId    String
+  ticketId  String
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@index([shopId, createdAt])
+  @@index([ticketId])
+}

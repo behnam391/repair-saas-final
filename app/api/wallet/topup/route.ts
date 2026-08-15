@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { UnauthorizedError } from "@/lib/tenant";
+import { requireCapability } from "@/lib/authz";
 import { requestPayment } from "@/lib/payments";
 import { logCaught } from "@/lib/logError";
 import { z } from "zod";
@@ -20,7 +21,8 @@ const Schema = z.object({
 // verifies the payment (see /api/wallet/callback).
 export async function POST(req: NextRequest) {
   try {
-    const { shopId } = await requireSession();
+    // Money movement (starts a wallet top-up payment) — OWNER only.
+    const { shopId } = await requireCapability("wallet.write");
     const { amountToman } = Schema.parse(await req.json());
     const origin = req.nextUrl.origin;
 

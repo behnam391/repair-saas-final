@@ -3,15 +3,18 @@
 // every call site in this app only depends on the `sendSms` signature below.
 
 import { db } from "./db";
+import { decryptSecret } from "./crypto";
 
 async function getCredentials() {
   // Platform settings edited from /superadmin/settings win over env vars,
   // so keys can be rotated without a redeploy. Falls back to env if the
-  // settings row doesn't exist yet or a field is empty.
+  // settings row doesn't exist yet or a field is empty. The API key is stored
+  // encrypted at rest (lib/crypto.ts); decryptSecret passes legacy plaintext
+  // through unchanged, so this is safe before and after the backfill.
   try {
     const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } });
     return {
-      apiKey: settings?.kavenegarApiKey || process.env.KAVENEGAR_API_KEY || "",
+      apiKey: decryptSecret(settings?.kavenegarApiKey) || process.env.KAVENEGAR_API_KEY || "",
       sender: settings?.kavenegarSender || process.env.KAVENEGAR_SENDER || "10004346",
     };
   } catch {

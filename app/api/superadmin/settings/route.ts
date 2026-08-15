@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSuperAdmin, UnauthorizedError } from "@/lib/tenant";
+import { encryptSecretOrPassthrough, PLATFORM_SECRET_FIELDS } from "@/lib/crypto";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
+
+// Secret values are NEVER returned to the client. Instead each secret field is
+// blanked and a companion boolean `<field>Set` reports whether a value exists.
+// The settings UI shows an empty input (so nothing sensitive is rendered) and
+// can indicate "configured" from the flag.
+function redactSecrets(settings: any): any {
+  const safe: any = { ...(settings ?? {}) };
+  for (const f of PLATFORM_SECRET_FIELDS) {
+    safe[`${f}Set`] = !!(settings as any)?.[f];
+    safe[f] = "";
+  }
+  return safe;
+}
 
 export async function GET() {
   try {
     await requireSuperAdmin();
     const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } });
-    return NextResponse.json({ settings: settings ?? {} });
+    return NextResponse.json({ settings: redactSecrets(settings) });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "internal_error" }, { status: 500 });
@@ -60,12 +74,27 @@ export async function PATCH(req: NextRequest) {
   try {
     await requireSuperAdmin();
     const body = Schema.parse(await req.json());
+
+    // Encrypt any secret field that carries a new value; SKIP secret fields
+    // that are absent or empty so saving other settings never wipes an
+    // existing secret (the GET blanks secrets, so a normal round-trip sends
+    // them back empty). Non-secret fields pass through unchanged.
+    const data: Record<string, unknown> = { ...body };
+    for (const f of PLATFORM_SECRET_FIELDS) {
+      const v = (body as any)[f];
+      if (v === undefined || v === "") {
+        delete data[f];
+        continue;
+      }
+      data[f] = encryptSecretOrPassthrough(String(v));
+    }
+
     const settings = await db.platformSettings.upsert({
       where: { id: "singleton" },
-      update: body as any,
-      create: { id: "singleton", ...body } as any,
+      update: data as any,
+      create: { id: "singleton", ...data } as any,
     });
-    return NextResponse.json({ settings });
+    return NextResponse.json({ settings: redactSecrets(settings) });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input" }, { status: 400 });

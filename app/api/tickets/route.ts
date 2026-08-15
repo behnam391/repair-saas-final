@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
 import { sendSms, sendIntakeSms, intakeReceivedMessage } from "@/lib/sms";
 import { preprocessPhone } from "@/lib/phone";
+import { encryptSecretOrPassthrough } from "@/lib/crypto";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +64,16 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ tickets });
+    // Never ship the (encrypted) passcode in the bulk board list. Expose only a
+    // boolean so the UI can offer a "reveal" button that goes through the
+    // audited GET /api/tickets/:id/passcode. devicePasscodeType is retained for
+    // the button label (the type alone is not the secret).
+    const safeTickets = tickets.map((t) => {
+      const { devicePasscode, ...rest } = t as any;
+      return { ...rest, hasPasscode: !!devicePasscode };
+    });
+
+    return NextResponse.json({ tickets: safeTickets });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     console.error(e);
@@ -131,7 +141,9 @@ export async function POST(req: NextRequest) {
           lane: body.lane,
           status: "PENDING",
           estimatedCost: body.estimatedCost,
-          devicePasscode: body.devicePasscode,
+          // Stored ENCRYPTED at rest (lib/crypto.ts); revealed only via
+          // GET /api/tickets/:id/passcode with an audit-logged access.
+          devicePasscode: body.devicePasscode ? encryptSecretOrPassthrough(body.devicePasscode) : undefined,
           devicePasscodeType: body.devicePasscodeType,
           customerDamageNotes: body.customerDamageNotes,
           receiptAck: body.receiptAck,

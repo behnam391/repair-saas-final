@@ -4,11 +4,13 @@
 // dev never accidentally hits the real gateway.
 
 import { db } from "./db";
+import { decryptSecret } from "./crypto";
 
 async function getMerchantId() {
   try {
     const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } });
-    return settings?.zarinpalMerchantId || process.env.ZARINPAL_MERCHANT_ID || "";
+    // Stored encrypted at rest; decryptSecret passes legacy plaintext through.
+    return decryptSecret(settings?.zarinpalMerchantId) || process.env.ZARINPAL_MERCHANT_ID || "";
   } catch {
     return process.env.ZARINPAL_MERCHANT_ID || "";
   }

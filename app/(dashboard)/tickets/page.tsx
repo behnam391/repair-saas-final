@@ -27,6 +27,7 @@ type Ticket = {
   technicianNote?: string | null;
   devicePasscode?: string | null;
   devicePasscodeType?: string | null;
+  hasPasscode?: boolean;
   customerDamageNotes?: string | null;
   customer: { name: string; phone: string };
   history: { action: string; lane: string; note?: string; createdAt: string; tech?: { name: string } }[];
@@ -267,6 +268,26 @@ function TicketDetail({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelNote, setCancelNote] = useState("");
 
+  // Device passcode is no longer shipped with the ticket list; it is revealed
+  // on demand through the audited endpoint below.
+  const [passcode, setPasscode] = useState<string | null>(null);
+  const [passcodeLoading, setPasscodeLoading] = useState(false);
+  const passcodeTypeLabel =
+    ticket.devicePasscodeType === "PATTERN" ? "الگو" : ticket.devicePasscodeType === "PASSWORD" ? "پسورد" : "پین";
+
+  async function revealPasscode() {
+    setPasscodeLoading(true);
+    try {
+      const res = await fetch(`/api/tickets/${ticket.id}/passcode`);
+      const data = await res.json();
+      setPasscode(typeof data.passcode === "string" ? data.passcode : "");
+    } catch {
+      setPasscode("");
+    } finally {
+      setPasscodeLoading(false);
+    }
+  }
+
   return (
     <div className="ticket-modal-backdrop" onClick={onClose}>
       <div
@@ -280,12 +301,23 @@ function TicketDetail({
 
         <div className="ticket-modal-body">
 
-        {(ticket.devicePasscode || ticket.customerDamageNotes) && (
+        {(ticket.hasPasscode || ticket.customerDamageNotes) && (
           <div className="ticket-private-note">
-            {ticket.devicePasscode && (
-              <div className="text-xs">
-                <span className="text-muted">رمز گوشی ({ticket.devicePasscodeType === "PATTERN" ? "الگو" : ticket.devicePasscodeType === "PASSWORD" ? "پسورد" : "پین"}): </span>
-                <span className="mono font-bold">{ticket.devicePasscode}</span>
+            {ticket.hasPasscode && (
+              <div className="text-xs flex items-center gap-2">
+                <span className="text-muted">رمز گوشی ({passcodeTypeLabel}): </span>
+                {passcode === null ? (
+                  <button
+                    type="button"
+                    onClick={revealPasscode}
+                    disabled={passcodeLoading}
+                    className="mono font-bold underline decoration-dotted disabled:opacity-60"
+                  >
+                    {passcodeLoading ? "..." : "نمایش رمز"}
+                  </button>
+                ) : (
+                  <span className="mono font-bold">{passcode || "—"}</span>
+                )}
               </div>
             )}
             {ticket.customerDamageNotes && (

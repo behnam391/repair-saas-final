@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireSession, UnauthorizedError } from "@/lib/tenant";
+import { UnauthorizedError } from "@/lib/tenant";
+import { requireCapability } from "@/lib/authz";
 import { requestPayment } from "@/lib/payments";
 import { getPricing, priceForDuration, extendPlanExpiry, type PlanKey, type DurationKey } from "@/lib/plans";
 import { logCaught } from "@/lib/logError";
@@ -18,7 +19,8 @@ const CheckoutSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const { shopId } = await requireSession();
+    // Money movement (starts a subscription / spends the wallet) — OWNER only.
+    const { shopId } = await requireCapability("billing.write");
     const { plan, duration, payWith } = CheckoutSchema.parse(await req.json());
     // Effective, possibly admin-overridden pricing — the amount charged must
     // reflect the price set in the super-admin panel, not the code default.

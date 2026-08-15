@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { DEVICE_BRANDS } from "@/lib/device-catalog";
 import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 import { preprocessPhone } from "@/lib/phone";
+import { encryptSecretOrPassthrough } from "@/lib/crypto";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -66,7 +67,15 @@ export async function POST(req: NextRequest, { params }: { params: { shopId: str
     if (!shop || !shop.active) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
     const body = Schema.parse(await req.json());
-    const intake = await db.pendingIntake.create({ data: { shopId: shop.id, ...body } });
+    // Encrypt the customer-supplied passcode at rest (same as staff intake).
+    const { devicePasscode, ...rest } = body;
+    const intake = await db.pendingIntake.create({
+      data: {
+        shopId: shop.id,
+        ...rest,
+        ...(devicePasscode ? { devicePasscode: encryptSecretOrPassthrough(devicePasscode) } : {}),
+      },
+    });
 
     // Ring the bell for every active staff member of this shop — QR intakes
     // used to arrive silently and sit unseen in the pending list.
