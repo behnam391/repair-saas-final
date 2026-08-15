@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import PatternLockInput from "@/components/PatternLockInput";
 import ComboBox from "@/components/ComboBox";
 import TicketChat from "@/components/TicketChat";
+import AiIntakeHelper from "@/components/AiIntakeHelper";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
 import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Check, ChevronDown, CircuitBoard, Clock3, Cpu, GitBranch, LockKeyhole, MessageCircle, Play, Plus, Search, ShieldCheck, Smartphone, UserRound, Wrench, X } from "lucide-react";
 
@@ -325,6 +326,8 @@ function TicketDetail({
             )}
           </div>
         )}
+
+        <AiIntakeHelper ticketId={ticket.id} />
 
         <ReferralFlow history={ticket.history} currentLane={ticket.lane} />
 

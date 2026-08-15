@@ -1154,3 +1154,26 @@ model PasscodeAccessLog {
   @@index([shopId, createdAt])
   @@index([ticketId])
 }
+
+// ── AI suggestion audit/history (Phase 3 — Intake Helper slice) ──
+// One row per AI Repair Assistant request. Advisory only — this stores what
+// was asked and the suggestion produced, for audit and later review; it never
+// drives ticket state. `inputSummary` is REDACTED before storage. Like
+// ErrorLog/PasscodeAccessLog, it deliberately has NO foreign keys so an audit
+// write can never fail/cascade — shopId/ticketId/createdByUserId are strings.
+model AiSuggestion {
+  id              String   @id @default(cuid())
+  shopId          String
+  ticketId        String?
+  createdByUserId String
+  kind            String // e.g. "intake_helper"
+  inputSummary    String? // redacted context that was sent
+  output          String? // JSON of the produced suggestion (null unless status = ok)
+  provider        String // provider that answered, or "none"
+  model           String?
+  status          String // "ok" | "empty" | "error" | "disabled" | "quota_exceeded"
+  createdAt       DateTime @default(now())
+
+  @@index([shopId, ticketId])
+  @@index([shopId, createdAt])
+}
