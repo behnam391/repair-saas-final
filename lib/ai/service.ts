@@ -2,7 +2,11 @@
 // The single entry point business logic uses. It orchestrates config, per-shop
 // quota, redaction, timeout, retries, provider fallback, and structured
 // logging — and it ALWAYS resolves to an AiResult. It never throws, so wiring
-// it into ticket/invoice/delivery flows later cannot break them.
+// it into ticket/invoice/delivery flows cannot break them.
+//
+// runCompletion()'s signature is unchanged from earlier phases; the only change
+// is that configuration is now loaded from PlatformSettings (env fallback) and
+// the fallback provider uses its own model/endpoint/credentials.
 
 import { loadAiConfig } from "./config";
 import { checkShopQuota } from "./quota";
@@ -15,14 +19,14 @@ import {
   AiProviderError,
   AiRequest,
   AiResult,
-  ProviderKey,
   ProviderRequest,
+  ProviderSlot,
 } from "./types";
 
 const TRANSIENT: AiErrorKind[] = ["timeout", "network", "rate_limit", "server"];
 
-export function isAiEnabled(): boolean {
-  return loadAiConfig().enabled;
+export async function isAiEnabled(): Promise<boolean> {
+  return (await loadAiConfig()).enabled;
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -34,14 +38,14 @@ function backoffMs(attempt: number): number {
   return Math.min(2000, 100 * Math.pow(2, attempt));
 }
 
-// One provider, with timeout + bounded retries on transient errors only.
-async function attemptProvider(
-  providerKey: ProviderKey,
+// One provider slot, with timeout + bounded retries on transient errors only.
+async function attemptSlot(
+  slot: ProviderSlot,
   redactedInput: string,
   req: AiRequest,
   config: AiConfig
 ): Promise<{ result: AiResult; attempts: number }> {
-  const provider = getProvider(providerKey);
+  const provider = getProvider(slot.provider);
   const maxRetries = Math.max(0, Math.floor(config.maxRetries));
   const timeoutMs = req.timeoutMs ?? config.timeoutMs;
   let attempts = 0;
@@ -56,12 +60,12 @@ async function attemptProvider(
       const pr: ProviderRequest = {
         system: req.system,
         input: redactedInput,
-        model: config.model,
+        model: slot.model,
         maxTokens: req.maxTokens ?? config.maxTokens,
         temperature: req.temperature ?? config.temperature,
         signal: controller.signal,
       };
-      const out = await provider.generate(pr, { baseUrl: config.baseUrl, apiKey: config.apiKey });
+      const out = await provider.generate(pr, { baseUrl: slot.baseUrl, apiKey: slot.apiKey });
       clearTimeout(timer);
       return {
         attempts,
@@ -71,7 +75,7 @@ async function attemptProvider(
           finishReason: out.finishReason,
           usage: out.usage,
           provider: provider.key,
-          model: config.model,
+          model: slot.model,
           latencyMs: Date.now() - started,
         },
       };
@@ -95,13 +99,31 @@ async function attemptProvider(
   };
 }
 
+// Build the ordered list of provider slots (primary, then optional fallback),
+// each with its own model/endpoint/credentials.
+function buildSlots(config: AiConfig): ProviderSlot[] {
+  const slots: ProviderSlot[] = [];
+  if (config.provider !== "disabled") {
+    slots.push({ provider: config.provider, model: config.model, baseUrl: config.baseUrl, apiKey: config.apiKey });
+  }
+  if (config.fallbackProvider) {
+    slots.push({
+      provider: config.fallbackProvider,
+      model: config.fallbackModel || config.model,
+      baseUrl: config.fallbackBaseUrl,
+      apiKey: config.fallbackApiKey,
+    });
+  }
+  return slots;
+}
+
 /**
  * Run one AI completion. Returns an AiResult in every case (success, disabled,
  * over-quota, or total failure) and never throws.
  */
 export async function runCompletion(req: AiRequest): Promise<AiResult> {
   const start = Date.now();
-  const config = loadAiConfig();
+  const config = await loadAiConfig();
 
   // 1) Disabled → never touch a provider.
   if (!config.enabled || config.provider === "disabled") {
@@ -135,19 +157,17 @@ export async function runCompletion(req: AiRequest): Promise<AiResult> {
   // 3) Redact before anything leaves Peyvo.
   const redactedInput = redactForPrompt(req.input);
 
-  // 4) Primary, then optional fallback provider.
-  const chain: ProviderKey[] = [config.provider, ...(config.fallbackProvider ? [config.fallbackProvider] : [])];
+  // 4) Primary, then optional fallback slot (each with its own endpoint/creds).
   let last: AiResult | null = null;
-
-  for (const providerKey of chain) {
-    const { result, attempts } = await attemptProvider(providerKey, redactedInput, req, config);
+  for (const slot of buildSlots(config)) {
+    const { result, attempts } = await attemptSlot(slot, redactedInput, req, config);
     last = result;
     if (result.ok) {
       const latencyMs = Date.now() - start;
       logAiEvent({
         task: req.task,
         provider: result.provider,
-        model: config.model,
+        model: result.model,
         shopId: req.shopId,
         outcome: "ok",
         latencyMs,
@@ -159,8 +179,8 @@ export async function runCompletion(req: AiRequest): Promise<AiResult> {
     }
     logAiEvent({
       task: req.task,
-      provider: providerKey,
-      model: config.model,
+      provider: slot.provider,
+      model: slot.model,
       shopId: req.shopId,
       outcome: "error",
       latencyMs: Date.now() - start,

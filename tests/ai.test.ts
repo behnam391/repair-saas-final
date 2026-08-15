@@ -20,7 +20,7 @@ const baseReq = { shopId: "shop_test", task: "test.echo", system: "you are a tes
 
 test("disabled by default — no env means AI is off and returns a safe result", async () => {
   setEnv({});
-  assert.equal(isAiEnabled(), false);
+  assert.equal(await isAiEnabled(), false);
   const r = await runCompletion(baseReq);
   assert.equal(r.ok, false);
   assert.equal(r.provider, "none");
@@ -29,7 +29,7 @@ test("disabled by default — no env means AI is off and returns a safe result",
 
 test("AI_ENABLED without a provider stays disabled (no accidental calls)", async () => {
   setEnv({ AI_ENABLED: "true" }); // provider defaults to "disabled"
-  assert.equal(isAiEnabled(), false);
+  assert.equal(await isAiEnabled(), false);
   const r = await runCompletion(baseReq);
   assert.equal(r.error?.kind, "disabled");
 });
@@ -67,7 +67,7 @@ test("when all providers fail, result is a safe negative and never throws", asyn
 
 test("quota disabled (limit 0) never touches the quota store", async () => {
   setEnv({ AI_ENABLED: "true", AI_PROVIDER: "mock", AI_SHOP_DAILY_LIMIT: "0" });
-  const cfg = loadAiConfig();
+  const cfg = await loadAiConfig();
   assert.equal(cfg.shopDailyLimit, 0);
   const r = await runCompletion(baseReq); // would throw if it hit the (absent) DB
   assert.equal(r.ok, true);

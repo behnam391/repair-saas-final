@@ -102,6 +102,8 @@ export const PLATFORM_SECRET_FIELDS = [
   "smtpPassword",
   "bazaarRsaPublicKey",
   "bazaarDynamicDiscountKey",
+  "aiApiKey",
+  "aiFallbackApiKey",
 ] as const;
 
 export type PlatformSecretField = (typeof PLATFORM_SECRET_FIELDS)[number];

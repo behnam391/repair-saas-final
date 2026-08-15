@@ -1,50 +1,71 @@
 // ── AI configuration (server-side only) ────────────────────────
-// Resolves the effective AiConfig from environment variables. Credentials
-// (AI_API_KEY) live only in the server environment and are never exposed to
-// the client. This is intentionally the single source of config today; a later
-// phase can overlay PlatformSettings values here WITHOUT changing any caller,
-// because everything above only depends on loadAiConfig()'s return shape.
+// Resolves the effective AiConfig with per-field precedence:
+//
+//     PlatformSettings value (if set)  →  environment variable  →  default
+//
+// PlatformSettings (edited by the Super Admin) is authoritative; environment
+// variables remain a safe fallback for development. Secrets (API keys) are
+// stored ENCRYPTED in PlatformSettings and decrypted here via lib/crypto —
+// they never leave the server. Reading the DB is wrapped so a DB outage (or
+// dev with no row) falls back cleanly to env + defaults and never throws.
 
+import { db } from "../db";
+import { decryptSecret } from "../crypto";
 import type { AiConfig, ProviderKey } from "./types";
 
 const VALID_PROVIDERS: ProviderKey[] = ["disabled", "mock", "openai-compat"];
 
-function asProvider(v: string | undefined, fallback: ProviderKey): ProviderKey {
-  return v && (VALID_PROVIDERS as string[]).includes(v) ? (v as ProviderKey) : fallback;
+function toProvider(v: unknown): ProviderKey | undefined {
+  return typeof v === "string" && (VALID_PROVIDERS as string[]).includes(v) ? (v as ProviderKey) : undefined;
+}
+function str(v: unknown): string | undefined {
+  return typeof v === "string" && v.trim() !== "" ? v : undefined;
+}
+function num(v: unknown): number | undefined {
+  const n = typeof v === "number" ? v : typeof v === "string" && v !== "" ? Number(v) : NaN;
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
+}
+function bool(v: unknown): boolean | undefined {
+  if (typeof v === "boolean") return v;
+  if (v === "true" || v === "1") return true;
+  if (v === "false" || v === "0") return false;
+  return undefined;
+}
+// A decrypted secret from the DB, or undefined if empty/unreadable.
+function secret(v: unknown): string | undefined {
+  const d = decryptSecret(typeof v === "string" ? v : null);
+  return d ? d : undefined;
 }
 
-function num(v: string | undefined, d: number): number {
-  const n = v != null && v !== "" ? Number(v) : NaN;
-  return Number.isFinite(n) && n >= 0 ? n : d;
-}
+export async function loadAiConfig(): Promise<AiConfig> {
+  let s: any = null;
+  try {
+    s = await db.platformSettings.findUnique({ where: { id: "singleton" } });
+  } catch {
+    s = null; // dev / DB unavailable → env + defaults
+  }
 
-function bool(v: string | undefined): boolean {
-  return v === "true" || v === "1";
-}
+  const provider = toProvider(s?.aiProvider) ?? toProvider(process.env.AI_PROVIDER) ?? "disabled";
+  const enabledRaw = bool(s?.aiEnabled) ?? bool(process.env.AI_ENABLED) ?? false;
+  const enabled = enabledRaw && provider !== "disabled";
 
-export function loadAiConfig(): AiConfig {
-  const provider = asProvider(process.env.AI_PROVIDER, "disabled");
-  // "enabled" requires BOTH the flag and a non-disabled provider, so a stray
-  // AI_ENABLED=true can never accidentally start calling a provider.
-  const enabled = bool(process.env.AI_ENABLED) && provider !== "disabled";
-
-  const rawFallback = process.env.AI_FALLBACK_PROVIDER
-    ? asProvider(process.env.AI_FALLBACK_PROVIDER, "disabled")
-    : null;
-  // A fallback that is "disabled" or identical to the primary is meaningless.
-  const fallbackProvider = rawFallback && rawFallback !== "disabled" && rawFallback !== provider ? rawFallback : null;
+  const fbRaw = toProvider(s?.aiFallbackProvider) ?? toProvider(process.env.AI_FALLBACK_PROVIDER) ?? "disabled";
+  const fallbackProvider = fbRaw !== "disabled" && fbRaw !== provider ? fbRaw : null;
 
   return {
     enabled,
     provider,
     fallbackProvider,
-    model: process.env.AI_MODEL || "mock-model",
-    baseUrl: process.env.AI_BASE_URL || undefined,
-    apiKey: process.env.AI_API_KEY || undefined,
-    timeoutMs: num(process.env.AI_TIMEOUT_MS, 20000),
-    maxRetries: num(process.env.AI_MAX_RETRIES, 2),
-    maxTokens: num(process.env.AI_MAX_TOKENS, 1024),
-    temperature: num(process.env.AI_TEMPERATURE, 0.2),
-    shopDailyLimit: num(process.env.AI_SHOP_DAILY_LIMIT, 200),
+    model: str(s?.aiModel) ?? str(process.env.AI_MODEL) ?? "mock-model",
+    baseUrl: str(s?.aiBaseUrl) ?? str(process.env.AI_BASE_URL),
+    apiKey: secret(s?.aiApiKey) ?? str(process.env.AI_API_KEY),
+    fallbackModel: str(s?.aiFallbackModel) ?? str(process.env.AI_FALLBACK_MODEL),
+    fallbackBaseUrl: str(s?.aiFallbackBaseUrl) ?? str(process.env.AI_FALLBACK_BASE_URL),
+    fallbackApiKey: secret(s?.aiFallbackApiKey) ?? str(process.env.AI_FALLBACK_API_KEY),
+    timeoutMs: num(s?.aiTimeoutMs) ?? num(process.env.AI_TIMEOUT_MS) ?? 20000,
+    maxRetries: num(s?.aiMaxRetries) ?? num(process.env.AI_MAX_RETRIES) ?? 2,
+    maxTokens: num(process.env.AI_MAX_TOKENS) ?? 1024, // not exposed in the admin UI
+    temperature: num(process.env.AI_TEMPERATURE) ?? 0.2,
+    shopDailyLimit: num(s?.aiShopDailyLimit) ?? num(process.env.AI_SHOP_DAILY_LIMIT) ?? 200,
   };
 }

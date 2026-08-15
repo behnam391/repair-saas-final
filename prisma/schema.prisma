@@ -778,7 +778,37 @@ model PlatformSettings {
   discount3           Int?     // % discount for the 3-month commitment
   discount6           Int?     // % discount for the 6-month commitment
   discount12          Int?     // % discount for the 12-month commitment
+  // ── AI provider configuration (Super Admin editable) ──
+  // Runtime config for the provider-agnostic AI layer (lib/ai). Read through
+  // lib/ai/config.ts with env vars as a dev fallback. API keys are stored
+  // ENCRYPTED via lib/crypto (aiApiKey/aiFallbackApiKey are in
+  // PLATFORM_SECRET_FIELDS) and are never returned to the browser.
+  aiEnabled           Boolean? // master on/off (null/false = off)
+  aiProvider          String?  // "disabled" | "mock" | "openai-compat"
+  aiBaseUrl           String?  // primary endpoint (for openai-compat)
+  aiApiKey            String?  // ENCRYPTED primary credential
+  aiModel             String?  // primary model id
+  aiFallbackProvider  String?  // optional fallback provider key
+  aiFallbackBaseUrl   String?  // fallback endpoint
+  aiFallbackApiKey    String?  // ENCRYPTED fallback credential
+  aiFallbackModel     String?  // fallback model id
+  aiTimeoutMs         Int?     // per-call timeout
+  aiMaxRetries        Int?     // transient-error retries
+  aiShopDailyLimit    Int?     // per-shop daily call cap (0 = unlimited)
   updatedAt           DateTime @updatedAt
+}
+
+// ── AI configuration change audit (Phase — AI provider management) ──
+// One row each time the Super Admin changes AI configuration. Stores only the
+// changed field NAMES (never API keys / values). No foreign key (mirrors
+// ErrorLog/PasscodeAccessLog) so an audit write can never fail/cascade.
+model AiConfigAudit {
+  id            String   @id @default(cuid())
+  adminId       String
+  changedFields String // comma-separated field names — NEVER values
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 // ── In-app notifications ──────────────────────────────────────

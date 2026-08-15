@@ -68,11 +68,32 @@ const Schema = z.object({
   discount3: z.number().int().min(0).max(100).optional(),
   discount6: z.number().int().min(0).max(100).optional(),
   discount12: z.number().int().min(0).max(100).optional(),
+  // ── AI provider configuration ──
+  aiEnabled: z.boolean().optional(),
+  aiProvider: z.enum(["disabled", "mock", "openai-compat"]).optional(),
+  aiBaseUrl: z.string().max(2000).optional(),
+  aiApiKey: z.string().max(4000).optional(),
+  aiModel: z.string().max(200).optional(),
+  aiFallbackProvider: z.string().max(40).optional(), // "" | disabled | mock | openai-compat
+  aiFallbackBaseUrl: z.string().max(2000).optional(),
+  aiFallbackApiKey: z.string().max(4000).optional(),
+  aiFallbackModel: z.string().max(200).optional(),
+  aiTimeoutMs: z.number().int().min(1000).max(120000).optional(),
+  aiMaxRetries: z.number().int().min(0).max(10).optional(),
+  aiShopDailyLimit: z.number().int().min(0).max(1000000).optional(),
 });
+
+// AI config fields whose CHANGES are audited (names only — never values).
+const AI_CONFIG_FIELDS = [
+  "aiEnabled", "aiProvider", "aiBaseUrl", "aiApiKey", "aiModel",
+  "aiFallbackProvider", "aiFallbackBaseUrl", "aiFallbackApiKey", "aiFallbackModel",
+  "aiTimeoutMs", "aiMaxRetries", "aiShopDailyLimit",
+] as const;
+const AI_SECRET_FIELDS = ["aiApiKey", "aiFallbackApiKey"];
 
 export async function PATCH(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin();
     const body = Schema.parse(await req.json());
 
     // Encrypt any secret field that carries a new value; SKIP secret fields
@@ -89,11 +110,36 @@ export async function PATCH(req: NextRequest) {
       data[f] = encryptSecretOrPassthrough(String(v));
     }
 
+    // Snapshot the prior AI values so the audit records only real changes.
+    const prior = await db.platformSettings.findUnique({ where: { id: "singleton" } });
+
     const settings = await db.platformSettings.upsert({
       where: { id: "singleton" },
       update: data as any,
       create: { id: "singleton", ...data } as any,
     });
+
+    // Audit any AI-config change — record the changed field NAMES only. For
+    // secret fields, a change counts only when a real (non-empty) value was
+    // sent; the value (API key) itself is NEVER logged. Non-secret fields are
+    // compared against the stored value so an unrelated save is not audited.
+    // Best-effort: never blocks the save.
+    const changedAiFields = AI_CONFIG_FIELDS.filter((f) => {
+      const v = (body as any)[f];
+      if (v === undefined) return false;
+      if (AI_SECRET_FIELDS.includes(f)) return v !== "";
+      return !prior || (prior as any)[f] !== v;
+    });
+    if (changedAiFields.length > 0) {
+      try {
+        await (db as any).aiConfigAudit.create({
+          data: { adminId, changedFields: changedAiFields.join(",") },
+        });
+      } catch (e) {
+        console.error("[ai] config audit write failed", e);
+      }
+    }
+
     return NextResponse.json({ settings: redactSecrets(settings) });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

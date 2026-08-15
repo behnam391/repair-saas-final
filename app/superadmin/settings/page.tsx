@@ -14,6 +14,7 @@ const TABS: [string, string][] = [
   ["payment", "🏦 پرداخت"],
   ["email", "✉️ ایمیل"],
   ["trust", "🛡️ اعتماد"],
+  ["ai", "🤖 هوش مصنوعی"],
   ["other", "⚙️ سایر"],
 ];
 
@@ -34,11 +35,17 @@ export default function SuperAdminSettingsPage() {
     proPriceToman: 490000, businessPriceToman: 990000,
     proQuota: 200, businessQuota: 100000,
     discount3: 5, discount6: 10, discount12: 20,
+    aiEnabled: false, aiProvider: "disabled", aiBaseUrl: "", aiApiKey: "", aiModel: "",
+    aiFallbackProvider: "", aiFallbackBaseUrl: "", aiFallbackApiKey: "", aiFallbackModel: "",
+    aiTimeoutMs: 20000, aiMaxRetries: 2, aiShopDailyLimit: 200,
   });
   const [saved, setSaved] = useState(false);
   const [testEmailTo, setTestEmailTo] = useState("");
   const [testMsg, setTestMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [testing, setTesting] = useState(false);
+  const [aiSecretSet, setAiSecretSet] = useState<{ apiKey: boolean; fallbackApiKey: boolean }>({ apiKey: false, fallbackApiKey: false });
+  const [aiTest, setAiTest] = useState<{ ok: boolean; text: string } | null>(null);
+  const [aiTesting, setAiTesting] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated" && !(session?.user as any)?.isSuperAdmin) router.push("/superadmin/login");
@@ -58,7 +65,7 @@ export default function SuperAdminSettingsPage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/superadmin/settings").then((r) => r.json()).then((d) => setForm({
+    fetch("/api/superadmin/settings").then((r) => r.json()).then((d) => { setForm({
       kavenegarApiKey: d.settings?.kavenegarApiKey ?? "",
       kavenegarSender: d.settings?.kavenegarSender ?? "",
       smsUseLookup: d.settings?.smsUseLookup ?? false,
@@ -92,7 +99,21 @@ export default function SuperAdminSettingsPage() {
       discount3: d.settings?.discount3 ?? 5,
       discount6: d.settings?.discount6 ?? 10,
       discount12: d.settings?.discount12 ?? 20,
-    }));
+      aiEnabled: d.settings?.aiEnabled ?? false,
+      aiProvider: d.settings?.aiProvider ?? "disabled",
+      aiBaseUrl: d.settings?.aiBaseUrl ?? "",
+      aiApiKey: "",
+      aiModel: d.settings?.aiModel ?? "",
+      aiFallbackProvider: d.settings?.aiFallbackProvider ?? "",
+      aiFallbackBaseUrl: d.settings?.aiFallbackBaseUrl ?? "",
+      aiFallbackApiKey: "",
+      aiFallbackModel: d.settings?.aiFallbackModel ?? "",
+      aiTimeoutMs: d.settings?.aiTimeoutMs ?? 20000,
+      aiMaxRetries: d.settings?.aiMaxRetries ?? 2,
+      aiShopDailyLimit: d.settings?.aiShopDailyLimit ?? 200,
+    });
+    setAiSecretSet({ apiKey: !!d.settings?.aiApiKeySet, fallbackApiKey: !!d.settings?.aiFallbackApiKeySet });
+    });
   }, []);
 
   async function save() {
@@ -124,6 +145,26 @@ export default function SuperAdminSettingsPage() {
     setTestMsg(res.ok
       ? { ok: true, text: "✅ ایمیل آزمایشی ارسال شد. صندوق ورودی (و پوشه‌ی اسپم) را چک کن." }
       : { ok: false, text: d.message || "ارسال ناموفق بود." });
+  }
+
+  // Save the current config first, then run a minimal server-side probe against
+  // the saved provider. The API key is never sent back — only the outcome.
+  async function testAiConnection() {
+    setAiTest(null);
+    setAiTesting(true);
+    const ok = await save();
+    if (!ok) { setAiTesting(false); setAiTest({ ok: false, text: "ذخیره تنظیمات ناموفق بود." }); return; }
+    const res = await fetch("/api/superadmin/ai-test", { method: "POST" });
+    const d = await res.json().catch(() => ({}));
+    setAiTesting(false);
+    if (res.ok) {
+      setAiTest({
+        ok: !!d.ok,
+        text: `${d.ok ? "✅ اتصال موفق" : "❌ اتصال ناموفق"} — ارائه‌دهنده: ${d.provider ?? "-"} · مدل: ${d.model ?? "-"} · زمان: ${d.latencyMs ?? 0}ms${d.message ? " — " + d.message : ""}`,
+      });
+    } else {
+      setAiTest({ ok: false, text: d.message || "تست ناموفق بود." });
+    }
   }
 
   return (
@@ -446,6 +487,93 @@ export default function SuperAdminSettingsPage() {
           <label className="block text-xs text-muted mb-1">متن صفحه «درباره ما»</label>
           <textarea className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" rows={4}
             value={form.aboutUsContent} onChange={(e) => setForm({ ...form, aboutUsContent: e.target.value })} />
+        </div>
+      </div>
+      )}
+
+      {/* ── هوش مصنوعی ── */}
+      {tab === "ai" && (
+      <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-bold">🤖 هوش مصنوعی — ارائه‌دهنده</div>
+          <button type="button" onClick={() => setForm({ ...form, aiEnabled: !form.aiEnabled })}
+            className={`text-[11px] font-bold rounded-full px-3 py-1 transition ${form.aiEnabled ? "bg-teal text-white" : "bg-surface2 text-muted"}`}>
+            {form.aiEnabled ? "فعال" : "غیرفعال"}
+          </button>
+        </div>
+        <p className="text-[10px] text-muted">کلیدهای API به‌صورت رمزنگاری‌شده ذخیره می‌شوند و هرگز به مرورگر بازگردانده نمی‌شوند. این مقادیر بر متغیرهای محیطی اولویت دارند.</p>
+
+        {/* Primary provider */}
+        <div className="border-t border-surface2 pt-3">
+          <div className="text-[12px] font-bold mb-2">ارائه‌دهنده اصلی</div>
+          <label className="block text-[11px] text-muted mb-1">نوع</label>
+          <select dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2"
+            value={form.aiProvider} onChange={(e) => setForm({ ...form, aiProvider: e.target.value })}>
+            <option value="disabled">disabled (خاموش)</option>
+            <option value="mock">mock (تست محلی)</option>
+            <option value="openai-compat">openai-compat</option>
+          </select>
+          <label className="block text-[11px] text-muted mb-1">مدل</label>
+          <input dir="ltr" placeholder="gpt-4o-mini / llama3 …" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono"
+            value={form.aiModel} onChange={(e) => setForm({ ...form, aiModel: e.target.value })} />
+          <label className="block text-[11px] text-muted mb-1">Base URL</label>
+          <input dir="ltr" placeholder="https://…/v1" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono"
+            value={form.aiBaseUrl} onChange={(e) => setForm({ ...form, aiBaseUrl: e.target.value })} />
+          <label className="block text-[11px] text-muted mb-1">کلید API {aiSecretSet.apiKey && <span className="text-teal">(ذخیره‌شده ✓ — برای تغییر مقدار جدید وارد کن)</span>}</label>
+          <input type="password" dir="ltr" autoComplete="off" placeholder={aiSecretSet.apiKey ? "•••••• (بدون تغییر)" : ""}
+            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+            value={form.aiApiKey} onChange={(e) => setForm({ ...form, aiApiKey: e.target.value })} />
+        </div>
+
+        {/* Fallback provider */}
+        <div className="border-t border-surface2 pt-3">
+          <div className="text-[12px] font-bold mb-2">ارائه‌دهنده جایگزین (اختیاری)</div>
+          <label className="block text-[11px] text-muted mb-1">نوع</label>
+          <select dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2"
+            value={form.aiFallbackProvider} onChange={(e) => setForm({ ...form, aiFallbackProvider: e.target.value })}>
+            <option value="">بدون جایگزین</option>
+            <option value="mock">mock</option>
+            <option value="openai-compat">openai-compat</option>
+          </select>
+          <label className="block text-[11px] text-muted mb-1">مدل جایگزین</label>
+          <input dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono"
+            value={form.aiFallbackModel} onChange={(e) => setForm({ ...form, aiFallbackModel: e.target.value })} />
+          <label className="block text-[11px] text-muted mb-1">Base URL جایگزین</label>
+          <input dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono"
+            value={form.aiFallbackBaseUrl} onChange={(e) => setForm({ ...form, aiFallbackBaseUrl: e.target.value })} />
+          <label className="block text-[11px] text-muted mb-1">کلید API جایگزین {aiSecretSet.fallbackApiKey && <span className="text-teal">(ذخیره‌شده ✓)</span>}</label>
+          <input type="password" dir="ltr" autoComplete="off" placeholder={aiSecretSet.fallbackApiKey ? "•••••• (بدون تغییر)" : ""}
+            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+            value={form.aiFallbackApiKey} onChange={(e) => setForm({ ...form, aiFallbackApiKey: e.target.value })} />
+        </div>
+
+        {/* Limits */}
+        <div className="border-t border-surface2 pt-3 grid grid-cols-3 gap-2">
+          <div>
+            <label className="block text-[10px] text-muted mb-1">Timeout (ms)</label>
+            <input type="number" dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-2 py-2 text-sm mono"
+              value={form.aiTimeoutMs} onChange={(e) => setForm({ ...form, aiTimeoutMs: Math.max(1000, +e.target.value) })} />
+          </div>
+          <div>
+            <label className="block text-[10px] text-muted mb-1">Max retries</label>
+            <input type="number" dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-2 py-2 text-sm mono"
+              value={form.aiMaxRetries} onChange={(e) => setForm({ ...form, aiMaxRetries: Math.max(0, Math.min(10, +e.target.value)) })} />
+          </div>
+          <div>
+            <label className="block text-[10px] text-muted mb-1">سهمیه روزانه هر مغازه</label>
+            <input type="number" dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-2 py-2 text-sm mono"
+              value={form.aiShopDailyLimit} onChange={(e) => setForm({ ...form, aiShopDailyLimit: Math.max(0, +e.target.value) })} />
+          </div>
+        </div>
+
+        {/* Test connection */}
+        <div className="border-t border-surface2 pt-3">
+          <button type="button" onClick={testAiConnection} disabled={aiTesting}
+            className="bg-teal text-white font-bold rounded-lg px-4 py-2 text-sm disabled:opacity-50">
+            {aiTesting ? "در حال تست…" : "تست اتصال"}
+          </button>
+          <p className="text-[10px] text-muted mt-1">اول تنظیمات ذخیره می‌شود، بعد یک درخواست کوچک آزمایشی به ارائه‌دهنده فرستاده می‌شود.</p>
+          {aiTest && <p className={`text-xs mt-2 ${aiTest.ok ? "text-teal" : "text-danger"}`}>{aiTest.text}</p>}
         </div>
       </div>
       )}

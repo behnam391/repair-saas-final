@@ -96,7 +96,9 @@ export interface AiProvider {
   generate(req: ProviderRequest, cfg: ProviderConfig): Promise<ProviderResult>;
 }
 
-// Effective, resolved configuration for one run.
+// Effective, resolved configuration for one run. The fallback slot carries its
+// OWN model/baseUrl/apiKey, so the fallback provider can be a completely
+// different endpoint from the primary.
 export interface AiConfig {
   enabled: boolean;
   provider: ProviderKey;
@@ -104,9 +106,21 @@ export interface AiConfig {
   model: string;
   baseUrl?: string;
   apiKey?: string;
+  fallbackModel?: string;
+  fallbackBaseUrl?: string;
+  fallbackApiKey?: string;
   timeoutMs: number;
   maxRetries: number;
   maxTokens: number;
   temperature: number;
   shopDailyLimit: number; // 0 = unlimited
+}
+
+// Internal: one resolved provider "slot" (primary or fallback) — provider key
+// plus the exact model/endpoint/credentials to use for it.
+export interface ProviderSlot {
+  provider: ProviderKey;
+  model: string;
+  baseUrl?: string;
+  apiKey?: string;
 }
