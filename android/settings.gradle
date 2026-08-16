@@ -1,3 +1,12 @@
+// Google's Maven host can return 404 in some regions. Inject the mirror before
+// every project's own buildscript (including Capacitor's node_modules project)
+// is evaluated, so both plugins and AndroidX artifacts remain resolvable.
+gradle.beforeProject { project ->
+    project.buildscript.repositories {
+        maven { url 'https://maven.aliyun.com/repository/google' }
+    }
+}
+
 include ':app'
 include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')

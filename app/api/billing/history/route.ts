@@ -24,7 +24,7 @@ export async function GET() {
     const subscriptions = await db.subscription.findMany({
       where: { shopId },
       orderBy: { createdAt: "desc" },
-      select: { id: true, plan: true, months: true, amount: true, status: true, createdAt: true },
+      select: { id: true, plan: true, months: true, amount: true, status: true, paymentProvider: true, createdAt: true },
       take: 50,
     });
     return NextResponse.json({ subscriptions });

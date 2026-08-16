@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatJalaliDateTime } from "@/lib/jalali";
+import { isMyketAndroidApp } from "@/lib/myket-billing-client";
 
 const QUICK = [100000, 200000, 500000, 1000000];
 
@@ -29,6 +30,7 @@ export default function WalletPage() {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [storeMode, setStoreMode] = useState<"checking" | "web" | "myket">("checking");
 
   async function load() {
     const res = await fetch("/api/wallet");
@@ -38,7 +40,11 @@ export default function WalletPage() {
       setTxns(d.transactions ?? []);
     }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const mode = isMyketAndroidApp() ? "myket" : "web";
+    setStoreMode(mode);
+    if (mode === "web") load();
+  }, []);
 
   const amountNum = parseInt(toEnDigits(amount) || "0", 10);
 
@@ -55,6 +61,27 @@ export default function WalletPage() {
     setLoading(false);
     if (!res.ok) { setError(d.message || "شروع پرداخت ناموفق بود"); return; }
     window.location.href = d.payUrl;
+  }
+
+  if (storeMode === "checking") {
+    return <div className="p-6 text-center text-xs text-muted">در حال بررسی روش پرداخت...</div>;
+  }
+
+  if (storeMode === "myket") {
+    return (
+      <div className="p-4 max-w-xl mx-auto">
+        <div className="bg-gradient-to-br from-teal/15 to-surface border border-teal/40 rounded-2xl p-6 text-center mt-6">
+          <div className="text-3xl mb-3">🟢</div>
+          <h1 className="display-heading text-lg mb-2">پرداخت امن مایکت</h1>
+          <p className="text-xs text-muted leading-6 mb-5">
+            در نسخه مایکت، خرید و تمدید اشتراک فقط از طریق پرداخت درون‌برنامه‌ای مایکت انجام می‌شود و شارژ مستقیم کیف پول در دسترس نیست.
+          </p>
+          <a href="/admin/billing" className="inline-flex bg-teal text-white font-bold rounded-xl px-5 py-2.5 text-sm">
+            مشاهده پلن‌ها و خرید از مایکت
+          </a>
+        </div>
+      </div>
+    );
   }
 
   return (

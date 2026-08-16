@@ -31,6 +31,7 @@ export default function SuperAdminSettingsPage() {
     neshanApiKey: "", enamadId: "", enamadCode: "",
     androidApkUrl: "", bazaarUrl: "", myketUrl: "",
     bazaarRsaPublicKey: "", bazaarDynamicDiscountKey: "",
+    myketRsaPublicKey: "", myketAccessToken: "",
     fontFamily: "vazirmatn", defaultTheme: "dark",
     proPriceToman: 490000, businessPriceToman: 990000,
     proQuota: 200, businessQuota: 100000,
@@ -44,6 +45,7 @@ export default function SuperAdminSettingsPage() {
   const [testMsg, setTestMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [testing, setTesting] = useState(false);
   const [aiSecretSet, setAiSecretSet] = useState<{ apiKey: boolean; fallbackApiKey: boolean }>({ apiKey: false, fallbackApiKey: false });
+  const [myketSecretSet, setMyketSecretSet] = useState<{ publicKey: boolean; accessToken: boolean }>({ publicKey: false, accessToken: false });
   const [aiTest, setAiTest] = useState<{ ok: boolean; text: string } | null>(null);
   const [aiTesting, setAiTesting] = useState(false);
 
@@ -89,6 +91,8 @@ export default function SuperAdminSettingsPage() {
       myketUrl: d.settings?.myketUrl ?? "",
       bazaarRsaPublicKey: d.settings?.bazaarRsaPublicKey ?? "",
       bazaarDynamicDiscountKey: d.settings?.bazaarDynamicDiscountKey ?? "",
+      myketRsaPublicKey: "",
+      myketAccessToken: "",
       fontFamily: d.settings?.fontFamily ?? "vazirmatn",
       defaultTheme: d.settings?.defaultTheme ?? "dark",
       // effective = stored value, or the code default when never set
@@ -113,6 +117,10 @@ export default function SuperAdminSettingsPage() {
       aiShopDailyLimit: d.settings?.aiShopDailyLimit ?? 200,
     });
     setAiSecretSet({ apiKey: !!d.settings?.aiApiKeySet, fallbackApiKey: !!d.settings?.aiFallbackApiKeySet });
+    setMyketSecretSet({
+      publicKey: !!d.settings?.myketRsaPublicKeySet,
+      accessToken: !!d.settings?.myketAccessTokenSet,
+    });
     });
   }, []);
 
@@ -123,7 +131,13 @@ export default function SuperAdminSettingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-    if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
+    if (res.ok) {
+      if (form.myketRsaPublicKey) setMyketSecretSet((s) => ({ ...s, publicKey: true }));
+      if (form.myketAccessToken) setMyketSecretSet((s) => ({ ...s, accessToken: true }));
+      setForm((f) => ({ ...f, myketRsaPublicKey: "", myketAccessToken: "" }));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    }
     return res.ok;
   }
 
@@ -392,6 +406,37 @@ export default function SuperAdminSettingsPage() {
             className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
             value={form.bazaarDynamicDiscountKey} onChange={(e) => setForm({ ...form, bazaarDynamicDiscountKey: e.target.value })} />
           <p className="text-[9px] text-amber mt-2">کلید خصوصی امضای APK را در این قسمت وارد نکنید.</p>
+        </div>
+
+        <div className="border-t border-surface2 mt-5 pt-4">
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <div className="text-sm font-bold">🟢 پرداخت درون‌برنامه‌ای مایکت</div>
+            <span className={`text-[10px] font-bold rounded-full px-2 py-1 ${myketSecretSet.publicKey && myketSecretSet.accessToken ? "bg-teal/20 text-teal" : "bg-amber/20 text-amber"}`}>
+              {myketSecretSet.publicKey && myketSecretSet.accessToken ? "تنظیم‌شده" : "نیازمند تکمیل"}
+            </span>
+          </div>
+          <p className="text-[10px] text-muted leading-5 mb-3">
+            «کلید عمومی RSA» و «توکن دسترسی API» را از پنل توسعه‌دهندگان مایکت وارد کنید. توکن دسترسی فقط روی سرور برای تأیید خرید استفاده می‌شود و داخل APK قرار نمی‌گیرد.
+          </p>
+
+          <label className="block text-[11px] font-bold mb-1">
+            کلید عمومی RSA مایکت {myketSecretSet.publicKey && <span className="text-teal">(قبلاً ذخیره شده)</span>}
+          </label>
+          <textarea dir="ltr" rows={5} spellCheck={false}
+            placeholder={myketSecretSet.publicKey ? "برای حفظ مقدار قبلی خالی بگذارید" : "-----BEGIN PUBLIC KEY-----"}
+            className="w-full resize-y bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs mono mb-3"
+            value={form.myketRsaPublicKey} onChange={(e) => setForm({ ...form, myketRsaPublicKey: e.target.value })} />
+
+          <label className="block text-[11px] font-bold mb-1">
+            توکن دسترسی API مایکت {myketSecretSet.accessToken && <span className="text-teal">(قبلاً ذخیره شده)</span>}
+          </label>
+          <input type="password" dir="ltr" autoComplete="off"
+            placeholder={myketSecretSet.accessToken ? "برای حفظ مقدار قبلی خالی بگذارید" : "X-Access-Token پنل مایکت"}
+            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+            value={form.myketAccessToken} onChange={(e) => setForm({ ...form, myketAccessToken: e.target.value })} />
+          <p className="text-[9px] text-amber mt-2">
+            این دو مقدار با فیلدهای کافه‌بازار متفاوت‌اند. کلید یا توکن مایکت را در قسمت بازار وارد نکنید.
+          </p>
         </div>
       </div>
       )}

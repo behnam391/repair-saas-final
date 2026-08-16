@@ -40,6 +40,8 @@ const Schema = z.object({
   myketUrl: z.string().optional(),
   bazaarRsaPublicKey: z.string().max(10000).optional(),
   bazaarDynamicDiscountKey: z.string().max(2000).optional(),
+  myketRsaPublicKey: z.string().max(10000).optional(),
+  myketAccessToken: z.string().max(4000).optional(),
   smsUseLookup: z.boolean().optional(),
   kavenegarOtpTemplate: z.string().optional(),
   kavenegarIntakeTemplate: z.string().optional(),

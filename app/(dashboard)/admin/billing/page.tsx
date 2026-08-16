@@ -2,6 +2,12 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatJalaliDate } from "@/lib/jalali";
+import {
+  hasMyketBillingPlugin,
+  isMyketAndroidApp,
+  MyketBilling,
+  type MyketPurchase,
+} from "@/lib/myket-billing-client";
 
 const STATUS_LABEL: Record<string, string> = { PENDING: "در انتظار پرداخت", PAID: "پرداخت‌شده", FAILED: "ناموفق" };
 
@@ -11,6 +17,26 @@ type Pricing = {
   plans: Record<"free" | "pro" | "business", PlanRow>;
   durations: Record<string, DurRow>;
 };
+
+type StoreMode = "checking" | "web" | "myket";
+type MyketConfig = {
+  enabled: boolean;
+  publicKey: string;
+  packageName: string;
+  skus: string[];
+  missing: string[];
+};
+
+function myketSku(plan: "pro" | "business", months: number) {
+  return `peyvo.${plan}.${months}m`;
+}
+
+function readableError(error: unknown, fallback: string) {
+  if (error && typeof error === "object" && "message" in error && typeof (error as any).message === "string") {
+    return (error as any).message;
+  }
+  return fallback;
+}
 
 // Fallback shown only until /api/pricing responds — the server (getPricing) is
 // the source of truth, reflecting any prices the super admin set in the panel.
@@ -49,16 +75,24 @@ export default function BillingPage() {
   const [giftCode, setGiftCode] = useState("");
   const [giftMsg, setGiftMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [redeeming, setRedeeming] = useState(false);
+  const [storeMode, setStoreMode] = useState<StoreMode>("checking");
+  const [myketConfig, setMyketConfig] = useState<MyketConfig | null>(null);
+  const [myketAvailable, setMyketAvailable] = useState(true);
+  const [myketRestoring, setMyketRestoring] = useState(false);
+  const [myketNotice, setMyketNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  const [storePrices, setStorePrices] = useState<Record<string, string>>({});
 
   const [currentPlan, setCurrentPlan] = useState<string>("free");
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
-  const [history, setHistory] = useState<{ id: string; plan: string; months: number; amount: number; status: string; createdAt: string }[]>([]);
+  const [history, setHistory] = useState<{ id: string; plan: string; months: number; amount: number; status: string; paymentProvider?: string | null; createdAt: string }[]>([]);
 
   const PLAN_FA: Record<string, string> = { free: "رایگان", pro: "حرفه‌ای", business: "تجاری" };
 
-  async function loadShopAndHistory() {
+  async function loadShopAndHistory(includeWallet = storeMode === "web") {
     const [shopRes, histRes, walletRes] = await Promise.all([
-      fetch("/api/shop"), fetch("/api/billing/history"), fetch("/api/wallet"),
+      fetch("/api/shop"),
+      fetch("/api/billing/history"),
+      includeWallet ? fetch("/api/wallet") : Promise.resolve(null),
     ]);
     if (shopRes.ok) {
       const d = await shopRes.json();
@@ -66,9 +100,15 @@ export default function BillingPage() {
       setPlanExpiresAt(d.shop.planExpiresAt ?? null);
     }
     if (histRes.ok) setHistory((await histRes.json()).subscriptions ?? []);
-    if (walletRes.ok) setWalletBalance((await walletRes.json()).balance ?? 0);
+    if (walletRes?.ok) setWalletBalance((await walletRes.json()).balance ?? 0);
   }
-  useEffect(() => { loadShopAndHistory(); }, []);
+
+  useEffect(() => {
+    const mode: StoreMode = isMyketAndroidApp() ? "myket" : "web";
+    setStoreMode(mode);
+    loadShopAndHistory(mode === "web");
+    if (mode === "myket") initializeMyket();
+  }, []);
 
   // Live subscription prices (may have been changed by the super admin).
   useEffect(() => {
@@ -103,6 +143,137 @@ export default function BillingPage() {
       setTimeout(() => window.location.reload(), 1800);
     } else {
       setGiftMsg({ ok: false, text: data.message || "ثبت کد ناموفق بود" });
+    }
+  }
+
+  async function verifyAndConsumeMyket(purchase: MyketPurchase, intentId?: string, publicKey?: string) {
+    const verifyRes = await fetch("/api/billing/myket/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        intentId,
+        purchase: {
+          sku: purchase.sku,
+          token: purchase.token,
+          orderId: purchase.orderId || null,
+          developerPayload: purchase.developerPayload,
+          purchaseTime: purchase.purchaseTime,
+        },
+      }),
+    });
+    const verified = await verifyRes.json().catch(() => ({}));
+    if (!verifyRes.ok) throw new Error(verified.message || "تأیید خرید مایکت ناموفق بود.");
+
+    try {
+      await MyketBilling.consume({
+        publicKey: publicKey || myketConfig?.publicKey || "",
+        originalJson: purchase.originalJson,
+        signature: purchase.signature || "",
+        itemType: purchase.itemType || "inapp",
+      });
+    } catch {
+      // Entitlement is already safely active. The next automatic restore will
+      // retry consumption, so never tell the customer their paid plan failed.
+      setMyketNotice({ ok: true, text: "اشتراک فعال شد؛ نهایی‌سازی رسید در ورود بعدی دوباره انجام می‌شود." });
+    }
+    return verified;
+  }
+
+  async function restoreMyketPurchases(config: MyketConfig) {
+    setMyketRestoring(true);
+    try {
+      const inventory = await MyketBilling.restore({ publicKey: config.publicKey, skus: config.skus });
+      const prices: Record<string, string> = {};
+      for (const product of inventory.products ?? []) {
+        if (product.sku && product.price) prices[product.sku] = product.price;
+      }
+      setStorePrices(prices);
+
+      let restored = 0;
+      for (const purchase of inventory.purchases ?? []) {
+        try {
+          await verifyAndConsumeMyket(purchase, undefined, config.publicKey);
+          restored++;
+        } catch {
+          // Keep the receipt owned/unconsumed so a later restore can retry.
+        }
+      }
+      if (restored > 0) {
+        setMyketNotice({ ok: true, text: "خرید قبلی مایکت با موفقیت بازیابی و اشتراک فعال شد." });
+        await loadShopAndHistory(false);
+      }
+    } catch (restoreError) {
+      setError(readableError(restoreError, "دریافت محصولات مایکت ناموفق بود."));
+    } finally {
+      setMyketRestoring(false);
+    }
+  }
+
+  async function initializeMyket() {
+    setError("");
+    if (!hasMyketBillingPlugin()) {
+      setMyketAvailable(false);
+      setError("این نسخه از برنامه، افزونه پرداخت مایکت را ندارد. برنامه را به نسخه جدید به‌روزرسانی کنید.");
+      return;
+    }
+    try {
+      const availability = await MyketBilling.isAvailable();
+      setMyketAvailable(availability.available);
+      if (!availability.available) {
+        setError("برای خرید اشتراک، برنامه مایکت باید روی گوشی نصب باشد.");
+        return;
+      }
+      const res = await fetch("/api/billing/myket/config", { cache: "no-store" });
+      const config = (await res.json().catch(() => null)) as MyketConfig | null;
+      if (!res.ok || !config) throw new Error("دریافت تنظیمات مایکت ناموفق بود.");
+      setMyketConfig(config);
+      if (!config.enabled) {
+        setError("پرداخت مایکت هنوز توسط مدیر سامانه تکمیل نشده است.");
+        return;
+      }
+      await restoreMyketPurchases(config);
+    } catch (initError) {
+      setError(readableError(initError, "راه‌اندازی پرداخت مایکت ناموفق بود."));
+    }
+  }
+
+  async function startMyketPurchase(plan: "pro" | "business", dur: number) {
+    const config = myketConfig;
+    if (!config?.enabled || !myketAvailable || myketRestoring) return;
+    const sku = myketSku(plan, dur);
+    setError("");
+    setMyketNotice(null);
+    setLoadingPlan(`${sku}-myket`);
+    let intentId = "";
+    let receiptReceived = false;
+    try {
+      const intentRes = await fetch("/api/billing/myket/intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sku }),
+      });
+      const intent = await intentRes.json().catch(() => ({}));
+      if (!intentRes.ok) throw new Error(intent.message || "ساخت درخواست خرید ناموفق بود.");
+      intentId = intent.intentId;
+
+      const purchase = await MyketBilling.purchase({ publicKey: config.publicKey, sku, payload: intent.payload });
+      receiptReceived = true;
+      await verifyAndConsumeMyket(purchase, intentId, config.publicKey);
+      setMyketNotice({ ok: true, text: "پرداخت مایکت تأیید شد و اشتراک شما فعال شد." });
+      await loadShopAndHistory(false);
+    } catch (purchaseError) {
+      if (intentId && !receiptReceived) {
+        await fetch("/api/billing/history", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: intentId }),
+        }).catch(() => {});
+      }
+      setError(readableError(purchaseError, receiptReceived
+        ? "رسید خرید ثبت شد اما تأیید آن کامل نشد؛ گزینه بازیابی خرید را بزنید."
+        : "خرید مایکت انجام نشد."));
+    } finally {
+      setLoadingPlan(null);
     }
   }
 
@@ -144,6 +315,28 @@ export default function BillingPage() {
       {result === "failed" && <div className="bg-danger/20 text-danger text-xs rounded-lg p-3 mb-4">پرداخت ناموفق بود.</div>}
       {result === "cancelled" && <div className="bg-amber/20 text-amber text-xs rounded-lg p-3 mb-4">پرداخت لغو شد.</div>}
       {error && <p className="text-danger text-xs mb-3">{error}</p>}
+      {myketNotice && (
+        <div className={`${myketNotice.ok ? "bg-teal/20 text-teal" : "bg-danger/20 text-danger"} text-xs rounded-lg p-3 mb-4`}>
+          {myketNotice.text}
+        </div>
+      )}
+
+      {storeMode === "myket" && (
+        <div className="bg-gradient-to-l from-teal/15 to-surface border border-teal/35 rounded-xl px-4 py-3 mb-5 flex items-center justify-between gap-3">
+          <div>
+            <div className="text-xs font-bold text-teal">پرداخت امن درون‌برنامه‌ای مایکت</div>
+            <p className="text-[10px] text-muted mt-1">خرید و بازیابی اشتراک بدون خروج از برنامه انجام می‌شود.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => myketConfig?.enabled && restoreMyketPurchases(myketConfig)}
+            disabled={!myketConfig?.enabled || !myketAvailable || myketRestoring || !!loadingPlan}
+            className="shrink-0 text-[10px] font-bold rounded-lg px-3 py-2 bg-teal/20 text-teal disabled:opacity-40"
+          >
+            {myketRestoring ? "در حال بررسی..." : "بازیابی خرید"}
+          </button>
+        </div>
+      )}
 
       {/* Current plan + remaining time — the whole point of "مدیریت اشتراک" */}
       <div className={`bg-gradient-to-br from-surface to-surface2 border rounded-xl p-4 mb-5 ${isExpired ? "border-danger" : "border-surface2"}`}>
@@ -167,14 +360,16 @@ export default function BillingPage() {
         )}
       </div>
 
-      {/* Wallet balance — pay a subscription straight from here */}
-      <div className="flex items-center justify-between bg-surface2 border border-surface2 rounded-xl px-4 py-3 mb-5">
-        <div className="text-xs">
-          <span className="text-muted">👛 موجودی کیف پول: </span>
-          <span className="mono font-bold">{walletBalance.toLocaleString("fa-IR")} تومان</span>
+      {/* Wallet is a web-only payment route; Myket policy requires its own IAP. */}
+      {storeMode === "web" && (
+        <div className="flex items-center justify-between bg-surface2 border border-surface2 rounded-xl px-4 py-3 mb-5">
+          <div className="text-xs">
+            <span className="text-muted">👛 موجودی کیف پول: </span>
+            <span className="mono font-bold">{walletBalance.toLocaleString("fa-IR")} تومان</span>
+          </div>
+          <a href="/admin/wallet" className="text-[11px] text-copper font-semibold whitespace-nowrap">شارژ کیف پول →</a>
         </div>
-        <a href="/admin/wallet" className="text-[11px] text-copper font-semibold whitespace-nowrap">شارژ کیف پول →</a>
-      </div>
+      )}
 
       {/* Gift code redemption */}
       <div className="bg-surface border border-teal/40 rounded-xl p-4 mb-5">
@@ -209,6 +404,8 @@ export default function BillingPage() {
         {(["free", "pro", "business"] as const).map((key) => {
           const p = pricing.plans[key];
           const total = priceFor(p.priceToman, duration, activeDiscount);
+          const sku = key === "free" ? "" : myketSku(key, duration);
+          const myketPrice = sku ? storePrices[sku] : "";
           return (
             <div key={key} className={`bg-surface border rounded-xl p-4 flex justify-between items-center ${currentPlan === key ? "border-copper" : "border-surface2"}`}>
               <div>
@@ -218,10 +415,14 @@ export default function BillingPage() {
                 </div>
                 <div className="text-[11px] text-muted mt-0.5">{quotaLabel(p.monthlyQuota)}</div>
                 <div className="mono text-sm mt-1">
-                  {p.priceToman === 0 ? "رایگان" : `${total.toLocaleString("fa-IR")} تومان / ${duration} ماه`}
+                  {p.priceToman === 0
+                    ? "رایگان"
+                    : storeMode === "myket" && myketPrice
+                      ? `${myketPrice} / ${duration} ماه`
+                      : `${total.toLocaleString("fa-IR")} تومان / ${duration} ماه`}
                 </div>
               </div>
-              {key !== "free" && (
+              {key !== "free" && storeMode === "web" && (
                 <div className="flex flex-col gap-1.5 shrink-0">
                   <button
                     onClick={() => startCheckout(key, duration, "gateway")}
@@ -239,6 +440,20 @@ export default function BillingPage() {
                     {loadingPlan === `${key}-wallet` ? "..." : "از کیف پول"}
                   </button>
                 </div>
+              )}
+              {key !== "free" && storeMode === "myket" && (
+                <button
+                  onClick={() => startMyketPurchase(key, duration)}
+                  disabled={!myketConfig?.enabled || !myketAvailable || myketRestoring || !!loadingPlan}
+                  className="bg-teal text-white text-xs font-bold rounded-lg px-4 py-2.5 disabled:opacity-40 shrink-0"
+                >
+                  {loadingPlan === `${sku}-myket` ? "در حال اتصال..." : "خرید از مایکت"}
+                </button>
+              )}
+              {key !== "free" && storeMode === "checking" && (
+                <button disabled className="bg-surface2 text-muted text-xs font-bold rounded-lg px-4 py-2.5 opacity-50 shrink-0">
+                  در حال بررسی...
+                </button>
               )}
             </div>
           );
@@ -270,7 +485,7 @@ export default function BillingPage() {
                 </div>
                 {h.status !== "PAID" && (
                   <div className="flex gap-1.5 mt-2 justify-end">
-                    {h.status === "PENDING" && (
+                    {h.status === "PENDING" && storeMode === "web" && (
                       <>
                         <button onClick={() => startCheckout(h.plan, h.months, "gateway")}
                           className="text-[10px] font-semibold rounded-md px-2.5 py-1 bg-copper/20 text-copper">ادامه پرداخت</button>

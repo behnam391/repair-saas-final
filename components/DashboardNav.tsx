@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { LogoMark } from "./Logo";
 import { canSeeNav } from "@/lib/permissions";
+import { isMyketAndroidApp } from "@/lib/myket-billing-client";
 import type { LucideIcon } from "lucide-react";
 import {
   BadgeHelp, BarChart3, Boxes, ChevronDown, CircleUserRound, Clock3, FileText,
@@ -36,7 +37,11 @@ export default function DashboardNav({
   // containing block for fixed-position descendants, which would trap and
   // clip a fixed overlay inside the header box.
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const [billingContext, setBillingContext] = useState<"checking" | "web" | "myket">("checking");
+  useEffect(() => {
+    setMounted(true);
+    setBillingContext(isMyketAndroidApp() ? "myket" : "web");
+  }, []);
   const containerRef = useRef<HTMLDivElement>(null);
   const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
@@ -119,7 +124,12 @@ export default function DashboardNav({
   // Hide any nav entry this role shouldn't see, then drop groups that end
   // up empty. Owner is unaffected (canSeeNav returns true for OWNER).
   const visibleGroups = groups
-    .map((g) => ({ ...g, items: g.items.filter((item) => canSeeNav(role, item.href)) }))
+    .map((g) => ({
+      ...g,
+      items: g.items.filter((item) =>
+        canSeeNav(role, item.href) && (item.href !== "/admin/wallet" || billingContext === "web")
+      ),
+    }))
     .filter((g) => g.items.length > 0);
 
   const activeGroup = visibleGroups.find((g) => g.label === openGroup);

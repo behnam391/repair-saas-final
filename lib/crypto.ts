@@ -102,6 +102,8 @@ export const PLATFORM_SECRET_FIELDS = [
   "smtpPassword",
   "bazaarRsaPublicKey",
   "bazaarDynamicDiscountKey",
+  "myketRsaPublicKey",
+  "myketAccessToken",
   "aiApiKey",
   "aiFallbackApiKey",
 ] as const;

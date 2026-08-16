@@ -39,10 +39,15 @@ function secret(v: unknown): string | undefined {
 
 export async function loadAiConfig(): Promise<AiConfig> {
   let s: any = null;
-  try {
-    s = await db.platformSettings.findUnique({ where: { id: "singleton" } });
-  } catch {
-    s = null; // dev / DB unavailable → env + defaults
+  // Node's test runner marks worker processes with NODE_TEST_CONTEXT. Tests
+  // intentionally provide a complete AI_* environment and must never read or
+  // mutate the live PlatformSettings row just because DATABASE_URL is present.
+  if (!process.env.NODE_TEST_CONTEXT) {
+    try {
+      s = await db.platformSettings.findUnique({ where: { id: "singleton" } });
+    } catch {
+      s = null; // dev / DB unavailable → env + defaults
+    }
   }
 
   const provider = toProvider(s?.aiProvider) ?? toProvider(process.env.AI_PROVIDER) ?? "disabled";

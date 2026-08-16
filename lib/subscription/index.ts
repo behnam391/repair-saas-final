@@ -18,6 +18,7 @@ export { SubscriptionService } from "./service";
 export { PrismaSubscriptionStore } from "./store-prisma";
 export { WebPaymentProvider } from "./providers/web";
 export { MockPaymentProvider } from "./providers/mock";
+export { MyketPaymentProvider } from "./providers/myket";
 export { getPaymentProvider, listPaymentSources } from "./registry";
 export { resolveSku, listSkus } from "./skus";
 export { deriveEntitlement } from "./entitlement";

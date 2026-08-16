@@ -737,6 +737,11 @@ model PlatformSettings {
   // The RSA public key is used only when Bazaar in-app billing is implemented.
   bazaarRsaPublicKey      String?
   bazaarDynamicDiscountKey String?
+  // Myket in-app billing. The RSA public key is delivered to the native app;
+  // the access token is server-only and is used solely for server-to-server
+  // purchase verification with Myket.
+  myketRsaPublicKey       String?
+  myketAccessToken        String?
   smsUseLookup            Boolean @default(false)
   kavenegarOtpTemplate    String? // template for verification/reset codes  (%token = code)
   kavenegarIntakeTemplate String? // device-received template  (%token=ticket, %token2=phone, %token10=shop)

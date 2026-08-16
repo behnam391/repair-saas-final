@@ -7,11 +7,13 @@
 import type { PaymentProvider } from "./types";
 import { WebPaymentProvider } from "./providers/web";
 import { MockPaymentProvider } from "./providers/mock";
+import { MyketPaymentProvider } from "./providers/myket";
 
 const REGISTRY: Record<string, PaymentProvider<any>> = {
   web: new WebPaymentProvider(),
   mock: new MockPaymentProvider(),
-  // bazaar / myket adapters register here in a later slice.
+  myket: new MyketPaymentProvider(),
+  // Bazaar can be added through the same provider boundary later.
 };
 
 export function getPaymentProvider(key: string): PaymentProvider<any> | null {

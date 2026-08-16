@@ -3,6 +3,7 @@
 buildscript {
     
     repositories {
+        maven { url 'https://maven.aliyun.com/repository/google' }
         google()
         mavenCentral()
     }
@@ -19,8 +20,12 @@ apply from: "variables.gradle"
 
 allprojects {
     repositories {
+        // Fallback mirror for regions where Google's Maven endpoint returns
+        // 404; required by Myket Billing's Material/Advertising-ID deps.
+        maven { url 'https://maven.aliyun.com/repository/google' }
         google()
         mavenCentral()
+        maven { url 'https://jitpack.io' }
     }
 }
 
