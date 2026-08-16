@@ -1,17 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { verifyPayment, parseCallback, collectCallbackParams, type ProviderKey } from "@/lib/payments";
-import { getPricing, extendPlanExpiry, type PlanKey } from "@/lib/plans";
+import { parseCallback, collectCallbackParams, type ProviderKey } from "@/lib/payments";
+import { type PlanKey } from "@/lib/plans";
+import { WebPaymentProvider, getSubscriptionService } from "@/lib/subscription";
 import { logCaught } from "@/lib/logError";
 
 export const dynamic = "force-dynamic";
 
 // /api/billing/callback?subId=...  (+ gateway params)
 // The active gateway redirects the user's browser here after payment. No
-// session requirement (mid-redirect from the gateway), so it trusts only
-// the subId + the stored token + the gateway's own verify response — never
-// the callback's success flag alone. Handles GET (Zarinpal/Zibal) and POST
-// (NextPay) alike.
+// session requirement (mid-redirect from the gateway), so it trusts only the
+// subId + the stored token + the gateway's own verify response — never the
+// callback's success flag alone. Handles GET (Zarinpal/Zibal) and POST
+// (NextPay).
+//
+// Entitlement is applied through the single SubscriptionService (via
+// WebPaymentProvider), so the web gateway now shares one activation path with
+// every other payment source. Behavior is unchanged: same verification, same
+// plan-expiry math, same redirects. Idempotency is guaranteed by the
+// PurchaseRecord's unique externalRef ("web:<subId>"), and already-PAID
+// subscriptions short-circuit so a replayed callback never re-activates.
 async function handle(req: NextRequest) {
   const origin = req.nextUrl.origin;
   try {
@@ -37,29 +45,37 @@ async function handle(req: NextRequest) {
       return NextResponse.redirect(`${origin}/admin/billing?result=cancelled`, 303);
     }
 
-    const pricing = await getPricing();
-    const planInfo = pricing.plans[sub.plan as PlanKey];
-    const verified = await verifyPayment({ provider, amountToman: sub.amount, token });
+    // Already processed (legacy row or a prior callback) — never re-activate.
+    if (sub.status === "PAID") {
+      return NextResponse.redirect(`${origin}/admin/billing?result=success`, 303);
+    }
 
-    if (!verified.ok) {
+    // Verify through the web payment provider (wraps the existing gateway
+    // verify) → normalized VerifiedPurchase.
+    const web = new WebPaymentProvider();
+    const result = await web.verify({
+      shopId: sub.shopId,
+      subId: sub.id,
+      token,
+      gateway: provider,
+      amountToman: sub.amount,
+      plan: sub.plan as PlanKey,
+      months: sub.months,
+    });
+
+    if (!result.ok) {
       await db.subscription.update({ where: { id: sub.id }, data: { status: "FAILED" } });
       return NextResponse.redirect(`${origin}/admin/billing?result=failed`, 303);
     }
 
-    await db.$transaction(async (tx) => {
-      const claimed = await tx.subscription.updateMany({
-        where: { id: sub.id, status: { not: "PAID" } },
-        data: { status: "PAID", refId: verified.refId },
-      });
-      if (claimed.count === 0) return;
+    // Single entitlement mutation point — idempotent on externalRef.
+    await getSubscriptionService().activate(result.purchase);
 
-      const shop = await tx.shop.findUniqueOrThrow({ where: { id: sub.shopId } });
-      const newExpiry = extendPlanExpiry(shop.planExpiresAt, sub.months);
-
-      await tx.shop.update({
-        where: { id: shop.id },
-        data: { plan: sub.plan, planExpiresAt: newExpiry, monthlyQuota: planInfo.monthlyQuota },
-      });
+    // Mark the web ledger row PAID (entitlement idempotency lives on the
+    // PurchaseRecord, so this is just the Subscription row's status).
+    await db.subscription.updateMany({
+      where: { id: sub.id, status: { not: "PAID" } },
+      data: { status: "PAID", refId: result.purchase.providerRef ?? null },
     });
 
     return NextResponse.redirect(`${origin}/admin/billing?result=success`, 303);

@@ -798,6 +798,32 @@ model PlatformSettings {
   updatedAt           DateTime @updatedAt
 }
 
+// ── Normalized purchase record (store-agnostic subscriptions) ──
+// One row per verified purchase/renewal from ANY payment source (web gateway,
+// Cafe Bazaar, Myket, future stores). `externalRef` is the global idempotency
+// key (unique), so the same purchase can never activate entitlement twice.
+// SubscriptionService is the only writer. No foreign key (mirrors the audit
+// tables): shopId is best-effort and entitlement itself lives on Shop.
+model PurchaseRecord {
+  id           String   @id @default(cuid())
+  shopId       String
+  source       String   // "web" | "mock" | "bazaar" | "myket" | ...
+  externalRef  String   @unique // idempotency key across all sources
+  plan         String   // "pro" | "business"
+  months       Int
+  amountToman  Int?
+  status       String   @default("ACTIVE") // ACTIVE | CANCELLED | REFUNDED | EXPIRED
+  autoRenewing Boolean  @default(false)
+  purchasedAt  DateTime @default(now())
+  expiresAt    DateTime? // entitlement expiry snapshot at activation time
+  raw          String?   // opaque provider payload (audit)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([shopId, createdAt])
+  @@index([source, status])
+}
+
 // ── AI configuration change audit (Phase — AI provider management) ──
 // One row each time the Super Admin changes AI configuration. Stores only the
 // changed field NAMES (never API keys / values). No foreign key (mirrors
