@@ -4,6 +4,7 @@ import { UnauthorizedError } from "@/lib/tenant";
 import { requireCapability } from "@/lib/authz";
 import { requestPayment } from "@/lib/payments";
 import { logCaught } from "@/lib/logError";
+import { getPublicOrigin } from "@/lib/public-url";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
     // Money movement (starts a wallet top-up payment) — OWNER only.
     const { shopId } = await requireCapability("wallet.write");
     const { amountToman } = Schema.parse(await req.json());
-    const origin = req.nextUrl.origin;
+    const origin = getPublicOrigin(req.nextUrl.origin);
 
     const txn = await (db as any).walletTransaction.create({
       data: { shopId, type: "TOPUP", amount: amountToman, status: "PENDING", note: "شارژ کیف پول" },
@@ -43,6 +44,13 @@ export async function POST(req: NextRequest) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input", message: "مبلغ نامعتبر است (حداقل ۱۰٬۰۰۰ تومان)" }, { status: 400 });
     await logCaught(e, { source: "payment", path: "/api/wallet/topup", method: "POST" });
-    return NextResponse.json({ error: "internal_error", message: (e as Error).message }, { status: 500 });
+    const rawMessage = e instanceof Error ? e.message : "";
+    const domainMismatch = rawMessage.includes("callback URL domain") || rawMessage.includes('"code":-14');
+    return NextResponse.json({
+      error: domainMismatch ? "gateway_domain_mismatch" : "internal_error",
+      message: domainMismatch
+        ? "دامنه بازگشت پرداخت با دامنه ثبت‌شده در زرین‌پال هماهنگ نیست. تنظیمات درگاه را بررسی کنید."
+        : "در حال حاضر ارتباط با درگاه برقرار نشد؛ لطفاً چند لحظه دیگر دوباره تلاش کنید.",
+    }, { status: 500 });
   }
 }

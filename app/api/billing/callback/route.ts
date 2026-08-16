@@ -4,6 +4,7 @@ import { parseCallback, collectCallbackParams, type ProviderKey } from "@/lib/pa
 import { type PlanKey } from "@/lib/plans";
 import { WebPaymentProvider, getSubscriptionService } from "@/lib/subscription";
 import { logCaught } from "@/lib/logError";
+import { getPublicOrigin } from "@/lib/public-url";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,7 @@ export const dynamic = "force-dynamic";
 // PurchaseRecord's unique externalRef ("web:<subId>"), and already-PAID
 // subscriptions short-circuit so a replayed callback never re-activates.
 async function handle(req: NextRequest) {
-  const origin = req.nextUrl.origin;
+  const origin = getPublicOrigin(req.nextUrl.origin);
   try {
     const params = await collectCallbackParams(req);
     const subId = params.get("subId") || req.nextUrl.searchParams.get("subId");

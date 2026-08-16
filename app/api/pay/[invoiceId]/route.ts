@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requestPayment } from "@/lib/payments";
 import { logCaught } from "@/lib/logError";
+import { getPublicOrigin } from "@/lib/public-url";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: { invoiceId: 
     if (invoice.paid) return NextResponse.json({ error: "already_paid", message: "این فاکتور قبلاً پرداخت شده است" }, { status: 409 });
     if (invoice.total <= 0) return NextResponse.json({ error: "zero_amount", message: "مبلغ فاکتور صفر است" }, { status: 400 });
 
-    const origin = req.nextUrl.origin;
+    const origin = getPublicOrigin(req.nextUrl.origin);
     const { provider, token, payUrl } = await requestPayment({
       amountToman: invoice.total,
       description: `پرداخت فاکتور ${invoice.shop.name} — ${invoice.id.slice(0, 8)}`,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyPayment, parseCallback, collectCallbackParams, type ProviderKey } from "@/lib/payments";
 import { logCaught } from "@/lib/logError";
+import { getPublicOrigin } from "@/lib/public-url";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export const dynamic = "force-dynamic";
 // gateway's verify response are trusted. Handles GET (Zarinpal/Zibal) and
 // POST (NextPay).
 async function handle(req: NextRequest) {
-  const origin = req.nextUrl.origin;
+  const origin = getPublicOrigin(req.nextUrl.origin);
   let invoiceId: string | null = null;
   try {
     const params = await collectCallbackParams(req);

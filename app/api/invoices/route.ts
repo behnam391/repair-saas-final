@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { sendSms } from "@/lib/sms";
+import { getPublicOrigin } from "@/lib/public-url";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
     try {
       const customer = await db.customer.findUnique({ where: { id: ticket.customerId } });
       if (customer?.phone) {
-        const origin = req.nextUrl.origin;
+        const origin = getPublicOrigin(req.nextUrl.origin);
         sendSms(
           customer.phone,
           `${shop.name}\n${customer.name} عزیز، فاکتور تعمیر دستگاه شما (کد پیگیری #${ticket.no}) به مبلغ ${invoice.total.toLocaleString("fa-IR")} تومان صادر شد.\nمشاهده و پرداخت آنلاین: ${origin}/pay/${invoice.id}`,

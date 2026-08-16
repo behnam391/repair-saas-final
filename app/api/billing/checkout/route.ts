@@ -5,6 +5,7 @@ import { requireCapability } from "@/lib/authz";
 import { requestPayment } from "@/lib/payments";
 import { getPricing, priceForDuration, extendPlanExpiry, type PlanKey, type DurationKey } from "@/lib/plans";
 import { logCaught } from "@/lib/logError";
+import { getPublicOrigin } from "@/lib/public-url";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +66,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ paidFromWallet: true });
     }
 
-    const origin = req.nextUrl.origin;
+    const origin = getPublicOrigin(req.nextUrl.origin);
     const sub = await db.subscription.create({
       data: { shopId, plan, months: durationInfo.months, amount, status: "PENDING" },
     });

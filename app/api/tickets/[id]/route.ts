@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireSession, requireRole, UnauthorizedError } from "@/lib/tenant";
 import { sendSms, sendReadySms, readyForPickupMessage } from "@/lib/sms";
 import { notifyUser } from "@/lib/notify";
+import { getPublicOrigin } from "@/lib/public-url";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -191,7 +192,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
         try {
           const t = updated as any;
-          const origin = req.nextUrl.origin;
+          const origin = getPublicOrigin(req.nextUrl.origin);
           await sendSms(
             t.customer.phone,
             `${t.shop.name}\nممنون از اعتماد شما! لطفاً با کلیک روی لینک زیر، تجربه‌تان از تعمیر را با یک امتیاز ثبت کنید:\n${origin}/rate/${t.id}`

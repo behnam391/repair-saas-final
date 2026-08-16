@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { sendSms } from "@/lib/sms";
 import { preprocessPhone } from "@/lib/phone";
+import { getPublicOrigin } from "@/lib/public-url";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -69,7 +70,7 @@ export async function POST(req: NextRequest) {
 
     // Optional payment-link SMS for walk-in customers who left a number.
     if (body.customerPhone) {
-      const origin = req.nextUrl.origin;
+      const origin = getPublicOrigin(req.nextUrl.origin);
       sendSms(
         body.customerPhone,
         `${shop.name}\nفاکتور خرید شما به مبلغ ${invoice.total.toLocaleString("fa-IR")} تومان صادر شد.\nمشاهده و پرداخت آنلاین: ${origin}/pay/${invoice.id}`,

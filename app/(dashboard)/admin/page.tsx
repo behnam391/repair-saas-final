@@ -9,6 +9,8 @@ import { motion } from "framer-motion";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 import { BarChart3, ChevronDown, CircleDollarSign, LayoutDashboard, Settings2, Store, UsersRound, Wrench } from "lucide-react";
 
+const PUBLIC_APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL || "https://peyvo.ir").replace(/\/+$/, "");
+
 const ROLE_LABEL: Record<string, string> = {
   OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی",
 };
@@ -367,11 +369,11 @@ export default function AdminPage() {
           <div className="text-center">
           <p className="text-[11px] text-muted mb-3">این کد را چاپ کرده و در مغازه نصب کنید؛ مشتری با اسکن آن می‌تواند مشخصات دستگاه خود را ثبت کند.</p>
           <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${typeof window !== "undefined" ? window.location.origin : ""}/kiosk/${shopInfo.id}`)}`}
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${PUBLIC_APP_ORIGIN}/kiosk/${shopInfo.id}`)}`}
             alt="QR کد پذیرش"
             className="mx-auto rounded-lg bg-white p-2"
           />
-          <p className="text-[10px] text-muted mt-2 mono break-all">/kiosk/{shopInfo.id}</p>
+          <p className="text-[10px] text-muted mt-2 mono break-all">{PUBLIC_APP_ORIGIN}/kiosk/{shopInfo.id}</p>
           </div>
         </Section>
       )}
@@ -379,8 +381,8 @@ export default function AdminPage() {
       {shopInfo.id && (
         <Section title="صفحه عمومی مغازه" icon="🔗">
           <p className="text-[11px] text-muted mb-2">این لینک را با مشتریان به اشتراک بگذارید — آدرس، تماس، امتیاز و مسیریابی مغازه را نشان می‌دهد.</p>
-          <a href={`/shop/${shopInfo.id}`} target="_blank" className="text-copper text-xs mono break-all">
-            {typeof window !== "undefined" ? window.location.origin : ""}/shop/{shopInfo.id}
+          <a href={`${PUBLIC_APP_ORIGIN}/shop/${shopInfo.id}`} target="_blank" className="text-copper text-xs mono break-all">
+            {PUBLIC_APP_ORIGIN}/shop/{shopInfo.id}
           </a>
         </Section>
       )}

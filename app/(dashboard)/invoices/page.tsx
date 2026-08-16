@@ -3,6 +3,8 @@ import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import { formatJalaliDate } from "@/lib/jalali";
 
+const PUBLIC_APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL || "https://peyvo.ir").replace(/\/+$/, "");
+
 type Ticket = {
   id: string; no: number; deviceModel: string; lane: string; invoice: any;
   customer: { name: string };
@@ -228,7 +230,7 @@ export default function InvoicesPage() {
                     {!inv.paid && (
                       <button
                         onClick={() => {
-                          navigator.clipboard?.writeText(`${window.location.origin}/pay/${inv.id}`);
+                          navigator.clipboard?.writeText(`${PUBLIC_APP_ORIGIN}/pay/${inv.id}`);
                         }}
                         className="text-teal text-[10px] font-semibold" title="لینک صفحه پرداخت آنلاین این فاکتور کپی می‌شود">
                         💳 کپی لینک پرداخت
