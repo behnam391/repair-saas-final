@@ -15,7 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: { invoiceId: 
     where: { id: params.invoiceId },
     select: {
       id: true, type: true, laborCost: true, partsCost: true, taxPercent: true, taxAmount: true,
-      total: true, paid: true, paymentRefId: true, createdAt: true, customerName: true,
+      total: true, paid: true, paidAmount: true, paymentRefId: true, createdAt: true, customerName: true,
       shop: { select: { name: true, phone: true, address: true } },
       ticket: { select: { no: true, deviceModel: true, customer: { select: { name: true } } } },
       items: { select: { quantity: true, priceCharged: true, item: { select: { name: true } } } },
@@ -36,17 +36,18 @@ export async function POST(req: NextRequest, { params }: { params: { invoiceId: 
     });
     if (!invoice) return NextResponse.json({ error: "not_found" }, { status: 404 });
     if (invoice.paid) return NextResponse.json({ error: "already_paid", message: "این فاکتور قبلاً پرداخت شده است" }, { status: 409 });
-    if (invoice.total <= 0) return NextResponse.json({ error: "zero_amount", message: "مبلغ فاکتور صفر است" }, { status: 400 });
+    const remaining = Math.max(0, invoice.total - invoice.paidAmount);
+    if (remaining <= 0) return NextResponse.json({ error: "zero_amount", message: "مانده فاکتور صفر است" }, { status: 400 });
 
     const origin = getPublicOrigin(req.nextUrl.origin);
     const { provider, token, payUrl } = await requestPayment({
-      amountToman: invoice.total,
+      amountToman: remaining,
       description: `پرداخت فاکتور ${invoice.shop.name} — ${invoice.id.slice(0, 8)}`,
       callbackUrl: `${origin}/api/pay/callback?invoiceId=${invoice.id}`,
       orderId: invoice.id,
     });
 
-    await db.invoice.update({ where: { id: invoice.id }, data: { paymentAuthority: token, paymentProvider: provider } as any });
+    await db.invoice.update({ where: { id: invoice.id }, data: { paymentAuthority: token, paymentProvider: provider, paymentPendingAmount: remaining } as any });
 
     return NextResponse.json({ payUrl });
   } catch (e) {

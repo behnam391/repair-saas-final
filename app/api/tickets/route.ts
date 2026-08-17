@@ -22,6 +22,9 @@ const CreateTicketSchema = z.object({
   devicePasscodeType: z.enum(["PIN", "PASSWORD", "PATTERN"]).optional(),
   customerDamageNotes: z.string().optional(),
   receiptAck: z.enum(["SHOP_PRINTED_SIGNED", "SITE_PRINTED_SIGNED", "NO_SIGNATURE"]).optional(),
+  intakeSource: z.enum(["CUSTOMER", "PARTNER"]).default("CUSTOMER"),
+  partnerName: z.string().max(120).optional(),
+  partnerPhone: z.preprocess(preprocessPhone, z.string().optional()),
 });
 
 // GET /api/tickets?lane=HARDWARE&status=PENDING
@@ -86,6 +89,9 @@ export async function POST(req: NextRequest) {
   try {
     const { shopId, userId } = await requireSession();
     const body = CreateTicketSchema.parse(await req.json());
+    if (body.intakeSource === "PARTNER" && !body.partnerName?.trim()) {
+      return NextResponse.json({ message: "نام همکار تحویل‌دهنده را وارد کنید" }, { status: 400 });
+    }
 
     // Enforce the shop's monthly intake quota (applies to every plan;
     // paid plans just get a much higher monthlyQuota set at checkout).
@@ -147,6 +153,9 @@ export async function POST(req: NextRequest) {
           devicePasscodeType: body.devicePasscodeType,
           customerDamageNotes: body.customerDamageNotes,
           receiptAck: body.receiptAck,
+          intakeSource: body.intakeSource,
+          partnerName: body.partnerName?.trim() || undefined,
+          partnerPhone: body.partnerPhone || undefined,
           history: {
             create: [
               { lane: body.lane, action: "پذیرش دستگاه", techId: userId, note: body.issueInitial },

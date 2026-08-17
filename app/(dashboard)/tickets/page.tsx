@@ -8,7 +8,7 @@ import TicketChat from "@/components/TicketChat";
 import AiIntakeHelper from "@/components/AiIntakeHelper";
 import CustomerQuickPick from "@/components/CustomerQuickPick";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
-import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Check, ChevronDown, CircuitBoard, Clock3, Cpu, GitBranch, LockKeyhole, MessageCircle, Play, Plus, Search, ShieldCheck, Smartphone, UserRound, Wrench, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Check, ChevronDown, CircuitBoard, Clock3, Cpu, GitBranch, Handshake, LockKeyhole, MessageCircle, Play, Plus, Printer, Search, ShieldCheck, Smartphone, UserRound, Wrench, X } from "lucide-react";
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار", hint: "تعمیرات فیزیکی", Icon: Wrench, tone: "blue" },
@@ -31,6 +31,10 @@ type Ticket = {
   devicePasscodeType?: string | null;
   hasPasscode?: boolean;
   customerDamageNotes?: string | null;
+  intakeSource?: string;
+  partnerName?: string | null;
+  partnerPhone?: string | null;
+  invoice?: { id: string; total: number; paid: boolean; paidAmount: number } | null;
   customer: { name: string; phone: string };
   history: { action: string; lane: string; note?: string; createdAt: string; tech?: { name: string } }[];
 };
@@ -274,6 +278,9 @@ function TicketDetail({
   const [showChat, setShowChat] = useState(false);
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [includeCard, setIncludeCard] = useState(false);
+  const [deliverOpen, setDeliverOpen] = useState(false);
+  const [deliveryPaidAmount, setDeliveryPaidAmount] = useState(ticket.invoice?.paidAmount ?? (ticket.invoice?.paid ? ticket.invoice.total : 0));
+  const [delivering, setDelivering] = useState(false);
 
   const [submitOpen, setSubmitOpen] = useState(false);
   const [reportedCost, setReportedCost] = useState(0);
@@ -313,6 +320,20 @@ function TicketDetail({
       issueNote: ticket.issueInitial,
     }));
     window.location.assign("/collaboration?newReferral=1");
+  }
+
+  async function confirmDelivery() {
+    setDelivering(true);
+    if (ticket.invoice) {
+      const res = await fetch(`/api/invoices/${ticket.invoice.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paidAmount: Math.min(ticket.invoice.total, Math.max(0, deliveryPaidAmount)) }),
+      });
+      if (!res.ok) { setDelivering(false); return; }
+    }
+    await onTransition(ticket.id, "deliver");
+    setDelivering(false);
   }
 
   return (
@@ -355,6 +376,13 @@ function TicketDetail({
 
         <AiIntakeHelper ticketId={ticket.id} />
 
+        {ticket.intakeSource === "PARTNER" && (
+          <div className="mb-3 rounded-xl border border-teal/30 bg-teal/10 p-3 text-xs">
+            <b className="flex items-center gap-1.5 text-teal"><Handshake size={14} /> دریافت‌شده از همکار</b>
+            <div className="mt-1 text-muted">{ticket.partnerName}{ticket.partnerPhone ? ` · ${ticket.partnerPhone}` : ""}</div>
+          </div>
+        )}
+
         <ReferralFlow history={ticket.history} currentLane={ticket.lane} />
 
         {/* Customer chat — collapsible, so the ticket detail stays compact. */}
@@ -385,6 +413,10 @@ function TicketDetail({
             </div>
           ))}
         </div>
+
+        <a href={`/tickets/${ticket.id}/receipt`} target="_blank" className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-surface2 bg-surface2 py-2 text-xs font-bold text-copper">
+          <Printer size={14} /> مشاهده و چاپ رسید پذیرش
+        </a>
 
         {ticket.status === "AWAITING_APPROVAL" ? (
           <div className="bg-amber/10 border border-amber/40 rounded-lg p-3 mb-2">
@@ -491,9 +523,32 @@ function TicketDetail({
             )}
           </>
         ) : (
-          <button onClick={() => onTransition(ticket.id, "deliver")} className="w-full bg-copper text-[#1A1410] text-xs font-bold rounded-lg py-2.5">
-            ثبت تحویل به مشتری
-          </button>
+          <div>
+            {!deliverOpen ? (
+              <button onClick={() => setDeliverOpen(true)} className="w-full bg-copper text-[#1A1410] text-xs font-bold rounded-lg py-2.5">
+                ثبت تحویل و وضعیت تسویه
+              </button>
+            ) : (
+              <div className="rounded-xl border border-copper/40 bg-copper/5 p-3 space-y-2">
+                <div className="text-xs font-bold">وضعیت مالی هنگام تحویل</div>
+                {ticket.invoice ? (
+                  <>
+                    <div className="flex justify-between text-[11px] text-muted"><span>مبلغ فاکتور</span><b>{ticket.invoice.total.toLocaleString("fa-IR")} تومان</b></div>
+                    <label className="block text-[11px] text-muted">مجموع مبلغی که مشتری/همکار پرداخت کرده</label>
+                    <input type="text" inputMode="numeric" dir="ltr" value={deliveryPaidAmount || ""} onChange={(e) => setDeliveryPaidAmount(Math.min(ticket.invoice!.total, num(e.target.value)))} className="w-full rounded-lg border border-surface2 bg-surface px-3 py-2 text-sm" />
+                    <div className="flex justify-between rounded-lg bg-surface2 px-3 py-2 text-xs"><span>مانده حساب</span><b className={ticket.invoice.total - deliveryPaidAmount > 0 ? "text-amber" : "text-teal"}>{Math.max(0, ticket.invoice.total - deliveryPaidAmount).toLocaleString("fa-IR")} تومان</b></div>
+                    <button type="button" onClick={() => setDeliveryPaidAmount(ticket.invoice!.total)} className="text-[10px] font-bold text-teal">✓ تسویه کامل شد</button>
+                  </>
+                ) : (
+                  <p className="rounded-lg bg-amber/10 p-2 text-[10px] text-amber">برای این تعمیر فاکتور صادر نشده است. تحویل ثبت می‌شود اما مانده حسابی ثبت نخواهد شد.</p>
+                )}
+                <div className="flex gap-2">
+                  <button onClick={confirmDelivery} disabled={delivering} className="flex-1 rounded-lg bg-copper py-2 text-xs font-bold text-[#1A1410] disabled:opacity-60">{delivering ? "در حال ثبت..." : "تأیید تحویل"}</button>
+                  <button onClick={() => setDeliverOpen(false)} className="flex-1 rounded-lg bg-surface2 py-2 text-xs">انصراف</button>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Available at any stage before the device is actually delivered —
@@ -538,18 +593,24 @@ function NewTicketModal({ defaultLane, singleOperator, onClose, onCreated }: { d
   const [form, setForm] = useState({
     customerName: "", customerPhone: "", deviceModel: "", imei: "", issueInitial: "", lane: ["HARDWARE", "SOFTWARE", "BOARD"].includes(defaultLane || "") ? defaultLane! : "HARDWARE",
     devicePasscode: "", devicePasscodeType: "PIN" as string, customerDamageNotes: "", receiptAck: "NO_SIGNATURE" as string,
+    intakeSource: "CUSTOMER", partnerName: "", partnerPhone: "",
   });
   const [collectPasscode, setCollectPasscode] = useState(false);
   const [error, setError] = useState("");
   // Step wizard: 1=customer, 2=device, 3=issue+confirm — keeps the intake
   // form short and phone-friendly instead of one long scroll.
   const [step, setStep] = useState(1);
+  const [createdTicket, setCreatedTicket] = useState<{ id: string; no: number } | null>(null);
   const STEPS = ["مشتری", "دستگاه", "ایراد", "تأیید"];
 
   function nextStep() {
     setError("");
     if (step === 1 && (!form.customerName.trim() || !form.customerPhone.trim())) {
       setError("نام و شماره تماس مشتری را وارد کنید");
+      return;
+    }
+    if (step === 1 && form.intakeSource === "PARTNER" && !form.partnerName.trim()) {
+      setError("نام همکار تحویل‌دهنده را وارد کنید");
       return;
     }
     // Every repair-status SMS goes to this number. See lib/phone.ts.
@@ -594,8 +655,27 @@ function NewTicketModal({ defaultLane, singleOperator, onClose, onCreated }: { d
       setError(err.message || "ثبت تیکت ناموفق بود");
       return;
     }
+    const data = await res.json();
+    setCreatedTicket({ id: data.ticket.id, no: data.ticket.no });
     onCreated();
-    onClose();
+  }
+
+  if (createdTicket) {
+    return (
+      <div className="ticket-modal-backdrop" onClick={onClose}>
+        <div className="intake-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="p-6 text-center sm:p-8">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-teal/15 text-teal"><Check size={28} /></div>
+            <h2 className="display-heading text-lg">پذیرش با موفقیت ثبت شد</h2>
+            <p className="mt-1 text-xs text-muted">کد پیگیری #{createdTicket.no}</p>
+            <a href={`/tickets/${createdTicket.id}/receipt`} target="_blank" className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-copper py-3 text-sm font-bold text-[#1A1410]">
+              <Printer size={17} /> چاپ رسید پذیرش
+            </a>
+            <button type="button" onClick={onClose} className="mt-2 w-full rounded-xl border border-surface2 bg-surface2 py-2.5 text-xs font-bold">بازگشت به تعمیرها</button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -626,6 +706,20 @@ function NewTicketModal({ defaultLane, singleOperator, onClose, onCreated }: { d
         <div className="intake-step-content">
         {step === 1 && (<>
         <div className="intake-content-title"><UserRound size={18} /><div><b>اطلاعات مشتری</b><small>مشخصات صاحب دستگاه را وارد کنید</small></div></div>
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setForm({ ...form, intakeSource: "CUSTOMER", partnerName: "", partnerPhone: "" })} className={`rounded-xl border px-3 py-2.5 text-xs font-bold ${form.intakeSource === "CUSTOMER" ? "border-copper bg-copper text-[#1A1410]" : "border-surface2 bg-surface2 text-muted"}`}>مراجعه مستقیم مشتری</button>
+          <button type="button" onClick={() => setForm({ ...form, intakeSource: "PARTNER" })} className={`rounded-xl border px-3 py-2.5 text-xs font-bold ${form.intakeSource === "PARTNER" ? "border-teal bg-teal text-[#0B1512]" : "border-surface2 bg-surface2 text-muted"}`}>دریافت از همکار</button>
+        </div>
+        {form.intakeSource === "PARTNER" && (
+          <div className="mb-4 rounded-xl border border-teal/30 bg-teal/5 p-3">
+            <div className="mb-2 text-[11px] font-bold text-teal">مشخصات همکار تحویل‌دهنده</div>
+            <CustomerQuickPick allowCustomerBook={false} onSelect={(person) => setForm({ ...form, partnerName: person.name, partnerPhone: person.phone })} />
+            <div className="grid grid-cols-2 gap-2">
+              <input value={form.partnerName} onChange={(e) => setForm({ ...form, partnerName: e.target.value })} placeholder="نام همکار یا مغازه" className="min-w-0 rounded-lg border border-surface2 bg-surface px-3 py-2 text-xs" />
+              <input value={form.partnerPhone} onChange={(e) => setForm({ ...form, partnerPhone: toLatinDigits(e.target.value) })} placeholder="شماره همکار" inputMode="tel" dir="ltr" maxLength={11} className="min-w-0 rounded-lg border border-surface2 bg-surface px-3 py-2 text-xs mono" />
+            </div>
+          </div>
+        )}
         <CustomerQuickPick onSelect={(person) => setForm({ ...form, customerName: person.name, customerPhone: person.phone })} />
         <div className="mb-3">
           <label className="block text-xs text-muted mb-1">نام مشتری</label>

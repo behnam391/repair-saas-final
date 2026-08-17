@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from "next/navigation";
 
 type PayInvoice = {
   id: string; type: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number;
-  total: number; paid: boolean; paymentRefId: string | null; createdAt: string; customerName: string | null;
+  total: number; paid: boolean; paidAmount: number; paymentRefId: string | null; createdAt: string; customerName: string | null;
   shop: { name: string; phone: string | null; address: string | null };
   ticket: { no: number; deviceModel: string; customer: { name: string } } | null;
   items: { quantity: number; priceCharged: number; item: { name: string } }[];
@@ -49,6 +49,7 @@ export default function PayInvoicePage() {
   }
 
   const customerLabel = invoice.ticket?.customer.name ?? invoice.customerName;
+  const remaining = Math.max(0, invoice.total - invoice.paidAmount);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8">
@@ -103,12 +104,19 @@ export default function PayInvoicePage() {
           <span className="mono">{invoice.total.toLocaleString("fa-IR")} تومان</span>
         </div>
 
+        {invoice.paidAmount > 0 && !invoice.paid && (
+          <div className="mb-4 rounded-lg bg-amber/10 p-3 text-xs">
+            <div className="flex justify-between"><span>پرداخت‌شده</span><b>{invoice.paidAmount.toLocaleString("fa-IR")} تومان</b></div>
+            <div className="mt-1 flex justify-between text-amber"><span>مانده قابل پرداخت</span><b>{remaining.toLocaleString("fa-IR")} تومان</b></div>
+          </div>
+        )}
+
         {!invoice.paid && (
           <>
             {error && <p className="text-danger text-xs mb-2">{error}</p>}
             <button onClick={pay} disabled={paying}
               className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-3 text-sm disabled:opacity-60">
-              {paying ? "در حال انتقال به درگاه..." : "💳 پرداخت آنلاین (زرین‌پال)"}
+              {paying ? "در حال انتقال به درگاه..." : `💳 پرداخت مانده ${remaining.toLocaleString("fa-IR")} تومان`}
             </button>
             <p className="text-[10px] text-muted text-center mt-3">
               پس از پرداخت، به همین صفحه برمی‌گردید و وضعیت فاکتور به «پرداخت‌شده» تغییر می‌کند.

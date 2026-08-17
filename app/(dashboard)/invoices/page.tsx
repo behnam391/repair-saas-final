@@ -11,7 +11,7 @@ type Ticket = {
 };
 type InvItem = { id: string; name: string; quantity: number; sellPrice: number };
 type Invoice = {
-  id: string; type: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; createdAt: string;
+  id: string; type: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; paidAmount: number; createdAt: string;
   customerName: string | null;
   ticket: { no: number; deviceModel: string; customer: { name: string } } | null;
   items: { quantity: number; item: { name: string } }[];
@@ -28,7 +28,8 @@ export default function InvoicesPage() {
   const [taxPercent, setTaxPercent] = useState(10);
   const [error, setError] = useState("");
   const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null);
-  const [editInvoiceForm, setEditInvoiceForm] = useState({ laborCost: 0, applyTax: true, paid: false });
+  const [editInvoiceForm, setEditInvoiceForm] = useState({ laborCost: 0, applyTax: true, paidAmount: 0 });
+  const [shareMsg, setShareMsg] = useState("");
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -90,7 +91,7 @@ export default function InvoicesPage() {
 
   function startInvoiceEdit(inv: Invoice) {
     setEditingInvoiceId(inv.id);
-    setEditInvoiceForm({ laborCost: inv.laborCost, applyTax: inv.taxAmount > 0, paid: inv.paid });
+    setEditInvoiceForm({ laborCost: inv.laborCost, applyTax: inv.taxAmount > 0, paidAmount: inv.paidAmount ?? (inv.paid ? inv.total : 0) });
   }
 
   async function saveInvoiceEdit(id: string) {
@@ -109,9 +110,23 @@ export default function InvoicesPage() {
     load();
   }
 
+  async function shareInvoice(inv: Invoice) {
+    const url = `${PUBLIC_APP_ORIGIN}/pay/${inv.id}`;
+    const customer = inv.ticket?.customer.name ?? inv.customerName ?? "مشتری";
+    const text = `${customer} عزیز، فاکتور شما به مبلغ ${inv.total.toLocaleString("fa-IR")} تومان آماده است. مشاهده و پرداخت: ${url}`;
+    try {
+      const usedShare = typeof navigator.share === "function";
+      if (usedShare) await navigator.share({ title: "فاکتور پیوو", text, url });
+      else await navigator.clipboard.writeText(text);
+      setShareMsg(usedShare ? "فاکتور برای ارسال آماده شد" : "متن و لینک فاکتور کپی شد");
+      window.setTimeout(() => setShareMsg(""), 2500);
+    } catch {}
+  }
+
   return (
     <div className="p-4 max-w-xl mx-auto">
       <h1 className="display-heading text-lg mb-4">صدور و تاریخچه فاکتور</h1>
+      {shareMsg && <div className="mb-3 rounded-lg bg-teal/15 p-2.5 text-center text-xs font-bold text-teal">{shareMsg}</div>}
 
       {loading ? (
         <p className="text-muted text-sm">در حال بارگذاری...</p>
@@ -201,10 +216,10 @@ export default function InvoicesPage() {
                     <input type="checkbox" checked={editInvoiceForm.applyTax} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, applyTax: e.target.checked })} />
                     اعمال مالیات
                   </label>
-                  <label className="flex items-center gap-2 text-[11px] text-muted">
-                    <input type="checkbox" checked={editInvoiceForm.paid} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, paid: e.target.checked })} />
-                    پرداخت‌شده است
-                  </label>
+                  <label className="block text-[11px] text-muted">مبلغ پرداخت‌شده تا این لحظه (تومان)</label>
+                  <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface rounded-lg px-2 py-1.5"
+                    value={editInvoiceForm.paidAmount || ""} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, paidAmount: Math.min(inv.total, num(e.target.value)) })} />
+                  <div className="text-[10px] text-amber">مانده: {Math.max(0, inv.total - editInvoiceForm.paidAmount).toLocaleString("fa-IR")} تومان</div>
                   <div className="flex gap-2">
                     <button onClick={() => saveInvoiceEdit(inv.id)} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">ذخیره</button>
                     <button onClick={() => setEditingInvoiceId(null)} className="flex-1 bg-surface rounded-lg py-1.5">انصراف</button>
@@ -222,11 +237,13 @@ export default function InvoicesPage() {
                   </div>
                   <div className="text-muted mt-1">
                     {inv.ticket?.customer.name ?? inv.customerName ?? "مشتری متفرقه"} · {formatJalaliDate(inv.createdAt)}
-                    {" "}· <span className={inv.paid ? "text-teal" : "text-amber"}>{inv.paid ? "پرداخت‌شده" : "پرداخت‌نشده"}</span>
+                    {" "}· <span className={inv.paid ? "text-teal" : inv.paidAmount > 0 ? "text-amber" : "text-danger"}>{inv.paid ? "تسویه کامل" : inv.paidAmount > 0 ? "تسویه ناقص" : "پرداخت‌نشده"}</span>
                   </div>
+                  {!inv.paid && <div className="mt-1 text-[10px] text-muted">پرداخت‌شده: {(inv.paidAmount || 0).toLocaleString("fa-IR")} · مانده: {Math.max(0, inv.total - (inv.paidAmount || 0)).toLocaleString("fa-IR")} تومان</div>}
                   {inv.taxAmount > 0 && <div className="text-muted mt-0.5">شامل {inv.taxPercent}٪ مالیات ({inv.taxAmount.toLocaleString("fa-IR")} تومان)</div>}
                   <div className="flex gap-3 mt-2 flex-wrap">
                     <a href={`/invoices/${inv.id}/print`} target="_blank" className="text-copper text-[10px] font-semibold">🖨 چاپ</a>
+                    <button onClick={() => shareInvoice(inv)} className="text-teal text-[10px] font-semibold">📤 ارسال فاکتور</button>
                     {!inv.paid && (
                       <button
                         onClick={() => {

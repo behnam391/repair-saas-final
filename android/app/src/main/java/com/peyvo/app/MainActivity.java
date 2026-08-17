@@ -8,6 +8,7 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(MyketBillingPlugin.class);
         registerPlugin(NativeContactsPlugin.class);
+        registerPlugin(AppVersionPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

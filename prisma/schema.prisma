@@ -285,6 +285,9 @@ model Ticket {
   devicePasscodeType String? // "PIN" | "PASSWORD" | "PATTERN" — how to interpret devicePasscode
   customerDamageNotes String? // pre-existing damage/prior repairs the customer discloses at intake
   receiptAck    ReceiptAck?  // how intake was acknowledged: shop's own printed slip, site-generated printed slip, or none
+  intakeSource  String       @default("CUSTOMER") // CUSTOMER | PARTNER
+  partnerName   String?      // direct intake from a colleague, even if they are not registered on Peyvo
+  partnerPhone  String?
 
   lane          Lane
   status        TicketStatus @default(PENDING)
@@ -407,6 +410,9 @@ model Invoice {
   taxAmount  Int      @default(0) // toman, computed at invoice time
   total      Int
   paid       Boolean  @default(false)
+  paidAmount Int      @default(0) // supports partial cash/card settlement
+  paymentPendingAmount Int?       // exact remaining amount sent to the online gateway
+  lastPaymentAt DateTime?
   // Online payment by the customer (/pay/[invoiceId]) via the active gateway
   paymentProvider  String? // "zarinpal" | "zibal" | "nextpay"
   paymentAuthority String? // gateway transaction token

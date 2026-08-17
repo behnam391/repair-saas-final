@@ -19,6 +19,28 @@ const TransitionSchema = z.object({
   technicianWage: z.number().int().optional(),          // "approve-cost"
 });
 
+// Safe single-ticket detail used by the printable intake receipt.
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const { shopId } = await requireSession();
+    const ticket = await db.ticket.findFirst({
+      where: { id: params.id, shopId },
+      select: {
+        id: true, no: true, deviceModel: true, imei: true, issueInitial: true,
+        customerDamageNotes: true, receiptAck: true, intakeSource: true,
+        partnerName: true, partnerPhone: true, createdAt: true,
+        customer: { select: { name: true, phone: true } },
+        shop: { select: { name: true, phone: true, landlinePhone: true, address: true } },
+      },
+    });
+    if (!ticket) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    return NextResponse.json({ ticket });
+  } catch (e) {
+    if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "internal_error" }, { status: 500 });
+  }
+}
+
 // PATCH /api/tickets/:id — the single endpoint that drives the whole
 // multi-specialty workflow. Every transition is written to TicketHistory,
 // which is what powers the stamped-timeline view in the UI.

@@ -8,7 +8,7 @@ type Repair = {
   estimatedCost: number | null; finalCost: number | null;
   createdAt: string; deliveredAt: string | null; rated: boolean;
   shop: { id: string; name: string; phone: string | null; province: string | null; address: string | null };
-  invoice: { id: string; total: number; paid: boolean } | null;
+  invoice: { id: string; total: number; paid: boolean; paidAmount: number } | null;
 };
 
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
@@ -72,6 +72,7 @@ export default function CustomerRepairsPage() {
                     <span>
                       فاکتور: {r.invoice.total.toLocaleString("fa-IR")} تومان
                       {r.invoice.paid ? " (پرداخت‌شده)" : " (پرداخت‌نشده)"}
+                      {!r.invoice.paid && r.invoice.paidAmount > 0 && ` — پرداخت‌شده ${r.invoice.paidAmount.toLocaleString("fa-IR")}, مانده ${(r.invoice.total - r.invoice.paidAmount).toLocaleString("fa-IR")} تومان`}
                     </span>
                   ) : r.finalCost ? (
                     <span>هزینه نهایی: {r.finalCost.toLocaleString("fa-IR")} تومان</span>

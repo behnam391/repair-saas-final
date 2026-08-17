@@ -38,14 +38,27 @@ async function handle(req: NextRequest) {
       return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=cancelled`, 303);
     }
 
-    const verified = await verifyPayment({ provider, amountToman: invoice.total, token });
+    const pendingAmount = invoice.paymentPendingAmount ?? Math.max(0, invoice.total - invoice.paidAmount);
+    const verified = await verifyPayment({ provider, amountToman: pendingAmount, token });
     if (!verified.ok) {
       return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=failed`, 303);
     }
 
-    await db.invoice.updateMany({
-      where: { id: invoice.id, paid: false },
-      data: { paid: true, paymentRefId: verified.refId ?? null },
+    await db.$transaction(async (tx) => {
+      const fresh = await tx.invoice.findUniqueOrThrow({ where: { id: invoice.id } });
+      if (fresh.paid) return;
+      const amount = fresh.paymentPendingAmount ?? Math.max(0, fresh.total - fresh.paidAmount);
+      const paidAmount = Math.min(fresh.total, fresh.paidAmount + amount);
+      await tx.invoice.update({
+        where: { id: fresh.id },
+        data: {
+          paidAmount,
+          paid: paidAmount >= fresh.total,
+          paymentRefId: verified.refId ?? null,
+          paymentPendingAmount: null,
+          lastPaymentAt: new Date(),
+        },
+      });
     });
 
     return NextResponse.redirect(`${origin}/pay/${invoiceId}?result=success`, 303);

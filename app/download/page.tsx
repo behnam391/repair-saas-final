@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { db } from "@/lib/db";
+import { LATEST_ANDROID_RELEASE } from "@/lib/app-release";
 
 export const dynamic = "force-dynamic";
 
@@ -14,9 +15,9 @@ export default async function DownloadPage() {
   } catch {
     // fall through to the "coming soon" state
   }
-  const apk = s?.androidApkUrl || "/downloads/peyvo-android-v1.0.apk";
-  const bazaar = s?.bazaarUrl || "";
-  const myket = s?.myketUrl || "";
+  const apk = s?.androidApkUrl || LATEST_ANDROID_RELEASE.directApkUrl;
+  const bazaar = /^https:\/\/(?:www\.)?cafebazaar\.ir\//i.test(s?.bazaarUrl || "") ? s.bazaarUrl : "";
+  const myket = /^https:\/\/(?:www\.)?myket\.ir\//i.test(s?.myketUrl || "") ? s.myketUrl : "";
   const anything = apk || bazaar || myket;
 
   return (
@@ -28,6 +29,7 @@ export default async function DownloadPage() {
         </div>
         <h1 className="display-heading text-2xl mb-1">اپلیکیشن پیوو</h1>
         <p className="text-xs text-muted mb-8">پنل تعمیرگاه و مشتریان، همیشه در جیبت — روی اندروید.</p>
+        <div className="mb-4 inline-flex rounded-full border border-teal/30 bg-teal/10 px-3 py-1 text-[10px] font-bold text-teal">نسخه {LATEST_ANDROID_RELEASE.versionName}</div>
 
         {!anything ? (
           <div className="bg-surface border border-surface2 rounded-2xl p-6">

@@ -34,6 +34,7 @@ const UpdateSchema = z.object({
   laborCost: z.number().int().min(0).optional(),
   applyTax: z.boolean().optional(),
   paid: z.boolean().optional(),
+  paidAmount: z.number().int().min(0).optional(),
 });
 
 // PATCH /api/invoices/:id — edit labor cost, toggle tax, or mark paid.
@@ -55,11 +56,14 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const taxPercent = applyTax ? shop.taxPercent : 0;
     const taxAmount = Math.round((subtotal * taxPercent) / 100);
     const total = subtotal + taxAmount;
+    const requestedPaidAmount = body.paidAmount ?? (body.paid === true ? total : body.paid === false ? 0 : invoice.paidAmount);
+    const paidAmount = Math.min(total, Math.max(0, requestedPaidAmount));
+    const paid = paidAmount >= total;
 
     const updated = await db.$transaction(async (tx) => {
       const inv = await tx.invoice.update({
         where: { id: invoice.id },
-        data: { laborCost, taxPercent, taxAmount, total, ...(body.paid !== undefined ? { paid: body.paid } : {}) },
+        data: { laborCost, taxPercent, taxAmount, total, paidAmount, paid, lastPaymentAt: paidAmount > 0 ? new Date() : null },
       });
       // SALE invoices have no ticket to keep in sync.
       if (invoice.ticketId) {

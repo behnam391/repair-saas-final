@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { formatJalaliDate } from "@/lib/jalali";
 
 type InvoiceDetail = {
-  id: string; type: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; createdAt: string;
+  id: string; type: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; paidAmount: number; createdAt: string;
   customerName: string | null; customerPhone: string | null;
   shop: { name: string; address: string | null; phone: string | null; bankCardNumber: string | null; bankAccountNumber: string | null };
   ticket: {
@@ -102,7 +102,11 @@ export default function PrintInvoicePage() {
           <span>جمع کل</span>
           <span>{invoice.total.toLocaleString("fa-IR")} تومان</span>
         </div>
-        <div className="text-xs text-gray-600 mt-1">وضعیت پرداخت: {invoice.paid ? "پرداخت‌شده" : "پرداخت‌نشده"}</div>
+        <div className="mt-2 grid grid-cols-2 gap-1 text-xs text-gray-600">
+          <span>پرداخت‌شده: {(invoice.paidAmount || 0).toLocaleString("fa-IR")} تومان</span>
+          <span className="text-left">مانده: {Math.max(0, invoice.total - (invoice.paidAmount || 0)).toLocaleString("fa-IR")} تومان</span>
+          <span className="col-span-2">وضعیت: {invoice.paid ? "تسویه کامل" : invoice.paidAmount > 0 ? "تسویه ناقص" : "پرداخت‌نشده"}</span>
+        </div>
 
         {(invoice.shop.bankCardNumber || invoice.shop.bankAccountNumber) && (
           <div className="text-xs text-gray-600 mt-3 border-t border-gray-300 pt-2">
