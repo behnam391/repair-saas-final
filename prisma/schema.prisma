@@ -1132,6 +1132,10 @@ model ShopReferral {
   deviceModel    String?
   issueNote      String?
   suggestedLane  String?           // "HARDWARE" | "SOFTWARE" | "BOARD" — hint only, receiving shop can re-refer internally afterward
+  handoffMethod  String?           // CUSTOMER | COURIER | OWNER | APPRENTICE | OTHER
+  carrierName    String?           // person physically carrying the device, when known
+  carrierPhone   String?
+  handoffNote    String?           // courier details, timing, tracking code, etc.
 
   status         ReferralStatus    @default(SENT)
   resultTicketId String?           // the Ticket the receiving shop opened upon accepting

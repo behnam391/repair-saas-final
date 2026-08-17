@@ -15,6 +15,10 @@ const CreateSchema = z.object({
   deviceModel: z.string().optional(),
   issueNote: z.string().optional(),
   suggestedLane: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]).optional(),
+  handoffMethod: z.enum(["CUSTOMER", "COURIER", "OWNER", "APPRENTICE", "OTHER"]),
+  carrierName: z.string().max(120).optional(),
+  carrierPhone: z.preprocess(preprocessPhone, z.string().optional()),
+  handoffNote: z.string().max(1000).optional(),
   commissionType: z.enum(["PERCENT", "FLAT"]).optional(),
   commissionValue: z.number().int().min(0).optional(),
 });
@@ -49,6 +53,10 @@ export async function POST(req: NextRequest) {
     const { shopId, name } = await requireDeskSession();
     const body = CreateSchema.parse(await req.json());
 
+    if (body.handoffMethod === "OTHER" && !body.carrierName?.trim()) {
+      return NextResponse.json({ message: "نام شخص تحویل‌دهنده را وارد کنید" }, { status: 400 });
+    }
+
     const partnership = await (db as any).shopPartnership.findFirst({
       where: { id: body.partnershipId, OR: [{ requestedByShopId: shopId }, { targetShopId: shopId }] },
     });
@@ -69,6 +77,10 @@ export async function POST(req: NextRequest) {
         deviceModel: body.deviceModel,
         issueNote: body.issueNote,
         suggestedLane: body.suggestedLane,
+        handoffMethod: body.handoffMethod,
+        carrierName: body.carrierName?.trim() || undefined,
+        carrierPhone: body.carrierPhone || undefined,
+        handoffNote: body.handoffNote?.trim() || undefined,
         commissionType: body.commissionType,
         commissionValue: body.commissionValue,
         createdByName: name,

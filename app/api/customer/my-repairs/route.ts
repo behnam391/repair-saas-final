@@ -23,7 +23,7 @@ export async function GET() {
         estimatedCost: true, finalCost: true,
         createdAt: true, deliveredAt: true,
         shop: { select: { id: true, name: true, phone: true, province: true, address: true } },
-        invoice: { select: { total: true, paid: true } },
+        invoice: { select: { id: true, total: true, paid: true } },
       },
     });
 

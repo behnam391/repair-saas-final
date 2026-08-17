@@ -37,13 +37,15 @@ export default function LoginPage() {
       asideTitle="تعمیرگاهت را هوشمندتر مدیریت کن" asideText="از پذیرش تا تحویل، همه چیز در یک فضای سریع و منظم پیش می‌رود."
       asideItems={["وضعیت لحظه‌ای تعمیرها", "فاکتور، انبار و گزارش مالی", "ارتباط ساده با مشتری"]}>
       <form onSubmit={handleSubmit} className="auth-form">
+        <a href="/customer/login" className="mb-4 flex items-center justify-between rounded-xl border border-teal/40 bg-teal/10 px-3 py-2.5 text-xs font-bold text-teal">
+          <span>مشتری هستید؟ ورود به پنل پیگیری مشتری</span><span>←</span>
+        </a>
         <PhoneField value={phone} onChange={(v) => setPhone(toLatinDigits(v))} />
         <PasswordField value={password} status={loginState} onChange={(v) => { setPassword(v); setLoginState("idle"); }} />
         <div className="auth-form-meta"><label><input type="checkbox" /> مرا به خاطر بسپار</label><a href="/forgot-password">رمز را فراموش کردم</a></div>
         {error && <div className="auth-error">{error}</div>}
         <AuthSubmit loading={loading}>ورود به پنل</AuthSubmit>
         <p className="auth-switch">هنوز حساب ندارید؟ <a href="/signup">ساخت رایگان تعمیرگاه</a></p>
-        <div className="auth-alt">مشتری هستید؟ <a href="/customer/login">ورود به پنل مشتریان</a></div>
         <EnamadBadge className="mt-4" />
       </form>
     </AuthShell>

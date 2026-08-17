@@ -6,6 +6,7 @@ import PatternLockInput from "@/components/PatternLockInput";
 import ComboBox from "@/components/ComboBox";
 import TicketChat from "@/components/TicketChat";
 import AiIntakeHelper from "@/components/AiIntakeHelper";
+import CustomerQuickPick from "@/components/CustomerQuickPick";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
 import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Check, ChevronDown, CircuitBoard, Clock3, Cpu, GitBranch, LockKeyhole, MessageCircle, Play, Plus, Search, ShieldCheck, Smartphone, UserRound, Wrench, X } from "lucide-react";
 
@@ -38,12 +39,14 @@ export default function TicketsPage() {
   const { data: session } = useSession();
   const myRole = (session?.user as any)?.role;
   const myId = (session?.user as any)?.id;
+  const mySpecialty = (session?.user as any)?.specialty as string | null | undefined;
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [openTicket, setOpenTicket] = useState<Ticket | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [toast, setToast] = useState("");
   const [query, setQuery] = useState("");
+  const [singleOperator, setSingleOperator] = useState(false);
   // Mobile accordion: which lanes are collapsed. Starts empty (all open);
   // only affects narrow screens — desktop always shows every column.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -53,9 +56,19 @@ export default function TicketsPage() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch("/api/tickets");
-    const data = await res.json();
+    const [ticketRes, shopRes, staffRes] = await Promise.all([
+      fetch("/api/tickets"),
+      fetch("/api/shop"),
+      fetch("/api/staff"),
+    ]);
+    const data = await ticketRes.json();
     setTickets(data.tickets ?? []);
+    if (shopRes.ok && staffRes.ok) {
+      const shop = (await shopRes.json()).shop;
+      const staff = (await staffRes.json()).staff ?? [];
+      const activeStaffCount = staff.filter((member: any) => member.active).length;
+      setSingleOperator(shop?.businessSize === "SOLO" || activeStaffCount <= 1);
+    }
     setLoading(false);
   }
 
@@ -197,11 +210,12 @@ export default function TicketsPage() {
         <TicketDetail
           ticket={openTicket}
           myRole={myRole}
+          singleOperator={singleOperator}
           onClose={() => setOpenTicket(null)}
           onTransition={transition}
         />
       )}
-      {showNew && <NewTicketModal onClose={() => setShowNew(false)} onCreated={load} />}
+      {showNew && <NewTicketModal defaultLane={mySpecialty} singleOperator={singleOperator} onClose={() => setShowNew(false)} onCreated={load} />}
       {toast && (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-[#1B302D] border border-teal text-teal text-xs px-4 py-2.5 rounded-xl">
           {toast}
@@ -245,11 +259,13 @@ function ReferralFlow({ history, currentLane }: { history: { lane: string }[]; c
 function TicketDetail({
   ticket,
   myRole,
+  singleOperator,
   onClose,
   onTransition,
 }: {
   ticket: Ticket;
   myRole?: string;
+  singleOperator: boolean;
   onClose: () => void;
   onTransition: (id: string, action: string, targetLane?: string, extra?: Record<string, any>) => void;
 }) {
@@ -287,6 +303,16 @@ function TicketDetail({
     } finally {
       setPasscodeLoading(false);
     }
+  }
+
+  function referToPartnerShop() {
+    sessionStorage.setItem("peyvo-referral-draft", JSON.stringify({
+      customerName: ticket.customer.name,
+      customerPhone: ticket.customer.phone,
+      deviceModel: ticket.deviceModel,
+      issueNote: ticket.issueInitial,
+    }));
+    window.location.assign("/collaboration?newReferral=1");
   }
 
   return (
@@ -402,8 +428,8 @@ function TicketDetail({
               <button onClick={() => onTransition(ticket.id, "start")} className="ticket-action is-primary">
                 <Play size={15} /> شروع/ادامه کار
               </button>
-              <button onClick={() => setReferOpen((v) => !v)} className="ticket-action">
-                <GitBranch size={15} /> ارجاع به بخش دیگر
+              <button onClick={() => singleOperator ? referToPartnerShop() : setReferOpen((v) => !v)} className="ticket-action">
+                <GitBranch size={15} /> {singleOperator ? "ارجاع به مغازه همکار" : "ارجاع به بخش دیگر"}
               </button>
               {isOwner ? (
                 <button onClick={() => setReadyOpen((v) => !v)} className="ticket-action is-success">
@@ -446,7 +472,7 @@ function TicketDetail({
                 </button>
               </div>
             )}
-            {referOpen && (
+            {referOpen && !singleOperator && (
               <div className="bg-surface2 border border-surface2 rounded-xl p-3 mt-2.5">
                 <div className="text-[11px] text-muted mb-2 font-bold">به کدام بخش ارجاع شود؟</div>
                 <div className="flex flex-col gap-2">
@@ -508,9 +534,9 @@ function TicketDetail({
   );
 }
 
-function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
+function NewTicketModal({ defaultLane, singleOperator, onClose, onCreated }: { defaultLane?: string | null; singleOperator: boolean; onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
-    customerName: "", customerPhone: "", deviceModel: "", imei: "", issueInitial: "", lane: "HARDWARE",
+    customerName: "", customerPhone: "", deviceModel: "", imei: "", issueInitial: "", lane: ["HARDWARE", "SOFTWARE", "BOARD"].includes(defaultLane || "") ? defaultLane! : "HARDWARE",
     devicePasscode: "", devicePasscodeType: "PIN" as string, customerDamageNotes: "", receiptAck: "NO_SIGNATURE" as string,
   });
   const [collectPasscode, setCollectPasscode] = useState(false);
@@ -600,6 +626,7 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
         <div className="intake-step-content">
         {step === 1 && (<>
         <div className="intake-content-title"><UserRound size={18} /><div><b>اطلاعات مشتری</b><small>مشخصات صاحب دستگاه را وارد کنید</small></div></div>
+        <CustomerQuickPick onSelect={(person) => setForm({ ...form, customerName: person.name, customerPhone: person.phone })} />
         <div className="mb-3">
           <label className="block text-xs text-muted mb-1">نام مشتری</label>
           <input
@@ -658,16 +685,22 @@ function NewTicketModal({ onClose, onCreated }: { onClose: () => void; onCreated
         {step === 3 && (<>
         <div className="intake-content-title"><Wrench size={18} /><div><b>شرح ایراد</b><small>دستگاه به بخش مناسب ارجاع می‌شود</small></div></div>
         <div className="mb-2">
-          <label className="block text-xs text-muted mb-1">ارجاع اولیه به</label>
-          <select
-            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-            value={form.lane}
-            onChange={(e) => setForm({ ...form, lane: e.target.value })}
-          >
-            {LANES.filter((l) => l.key !== "READY").map((l) => (
-              <option key={l.key} value={l.key}>{l.label}</option>
-            ))}
-          </select>
+          <label className="block text-xs text-muted mb-1">مسیر اولیه تعمیر</label>
+          {singleOperator && defaultLane ? (
+            <div className="w-full rounded-lg border border-teal/30 bg-teal/10 px-3 py-2 text-sm font-bold text-teal">
+              {LANES.find((lane) => lane.key === form.lane)?.label ?? "تخصص ثبت‌شده مغازه"}
+            </div>
+          ) : (
+            <select
+              className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+              value={form.lane}
+              onChange={(e) => setForm({ ...form, lane: e.target.value })}
+            >
+              {LANES.filter((l) => l.key !== "READY").map((l) => (
+                <option key={l.key} value={l.key}>{l.label}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         {laneTemplates.length > 0 && (

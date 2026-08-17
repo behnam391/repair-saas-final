@@ -2,13 +2,22 @@
 import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { formatJalaliDate } from "@/lib/jalali";
 import ComboBox from "@/components/ComboBox";
+import CustomerQuickPick from "@/components/CustomerQuickPick";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 
 const LANE_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی" };
 const PARTNERSHIP_STATUS_LABEL: Record<string, string> = { PENDING: "در انتظار پاسخ", ACCEPTED: "فعال", REJECTED: "رد شده", ENDED: "پایان‌یافته" };
 const REFERRAL_STATUS_LABEL: Record<string, string> = { SENT: "ارسال‌شده", ACCEPTED: "پذیرفته‌شده", DECLINED: "رد شده", COMPLETED: "تکمیل‌شده" };
+const HANDOFF_LABEL: Record<string, string> = {
+  CUSTOMER: "توسط خود مشتری",
+  COURIER: "با پیک",
+  OWNER: "توسط خودم",
+  APPRENTICE: "توسط شاگرد",
+  OTHER: "توسط شخص دیگر",
+};
 
 type PartnerShop = { id: string; name: string; address: string | null; province: string | null; type: string; specialties: string | null; verificationLevel: number; partnershipStatus: string | null };
 type ShopRef = { id: string; name: string; province: string | null; address: string | null };
@@ -20,6 +29,7 @@ type Partnership = {
 type Referral = {
   id: string; partnershipId: string; fromShopId: string; toShopId: string;
   customerName: string; customerPhone: string; deviceModel?: string | null; issueNote?: string | null; suggestedLane?: string | null;
+  handoffMethod?: string | null; carrierName?: string | null; carrierPhone?: string | null; handoffNote?: string | null;
   status: string; resultTicketId?: string | null;
   commissionType?: string | null; commissionValue?: number | null; commissionAmount?: number | null; commissionStatus: string; commissionPaidAt?: string | null;
   createdByName: string; createdAt: string;
@@ -28,6 +38,8 @@ type Referral = {
 
 export default function CollaborationPage() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const referralRequested = searchParams.get("newReferral") === "1";
   const myShopId = (session?.user as any)?.shopId as string | undefined;
 
   const [partnerships, setPartnerships] = useState<Partnership[]>([]);
@@ -153,7 +165,7 @@ export default function CollaborationPage() {
         )}
       </Section>
 
-      <Section title="ارجاع مشتری به همکار" icon="📤">
+      <Section title="ارجاع مشتری به همکار" icon="📤" defaultOpen={referralRequested}>
         {acceptedPartners.length === 0 ? (
           <p className="text-xs text-muted">برای ارجاع مشتری، ابتدا باید حداقل یک همکاری فعال داشته باشید.</p>
         ) : (
@@ -287,6 +299,10 @@ function ReferralForm({
   const [model, setModel] = useState("");
   const [issueNote, setIssueNote] = useState("");
   const [suggestedLane, setSuggestedLane] = useState("");
+  const [handoffMethod, setHandoffMethod] = useState("CUSTOMER");
+  const [carrierName, setCarrierName] = useState("");
+  const [carrierPhone, setCarrierPhone] = useState("");
+  const [handoffNote, setHandoffNote] = useState("");
   const [commissionType, setCommissionType] = useState<"" | "PERCENT" | "FLAT">("");
   const [commissionValue, setCommissionValue] = useState(0);
   const [error, setError] = useState("");
@@ -295,11 +311,28 @@ function ReferralForm({
   const brandList = Object.keys(catalog);
   const modelsForBrand = brand ? catalog[brand] ?? [] : [];
 
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("peyvo-referral-draft");
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      setCustomerName(typeof draft.customerName === "string" ? draft.customerName : "");
+      setCustomerPhone(typeof draft.customerPhone === "string" ? draft.customerPhone : "");
+      setBrand(typeof draft.deviceModel === "string" ? draft.deviceModel : "");
+      setIssueNote(typeof draft.issueNote === "string" ? draft.issueNote : "");
+      sessionStorage.removeItem("peyvo-referral-draft");
+    } catch {
+      sessionStorage.removeItem("peyvo-referral-draft");
+    }
+  }, []);
+
   async function submit() {
     setError("");
     if (!partnershipId) { setError("یک همکار انتخاب کنید"); return; }
     if (!customerName.trim() || !customerPhone.trim()) { setError("نام و شماره مشتری را وارد کنید"); return; }
     if (!isValidMobile(customerPhone)) { setError("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
+    if (handoffMethod === "OTHER" && !carrierName.trim()) { setError("نام شخص تحویل‌دهنده را وارد کنید"); return; }
+    if (carrierPhone && !isValidMobile(carrierPhone)) { setError("شماره تحویل‌دهنده باید ۱۱ رقمی و با ۰۹ باشد"); return; }
     setBusy(true);
     const res = await fetch("/api/collaboration/referrals", {
       method: "POST",
@@ -309,13 +342,17 @@ function ReferralForm({
         deviceModel: brand ? `${brand}${model ? " " + model : ""}` : undefined,
         issueNote: issueNote || undefined,
         suggestedLane: suggestedLane || undefined,
+        handoffMethod,
+        carrierName: carrierName.trim() || undefined,
+        carrierPhone: carrierPhone ? normalizePhone(carrierPhone) : undefined,
+        handoffNote: handoffNote.trim() || undefined,
         commissionType: commissionType || undefined,
         commissionValue: commissionType ? commissionValue : undefined,
       }),
     });
     setBusy(false);
     if (!res.ok) { const d = await res.json().catch(() => ({})); setError(d.message || "ثبت ارجاع ناموفق بود"); return; }
-    setCustomerName(""); setCustomerPhone(""); setBrand(""); setModel(""); setIssueNote(""); setSuggestedLane(""); setCommissionType(""); setCommissionValue(0);
+    setCustomerName(""); setCustomerPhone(""); setBrand(""); setModel(""); setIssueNote(""); setSuggestedLane(""); setHandoffMethod("CUSTOMER"); setCarrierName(""); setCarrierPhone(""); setHandoffNote(""); setCommissionType(""); setCommissionValue(0);
     onSent();
   }
 
@@ -325,6 +362,8 @@ function ReferralForm({
       <select className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" value={partnershipId} onChange={(e) => setPartnershipId(e.target.value)}>
         {partners.map((p) => <option key={p.partnershipId} value={p.partnershipId}>{p.shop.name}</option>)}
       </select>
+
+      <CustomerQuickPick onSelect={(person) => { setCustomerName(person.name); setCustomerPhone(person.phone); }} />
 
       <div className="grid grid-cols-2 gap-2">
         <div>
@@ -346,6 +385,27 @@ function ReferralForm({
 
       <label className="block text-xs text-muted mb-1">شرح ایراد / یادداشت (اختیاری)</label>
       <textarea className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" value={issueNote} onChange={(e) => setIssueNote(e.target.value)} />
+
+      <div className="rounded-xl border border-border bg-surface2/60 p-3">
+        <div className="mb-2 text-[11px] font-bold">دستگاه چطور به مغازه همکار می‌رسد؟</div>
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+          {Object.entries(HANDOFF_LABEL).map(([value, label]) => (
+            <button key={value} type="button" onClick={() => setHandoffMethod(value)} className={`rounded-lg border px-2 py-2 text-[10px] font-bold ${handoffMethod === value ? "border-copper bg-copper text-[#1A1410]" : "border-surface2 bg-surface text-muted"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+        {["COURIER", "APPRENTICE", "OTHER"].includes(handoffMethod) && (
+          <div className="mt-3">
+            <CustomerQuickPick onSelect={(person) => { setCarrierName(person.name); setCarrierPhone(person.phone); }} />
+            <div className="grid grid-cols-2 gap-2">
+              <input value={carrierName} onChange={(e) => setCarrierName(e.target.value)} placeholder={handoffMethod === "COURIER" ? "نام پیک (اختیاری)" : "نام تحویل‌دهنده"} className="min-w-0 rounded-lg border border-surface2 bg-surface px-3 py-2 text-xs" />
+              <input value={carrierPhone} onChange={(e) => setCarrierPhone(toLatinDigits(e.target.value))} inputMode="tel" dir="ltr" maxLength={11} placeholder="شماره تماس" className="min-w-0 rounded-lg border border-surface2 bg-surface px-3 py-2 text-xs mono" />
+            </div>
+          </div>
+        )}
+        <textarea value={handoffNote} onChange={(e) => setHandoffNote(e.target.value)} placeholder="توضیحات ارسال، زمان یا کد پیگیری (اختیاری)" className="mt-2 w-full rounded-lg border border-surface2 bg-surface px-3 py-2 text-xs" />
+      </div>
 
       <label className="block text-xs text-muted mb-1">پیشنهاد ارجاع به کدام تخصص (اختیاری)</label>
       <select className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" value={suggestedLane} onChange={(e) => setSuggestedLane(e.target.value)}>
@@ -429,6 +489,14 @@ function ReferralRow({ r, myShopId, onChanged, onMsg }: { r: Referral; myShopId:
         {r.deviceModel && ` · ${r.deviceModel}`}
       </div>
       {r.issueNote && <div className="text-[#C7CAD1] mt-1">{r.issueNote}</div>}
+      {r.handoffMethod && (
+        <div className="mt-2 rounded-lg border border-border bg-surface px-2.5 py-2 text-[10px]">
+          <b>نحوه ارسال:</b> {HANDOFF_LABEL[r.handoffMethod] ?? r.handoffMethod}
+          {r.carrierName && <> · {r.carrierName}</>}
+          {r.carrierPhone && <> · <span dir="ltr" className="mono">{r.carrierPhone}</span></>}
+          {r.handoffNote && <div className="mt-1 text-muted">{r.handoffNote}</div>}
+        </div>
+      )}
       <div className="text-[10px] text-muted mt-1">{formatJalaliDate(r.createdAt)} · ثبت توسط {r.createdByName}</div>
 
       {commissionHint && r.status !== "COMPLETED" && <div className="text-[10px] text-amber mt-1.5">{commissionHint}</div>}

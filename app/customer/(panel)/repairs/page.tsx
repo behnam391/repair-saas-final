@@ -8,7 +8,7 @@ type Repair = {
   estimatedCost: number | null; finalCost: number | null;
   createdAt: string; deliveredAt: string | null; rated: boolean;
   shop: { id: string; name: string; phone: string | null; province: string | null; address: string | null };
-  invoice: { total: number; paid: boolean } | null;
+  invoice: { id: string; total: number; paid: boolean } | null;
 };
 
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
@@ -82,6 +82,9 @@ export default function CustomerRepairsPage() {
 
                 <div className="flex gap-3 mt-2 pt-2 border-t border-surface2 flex-wrap items-center">
                   <button onClick={() => setChatWith(r)} className="text-copper font-bold">💬 گفتگو با مغازه</button>
+                  {r.invoice && !r.invoice.paid && (
+                    <a href={`/pay/${r.invoice.id}`} className="rounded-lg bg-teal px-3 py-1.5 font-bold text-[#0B1512]">💳 پرداخت فاکتور</a>
+                  )}
                   <a href={`/shop/${r.shop.id}`} className="text-teal">صفحه مغازه ↗</a>
                   {r.shop.phone && <a href={`tel:${r.shop.phone}`} className="text-muted">📞 تماس</a>}
                   {r.status === "DELIVERED" && !r.rated && (

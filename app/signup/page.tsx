@@ -44,6 +44,7 @@ export default function SignupPage() {
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
+  const [businessConfirmed, setBusinessConfirmed] = useState(false);
 
   function toggleSpecialty(key: string) {
     setForm((f) => ({
@@ -97,6 +98,37 @@ export default function SignupPage() {
   }
 
   const selectedModel = BUSINESS_SIZE_OPTIONS.find((option) => option.key === form.businessSize)!;
+
+  if (!businessConfirmed) {
+    return (
+      <main className="signup-scene">
+        <div className="signup-ambient" aria-hidden><i /><i /><i /></div>
+        <Link href="/" className="signup-home"><ArrowRight size={15} /> بازگشت به سایت</Link>
+        <div className="relative z-10 mx-auto w-[min(92vw,760px)] rounded-3xl border border-white/10 bg-surface/95 p-5 shadow-2xl sm:p-8">
+          <div className="mb-6 text-center">
+            <Logo size={35} textClassName="text-2xl" />
+            <h1 className="display-heading mt-5 text-2xl">چه نوع حسابی می‌خواهید؟</h1>
+            <p className="mt-2 text-sm text-muted">حساب مشتری و حساب مدیریت مغازه کاملاً از هم جدا هستند.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Link href="/customer/signup" className="group rounded-2xl border border-teal/40 bg-teal/10 p-5 transition hover:border-teal hover:bg-teal/15">
+              <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-teal text-[#0B1512]"><UserRound size={24} /></span>
+              <strong className="block text-lg">من مشتری هستم</strong>
+              <p className="mt-2 text-xs leading-6 text-muted">برای پیگیری تعمیر گوشی، دیدن مغازه‌ها و دریافت پیام‌ها حساب مشتری بسازید.</p>
+              <b className="mt-4 flex items-center gap-1 text-xs text-teal">ثبت‌نام مشتری <ArrowLeft size={14} /></b>
+            </Link>
+            <button type="button" onClick={() => setBusinessConfirmed(true)} className="group rounded-2xl border border-copper/40 bg-copper/10 p-5 text-right transition hover:border-copper hover:bg-copper/15">
+              <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-copper text-[#1A1410]"><Store size={24} /></span>
+              <strong className="block text-lg">صاحب یا مدیر مغازه هستم</strong>
+              <p className="mt-2 text-xs leading-6 text-muted">برای ساخت فضای کاری، پذیرش دستگاه و مدیریت تعمیرگاه ادامه دهید.</p>
+              <b className="mt-4 flex items-center gap-1 text-xs text-copper">ساخت حساب کسب‌وکار <ArrowLeft size={14} /></b>
+            </button>
+          </div>
+          <p className="mt-5 text-center text-xs text-muted">قبلاً حساب دارید؟ <Link href="/login" className="font-bold text-copper">انتخاب نوع ورود</Link></p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="signup-scene">
