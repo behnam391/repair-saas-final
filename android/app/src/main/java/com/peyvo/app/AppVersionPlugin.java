@@ -15,6 +15,7 @@ public class AppVersionPlugin extends Plugin {
         JSObject result = new JSObject();
         result.put("versionCode", BuildConfig.VERSION_CODE);
         result.put("versionName", BuildConfig.VERSION_NAME);
+        result.put("store", BuildConfig.STORE_ID);
         String installer = "";
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

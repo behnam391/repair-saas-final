@@ -1,0 +1,163 @@
+{"kind":"deck","id":"pr/4ylnfx","name":"Deck"}
+{"kind":"layout","layoutId":"ed4b6dc8-b5ec-4922-bc65-5731425458c9","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"61c9ff55-592a-4d35-8534-3d3926d94e8b","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/oq9wnf","slide":1,"title":"پیوو","textShapes":4}
+{"kind":"shape","id":"sh/y1gjiloj","slide":1,"bbox":[0,0,22,720]}
+{"kind":"shape","id":"sh/03i1kb69","slide":1,"bbox":[650,0,630,720]}
+{"kind":"textbox","id":"sh/qdgje1o7","slide":1,"text":"پیوو","textPreview":"پیوو","textChars":4,"textLines":1,"bbox":[72,260,520,88]}
+{"kind":"textbox","id":"sh/d07ipgny","slide":1,"text":"هوشمند زیرساخت\nموبایل تعمیرگاه‌های مدیریت","textPreview":"هوشمند زیرساخت | موبایل تعمیرگاه‌های مدیریت","textChars":41,"textLines":2,"bbox":[72,356,520,96]}
+{"kind":"textbox","id":"sh/czy1gb6d","slide":1,"text":"فاکتور و تحویل تا دستگاه پذیرش از\nابری زیرساخت و مشتری با یکپارچه ارتباط","textPreview":"فاکتور و تحویل تا دستگاه پذیرش از | ابری زیرساخت و مشتری با یکپارچه ارتباط","textChars":72,"textLines":2,"bbox":[72,477,520,92]}
+{"kind":"textbox","id":"sh/vutkzq5w","slide":1,"text":"۱۴۰۵ | آروان‌کلاد زیرساختی حمایت درخواست","textPreview":"۱۴۰۵ | آروان‌کلاد زیرساختی حمایت درخواست","textChars":40,"textLines":1,"bbox":[72,625,520,30]}
+{"kind":"image","id":"im/0f2lwfe5","slide":1,"name":"","geometry":"rect","bbox":[650,0,630,720]}
+{"kind":"image","id":"im/q9k3qlw3","slide":1,"name":"","geometry":"rect","bbox":[72,62,178,178]}
+{"kind":"notes","id":"nt/oq9wnf","slide":1,"text":"[Sources]\n- دارایی‌های برند و تصویر اصلی: فایل‌های داخلی پروژه پیوو\n[/Sources]"}
+{"kind":"slide","id":"sl/sunla7","slide":2,"title":"۰2","textShapes":13}
+{"kind":"shape","id":"sh/47eh4bi1","slide":2,"bbox":[0,0,1280,8]}
+{"kind":"shape","id":"sh/3650b61g","slide":2,"bbox":[1120,0,160,8]}
+{"kind":"textbox","id":"sh/i5wz210v","slide":2,"text":"۰2","textPreview":"۰2","textChars":2,"textLines":1,"bbox":[40,666,70,24]}
+{"kind":"textbox","id":"sh/dc7ihgji","slide":2,"text":"PEYVO  |  PITCH DECK","textPreview":"PEYVO  |  PITCH DECK","textChars":20,"textLines":1,"bbox":[850,666,390,22]}
+{"kind":"textbox","id":"sh/sbyh8bid","slide":2,"text":"می‌کند کند را تعمیرگاه رشد سنتی فرایند","textPreview":"می‌کند کند را تعمیرگاه رشد سنتی فرایند","textChars":38,"textLines":1,"bbox":[62,48,1156,72]}
+{"kind":"textbox","id":"sh/rap0f61s","slide":2,"text":"می‌شود پخش تماس و دفتر بین روزانه عملیات از زیادی بخش\nمی‌ماند باقی افراد حافظه و پیام‌رسان در دیگر بخشی","textPreview":"می‌شود پخش تماس و دفتر بین روزانه عملیات از زیادی بخش | می‌ماند باقی افراد حافظه و پیام‌رسان در دیگر بخشی","textChars":103,"textLines":2,"bbox":[640,145,570,80]}
+{"kind":"shape","id":"sh/q9gz6107","slide":2,"bbox":[1172,272,10,10]}
+{"kind":"textbox","id":"sh/tgni5wje","slide":2,"text":"پراکنده اطلاعات","textPreview":"پراکنده اطلاعات","textChars":15,"textLines":1,"bbox":[650,265,508,35]}
+{"kind":"textbox","id":"sh/8fuhwr2t","slide":2,"text":"نمی‌شود. ثبت واحد مسیر یک در تعمیر وضعیت و مشتری سوابق پذیرش","textPreview":"نمی‌شود. ثبت واحد مسیر یک در تعمیر وضعیت و مشتری سوابق پذیرش","textChars":60,"textLines":1,"bbox":[650,307,540,72]}
+{"kind":"shape","id":"sh/2don2p47","slide":2,"bbox":[1172,412,10,10]}
+{"kind":"textbox","id":"sh/3exobuls","slide":2,"text":"مشتری برای پایین شفافیت","textPreview":"مشتری برای پایین شفافیت","textChars":23,"textLines":1,"bbox":[650,405,508,35]}
+{"kind":"textbox","id":"sh/4f654zmd","slide":2,"text":"است. تکراری تماس‌های به ناچار دستگاه وضعیت از اطلاع برای مشتری","textPreview":"است. تکراری تماس‌های به ناچار دستگاه وضعیت از اطلاع برای مشتری","textChars":62,"textLines":1,"bbox":[650,447,540,72]}
+{"kind":"shape","id":"sh/p0f6dk3y","slide":2,"bbox":[1172,552,10,10]}
+{"kind":"textbox","id":"sh/q1on6p43","slide":2,"text":"تیم و مالی دشوار کنترل","textPreview":"تیم و مالی دشوار کنترل","textChars":22,"textLines":1,"bbox":[650,545,508,35]}
+{"kind":"textbox","id":"sh/r2xofulo","slide":2,"text":"است. پیگیری قابل به‌سختی همکاران عملکرد و ارجاع تسویه فاکتور","textPreview":"است. پیگیری قابل به‌سختی همکاران عملکرد و ارجاع تسویه فاکتور","textChars":60,"textLines":1,"bbox":[650,587,540,72]}
+{"kind":"shape","id":"sh/c3q58zm9","slide":2,"bbox":[54,142,520,485]}
+{"kind":"textbox","id":"sh/d4z6h43u","slide":2,"text":"پرهزینه اما روزمره مسئله‌ای","textPreview":"پرهزینه اما روزمره مسئله‌ای","textChars":27,"textLines":1,"bbox":[92,186,440,58]}
+{"kind":"textbox","id":"sh/e58na94f","slide":2,"text":"دارد گردش‌کار یک دستگاه هر\nنباشد مشاهده قابل و ثبت گردش‌کار اگر\nمی‌شود بیشتر نارضایتی و تأخیر و خطا","textPreview":"دارد گردش‌کار یک دستگاه هر | نباشد مشاهده قابل و ثبت گردش‌کار اگر | می‌شود بیشتر نارضایتی و تأخیر و خطا","textChars":99,"textLines":3,"bbox":[92,275,440,150]}
+{"kind":"shape","id":"sh/z6hojel0","slide":2,"bbox":[92,493,330,4]}
+{"kind":"textbox","id":"sh/ba14re1s","slide":2,"text":"می‌کند. دیجیتال را گردش‌کار این پیوو","textPreview":"می‌کند. دیجیتال را گردش‌کار این پیوو","textChars":36,"textLines":1,"bbox":[92,530,420,54]}
+{"kind":"notes","id":"nt/sunla7","slide":2,"text":"[Sources]\n- تعریف مسئله بر اساس گردش‌کار پیاده‌سازی‌شده در پروژه و صفحات معرفی محصول\n[/Sources]"}
+{"kind":"slide","id":"sl/sfpcmm","slide":3,"title":"۰3","textShapes":13}
+{"kind":"shape","id":"sh/gjmxkr61","slide":3,"bbox":[0,0,1280,8]}
+{"kind":"shape","id":"sh/vidwrm5g","slide":3,"bbox":[1120,0,160,8]}
+{"kind":"textbox","id":"sh/uh4vihov","slide":3,"text":"۰3","textPreview":"۰3","textChars":2,"textLines":1,"bbox":[40,666,70,24]}
+{"kind":"textbox","id":"sh/tgvepcna","slide":3,"text":"PEYVO  |  PITCH DECK","textPreview":"PEYVO  |  PITCH DECK","textChars":20,"textLines":1,"bbox":[850,666,390,22]}
+{"kind":"textbox","id":"sh/8fmdg76p","slide":3,"text":"تعمیر مسیر تمام برای پنل یک","textPreview":"تعمیر مسیر تمام برای پنل یک","textChars":27,"textLines":1,"bbox":[62,48,1156,72]}
+{"kind":"textbox","id":"sh/6dkvexoz","slide":3,"text":"می‌کند ثبت دستگاه ورود لحظه از را تعمیر فرایند پیوو\nاست پیگیری و مشاهده قابل تسویه پایان تا مسیر این","textPreview":"می‌کند ثبت دستگاه ورود لحظه از را تعمیر فرایند پیوو | است پیگیری و مشاهده قابل تسویه پایان تا مسیر این","textChars":100,"textLines":2,"bbox":[540,148,670,76]}
+{"kind":"shape","id":"sh/lcbelsne","slide":3,"bbox":[1140,260,54,54]}
+{"kind":"textbox","id":"sh/kb2dcn6t","slide":3,"text":"۱","textPreview":"۱","textChars":1,"textLines":1,"bbox":[1140,270,54,32]}
+{"kind":"textbox","id":"sh/ah07m5wv","slide":3,"text":"پذیرش","textPreview":"پذیرش","textChars":5,"textLines":1,"bbox":[730,260,370,38]}
+{"kind":"textbox","id":"sh/bi98vadg","slide":3,"text":"ایراد شرح و دستگاه مشتری ثبت","textPreview":"ایراد شرح و دستگاه مشتری ثبت","textChars":28,"textLines":1,"bbox":[600,305,500,44]}
+{"kind":"shape","id":"sh/cjipofe1","slide":3,"bbox":[1166,320,3,50]}
+{"kind":"shape","id":"sh/xkbqxkvm","slide":3,"bbox":[1140,378,54,54]}
+{"kind":"textbox","id":"sh/2d07i5wz","slide":3,"text":"۲","textPreview":"۲","textChars":1,"textLines":1,"bbox":[1140,388,54,32]}
+{"kind":"textbox","id":"sh/3e98rqxk","slide":3,"text":"تعمیر مدیریت","textPreview":"تعمیر مدیریت","textChars":12,"textLines":1,"bbox":[730,378,370,38]}
+{"kind":"textbox","id":"sh/ofipkvep","slide":3,"text":"ارجاع و قطعات تکنسین وضعیت","textPreview":"ارجاع و قطعات تکنسین وضعیت","textChars":26,"textLines":1,"bbox":[600,423,500,44]}
+{"kind":"shape","id":"sh/pgrqt0fa","slide":3,"bbox":[1166,438,3,50]}
+{"kind":"shape","id":"sh/epg7elwn","slide":3,"bbox":[1140,496,54,54]}
+{"kind":"textbox","id":"sh/faponqx8","slide":3,"text":"۳","textPreview":"۳","textChars":1,"textLines":1,"bbox":[1140,506,54,32]}
+{"kind":"textbox","id":"sh/ju54vmd0","slide":3,"text":"تسویه و تحویل","textPreview":"تسویه و تحویل","textChars":13,"textLines":1,"bbox":[730,496,370,38]}
+{"kind":"textbox","id":"sh/itwnmhcf","slide":3,"text":"اطلاع‌رسانی و پرداخت فاکتور","textPreview":"اطلاع‌رسانی و پرداخت فاکتور","textChars":27,"textLines":1,"bbox":[600,541,500,44]}
+{"kind":"image","id":"im/6d8ryxwb","slide":3,"name":"","geometry":"roundRect","bbox":[54,142,430,486]}
+{"kind":"notes","id":"nt/sfpcmm","slide":3,"text":"[Sources]\n- اسکرین‌شات و متن قابلیت‌ها: فایل‌های داخلی پروژه پیوو\n[/Sources]"}
+{"kind":"slide","id":"sl/c5jgwp","slide":4,"title":"۰4","textShapes":16}
+{"kind":"shape","id":"sh/6p0vahsn","slide":4,"bbox":[0,0,1280,8]}
+{"kind":"shape","id":"sh/tsbelcre","slide":4,"bbox":[1120,0,160,8]}
+{"kind":"textbox","id":"sh/sr2xc7at","slide":4,"text":"۰4","textPreview":"۰4","textChars":2,"textLines":1,"bbox":[40,666,70,24]}
+{"kind":"textbox","id":"sh/futwnm9k","slide":4,"text":"PEYVO  |  PITCH DECK","textPreview":"PEYVO  |  PITCH DECK","textChars":20,"textLines":1,"bbox":[850,666,390,22]}
+{"kind":"textbox","id":"sh/etkfehsz","slide":4,"text":"است شده ساخته اکوسیستم ضلع سه برای محصول","textPreview":"است شده ساخته اکوسیستم ضلع سه برای محصول","textChars":40,"textLines":1,"bbox":[62,48,1156,72]}
+{"kind":"shape","id":"sh/1wbepwra","slide":4,"bbox":[62,160,330,8]}
+{"kind":"textbox","id":"sh/gv2xgrqp","slide":4,"text":"تعمیرگاه مدیریت","textPreview":"تعمیرگاه مدیریت","textChars":15,"textLines":1,"bbox":[62,196,330,48]}
+{"kind":"shape","id":"sh/3ydwr69g","slide":4,"bbox":[364,300,10,10]}
+{"kind":"textbox","id":"sh/2xkfi18v","slide":4,"text":"تعمیر گردش‌کار و پذیرش","textPreview":"تعمیر گردش‌کار و پذیرش","textChars":22,"textLines":1,"bbox":[62,286,280,62]}
+{"kind":"shape","id":"sh/gne10v2h","slide":4,"bbox":[364,392,10,10]}
+{"kind":"textbox","id":"sh/1onit032","slide":4,"text":"فاکتور و انبار مشتریان","textPreview":"فاکتور و انبار مشتریان","textChars":22,"textLines":1,"bbox":[62,378,280,62]}
+{"kind":"shape","id":"sh/elwjy5kb","slide":4,"bbox":[364,484,10,10]}
+{"kind":"textbox","id":"sh/fm507qlw","slide":4,"text":"تسویه و گزارش کارمندان","textPreview":"تسویه و گزارش کارمندان","textChars":22,"textLines":1,"bbox":[62,470,280,62]}
+{"kind":"shape","id":"sh/ore14f2t","slide":4,"bbox":[446,160,330,8]}
+{"kind":"textbox","id":"sh/ps72xk3y","slide":4,"text":"مشتری تجربه","textPreview":"مشتری تجربه","textChars":11,"textLines":1,"bbox":[446,196,330,48]}
+{"kind":"shape","id":"sh/2pwj25kn","slide":4,"bbox":[748,300,10,10]}
+{"kind":"textbox","id":"sh/3q5kval8","slide":4,"text":"تعمیر وضعیت پیگیری","textPreview":"تعمیر وضعیت پیگیری","textChars":18,"textLines":1,"bbox":[446,286,280,62]}
+{"kind":"shape","id":"sh/cfy18f2p","slide":4,"bbox":[748,392,10,10]}
+{"kind":"textbox","id":"sh/dg721k3a","slide":4,"text":"دستگاه‌ها سوابق","textPreview":"دستگاه‌ها سوابق","textChars":15,"textLines":1,"bbox":[446,378,280,62]}
+{"kind":"shape","id":"sh/lc3ilkbe","slide":4,"bbox":[748,484,10,10]}
+{"kind":"textbox","id":"sh/kbu1sfut","slide":4,"text":"وضعیت اعلان و گفت‌وگو","textPreview":"وضعیت اعلان و گفت‌وگو","textChars":21,"textLines":1,"bbox":[446,470,280,62]}
+{"kind":"shape","id":"sh/zal0jat8","slide":4,"bbox":[830,160,330,8]}
+{"kind":"textbox","id":"sh/y9cjq5cn","slide":4,"text":"همکاری شبکه","textPreview":"همکاری شبکه","textChars":11,"textLines":1,"bbox":[830,196,330,48]}
+{"kind":"shape","id":"sh/90n2p4ba","slide":4,"bbox":[1132,300,10,10]}
+{"kind":"textbox","id":"sh/8ze1wzu5","slide":4,"text":"تخصصی تعمیر ارجاع","textPreview":"تخصصی تعمیر ارجاع","textChars":17,"textLines":1,"bbox":[830,286,280,62]}
+{"kind":"shape","id":"sh/7el0nutk","slide":4,"bbox":[1132,392,10,10]}
+{"kind":"textbox","id":"sh/mdcjupcz","slide":4,"text":"دریافت و ارسال نحوه ثبت","textPreview":"دریافت و ارسال نحوه ثبت","textChars":23,"textLines":1,"bbox":[830,378,280,62]}
+{"kind":"shape","id":"sh/p4jid0v6","slide":4,"bbox":[1132,484,10,10]}
+{"kind":"textbox","id":"sh/oja1kvul","slide":4,"text":"همکاران میان تسویه","textPreview":"همکاران میان تسویه","textChars":18,"textLines":1,"bbox":[830,470,280,62]}
+{"kind":"shape","id":"sh/udo7yxo7","slide":4,"bbox":[62,603,1098,1]}
+{"kind":"textbox","id":"sh/fyxo725s","slide":4,"text":"مشترک داده هسته یک با مشتری پنل و اندروید اپلیکیشن وب","textPreview":"مشترک داده هسته یک با مشتری پنل و اندروید اپلیکیشن وب","textChars":53,"textLines":1,"bbox":[62,625,1098,32]}
+{"kind":"notes","id":"nt/c5jgwp","slide":4,"text":"[Sources]\n- قابلیت‌ها: کد و صفحات داخلی پروژه پیوو شامل tickets، invoices، customer و collaboration\n[/Sources]"}
+{"kind":"slide","id":"sl/h8e6tc","slide":5,"title":"۰5","textShapes":14}
+{"kind":"shape","id":"sh/8z6tc32l","slide":5,"bbox":[0,0,1280,8]}
+{"kind":"shape","id":"sh/7yxsjy10","slide":5,"bbox":[1120,0,160,8]}
+{"kind":"textbox","id":"sh/6x4batkf","slide":5,"text":"۰5","textPreview":"۰5","textChars":2,"textLines":1,"bbox":[40,666,70,24]}
+{"kind":"textbox","id":"sh/lwvahoju","slide":5,"text":"PEYVO  |  PITCH DECK","textPreview":"PEYVO  |  PITCH DECK","textChars":20,"textLines":1,"bbox":[850,666,390,22]}
+{"kind":"textbox","id":"sh/kvmt8j29","slide":5,"text":"تکرارشونده درآمدی مدل است روشن هدف بازار","textPreview":"تکرارشونده درآمدی مدل است روشن هدف بازار","textChars":40,"textLines":1,"bbox":[62,48,1156,72]}
+{"kind":"textbox","id":"sh/judsfe1o","slide":5,"text":"هدف مشتریان","textPreview":"هدف مشتریان","textChars":11,"textLines":1,"bbox":[690,160,500,52]}
+{"kind":"shape","id":"sh/yt4b6tkj","slide":5,"bbox":[1172,252,10,10]}
+{"kind":"textbox","id":"sh/xsvadojy","slide":5,"text":"مستقل تعمیرکار","textPreview":"مستقل تعمیرکار","textChars":14,"textLines":1,"bbox":[690,245,468,35]}
+{"kind":"textbox","id":"sh/crm94j2d","slide":5,"text":"حرفه‌ای فاکتور و مشتری سابقه نظم نیازمند","textPreview":"حرفه‌ای فاکتور و مشتری سابقه نظم نیازمند","textChars":40,"textLines":1,"bbox":[690,287,500,72]}
+{"kind":"shape","id":"sh/y1szmdor","slide":5,"bbox":[1172,385,10,10]}
+{"kind":"textbox","id":"sh/z210fipc","slide":5,"text":"رشد حال در تعمیرگاه","textPreview":"رشد حال در تعمیرگاه","textChars":19,"textLines":1,"bbox":[690,378,468,35]}
+{"kind":"textbox","id":"sh/0nuhon6x","slide":5,"text":"تیم مدیریت و گزارش کار تقسیم نیازمند","textPreview":"تیم مدیریت و گزارش کار تقسیم نیازمند","textChars":36,"textLines":1,"bbox":[690,420,500,72]}
+{"kind":"shape","id":"sh/lo3ihs72","slide":5,"bbox":[1172,518,10,10]}
+{"kind":"textbox","id":"sh/qxszid8f","slide":5,"text":"چندشعبه‌ای خدمات مراکز","textPreview":"چندشعبه‌ای خدمات مراکز","textChars":22,"textLines":1,"bbox":[690,511,468,35]}
+{"kind":"textbox","id":"sh/by1gbip0","slide":5,"text":"واحد چند کنترل و یکپارچه دید نیازمند","textPreview":"واحد چند کنترل و یکپارچه دید نیازمند","textChars":36,"textLines":1,"bbox":[690,553,500,72]}
+{"kind":"shape","id":"sh/czahkn6l","slide":5,"bbox":[70,158,520,470]}
+{"kind":"textbox","id":"sh/d0jids76","slide":5,"text":"درآمدی مدل","textPreview":"درآمدی مدل","textChars":10,"textLines":1,"bbox":[110,205,440,48]}
+{"kind":"textbox","id":"sh/2t8zet8j","slide":5,"text":"(SaaS) سرویس به‌عنوان نرم‌افزار اشتراک","textPreview":"(SaaS) سرویس به‌عنوان نرم‌افزار اشتراک","textChars":38,"textLines":1,"bbox":[110,300,440,70]}
+{"kind":"textbox","id":"sh/3uhg7yp4","slide":5,"text":"تعمیرگاه کاری مدل و اندازه با متناسب پلن‌های\nکسب‌وکار رشد با هم‌زمان اشتراک ارتقای امکان","textPreview":"تعمیرگاه کاری مدل و اندازه با متناسب پلن‌های | کسب‌وکار رشد با هم‌زمان اشتراک ارتقای امکان","textChars":88,"textLines":2,"bbox":[110,396,440,120]}
+{"kind":"textbox","id":"sh/7mdoza1k","slide":5,"text":"اشتراک ارتقای → محصول تجربه → رایگان شروع","textPreview":"اشتراک ارتقای → محصول تجربه → رایگان شروع","textChars":41,"textLines":1,"bbox":[110,548,440,40]}
+{"kind":"notes","id":"nt/h8e6tc","slide":5,"text":"[Sources]\n- مدل اشتراک و دسته‌بندی کاربران: lib/plans.ts و app/signup/page.tsx\n[/Sources]"}
+{"kind":"slide","id":"sl/fx2y1x","slide":6,"title":"۰6","textShapes":18}
+{"kind":"shape","id":"sh/8bihsj2l","slide":6,"bbox":[0,0,1280,8]}
+{"kind":"shape","id":"sh/nq9gzelg","slide":6,"bbox":[1120,0,160,8]}
+{"kind":"textbox","id":"sh/mp0zq9kv","slide":6,"text":"۰6","textPreview":"۰6","textChars":2,"textLines":1,"bbox":[40,666,70,24]}
+{"kind":"textbox","id":"sh/xgby5o3i","slide":6,"text":"PEYVO  |  PITCH DECK","textPreview":"PEYVO  |  PITCH DECK","textChars":20,"textLines":1,"bbox":[850,666,390,22]}
+{"kind":"textbox","id":"sh/wf2hwj2x","slide":6,"text":"است رشد مرحله به ورود آماده و شده ساخته محصول","textPreview":"است رشد مرحله به ورود آماده و شده ساخته محصول","textChars":45,"textLines":1,"bbox":[62,48,1156,72]}
+{"kind":"textbox","id":"sh/ve9g3elc","slide":6,"text":"اولیه فعلی: مرحله","textPreview":"اولیه فعلی: مرحله","textChars":17,"textLines":1,"bbox":[62,145,350,48]}
+{"kind":"textbox","id":"sh/ad0zu9kr","slide":6,"text":"است یافته توسعه اندروید و وب عملیاتی نسخه\nهستند استفاده قابل اکنون محصول اصلی مسیرهای","textPreview":"است یافته توسعه اندروید و وب عملیاتی نسخه | هستند استفاده قابل اکنون محصول اصلی مسیرهای","textChars":85,"textLines":2,"bbox":[480,145,730,66]}
+{"kind":"shape","id":"sh/dk7ytk3y","slide":6,"bbox":[110,356,1060,3]}
+{"kind":"shape","id":"sh/cjyxkz2t","slide":6,"bbox":[327,332,50,50]}
+{"kind":"textbox","id":"sh/y1gbixwr","slide":6,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[327,341,50,28]}
+{"kind":"textbox","id":"sh/j2pcr2xc","slide":6,"text":"محصول","textPreview":"محصول","textChars":5,"textLines":1,"bbox":[135,418,220,38]}
+{"kind":"textbox","id":"sh/k3ytk7ex","slide":6,"text":"اندروید اپ و وب نسخه","textPreview":"اندروید اپ و وب نسخه","textChars":20,"textLines":1,"bbox":[135,468,220,70]}
+{"kind":"shape","id":"sh/l47utsfi","slide":6,"bbox":[597,332,50,50]}
+{"kind":"textbox","id":"sh/65gbmxw3","slide":6,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[597,341,50,28]}
+{"kind":"textbox","id":"sh/76pcv2x8","slide":6,"text":"عملیات","textPreview":"عملیات","textChars":6,"textLines":1,"bbox":[405,418,220,38]}
+{"kind":"textbox","id":"sh/87yto7et","slide":6,"text":"پیامک و فاکتور پذیرش","textPreview":"پیامک و فاکتور پذیرش","textChars":20,"textLines":1,"bbox":[405,468,220,70]}
+{"kind":"shape","id":"sh/t87uxcfe","slide":6,"bbox":[867,332,50,50]}
+{"kind":"textbox","id":"sh/ut0bqhwz","slide":6,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[867,341,50,28]}
+{"kind":"textbox","id":"sh/vu9czmxk","slide":6,"text":"اعتماد","textPreview":"اعتماد","textChars":6,"textLines":1,"bbox":[675,418,220,38]}
+{"kind":"textbox","id":"sh/ry9s7mts","slide":6,"text":"پرداخت درگاه و دامنه","textPreview":"پرداخت درگاه و دامنه","textChars":20,"textLines":1,"bbox":[675,468,220,70]}
+{"kind":"shape","id":"sh/qx0behc7","slide":6,"bbox":[1137,332,50,50]}
+{"kind":"textbox","id":"sh/d0ba9wbi","slide":6,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[1137,341,50,28]}
+{"kind":"textbox","id":"sh/szitgrux","slide":6,"text":"انتشار","textPreview":"انتشار","textChars":6,"textLines":1,"bbox":[945,418,220,38]}
+{"kind":"textbox","id":"sh/3a9s32tg","slide":6,"text":"اولیه کاربران جذب آماده","textPreview":"اولیه کاربران جذب آماده","textChars":23,"textLines":1,"bbox":[945,468,220,70]}
+{"kind":"shape","id":"sh/i90raxcv","slide":6,"bbox":[62,596,1156,1]}
+{"kind":"textbox","id":"sh/5wra5cbm","slide":6,"text":"همکاری شبکه توسعه و تعمیرگاه‌ها جذب تولیدی استقرار پایدار زیرساخت بعدی: تمرکز","textPreview":"همکاری شبکه توسعه و تعمیرگاه‌ها جذب تولیدی استقرار پایدار زیرساخت بعدی: تمرکز","textChars":77,"textLines":1,"bbox":[62,622,1156,36]}
+{"kind":"notes","id":"nt/fx2y1x","slide":6,"text":"[Sources]\n- وضعیت محصول: مخزن پروژه، فایل APK، مسیرهای پرداخت، پیامک و انتشار فروشگاه‌ها\n[/Sources]"}
+{"kind":"slide","id":"sl/tjuw6b","slide":7,"title":"۰7","textShapes":13}
+{"kind":"shape","id":"sh/kn21srap","slide":7,"bbox":[0,0,1280,8]}
+{"kind":"shape","id":"sh/zmt0jm94","slide":7,"bbox":[1120,0,160,8]}
+{"kind":"textbox","id":"sh/ylkjqhsj","slide":7,"text":"۰7","textPreview":"۰7","textChars":2,"textLines":1,"bbox":[40,666,70,24]}
+{"kind":"textbox","id":"sh/9sv2pwr6","slide":7,"text":"PEYVO  |  PITCH DECK","textPreview":"PEYVO  |  PITCH DECK","textChars":20,"textLines":1,"bbox":[850,666,390,22]}
+{"kind":"textbox","id":"sh/8rm1wral","slide":7,"text":"می‌کند پایدار را پیوو رشد مسیر آروان حمایت","textPreview":"می‌کند پایدار را پیوو رشد مسیر آروان حمایت","textChars":42,"textLines":1,"bbox":[62,48,1156,72]}
+{"kind":"textbox","id":"sh/7qdknm90","slide":7,"text":"زیرساختی نیاز","textPreview":"زیرساختی نیاز","textChars":13,"textLines":1,"bbox":[720,150,470,50]}
+{"kind":"shape","id":"sh/mpkju1sv","slide":7,"bbox":[1172,242,10,10]}
+{"kind":"textbox","id":"sh/pwridcr2","slide":7,"text":"ابری رایانش و سرور","textPreview":"ابری رایانش و سرور","textChars":18,"textLines":1,"bbox":[720,235,438,35]}
+{"kind":"textbox","id":"sh/ovi1k7ah","slide":7,"text":"API و اپلیکیشن پایدار اجرای","textPreview":"API و اپلیکیشن پایدار اجرای","textChars":27,"textLines":1,"bbox":[720,277,470,72]}
+{"kind":"shape","id":"sh/adgn654v","slide":7,"bbox":[1172,372,10,10]}
+{"kind":"textbox","id":"sh/vepoza50","slide":7,"text":"ذخیره‌سازی و دیتابیس","textPreview":"ذخیره‌سازی و دیتابیس","textChars":20,"textLines":1,"bbox":[720,365,438,35]}
+{"kind":"textbox","id":"sh/wfy58fml","slide":7,"text":"پشتیبان نسخه‌های و فایل‌ها عملیاتی داده‌های","textPreview":"پشتیبان نسخه‌های و فایل‌ها عملیاتی داده‌های","textChars":43,"textLines":1,"bbox":[720,407,470,72]}
+{"kind":"shape","id":"sh/xgr61kn6","slide":7,"bbox":[1172,502,10,10]}
+{"kind":"textbox","id":"sh/ih0nap4r","slide":7,"text":"امنیت و CDN","textPreview":"امنیت و CDN","textChars":11,"textLines":1,"bbox":[720,495,438,35]}
+{"kind":"textbox","id":"sh/ji9o3u5c","slide":7,"text":"ایران سراسر کاربران برای امن و سریع دسترسی","textPreview":"ایران سراسر کاربران برای امن و سریع دسترسی","textChars":42,"textLines":1,"bbox":[720,537,470,72]}
+{"kind":"shape","id":"sh/kji5czmx","slide":7,"bbox":[62,145,570,470]}
+{"kind":"textbox","id":"sh/5kr65kni","slide":7,"text":"حمایت هدف","textPreview":"حمایت هدف","textChars":9,"textLines":1,"bbox":[102,195,490,45]}
+{"kind":"textbox","id":"sh/6l07ep4n","slide":7,"text":"اولیه کاربران جذب دوره در زیرساخت هزینه کاهش\nمحصول سراسری رشد برای اتکا قابل بستری ایجاد","textPreview":"اولیه کاربران جذب دوره در زیرساخت هزینه کاهش | محصول سراسری رشد برای اتکا قابل بستری ایجاد","textChars":88,"textLines":2,"bbox":[102,285,490,160]}
+{"kind":"shape","id":"sh/7m9o7u58","slide":7,"bbox":[102,483,390,5]}
+{"kind":"textbox","id":"sh/3at4vu1g","slide":7,"text":"peyvo.ir  |  support@peyvo.ir","textPreview":"peyvo.ir  |  support@peyvo.ir","textChars":29,"textLines":1,"bbox":[102,527,490,44]}
+{"kind":"notes","id":"nt/tjuw6b","slide":7,"text":"[Sources]\n- نیازهای زیرساختی بر اساس معماری فعلی پروژه: Next.js، پایگاه داده، فایل، بکاپ و CDN\n[/Sources]"}

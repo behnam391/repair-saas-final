@@ -1,0 +1,1139 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/h8e6tc",
+    "id": "h8e6tc",
+    "slide": 5,
+    "layoutId": "61c9ff55-592a-4d35-8534-3d3926d94e8b",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#06101F",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Tahoma"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "61c9ff55-592a-4d35-8534-3d3926d94e8b",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8z6tc32l",
+      "id": "1",
+      "bbox": [
+        0,
+        0,
+        1280,
+        8
+      ],
+      "geometry": "rect",
+      "fillColor": "#159CF4",
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7yxsjy10",
+      "id": "2",
+      "bbox": [
+        1120,
+        0,
+        160,
+        8
+      ],
+      "geometry": "rect",
+      "fillColor": "#66D437",
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6x4batkf",
+      "id": "3",
+      "bbox": [
+        40,
+        666,
+        70,
+        24
+      ],
+      "geometry": "rect",
+      "text": "۰5",
+      "textPreview": "۰5",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 13,
+        "typeface": "Tahoma",
+        "color": "#91A5BC",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "۰5"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "۰5",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "typeface": "Tahoma",
+            "color": "#91A5BC",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "۰5",
+              "fontSize": 13,
+              "typeface": "Tahoma",
+              "color": "#91A5BC",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lwvahoju",
+      "id": "4",
+      "bbox": [
+        850,
+        666,
+        390,
+        22
+      ],
+      "geometry": "rect",
+      "text": "PEYVO  |  PITCH DECK",
+      "textPreview": "PEYVO  |  PITCH DECK",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 12,
+        "typeface": "Tahoma",
+        "color": "#91A5BC",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PEYVO  |  PITCH DECK"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PEYVO  |  PITCH DECK",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Tahoma",
+            "color": "#91A5BC",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "PEYVO  |  PITCH DECK",
+              "fontSize": 12,
+              "typeface": "Tahoma",
+              "color": "#91A5BC",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kvmt8j29",
+      "id": "5",
+      "bbox": [
+        62,
+        48,
+        1156,
+        72
+      ],
+      "geometry": "rect",
+      "text": "تکرارشونده درآمدی مدل است روشن هدف بازار",
+      "textPreview": "تکرارشونده درآمدی مدل است روشن هدف بازار",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 38,
+        "typeface": "Tahoma",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "تکرارشونده درآمدی مدل است روشن هدف بازار"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "تکرارشونده درآمدی مدل است روشن هدف بازار",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "typeface": "Tahoma",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "تکرارشونده درآمدی مدل است روشن هدف بازار",
+              "fontSize": 38,
+              "typeface": "Tahoma",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/judsfe1o",
+      "id": "6",
+      "bbox": [
+        690,
+        160,
+        500,
+        52
+      ],
+      "geometry": "rect",
+      "text": "هدف مشتریان",
+      "textPreview": "هدف مشتریان",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 28,
+        "typeface": "Tahoma",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "هدف مشتریان"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "هدف مشتریان",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Tahoma",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "هدف مشتریان",
+              "fontSize": 28,
+              "typeface": "Tahoma",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yt4b6tkj",
+      "id": "7",
+      "bbox": [
+        1172,
+        252,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#159CF4",
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xsvadojy",
+      "id": "8",
+      "bbox": [
+        690,
+        245,
+        468,
+        35
+      ],
+      "geometry": "rect",
+      "text": "مستقل تعمیرکار",
+      "textPreview": "مستقل تعمیرکار",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Tahoma",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "مستقل تعمیرکار"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "مستقل تعمیرکار",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Tahoma",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "مستقل تعمیرکار",
+              "fontSize": 22,
+              "typeface": "Tahoma",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/crm94j2d",
+      "id": "9",
+      "bbox": [
+        690,
+        287,
+        500,
+        72
+      ],
+      "geometry": "rect",
+      "text": "حرفه‌ای فاکتور و مشتری سابقه نظم نیازمند",
+      "textPreview": "حرفه‌ای فاکتور و مشتری سابقه نظم نیازمند",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "Tahoma",
+        "color": "#B7C6D8",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "حرفه‌ای فاکتور و مشتری سابقه نظم نیازمند"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "حرفه‌ای فاکتور و مشتری سابقه نظم نیازمند",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Tahoma",
+            "color": "#B7C6D8",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "حرفه‌ای فاکتور و مشتری سابقه نظم نیازمند",
+              "fontSize": 16,
+              "typeface": "Tahoma",
+              "color": "#B7C6D8",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y1szmdor",
+      "id": "10",
+      "bbox": [
+        1172,
+        385,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#66D437",
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/z210fipc",
+      "id": "11",
+      "bbox": [
+        690,
+        378,
+        468,
+        35
+      ],
+      "geometry": "rect",
+      "text": "رشد حال در تعمیرگاه",
+      "textPreview": "رشد حال در تعمیرگاه",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Tahoma",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "رشد حال در تعمیرگاه"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "رشد حال در تعمیرگاه",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Tahoma",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "رشد حال در تعمیرگاه",
+              "fontSize": 22,
+              "typeface": "Tahoma",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0nuhon6x",
+      "id": "12",
+      "bbox": [
+        690,
+        420,
+        500,
+        72
+      ],
+      "geometry": "rect",
+      "text": "تیم مدیریت و گزارش کار تقسیم نیازمند",
+      "textPreview": "تیم مدیریت و گزارش کار تقسیم نیازمند",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "Tahoma",
+        "color": "#B7C6D8",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "تیم مدیریت و گزارش کار تقسیم نیازمند"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "تیم مدیریت و گزارش کار تقسیم نیازمند",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Tahoma",
+            "color": "#B7C6D8",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "تیم مدیریت و گزارش کار تقسیم نیازمند",
+              "fontSize": 16,
+              "typeface": "Tahoma",
+              "color": "#B7C6D8",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lo3ihs72",
+      "id": "13",
+      "bbox": [
+        1172,
+        518,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#1276DB",
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qxszid8f",
+      "id": "14",
+      "bbox": [
+        690,
+        511,
+        468,
+        35
+      ],
+      "geometry": "rect",
+      "text": "چندشعبه‌ای خدمات مراکز",
+      "textPreview": "چندشعبه‌ای خدمات مراکز",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Tahoma",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "چندشعبه‌ای خدمات مراکز"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "چندشعبه‌ای خدمات مراکز",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Tahoma",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "چندشعبه‌ای خدمات مراکز",
+              "fontSize": 22,
+              "typeface": "Tahoma",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/by1gbip0",
+      "id": "15",
+      "bbox": [
+        690,
+        553,
+        500,
+        72
+      ],
+      "geometry": "rect",
+      "text": "واحد چند کنترل و یکپارچه دید نیازمند",
+      "textPreview": "واحد چند کنترل و یکپارچه دید نیازمند",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 16,
+        "typeface": "Tahoma",
+        "color": "#B7C6D8",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "واحد چند کنترل و یکپارچه دید نیازمند"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "واحد چند کنترل و یکپارچه دید نیازمند",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "typeface": "Tahoma",
+            "color": "#B7C6D8",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "واحد چند کنترل و یکپارچه دید نیازمند",
+              "fontSize": 16,
+              "typeface": "Tahoma",
+              "color": "#B7C6D8",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/czahkn6l",
+      "id": "16",
+      "bbox": [
+        70,
+        158,
+        520,
+        470
+      ],
+      "geometry": "roundRect",
+      "fillColor": "#0D2138",
+      "lineColor": "#28425F",
+      "lineWidth": 1
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d0jids76",
+      "id": "17",
+      "bbox": [
+        110,
+        205,
+        440,
+        48
+      ],
+      "geometry": "rect",
+      "text": "درآمدی مدل",
+      "textPreview": "درآمدی مدل",
+      "resolvedFontSize": 28,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 28,
+        "typeface": "Tahoma",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "درآمدی مدل"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "درآمدی مدل",
+          "resolvedTextStyle": {
+            "fontSize": 28,
+            "typeface": "Tahoma",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "درآمدی مدل",
+              "fontSize": 28,
+              "typeface": "Tahoma",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2t8zet8j",
+      "id": "18",
+      "bbox": [
+        110,
+        300,
+        440,
+        70
+      ],
+      "geometry": "rect",
+      "text": "(SaaS) سرویس به‌عنوان نرم‌افزار اشتراک",
+      "textPreview": "(SaaS) سرویس به‌عنوان نرم‌افزار اشتراک",
+      "resolvedFontSize": 27,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 27,
+        "typeface": "Tahoma",
+        "color": "#66D437",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "(SaaS) سرویس به‌عنوان نرم‌افزار"
+          },
+          {
+            "index": 2,
+            "text": "اشتراک"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "(SaaS) سرویس به‌عنوان نرم‌افزار اشتراک",
+          "resolvedTextStyle": {
+            "fontSize": 27,
+            "typeface": "Tahoma",
+            "color": "#66D437",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "(SaaS) سرویس به‌عنوان نرم‌افزار اشتراک",
+              "fontSize": 27,
+              "typeface": "Tahoma",
+              "color": "#66D437",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3uhg7yp4",
+      "id": "19",
+      "bbox": [
+        110,
+        396,
+        440,
+        120
+      ],
+      "geometry": "rect",
+      "text": "تعمیرگاه کاری مدل و اندازه با متناسب پلن‌های\nکسب‌وکار رشد با هم‌زمان اشتراک ارتقای امکان",
+      "textPreview": "تعمیرگاه کاری مدل و اندازه با متناسب پلن‌های | کسب‌وکار رشد با هم‌زمان اشتراک ارتقای امکان",
+      "resolvedFontSize": 21,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 21,
+        "typeface": "Tahoma",
+        "color": "#B7C6D8",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "تعمیرگاه کاری مدل و اندازه با متناسب پلن‌های"
+          },
+          {
+            "index": 2,
+            "text": "کسب‌وکار رشد با هم‌زمان اشتراک ارتقای امکان"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "تعمیرگاه کاری مدل و اندازه با متناسب پلن‌های",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "typeface": "Tahoma",
+            "color": "#B7C6D8",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "تعمیرگاه کاری مدل و اندازه با متناسب پلن‌های",
+              "fontSize": 21,
+              "typeface": "Tahoma",
+              "color": "#B7C6D8",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "کسب‌وکار رشد با هم‌زمان اشتراک ارتقای امکان",
+          "resolvedTextStyle": {
+            "fontSize": 21,
+            "typeface": "Tahoma",
+            "color": "#B7C6D8",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "کسب‌وکار رشد با هم‌زمان اشتراک ارتقای امکان",
+              "fontSize": 21,
+              "typeface": "Tahoma",
+              "color": "#B7C6D8",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7mdoza1k",
+      "id": "20",
+      "bbox": [
+        110,
+        548,
+        440,
+        40
+      ],
+      "geometry": "rect",
+      "text": "اشتراک ارتقای → محصول تجربه → رایگان شروع",
+      "textPreview": "اشتراک ارتقای → محصول تجربه → رایگان شروع",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Tahoma",
+        "color": "#159CF4",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "اشتراک ارتقای → محصول تجربه → رایگان شروع"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "اشتراک ارتقای → محصول تجربه → رایگان شروع",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Tahoma",
+            "color": "#159CF4",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "اشتراک ارتقای → محصول تجربه → رایگان شروع",
+              "fontSize": 18,
+              "typeface": "Tahoma",
+              "color": "#159CF4",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

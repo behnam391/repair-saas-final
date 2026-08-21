@@ -22,8 +22,6 @@ import ir.myket.billingclient.util.SkuDetails;
 
 @CapacitorPlugin(name = "MyketBilling")
 public class MyketBillingPlugin extends Plugin {
-    private static final String MYKET_PACKAGE = "ir.mservices.market";
-
     private IabHelper helper;
     private String configuredKey = "";
     private boolean setupReady = false;
@@ -38,7 +36,8 @@ public class MyketBillingPlugin extends Plugin {
     @PluginMethod
     public void isAvailable(PluginCall call) {
         JSObject result = new JSObject();
-        result.put("available", isMyketInstalled());
+        result.put("available", isMarketInstalled());
+        result.put("store", BuildConfig.STORE_ID);
         result.put("packageName", getContext().getPackageName());
         call.resolve(result);
     }
@@ -52,8 +51,8 @@ public class MyketBillingPlugin extends Plugin {
             call.reject("اطلاعات لازم برای خرید مایکت ناقص است.", "INVALID_INPUT");
             return;
         }
-        if (!isMyketInstalled()) {
-            call.reject("برنامه مایکت روی دستگاه نصب نیست.", "MYKET_NOT_INSTALLED");
+        if (!isMarketInstalled()) {
+            call.reject("فروشگاه برنامه روی دستگاه نصب نیست.", "STORE_NOT_INSTALLED");
             return;
         }
         if (operationInProgress) {
@@ -97,8 +96,8 @@ public class MyketBillingPlugin extends Plugin {
             call.reject("کلید عمومی مایکت تنظیم نشده است.", "PUBLIC_KEY_MISSING");
             return;
         }
-        if (!isMyketInstalled()) {
-            call.reject("برنامه مایکت روی دستگاه نصب نیست.", "MYKET_NOT_INSTALLED");
+        if (!isMarketInstalled()) {
+            call.reject("فروشگاه برنامه روی دستگاه نصب نیست.", "STORE_NOT_INSTALLED");
             return;
         }
         if (operationInProgress) {
@@ -216,8 +215,8 @@ public class MyketBillingPlugin extends Plugin {
             callback.failed("راه‌اندازی پرداخت مایکت در حال انجام است.", "SETUP_BUSY", null);
             return;
         }
-        if (!isMyketInstalled()) {
-            callback.failed("برنامه مایکت روی دستگاه نصب نیست.", "MYKET_NOT_INSTALLED", null);
+        if (!isMarketInstalled()) {
+            callback.failed("فروشگاه برنامه روی دستگاه نصب نیست.", "STORE_NOT_INSTALLED", null);
             return;
         }
 
@@ -284,9 +283,9 @@ public class MyketBillingPlugin extends Plugin {
         return value == null ? "" : value.trim();
     }
 
-    private boolean isMyketInstalled() {
+    private boolean isMarketInstalled() {
         try {
-            getContext().getPackageManager().getApplicationInfo(MYKET_PACKAGE, 0);
+            getContext().getPackageManager().getApplicationInfo(BuildConfig.MARKET_PACKAGE, 0);
             return true;
         } catch (PackageManager.NameNotFoundException error) {
             return false;

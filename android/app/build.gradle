@@ -14,18 +14,36 @@ android {
         applicationId "com.peyvo.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
-        versionName "1.2"
+        versionCode 4
+        versionName "1.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        def marketApplicationId = "ir.mservices.market"
-        def marketBindAddress = "ir.mservices.market.InAppBillingService.BIND"
-        manifestPlaceholders = [marketApplicationId: "${marketApplicationId}",
-                                marketBindAddress  : "${marketBindAddress}",
-                                marketPermission   : "${marketApplicationId}.BILLING"]
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    flavorDimensions "store"
+    productFlavors {
+        bazaar {
+            dimension "store"
+            manifestPlaceholders = [
+                marketApplicationId: "com.farsitel.bazaar",
+                marketBindAddress: "ir.cafebazaar.pardakht.InAppBillingService.BIND",
+                marketPermission: "com.farsitel.bazaar.permission.PAY_THROUGH_BAZAAR"
+            ]
+            buildConfigField "String", "STORE_ID", '"bazaar"'
+            buildConfigField "String", "MARKET_PACKAGE", '"com.farsitel.bazaar"'
+        }
+        myket {
+            dimension "store"
+            manifestPlaceholders = [
+                marketApplicationId: "ir.mservices.market",
+                marketBindAddress: "ir.mservices.market.InAppBillingService.BIND",
+                marketPermission: "ir.mservices.market.BILLING"
+            ]
+            buildConfigField "String", "STORE_ID", '"myket"'
+            buildConfigField "String", "MARKET_PACKAGE", '"ir.mservices.market"'
         }
     }
     signingConfigs {

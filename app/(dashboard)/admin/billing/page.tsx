@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { formatJalaliDate } from "@/lib/jalali";
 import {
   hasMyketBillingPlugin,
-  isMyketAndroidApp,
+  getNativeStore,
   MyketBilling,
   type MyketPurchase,
 } from "@/lib/myket-billing-client";
@@ -18,7 +18,7 @@ type Pricing = {
   durations: Record<string, DurRow>;
 };
 
-type StoreMode = "checking" | "web" | "myket";
+type StoreMode = "checking" | "web" | "myket" | "bazaar";
 type MyketConfig = {
   enabled: boolean;
   publicKey: string;
@@ -104,10 +104,11 @@ export default function BillingPage() {
   }
 
   useEffect(() => {
-    const mode: StoreMode = isMyketAndroidApp() ? "myket" : "web";
-    setStoreMode(mode);
-    loadShopAndHistory(mode === "web");
-    if (mode === "myket") initializeMyket();
+    getNativeStore().then((mode) => {
+      setStoreMode(mode);
+      loadShopAndHistory(mode === "web");
+      if (mode === "myket" || mode === "bazaar") initializeStore(mode);
+    });
   }, []);
 
   // Live subscription prices (may have been changed by the super admin).
@@ -146,8 +147,8 @@ export default function BillingPage() {
     }
   }
 
-  async function verifyAndConsumeMyket(purchase: MyketPurchase, intentId?: string, publicKey?: string) {
-    const verifyRes = await fetch("/api/billing/myket/verify", {
+  async function verifyAndConsumeStore(purchase: MyketPurchase, intentId?: string, publicKey?: string, provider: "myket" | "bazaar" = storeMode === "bazaar" ? "bazaar" : "myket") {
+    const verifyRes = await fetch(`/api/billing/${provider}/verify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -158,11 +159,12 @@ export default function BillingPage() {
           orderId: purchase.orderId || null,
           developerPayload: purchase.developerPayload,
           purchaseTime: purchase.purchaseTime,
+          ...(provider === "bazaar" ? { originalJson: purchase.originalJson, signature: purchase.signature } : {}),
         },
       }),
     });
     const verified = await verifyRes.json().catch(() => ({}));
-    if (!verifyRes.ok) throw new Error(verified.message || "تأیید خرید مایکت ناموفق بود.");
+    if (!verifyRes.ok) throw new Error(verified.message || "تأیید خرید فروشگاه ناموفق بود.");
 
     try {
       await MyketBilling.consume({
@@ -179,7 +181,7 @@ export default function BillingPage() {
     return verified;
   }
 
-  async function restoreMyketPurchases(config: MyketConfig) {
+  async function restoreStorePurchases(config: MyketConfig, provider: "myket" | "bazaar" = storeMode === "bazaar" ? "bazaar" : "myket") {
     setMyketRestoring(true);
     try {
       const inventory = await MyketBilling.restore({ publicKey: config.publicKey, skus: config.skus });
@@ -192,52 +194,52 @@ export default function BillingPage() {
       let restored = 0;
       for (const purchase of inventory.purchases ?? []) {
         try {
-          await verifyAndConsumeMyket(purchase, undefined, config.publicKey);
+          await verifyAndConsumeStore(purchase, undefined, config.publicKey, provider);
           restored++;
         } catch {
           // Keep the receipt owned/unconsumed so a later restore can retry.
         }
       }
       if (restored > 0) {
-        setMyketNotice({ ok: true, text: "خرید قبلی مایکت با موفقیت بازیابی و اشتراک فعال شد." });
+        setMyketNotice({ ok: true, text: `خرید قبلی ${provider === "bazaar" ? "بازار" : "مایکت"} با موفقیت بازیابی و اشتراک فعال شد.` });
         await loadShopAndHistory(false);
       }
     } catch (restoreError) {
-      setError(readableError(restoreError, "دریافت محصولات مایکت ناموفق بود."));
+      setError(readableError(restoreError, "دریافت محصولات فروشگاه ناموفق بود."));
     } finally {
       setMyketRestoring(false);
     }
   }
 
-  async function initializeMyket() {
+  async function initializeStore(mode: "myket" | "bazaar") {
     setError("");
     if (!hasMyketBillingPlugin()) {
       setMyketAvailable(false);
-      setError("این نسخه از برنامه، افزونه پرداخت مایکت را ندارد. برنامه را به نسخه جدید به‌روزرسانی کنید.");
+      setError("افزونه پرداخت فروشگاه در این نصب در دسترس نیست. برنامه را از همان فروشگاه دوباره نصب کنید.");
       return;
     }
     try {
       const availability = await MyketBilling.isAvailable();
       setMyketAvailable(availability.available);
       if (!availability.available) {
-        setError("برای خرید اشتراک، برنامه مایکت باید روی گوشی نصب باشد.");
+        setError(`برای خرید اشتراک، برنامه ${mode === "bazaar" ? "بازار" : "مایکت"} باید روی گوشی نصب باشد.`);
         return;
       }
-      const res = await fetch("/api/billing/myket/config", { cache: "no-store" });
+      const res = await fetch(`/api/billing/${mode}/config`, { cache: "no-store" });
       const config = (await res.json().catch(() => null)) as MyketConfig | null;
-      if (!res.ok || !config) throw new Error("دریافت تنظیمات مایکت ناموفق بود.");
+      if (!res.ok || !config) throw new Error("دریافت تنظیمات فروشگاه ناموفق بود.");
       setMyketConfig(config);
       if (!config.enabled) {
-        setError("پرداخت مایکت هنوز توسط مدیر سامانه تکمیل نشده است.");
+        setError(`پرداخت ${mode === "bazaar" ? "بازار" : "مایکت"} هنوز توسط مدیر سامانه تکمیل نشده است.`);
         return;
       }
-      await restoreMyketPurchases(config);
+      await restoreStorePurchases(config, mode);
     } catch (initError) {
-      setError(readableError(initError, "راه‌اندازی پرداخت مایکت ناموفق بود."));
+      setError(readableError(initError, "راه‌اندازی پرداخت فروشگاه ناموفق بود."));
     }
   }
 
-  async function startMyketPurchase(plan: "pro" | "business", dur: number) {
+  async function startStorePurchase(plan: "pro" | "business", dur: number) {
     const config = myketConfig;
     if (!config?.enabled || !myketAvailable || myketRestoring) return;
     const sku = myketSku(plan, dur);
@@ -247,7 +249,7 @@ export default function BillingPage() {
     let intentId = "";
     let receiptReceived = false;
     try {
-      const intentRes = await fetch("/api/billing/myket/intent", {
+      const intentRes = await fetch(`/api/billing/${storeMode}/intent`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sku }),
@@ -258,8 +260,8 @@ export default function BillingPage() {
 
       const purchase = await MyketBilling.purchase({ publicKey: config.publicKey, sku, payload: intent.payload });
       receiptReceived = true;
-      await verifyAndConsumeMyket(purchase, intentId, config.publicKey);
-      setMyketNotice({ ok: true, text: "پرداخت مایکت تأیید شد و اشتراک شما فعال شد." });
+      await verifyAndConsumeStore(purchase, intentId, config.publicKey);
+      setMyketNotice({ ok: true, text: `پرداخت ${storeMode === "bazaar" ? "بازار" : "مایکت"} تأیید شد و اشتراک شما فعال شد.` });
       await loadShopAndHistory(false);
     } catch (purchaseError) {
       if (intentId && !receiptReceived) {
@@ -271,7 +273,7 @@ export default function BillingPage() {
       }
       setError(readableError(purchaseError, receiptReceived
         ? "رسید خرید ثبت شد اما تأیید آن کامل نشد؛ گزینه بازیابی خرید را بزنید."
-        : "خرید مایکت انجام نشد."));
+        : "خرید فروشگاهی انجام نشد."));
     } finally {
       setLoadingPlan(null);
     }
@@ -321,15 +323,15 @@ export default function BillingPage() {
         </div>
       )}
 
-      {storeMode === "myket" && (
+      {(storeMode === "myket" || storeMode === "bazaar") && (
         <div className="bg-gradient-to-l from-teal/15 to-surface border border-teal/35 rounded-xl px-4 py-3 mb-5 flex items-center justify-between gap-3">
           <div>
-            <div className="text-xs font-bold text-teal">پرداخت امن درون‌برنامه‌ای مایکت</div>
+            <div className="text-xs font-bold text-teal">پرداخت امن درون‌برنامه‌ای {storeMode === "bazaar" ? "بازار" : "مایکت"}</div>
             <p className="text-[10px] text-muted mt-1">خرید و بازیابی اشتراک بدون خروج از برنامه انجام می‌شود.</p>
           </div>
           <button
             type="button"
-            onClick={() => myketConfig?.enabled && restoreMyketPurchases(myketConfig)}
+            onClick={() => myketConfig?.enabled && restoreStorePurchases(myketConfig)}
             disabled={!myketConfig?.enabled || !myketAvailable || myketRestoring || !!loadingPlan}
             className="shrink-0 text-[10px] font-bold rounded-lg px-3 py-2 bg-teal/20 text-teal disabled:opacity-40"
           >
@@ -417,7 +419,7 @@ export default function BillingPage() {
                 <div className="mono text-sm mt-1">
                   {p.priceToman === 0
                     ? "رایگان"
-                    : storeMode === "myket" && myketPrice
+                    : storeMode !== "web" && storeMode !== "checking" && myketPrice
                       ? `${myketPrice} / ${duration} ماه`
                       : `${total.toLocaleString("fa-IR")} تومان / ${duration} ماه`}
                 </div>
@@ -441,13 +443,13 @@ export default function BillingPage() {
                   </button>
                 </div>
               )}
-              {key !== "free" && storeMode === "myket" && (
+              {key !== "free" && (storeMode === "myket" || storeMode === "bazaar") && (
                 <button
-                  onClick={() => startMyketPurchase(key, duration)}
+                  onClick={() => startStorePurchase(key, duration)}
                   disabled={!myketConfig?.enabled || !myketAvailable || myketRestoring || !!loadingPlan}
                   className="bg-teal text-white text-xs font-bold rounded-lg px-4 py-2.5 disabled:opacity-40 shrink-0"
                 >
-                  {loadingPlan === `${sku}-myket` ? "در حال اتصال..." : "خرید از مایکت"}
+                  {loadingPlan === `${sku}-myket` ? "در حال اتصال..." : `خرید از ${storeMode === "bazaar" ? "بازار" : "مایکت"}`}
                 </button>
               )}
               {key !== "free" && storeMode === "checking" && (

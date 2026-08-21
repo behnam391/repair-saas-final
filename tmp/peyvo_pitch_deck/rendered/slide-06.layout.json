@@ -1,0 +1,1444 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/fx2y1x",
+    "id": "fx2y1x",
+    "slide": 6,
+    "layoutId": "61c9ff55-592a-4d35-8534-3d3926d94e8b",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Tahoma"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "61c9ff55-592a-4d35-8534-3d3926d94e8b",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8bihsj2l",
+      "id": "1",
+      "bbox": [
+        0,
+        0,
+        1280,
+        8
+      ],
+      "geometry": "rect",
+      "fillColor": "#159CF4",
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/nq9gzelg",
+      "id": "2",
+      "bbox": [
+        1120,
+        0,
+        160,
+        8
+      ],
+      "geometry": "rect",
+      "fillColor": "#66D437",
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mp0zq9kv",
+      "id": "3",
+      "bbox": [
+        40,
+        666,
+        70,
+        24
+      ],
+      "geometry": "rect",
+      "text": "۰6",
+      "textPreview": "۰6",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 13,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "۰6"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "۰6",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "۰6",
+              "fontSize": 13,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/xgby5o3i",
+      "id": "4",
+      "bbox": [
+        850,
+        666,
+        390,
+        22
+      ],
+      "geometry": "rect",
+      "text": "PEYVO  |  PITCH DECK",
+      "textPreview": "PEYVO  |  PITCH DECK",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 12,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PEYVO  |  PITCH DECK"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PEYVO  |  PITCH DECK",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "PEYVO  |  PITCH DECK",
+              "fontSize": 12,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wf2hwj2x",
+      "id": "5",
+      "bbox": [
+        62,
+        48,
+        1156,
+        72
+      ],
+      "geometry": "rect",
+      "text": "است رشد مرحله به ورود آماده و شده ساخته محصول",
+      "textPreview": "است رشد مرحله به ورود آماده و شده ساخته محصول",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 38,
+        "typeface": "Tahoma",
+        "color": "#071426",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "است رشد مرحله به ورود آماده و شده ساخته محصول"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "است رشد مرحله به ورود آماده و شده ساخته محصول",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "typeface": "Tahoma",
+            "color": "#071426",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "است رشد مرحله به ورود آماده و شده ساخته محصول",
+              "fontSize": 38,
+              "typeface": "Tahoma",
+              "color": "#071426",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ve9g3elc",
+      "id": "6",
+      "bbox": [
+        62,
+        145,
+        350,
+        48
+      ],
+      "geometry": "rect",
+      "text": "اولیه فعلی: مرحله",
+      "textPreview": "اولیه فعلی: مرحله",
+      "resolvedFontSize": 27,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 27,
+        "typeface": "Tahoma",
+        "color": "#2A9B3A",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "اولیه فعلی: مرحله"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "اولیه فعلی: مرحله",
+          "resolvedTextStyle": {
+            "fontSize": 27,
+            "typeface": "Tahoma",
+            "color": "#2A9B3A",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "اولیه فعلی: مرحله",
+              "fontSize": 27,
+              "typeface": "Tahoma",
+              "color": "#2A9B3A",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ad0zu9kr",
+      "id": "7",
+      "bbox": [
+        480,
+        145,
+        730,
+        66
+      ],
+      "geometry": "rect",
+      "text": "است یافته توسعه اندروید و وب عملیاتی نسخه\nهستند استفاده قابل اکنون محصول اصلی مسیرهای",
+      "textPreview": "است یافته توسعه اندروید و وب عملیاتی نسخه | هستند استفاده قابل اکنون محصول اصلی مسیرهای",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 22,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "است یافته توسعه اندروید و وب عملیاتی نسخه"
+          },
+          {
+            "index": 2,
+            "text": "هستند استفاده قابل اکنون محصول اصلی مسیرهای"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "است یافته توسعه اندروید و وب عملیاتی نسخه",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "است یافته توسعه اندروید و وب عملیاتی نسخه",
+              "fontSize": 22,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "هستند استفاده قابل اکنون محصول اصلی مسیرهای",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "هستند استفاده قابل اکنون محصول اصلی مسیرهای",
+              "fontSize": 22,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dk7ytk3y",
+      "id": "8",
+      "bbox": [
+        110,
+        356,
+        1060,
+        3
+      ],
+      "geometry": "rect",
+      "fillColor": "#D3DEE8",
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cjyxkz2t",
+      "id": "9",
+      "bbox": [
+        327,
+        332,
+        50,
+        50
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#159CF4",
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y1gbixwr",
+      "id": "10",
+      "bbox": [
+        327,
+        341,
+        50,
+        28
+      ],
+      "geometry": "rect",
+      "text": "1",
+      "textPreview": "1",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "Tahoma",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "1"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "1",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Tahoma",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "1",
+              "fontSize": 20,
+              "typeface": "Tahoma",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/j2pcr2xc",
+      "id": "11",
+      "bbox": [
+        135,
+        418,
+        220,
+        38
+      ],
+      "geometry": "rect",
+      "text": "محصول",
+      "textPreview": "محصول",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "Tahoma",
+        "color": "#071426",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "محصول"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "محصول",
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "Tahoma",
+            "color": "#071426",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "محصول",
+              "fontSize": 23,
+              "typeface": "Tahoma",
+              "color": "#071426",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/k3ytk7ex",
+      "id": "12",
+      "bbox": [
+        135,
+        468,
+        220,
+        70
+      ],
+      "geometry": "rect",
+      "text": "اندروید اپ و وب نسخه",
+      "textPreview": "اندروید اپ و وب نسخه",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "اندروید اپ و وب نسخه"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "اندروید اپ و وب نسخه",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "اندروید اپ و وب نسخه",
+              "fontSize": 17,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/l47utsfi",
+      "id": "13",
+      "bbox": [
+        597,
+        332,
+        50,
+        50
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#66D437",
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/65gbmxw3",
+      "id": "14",
+      "bbox": [
+        597,
+        341,
+        50,
+        28
+      ],
+      "geometry": "rect",
+      "text": "2",
+      "textPreview": "2",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "Tahoma",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "2"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "2",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Tahoma",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "2",
+              "fontSize": 20,
+              "typeface": "Tahoma",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/76pcv2x8",
+      "id": "15",
+      "bbox": [
+        405,
+        418,
+        220,
+        38
+      ],
+      "geometry": "rect",
+      "text": "عملیات",
+      "textPreview": "عملیات",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "Tahoma",
+        "color": "#071426",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "عملیات"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "عملیات",
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "Tahoma",
+            "color": "#071426",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "عملیات",
+              "fontSize": 23,
+              "typeface": "Tahoma",
+              "color": "#071426",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/87yto7et",
+      "id": "16",
+      "bbox": [
+        405,
+        468,
+        220,
+        70
+      ],
+      "geometry": "rect",
+      "text": "پیامک و فاکتور پذیرش",
+      "textPreview": "پیامک و فاکتور پذیرش",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "پیامک و فاکتور پذیرش"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "پیامک و فاکتور پذیرش",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "پیامک و فاکتور پذیرش",
+              "fontSize": 17,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/t87uxcfe",
+      "id": "17",
+      "bbox": [
+        867,
+        332,
+        50,
+        50
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#1276DB",
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ut0bqhwz",
+      "id": "18",
+      "bbox": [
+        867,
+        341,
+        50,
+        28
+      ],
+      "geometry": "rect",
+      "text": "3",
+      "textPreview": "3",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "Tahoma",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "3"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "3",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Tahoma",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "3",
+              "fontSize": 20,
+              "typeface": "Tahoma",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vu9czmxk",
+      "id": "19",
+      "bbox": [
+        675,
+        418,
+        220,
+        38
+      ],
+      "geometry": "rect",
+      "text": "اعتماد",
+      "textPreview": "اعتماد",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "Tahoma",
+        "color": "#071426",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "اعتماد"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "اعتماد",
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "Tahoma",
+            "color": "#071426",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "اعتماد",
+              "fontSize": 23,
+              "typeface": "Tahoma",
+              "color": "#071426",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ry9s7mts",
+      "id": "20",
+      "bbox": [
+        675,
+        468,
+        220,
+        70
+      ],
+      "geometry": "rect",
+      "text": "پرداخت درگاه و دامنه",
+      "textPreview": "پرداخت درگاه و دامنه",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "پرداخت درگاه و دامنه"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "پرداخت درگاه و دامنه",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "پرداخت درگاه و دامنه",
+              "fontSize": 17,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qx0behc7",
+      "id": "21",
+      "bbox": [
+        1137,
+        332,
+        50,
+        50
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#2A9B3A",
+      "lineWidth": 0
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d0ba9wbi",
+      "id": "22",
+      "bbox": [
+        1137,
+        341,
+        50,
+        28
+      ],
+      "geometry": "rect",
+      "text": "4",
+      "textPreview": "4",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "Tahoma",
+        "color": "#FFFFFF",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "4"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "4",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Tahoma",
+            "color": "#FFFFFF",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "4",
+              "fontSize": 20,
+              "typeface": "Tahoma",
+              "color": "#FFFFFF",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/szitgrux",
+      "id": "23",
+      "bbox": [
+        945,
+        418,
+        220,
+        38
+      ],
+      "geometry": "rect",
+      "text": "انتشار",
+      "textPreview": "انتشار",
+      "resolvedFontSize": 23,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 23,
+        "typeface": "Tahoma",
+        "color": "#071426",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "انتشار"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "انتشار",
+          "resolvedTextStyle": {
+            "fontSize": 23,
+            "typeface": "Tahoma",
+            "color": "#071426",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "انتشار",
+              "fontSize": 23,
+              "typeface": "Tahoma",
+              "color": "#071426",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3a9s32tg",
+      "id": "24",
+      "bbox": [
+        945,
+        468,
+        220,
+        70
+      ],
+      "geometry": "rect",
+      "text": "اولیه کاربران جذب آماده",
+      "textPreview": "اولیه کاربران جذب آماده",
+      "resolvedFontSize": 17,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 17,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "اولیه کاربران جذب آماده"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "اولیه کاربران جذب آماده",
+          "resolvedTextStyle": {
+            "fontSize": 17,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "اولیه کاربران جذب آماده",
+              "fontSize": 17,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i90raxcv",
+      "id": "25",
+      "bbox": [
+        62,
+        596,
+        1156,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#D3DEE8",
+      "lineWidth": 0
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/5wra5cbm",
+      "id": "26",
+      "bbox": [
+        62,
+        622,
+        1156,
+        36
+      ],
+      "geometry": "rect",
+      "text": "همکاری شبکه توسعه و تعمیرگاه‌ها جذب تولیدی استقرار پایدار زیرساخت بعدی: تمرکز",
+      "textPreview": "همکاری شبکه توسعه و تعمیرگاه‌ها جذب تولیدی استقرار پایدار زیرساخت بعدی: تمرکز",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 19,
+        "typeface": "Tahoma",
+        "color": "#1276DB",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "همکاری شبکه توسعه و تعمیرگاه‌ها جذب تولیدی استقرار پایدار زیرساخت بعدی: تمرکز"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "همکاری شبکه توسعه و تعمیرگاه‌ها جذب تولیدی استقرار پایدار زیرساخت بعدی: تمرکز",
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "typeface": "Tahoma",
+            "color": "#1276DB",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "همکاری شبکه توسعه و تعمیرگاه‌ها جذب تولیدی استقرار پایدار زیرساخت بعدی: تمرکز",
+              "fontSize": 19,
+              "typeface": "Tahoma",
+              "color": "#1276DB",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

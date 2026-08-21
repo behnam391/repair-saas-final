@@ -4,7 +4,8 @@
   "webDir": "android-shell",
   "server": {
     "url": "https://peyvo.ir",
-    "cleartext": false
+    "cleartext": false,
+    "errorPath": "index.html"
   },
   "android": {
     "backgroundColor": "#10121A"

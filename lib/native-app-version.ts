@@ -2,7 +2,8 @@
 
 import { Capacitor, registerPlugin } from "@capacitor/core";
 
-type AppVersionInfo = { versionCode: number; versionName: string; installer: string };
+export type NativeStore = "bazaar" | "myket" | "web";
+type AppVersionInfo = { versionCode: number; versionName: string; installer: string; store?: NativeStore };
 type AppVersionApi = { getInfo(): Promise<AppVersionInfo> };
 
 const AppVersion = registerPlugin<AppVersionApi>("AppVersion");

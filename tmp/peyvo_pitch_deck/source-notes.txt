@@ -1,0 +1,7 @@
+Deck purpose: convince ArvanCloud startup-grant reviewers that Peyvo is a working early-stage SaaS with a clear infrastructure need.
+
+Sources used:
+- Internal Peyvo application repository and implemented product routes.
+- app/page.tsx, app/signup/page.tsx, app/terms/page.tsx, lib/plans.ts.
+- store-assets/cafebazaar screenshots and public/images/peyvo-intelligence-hero.jpg.
+- No external market-size statistics or unverified traction metrics were used.

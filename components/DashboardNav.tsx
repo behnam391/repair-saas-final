@@ -4,7 +4,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { LogoMark } from "./Logo";
 import { canSeeNav } from "@/lib/permissions";
-import { isMyketAndroidApp } from "@/lib/myket-billing-client";
+import { getNativeStore } from "@/lib/myket-billing-client";
 import type { LucideIcon } from "lucide-react";
 import {
   BadgeHelp, BarChart3, Boxes, ChevronDown, CircleUserRound, Clock3, FileText,
@@ -37,10 +37,10 @@ export default function DashboardNav({
   // containing block for fixed-position descendants, which would trap and
   // clip a fixed overlay inside the header box.
   const [mounted, setMounted] = useState(false);
-  const [billingContext, setBillingContext] = useState<"checking" | "web" | "myket">("checking");
+  const [billingContext, setBillingContext] = useState<"checking" | "web" | "myket" | "bazaar">("checking");
   useEffect(() => {
     setMounted(true);
-    setBillingContext(isMyketAndroidApp() ? "myket" : "web");
+    getNativeStore().then(setBillingContext);
   }, []);
   const containerRef = useRef<HTMLDivElement>(null);
   const btnRefs = useRef<Record<string, HTMLButtonElement | null>>({});

@@ -1,0 +1,470 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/oq9wnf",
+    "id": "oq9wnf",
+    "slide": 1,
+    "layoutId": "61c9ff55-592a-4d35-8534-3d3926d94e8b",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Tahoma"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "61c9ff55-592a-4d35-8534-3d3926d94e8b",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y1gjiloj",
+      "id": "1",
+      "bbox": [
+        0,
+        0,
+        22,
+        720
+      ],
+      "geometry": "rect",
+      "fillColor": "#159CF4",
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/0f2lwfe5",
+      "id": "2",
+      "bbox": [
+        650,
+        0,
+        630,
+        720
+      ],
+      "geometry": "rect",
+      "contentType": "image/jpeg",
+      "imageFit": "cover",
+      "imageMask": {
+        "geometry": "rect"
+      },
+      "asset": {
+        "assetId": "439be559-21c2-46b6-8a91-cfb77a1593d3",
+        "contentType": "image/jpeg",
+        "byteLength": 146756
+      }
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/03i1kb69",
+      "id": "3",
+      "bbox": [
+        650,
+        0,
+        630,
+        720
+      ],
+      "geometry": "rect",
+      "fillColor": "rgba(6, 16, 31, 0.8)",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "image",
+      "scope": "slide",
+      "aid": "im/q9k3qlw3",
+      "id": "4",
+      "bbox": [
+        72,
+        62,
+        178,
+        178
+      ],
+      "geometry": "rect",
+      "contentType": "image/png",
+      "imageFit": "contain",
+      "imageMask": {
+        "geometry": "rect"
+      },
+      "asset": {
+        "assetId": "17e69f29-c8de-4675-99fb-a00668b76458",
+        "contentType": "image/png",
+        "byteLength": 64376
+      }
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/qdgje1o7",
+      "id": "5",
+      "bbox": [
+        72,
+        260,
+        520,
+        88
+      ],
+      "geometry": "rect",
+      "text": "پیوو",
+      "textPreview": "پیوو",
+      "resolvedFontSize": 62,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 62,
+        "typeface": "Tahoma",
+        "color": "#071426",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "پیوو"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "پیوو",
+          "resolvedTextStyle": {
+            "fontSize": 62,
+            "typeface": "Tahoma",
+            "color": "#071426",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "پیوو",
+              "fontSize": 62,
+              "typeface": "Tahoma",
+              "color": "#071426",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/d07ipgny",
+      "id": "6",
+      "bbox": [
+        72,
+        356,
+        520,
+        96
+      ],
+      "geometry": "rect",
+      "text": "هوشمند زیرساخت\nموبایل تعمیرگاه‌های مدیریت",
+      "textPreview": "هوشمند زیرساخت | موبایل تعمیرگاه‌های مدیریت",
+      "resolvedFontSize": 30,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 30,
+        "typeface": "Tahoma",
+        "color": "#1276DB",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "هوشمند زیرساخت"
+          },
+          {
+            "index": 2,
+            "text": "موبایل تعمیرگاه‌های مدیریت"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "هوشمند زیرساخت",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "Tahoma",
+            "color": "#1276DB",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "هوشمند زیرساخت",
+              "fontSize": 30,
+              "typeface": "Tahoma",
+              "color": "#1276DB",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "موبایل تعمیرگاه‌های مدیریت",
+          "resolvedTextStyle": {
+            "fontSize": 30,
+            "typeface": "Tahoma",
+            "color": "#1276DB",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "موبایل تعمیرگاه‌های مدیریت",
+              "fontSize": 30,
+              "typeface": "Tahoma",
+              "color": "#1276DB",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/czy1gb6d",
+      "id": "7",
+      "bbox": [
+        72,
+        477,
+        520,
+        92
+      ],
+      "geometry": "rect",
+      "text": "فاکتور و تحویل تا دستگاه پذیرش از\nابری زیرساخت و مشتری با یکپارچه ارتباط",
+      "textPreview": "فاکتور و تحویل تا دستگاه پذیرش از | ابری زیرساخت و مشتری با یکپارچه ارتباط",
+      "resolvedFontSize": 20,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 20,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "فاکتور و تحویل تا دستگاه پذیرش از"
+          },
+          {
+            "index": 2,
+            "text": "ابری زیرساخت و مشتری با یکپارچه ارتباط"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "فاکتور و تحویل تا دستگاه پذیرش از",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "فاکتور و تحویل تا دستگاه پذیرش از",
+              "fontSize": 20,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        },
+        {
+          "index": 2,
+          "text": "ابری زیرساخت و مشتری با یکپارچه ارتباط",
+          "resolvedTextStyle": {
+            "fontSize": 20,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "ابری زیرساخت و مشتری با یکپارچه ارتباط",
+              "fontSize": 20,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/vutkzq5w",
+      "id": "8",
+      "bbox": [
+        72,
+        625,
+        520,
+        30
+      ],
+      "geometry": "rect",
+      "text": "۱۴۰۵ | آروان‌کلاد زیرساختی حمایت درخواست",
+      "textPreview": "۱۴۰۵ | آروان‌کلاد زیرساختی حمایت درخواست",
+      "resolvedFontSize": 15,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 15,
+        "typeface": "Tahoma",
+        "color": "#2A9B3A",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "۱۴۰۵ | آروان‌کلاد زیرساختی حمایت درخواست"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "۱۴۰۵ | آروان‌کلاد زیرساختی حمایت درخواست",
+          "resolvedTextStyle": {
+            "fontSize": 15,
+            "typeface": "Tahoma",
+            "color": "#2A9B3A",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "۱۴۰۵ | آروان‌کلاد زیرساختی حمایت درخواست",
+              "fontSize": 15,
+              "typeface": "Tahoma",
+              "color": "#2A9B3A",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

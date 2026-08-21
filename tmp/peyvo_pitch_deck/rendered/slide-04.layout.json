@@ -1,0 +1,1385 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/c5jgwp",
+    "id": "c5jgwp",
+    "slide": 4,
+    "layoutId": "61c9ff55-592a-4d35-8534-3d3926d94e8b",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#FFFFFF",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "Tahoma"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "61c9ff55-592a-4d35-8534-3d3926d94e8b",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "ed4b6dc8-b5ec-4922-bc65-5731425458c9",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6p0vahsn",
+      "id": "1",
+      "bbox": [
+        0,
+        0,
+        1280,
+        8
+      ],
+      "geometry": "rect",
+      "fillColor": "#159CF4",
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/tsbelcre",
+      "id": "2",
+      "bbox": [
+        1120,
+        0,
+        160,
+        8
+      ],
+      "geometry": "rect",
+      "fillColor": "#66D437",
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/sr2xc7at",
+      "id": "3",
+      "bbox": [
+        40,
+        666,
+        70,
+        24
+      ],
+      "geometry": "rect",
+      "text": "۰4",
+      "textPreview": "۰4",
+      "resolvedFontSize": 13,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 13,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "left",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "۰4"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "۰4",
+          "resolvedTextStyle": {
+            "fontSize": 13,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "۰4",
+              "fontSize": 13,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/futwnm9k",
+      "id": "4",
+      "bbox": [
+        850,
+        666,
+        390,
+        22
+      ],
+      "geometry": "rect",
+      "text": "PEYVO  |  PITCH DECK",
+      "textPreview": "PEYVO  |  PITCH DECK",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 12,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "PEYVO  |  PITCH DECK"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "PEYVO  |  PITCH DECK",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "PEYVO  |  PITCH DECK",
+              "fontSize": 12,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/etkfehsz",
+      "id": "5",
+      "bbox": [
+        62,
+        48,
+        1156,
+        72
+      ],
+      "geometry": "rect",
+      "text": "است شده ساخته اکوسیستم ضلع سه برای محصول",
+      "textPreview": "است شده ساخته اکوسیستم ضلع سه برای محصول",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 38,
+        "typeface": "Tahoma",
+        "color": "#071426",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "است شده ساخته اکوسیستم ضلع سه برای محصول"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "است شده ساخته اکوسیستم ضلع سه برای محصول",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "typeface": "Tahoma",
+            "color": "#071426",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "است شده ساخته اکوسیستم ضلع سه برای محصول",
+              "fontSize": 38,
+              "typeface": "Tahoma",
+              "color": "#071426",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1wbepwra",
+      "id": "6",
+      "bbox": [
+        62,
+        160,
+        330,
+        8
+      ],
+      "geometry": "rect",
+      "fillColor": "#159CF4",
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gv2xgrqp",
+      "id": "7",
+      "bbox": [
+        62,
+        196,
+        330,
+        48
+      ],
+      "geometry": "rect",
+      "text": "تعمیرگاه مدیریت",
+      "textPreview": "تعمیرگاه مدیریت",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 25,
+        "typeface": "Tahoma",
+        "color": "#071426",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "تعمیرگاه مدیریت"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "تعمیرگاه مدیریت",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "typeface": "Tahoma",
+            "color": "#071426",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "تعمیرگاه مدیریت",
+              "fontSize": 25,
+              "typeface": "Tahoma",
+              "color": "#071426",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3ydwr69g",
+      "id": "8",
+      "bbox": [
+        364,
+        300,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#159CF4",
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2xkfi18v",
+      "id": "9",
+      "bbox": [
+        62,
+        286,
+        280,
+        62
+      ],
+      "geometry": "rect",
+      "text": "تعمیر گردش‌کار و پذیرش",
+      "textPreview": "تعمیر گردش‌کار و پذیرش",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "تعمیر گردش‌کار و پذیرش"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "تعمیر گردش‌کار و پذیرش",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "تعمیر گردش‌کار و پذیرش",
+              "fontSize": 18,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/gne10v2h",
+      "id": "10",
+      "bbox": [
+        364,
+        392,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#159CF4",
+      "lineWidth": 0
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/1onit032",
+      "id": "11",
+      "bbox": [
+        62,
+        378,
+        280,
+        62
+      ],
+      "geometry": "rect",
+      "text": "فاکتور و انبار مشتریان",
+      "textPreview": "فاکتور و انبار مشتریان",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "فاکتور و انبار مشتریان"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "فاکتور و انبار مشتریان",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "فاکتور و انبار مشتریان",
+              "fontSize": 18,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/elwjy5kb",
+      "id": "12",
+      "bbox": [
+        364,
+        484,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#159CF4",
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fm507qlw",
+      "id": "13",
+      "bbox": [
+        62,
+        470,
+        280,
+        62
+      ],
+      "geometry": "rect",
+      "text": "تسویه و گزارش کارمندان",
+      "textPreview": "تسویه و گزارش کارمندان",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "تسویه و گزارش کارمندان"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "تسویه و گزارش کارمندان",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "تسویه و گزارش کارمندان",
+              "fontSize": 18,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ore14f2t",
+      "id": "14",
+      "bbox": [
+        446,
+        160,
+        330,
+        8
+      ],
+      "geometry": "rect",
+      "fillColor": "#66D437",
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ps72xk3y",
+      "id": "15",
+      "bbox": [
+        446,
+        196,
+        330,
+        48
+      ],
+      "geometry": "rect",
+      "text": "مشتری تجربه",
+      "textPreview": "مشتری تجربه",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 25,
+        "typeface": "Tahoma",
+        "color": "#071426",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "مشتری تجربه"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "مشتری تجربه",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "typeface": "Tahoma",
+            "color": "#071426",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "مشتری تجربه",
+              "fontSize": 25,
+              "typeface": "Tahoma",
+              "color": "#071426",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/2pwj25kn",
+      "id": "16",
+      "bbox": [
+        748,
+        300,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#66D437",
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3q5kval8",
+      "id": "17",
+      "bbox": [
+        446,
+        286,
+        280,
+        62
+      ],
+      "geometry": "rect",
+      "text": "تعمیر وضعیت پیگیری",
+      "textPreview": "تعمیر وضعیت پیگیری",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "تعمیر وضعیت پیگیری"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "تعمیر وضعیت پیگیری",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "تعمیر وضعیت پیگیری",
+              "fontSize": 18,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 18,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/cfy18f2p",
+      "id": "18",
+      "bbox": [
+        748,
+        392,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#66D437",
+      "lineWidth": 0
+    },
+    {
+      "order": 19,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/dg721k3a",
+      "id": "19",
+      "bbox": [
+        446,
+        378,
+        280,
+        62
+      ],
+      "geometry": "rect",
+      "text": "دستگاه‌ها سوابق",
+      "textPreview": "دستگاه‌ها سوابق",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "دستگاه‌ها سوابق"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "دستگاه‌ها سوابق",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "دستگاه‌ها سوابق",
+              "fontSize": 18,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 20,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/lc3ilkbe",
+      "id": "20",
+      "bbox": [
+        748,
+        484,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#66D437",
+      "lineWidth": 0
+    },
+    {
+      "order": 21,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kbu1sfut",
+      "id": "21",
+      "bbox": [
+        446,
+        470,
+        280,
+        62
+      ],
+      "geometry": "rect",
+      "text": "وضعیت اعلان و گفت‌وگو",
+      "textPreview": "وضعیت اعلان و گفت‌وگو",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "وضعیت اعلان و گفت‌وگو"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "وضعیت اعلان و گفت‌وگو",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "وضعیت اعلان و گفت‌وگو",
+              "fontSize": 18,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 22,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zal0jat8",
+      "id": "22",
+      "bbox": [
+        830,
+        160,
+        330,
+        8
+      ],
+      "geometry": "rect",
+      "fillColor": "#1276DB",
+      "lineWidth": 0
+    },
+    {
+      "order": 23,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/y9cjq5cn",
+      "id": "23",
+      "bbox": [
+        830,
+        196,
+        330,
+        48
+      ],
+      "geometry": "rect",
+      "text": "همکاری شبکه",
+      "textPreview": "همکاری شبکه",
+      "resolvedFontSize": 25,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 25,
+        "typeface": "Tahoma",
+        "color": "#071426",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "همکاری شبکه"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "همکاری شبکه",
+          "resolvedTextStyle": {
+            "fontSize": 25,
+            "typeface": "Tahoma",
+            "color": "#071426",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "همکاری شبکه",
+              "fontSize": 25,
+              "typeface": "Tahoma",
+              "color": "#071426",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 24,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/90n2p4ba",
+      "id": "24",
+      "bbox": [
+        1132,
+        300,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#1276DB",
+      "lineWidth": 0
+    },
+    {
+      "order": 25,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/8ze1wzu5",
+      "id": "25",
+      "bbox": [
+        830,
+        286,
+        280,
+        62
+      ],
+      "geometry": "rect",
+      "text": "تخصصی تعمیر ارجاع",
+      "textPreview": "تخصصی تعمیر ارجاع",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "bold": true,
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "تخصصی تعمیر ارجاع"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "تخصصی تعمیر ارجاع",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "bold": true,
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "تخصصی تعمیر ارجاع",
+              "fontSize": 18,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "bold": true,
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 26,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7el0nutk",
+      "id": "26",
+      "bbox": [
+        1132,
+        392,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#1276DB",
+      "lineWidth": 0
+    },
+    {
+      "order": 27,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/mdcjupcz",
+      "id": "27",
+      "bbox": [
+        830,
+        378,
+        280,
+        62
+      ],
+      "geometry": "rect",
+      "text": "دریافت و ارسال نحوه ثبت",
+      "textPreview": "دریافت و ارسال نحوه ثبت",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "دریافت و ارسال نحوه ثبت"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "دریافت و ارسال نحوه ثبت",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "دریافت و ارسال نحوه ثبت",
+              "fontSize": 18,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 28,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p4jid0v6",
+      "id": "28",
+      "bbox": [
+        1132,
+        484,
+        10,
+        10
+      ],
+      "geometry": "ellipse",
+      "fillColor": "#1276DB",
+      "lineWidth": 0
+    },
+    {
+      "order": 29,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/oja1kvul",
+      "id": "29",
+      "bbox": [
+        830,
+        470,
+        280,
+        62
+      ],
+      "geometry": "rect",
+      "text": "همکاران میان تسویه",
+      "textPreview": "همکاران میان تسویه",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Tahoma",
+        "color": "#53657B",
+        "alignment": "right",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "همکاران میان تسویه"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "همکاران میان تسویه",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Tahoma",
+            "color": "#53657B",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "همکاران میان تسویه",
+              "fontSize": 18,
+              "typeface": "Tahoma",
+              "color": "#53657B",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 30,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/udo7yxo7",
+      "id": "30",
+      "bbox": [
+        62,
+        603,
+        1098,
+        1
+      ],
+      "geometry": "rect",
+      "fillColor": "#D3DEE8",
+      "lineWidth": 0
+    },
+    {
+      "order": 31,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/fyxo725s",
+      "id": "31",
+      "bbox": [
+        62,
+        625,
+        1098,
+        32
+      ],
+      "geometry": "rect",
+      "text": "مشترک داده هسته یک با مشتری پنل و اندروید اپلیکیشن وب",
+      "textPreview": "مشترک داده هسته یک با مشتری پنل و اندروید اپلیکیشن وب",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "anchor": 1,
+        "fontSize": 18,
+        "typeface": "Tahoma",
+        "color": "#2A9B3A",
+        "bold": true,
+        "alignment": "center",
+        "verticalAlignment": "top",
+        "autoFit": "shrinkText",
+        "autoFitScale": 1,
+        "insets": {
+          "top": 0,
+          "right": 0,
+          "bottom": 0,
+          "left": 0
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "مشترک داده هسته یک با مشتری پنل و اندروید اپلیکیشن وب"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "مشترک داده هسته یک با مشتری پنل و اندروید اپلیکیشن وب",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "typeface": "Tahoma",
+            "color": "#2A9B3A",
+            "bold": true,
+            "alignment": "center"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "مشترک داده هسته یک با مشتری پنل و اندروید اپلیکیشن وب",
+              "fontSize": 18,
+              "typeface": "Tahoma",
+              "color": "#2A9B3A",
+              "bold": true,
+              "alignment": "center"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

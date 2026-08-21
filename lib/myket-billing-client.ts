@@ -24,7 +24,7 @@ export interface MyketProduct {
 }
 
 interface MyketBillingNative {
-  isAvailable(): Promise<{ available: boolean; packageName: string }>;
+  isAvailable(): Promise<{ available: boolean; packageName: string; store?: "bazaar" | "myket" }>;
   purchase(options: { publicKey: string; sku: string; payload: string }): Promise<MyketPurchase>;
   restore(options: { publicKey: string; skus: string[] }): Promise<{ purchases: MyketPurchase[]; products: MyketProduct[] }>;
   consume(options: { publicKey: string; originalJson: string; signature: string; itemType: string }): Promise<{ consumed: boolean; sku: string }>;
@@ -39,4 +39,16 @@ export function isMyketAndroidApp(): boolean {
 
 export function hasMyketBillingPlugin(): boolean {
   return Capacitor.isPluginAvailable("MyketBilling");
+}
+
+export async function getNativeStore(): Promise<"bazaar" | "myket" | "web"> {
+  if (Capacitor.getPlatform() !== "android" || !Capacitor.isPluginAvailable("AppVersion")) return "web";
+  try {
+    const { getNativeAppVersion } = await import("@/lib/native-app-version");
+    const info = await getNativeAppVersion();
+    if (info.store === "bazaar" || info.store === "myket") return info.store;
+    if (info.installer === "com.farsitel.bazaar") return "bazaar";
+    if (info.installer === "ir.mservices.market") return "myket";
+  } catch {}
+  return "web";
 }
