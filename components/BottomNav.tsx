@@ -27,7 +27,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import {
-  BarChart3,
+  CreditCard,
   Globe,
   Home,
   MessageSquare,
@@ -76,7 +76,7 @@ export function ShopBottomNav({ role }: { role: string }) {
       { href: "/customers", label: "مشتریان", Icon: Users },
       { href: "/inventory", label: "انبار", Icon: Package },
       { href: "/chats", label: "چت‌ها", Icon: MessageSquare },
-      { href: "/admin", label: "مدیریت", Icon: BarChart3 },
+      { href: "/admin/billing", label: "اشتراک", Icon: CreditCard },
     ];
   }, [role]);
 

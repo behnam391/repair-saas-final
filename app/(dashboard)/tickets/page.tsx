@@ -2,13 +2,14 @@
 import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 import PatternLockInput from "@/components/PatternLockInput";
 import ComboBox from "@/components/ComboBox";
 import TicketChat from "@/components/TicketChat";
 import AiIntakeHelper from "@/components/AiIntakeHelper";
 import CustomerQuickPick from "@/components/CustomerQuickPick";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
-import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Check, ChevronDown, CircuitBoard, Clock3, Cpu, GitBranch, Handshake, LockKeyhole, MessageCircle, Play, Plus, Printer, Search, ShieldCheck, Smartphone, UserRound, Wrench, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Check, ChevronDown, CircuitBoard, Clock3, Cpu, CreditCard, GitBranch, Handshake, LockKeyhole, MessageCircle, Play, Plus, Printer, Search, ShieldCheck, Smartphone, UserRound, Wrench, X } from "lucide-react";
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار", hint: "تعمیرات فیزیکی", Icon: Wrench, tone: "blue" },
@@ -117,6 +118,25 @@ export default function TicketsPage() {
           <Plus size={18} /> پذیرش دستگاه
         </button>
       </div>
+
+      {myRole === "OWNER" && (
+        <Link
+          href="/admin/billing"
+          className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-teal/40 bg-gradient-to-l from-teal/20 via-surface to-copper/10 p-4 shadow-sm transition hover:border-teal/70"
+          aria-label="خرید و تمدید اشتراک با پرداخت درون‌برنامه‌ای"
+        >
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal text-white shadow-lg shadow-teal/20">
+              <CreditCard size={22} />
+            </span>
+            <span className="min-w-0">
+              <b className="block text-sm">خرید و تمدید اشتراک</b>
+              <small className="mt-1 block text-[11px] text-muted">مشاهده پلن‌ها و پرداخت امن درون‌برنامه‌ای مایکت یا بازار</small>
+            </span>
+          </span>
+          <span className="shrink-0 rounded-lg bg-teal px-3 py-2 text-[11px] font-bold text-white">مشاهده پلن‌ها</span>
+        </Link>
+      )}
 
       <div className="dashboard-stats">
         <div className="dashboard-stat"><span className="is-blue"><Smartphone size={18} /></span><div><b>{tickets.length.toLocaleString("fa-IR")}</b><small>کل دستگاه‌ها</small></div></div>
