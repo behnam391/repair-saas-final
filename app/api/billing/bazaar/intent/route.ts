@@ -16,7 +16,7 @@ const VALID_DURATIONS = new Set<number>([1, 3, 6, 12]);
 // price configured in Pishkhan so receipts/history never show a larger amount
 // than the customer actually paid.
 const BAZAAR_PRICE_TOMAN: Record<string, number> = {
-  "peyvo.pro.1m": 200_000,
+  "peyvo.pro.1m": 490_000,
   "peyvo.pro.3m": 570_000,
   "peyvo.pro.6m": 1_080_000,
   "peyvo.pro.12m": 1_920_000,
