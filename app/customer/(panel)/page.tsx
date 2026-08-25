@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { IRAN_PROVINCES, PROVINCE_NAMES } from "@/lib/iran-locations";
 import ShopsMap from "@/components/ShopsMap";
 
@@ -27,6 +27,7 @@ export default function CustomerShopsPage() {
   const [province, setProvince] = useState("");
   const [city, setCity] = useState("");
   const [q, setQ] = useState("");
+  const [appliedQuery, setAppliedQuery] = useState("");
   const [shops, setShops] = useState<ShopItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [myPos, setMyPos] = useState<{ lat: number; lng: number } | null>(null);
@@ -34,6 +35,7 @@ export default function CustomerShopsPage() {
   const [geoError, setGeoError] = useState("");
   const [view, setView] = useState<"list" | "map">("list");
   const [neshanKey, setNeshanKey] = useState<string | null>(null);
+  const requestId = useRef(0);
 
   // rating modal state
   const [ratingShop, setRatingShop] = useState<ShopItem | null>(null);
@@ -58,24 +60,36 @@ export default function CustomerShopsPage() {
         if (res.ok) {
           const { customer } = await res.json();
           if (customer?.province) setProvince(customer.province);
-          else load("", "", "");
-        } else load("", "", "");
-      } catch { load("", "", ""); }
+          else setProvince("");
+        }
+      } catch { /* The unfiltered effect below still loads the list. */ }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function load(p = province, c = city, query = q) {
+  const load = useCallback(async (p: string, c: string, query: string) => {
+    const currentRequest = ++requestId.current;
     setLoading(true);
     const params = new URLSearchParams();
     if (p) params.set("province", p);
     if (c) params.set("city", c);
     if (query) params.set("q", query);
-    const res = await fetch(`/api/customer/shops?${params.toString()}`);
-    if (res.ok) setShops((await res.json()).shops ?? []);
-    setLoading(false);
+    try {
+      const res = await fetch(`/api/customer/shops?${params.toString()}`, { cache: "no-store" });
+      if (res.ok && currentRequest === requestId.current) {
+        setShops((await res.json()).shops ?? []);
+      }
+    } finally {
+      if (currentRequest === requestId.current) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(province, city, appliedQuery); }, [province, city, appliedQuery, load]);
+
+  function applySearch() {
+    const next = q.trim();
+    if (next === appliedQuery) load(province, city, next);
+    else setAppliedQuery(next);
   }
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [province, city]);
 
   function locateMe() {
     setGeoError("");
@@ -105,7 +119,7 @@ export default function CustomerShopsPage() {
       body: JSON.stringify({ shopId: ratingShop.id, stars, comment: comment || undefined }),
     });
     setSubmitting(false);
-    if (res.ok) { setRatingShop(null); setComment(""); setStars(5); load(); }
+    if (res.ok) { setRatingShop(null); setComment(""); setStars(5); load(province, city, appliedQuery); }
   }
 
   return (
@@ -129,8 +143,8 @@ export default function CustomerShopsPage() {
       <div className="flex gap-2 mb-2">
         <input className="flex-1 min-w-0 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
           placeholder="جستجوی نام مغازه..." value={q} onChange={(e) => setQ(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && load()} />
-        <button onClick={() => load()} className="bg-surface2 border border-border rounded-lg px-4 py-2 text-sm shrink-0">جستجو</button>
+          onKeyDown={(e) => e.key === "Enter" && applySearch()} />
+        <button onClick={applySearch} className="bg-surface2 border border-border rounded-lg px-4 py-2 text-sm shrink-0">جستجو</button>
       </div>
       <button onClick={locateMe}
         className={`w-full rounded-lg px-3 py-2.5 text-sm font-bold mb-3 border transition ${sortByDistance ? "bg-teal text-white border-teal" : "bg-surface2 border-border"}`}>

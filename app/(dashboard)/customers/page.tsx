@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { formatJalaliDate } from "@/lib/jalali";
 import { toLatinDigits } from "@/lib/phone";
 
@@ -18,6 +18,7 @@ export default function CustomersPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const requestId = useRef(0);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -32,14 +33,18 @@ export default function CustomersPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const load = useCallback(async () => {
+    const currentRequest = ++requestId.current;
     setLoading(true);
-    const res = await fetch(`/api/customers?page=${page}&pageSize=${PAGE_SIZE}&q=${encodeURIComponent(search)}`);
-    if (res.ok) {
-      const d = await res.json();
-      setCustomers(d.customers ?? []);
-      setTotal(d.total ?? 0);
+    try {
+      const res = await fetch(`/api/customers?page=${page}&pageSize=${PAGE_SIZE}&q=${encodeURIComponent(search)}`, { cache: "no-store" });
+      if (res.ok && currentRequest === requestId.current) {
+        const d = await res.json();
+        setCustomers(d.customers ?? []);
+        setTotal(d.total ?? 0);
+      }
+    } finally {
+      if (currentRequest === requestId.current) setLoading(false);
     }
-    setLoading(false);
   }, [page, search]);
 
   // Debounced fetch on search/page change.
