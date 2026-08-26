@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import type { LucideIcon } from "lucide-react";
-import { BadgeCheck, BellRing, Bug, CircleUserRound, DatabaseBackup, Gift, Headphones, KeyRound, LayoutDashboard, LogOut, MessageCircle, Settings2, Store, UsersRound } from "lucide-react";
+import { BadgeCheck, BellRing, Bug, CircleUserRound, DatabaseBackup, Gift, Headphones, KeyRound, LayoutDashboard, LogOut, MessageCircle, MonitorSmartphone, Settings2, Store, UsersRound } from "lucide-react";
 import Logo from "@/components/Logo";
 
 const GROUPS: { label: string; items: { href: string; label: string; Icon: LucideIcon }[] }[] = [
@@ -24,6 +24,7 @@ const GROUPS: { label: string; items: { href: string; label: string; Icon: Lucid
     { href: "/superadmin/gift-codes", label: "کد هدیه", Icon: Gift },
   ] },
   { label: "سیستم", items: [
+    { href: "/superadmin/sessions", label: "نشست‌ها و ورودها", Icon: MonitorSmartphone },
     { href: "/superadmin/settings", label: "تنظیمات", Icon: Settings2 },
     { href: "/superadmin/external-keys", label: "API سازمان‌ها", Icon: KeyRound },
     { href: "/superadmin/errors", label: "خطاها", Icon: Bug },

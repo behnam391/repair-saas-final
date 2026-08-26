@@ -37,7 +37,7 @@ export default function DashboardNav({
   // containing block for fixed-position descendants, which would trap and
   // clip a fixed overlay inside the header box.
   const [mounted, setMounted] = useState(false);
-  const [billingContext, setBillingContext] = useState<"checking" | "web" | "myket" | "bazaar">("checking");
+  const [billingContext, setBillingContext] = useState<"checking" | "web" | "myket" | "bazaar" | "native">("checking");
   useEffect(() => {
     setMounted(true);
     getNativeStore().then(setBillingContext);

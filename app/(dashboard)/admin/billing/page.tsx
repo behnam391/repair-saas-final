@@ -18,7 +18,7 @@ type Pricing = {
   durations: Record<string, DurRow>;
 };
 
-type StoreMode = "checking" | "web" | "myket" | "bazaar";
+type StoreMode = "checking" | "web" | "myket" | "bazaar" | "native";
 type MyketConfig = {
   enabled: boolean;
   publicKey: string;
@@ -317,6 +317,11 @@ export default function BillingPage() {
       {result === "failed" && <div className="bg-danger/20 text-danger text-xs rounded-lg p-3 mb-4">پرداخت ناموفق بود.</div>}
       {result === "cancelled" && <div className="bg-amber/20 text-amber text-xs rounded-lg p-3 mb-4">پرداخت لغو شد.</div>}
       {error && <p className="text-danger text-xs mb-3">{error}</p>}
+      {storeMode === "native" && (
+        <div className="bg-amber/10 text-amber border border-amber/30 text-xs rounded-xl p-3 mb-4 leading-6">
+          فروشگاه نصب‌کننده برنامه شناسایی نشد؛ خرید اشتراک تا نصب نسخه رسمی مایکت یا بازار غیرفعال است. هیچ درگاه بانکی جایگزینی در این نسخه نمایش داده نمی‌شود.
+        </div>
+      )}
       {myketNotice && (
         <div className={`${myketNotice.ok ? "bg-teal/20 text-teal" : "bg-danger/20 text-danger"} text-xs rounded-lg p-3 mb-4`}>
           {myketNotice.text}
@@ -373,8 +378,8 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Gift code redemption */}
-      <div className="bg-surface border border-teal/40 rounded-xl p-4 mb-5">
+      {/* Gift codes stay web-only; store builds must have no parallel digital-entitlement path. */}
+      {storeMode === "web" && <div className="bg-surface border border-teal/40 rounded-xl p-4 mb-5">
         <div className="text-sm font-bold mb-1">🎁 کد هدیه دارید؟</div>
         <p className="text-[11px] text-muted mb-3">کد هدیه‌ای که از پشتیبانی Peyvo گرفته‌اید را وارد کنید تا اشتراک رایگان فعال شود.</p>
         <div className="flex gap-2">
@@ -391,7 +396,7 @@ export default function BillingPage() {
           </button>
         </div>
         {giftMsg && <p className={`text-xs mt-2 ${giftMsg.ok ? "text-teal" : "text-danger"}`}>{giftMsg.text}</p>}
-      </div>
+      </div>}
 
       <div className="flex gap-2 mb-5">
         {durationList.map((d) => (

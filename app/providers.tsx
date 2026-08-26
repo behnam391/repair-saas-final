@@ -2,10 +2,12 @@
 import { SessionProvider } from "next-auth/react";
 import { MotionConfig } from "framer-motion";
 import { ToastProvider } from "@/components/ToastProvider";
+import SessionRevocationWatcher from "@/components/SessionRevocationWatcher";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <SessionProvider>
+    <SessionProvider refetchInterval={60} refetchOnWindowFocus>
+      <SessionRevocationWatcher />
       {/* reducedMotion="user" makes framer-motion skip transform/layout
           animations for anyone whose device asks for less motion, and it does
           it at animation time rather than render time — so the markup the

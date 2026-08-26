@@ -1,4 +1,4 @@
-const CACHE_NAME = "repair-saas-shell-v1";
+const CACHE_NAME = "repair-saas-static-v2";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -15,13 +15,25 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+
+  // Never cache HTML, authentication, APIs, account data or payment responses.
+  // Only immutable public assets get an offline fallback.
+  const isStaticAsset =
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.startsWith("/icons/") ||
+    url.pathname.startsWith("/fonts/") ||
+    /\.(?:png|jpg|jpeg|webp|svg|ico|woff2)$/i.test(url.pathname);
+  if (!isStaticAsset) return;
+
   event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        const resClone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+    caches.match(event.request).then((cached) => {
+      const fresh = fetch(event.request).then((res) => {
+        if (res.ok) caches.open(CACHE_NAME).then((cache) => cache.put(event.request, res.clone()));
         return res;
-      })
-      .catch(() => caches.match(event.request))
+      }).catch(() => cached);
+      return cached || fresh;
+    })
   );
 });

@@ -5,6 +5,8 @@ import { preprocessPhone, preprocessDigits } from "@/lib/phone";
 import { z } from "zod";
 import { strongPassword, verifyOtp } from "@/lib/security";
 import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
+import { LoginSubjectKind } from "@prisma/client";
+import { revokeSessionsForSubject } from "@/lib/login-sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,9 @@ export async function POST(req: NextRequest) {
       db.user.update({ where: { id: user.id }, data: { passwordHash } }),
       db.passwordResetToken.update({ where: { id: token.id }, data: { used: true } }),
     ]);
+    await revokeSessionsForSubject(LoginSubjectKind.SHOP_USER, user.id, {
+      reason: "PASSWORD_RESET",
+    });
 
     return NextResponse.json({ ok: true });
   } catch (e) {

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSuperAdmin, UnauthorizedError } from "@/lib/tenant";
 import { preprocessPhone } from "@/lib/phone";
+import { revokeSessionsForSubject } from "@/lib/login-sessions";
+import { LoginSubjectKind } from "@prisma/client";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -17,8 +19,14 @@ const UpdateSchema = z.object({
 // info (e.g. a shop owner who changed their number and can't get in).
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin();
     const body = UpdateSchema.parse(await req.json());
+
+    const existing = await db.user.findUnique({
+      where: { id: params.id },
+      select: { phone: true },
+    });
+    if (!existing) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
     if (body.phone) {
       const clash = await db.user.findFirst({ where: { phone: body.phone, id: { not: params.id } } });
@@ -30,6 +38,16 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       data: body,
       select: { id: true, name: true, phone: true, email: true, active: true },
     });
+
+    const phoneChanged = body.phone !== undefined && body.phone !== existing.phone;
+    const accountDisabled = body.active === false;
+    if (phoneChanged || accountDisabled) {
+      await revokeSessionsForSubject(LoginSubjectKind.SHOP_USER, params.id, {
+        adminId,
+        reason: accountDisabled ? "ACCOUNT_DISABLED" : "LOGIN_PHONE_CHANGED",
+      });
+    }
+
     return NextResponse.json({ user });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

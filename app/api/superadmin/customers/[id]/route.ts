@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSuperAdmin, UnauthorizedError } from "@/lib/tenant";
 import { deletePlatformCustomerCascade } from "@/lib/cascade";
+import { revokeSessionsForSubject } from "@/lib/login-sessions";
+import { LoginSubjectKind } from "@prisma/client";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -13,13 +15,19 @@ const Schema = z.object({ active: z.boolean() });
 // lib/auth.ts) — their existing ratings stay, but they can't add more.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin();
     const { active } = Schema.parse(await req.json());
     const customer = await db.platformCustomer.update({
       where: { id: params.id },
       data: { active },
       select: { id: true, name: true, active: true },
     });
+    if (!active) {
+      await revokeSessionsForSubject(LoginSubjectKind.CUSTOMER, params.id, {
+        adminId,
+        reason: "ACCOUNT_DISABLED",
+      });
+    }
     return NextResponse.json({ customer });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -32,11 +40,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 // customer account and their data (super-admin only). Irreversible.
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin();
     const customer = await db.platformCustomer.findUnique({ where: { id: params.id }, select: { id: true } });
     if (!customer) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-    await deletePlatformCustomerCascade(params.id);
+    await deletePlatformCustomerCascade(params.id, adminId);
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

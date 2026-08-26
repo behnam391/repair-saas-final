@@ -4,6 +4,8 @@ import { requireSuperAdmin, UnauthorizedError } from "@/lib/tenant";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { strongPassword } from "@/lib/security";
+import { LoginSubjectKind } from "@prisma/client";
+import { revokeSessionsForSubject } from "@/lib/login-sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,10 +17,14 @@ const Schema = z.object({ newPassword: strongPassword });
 // documents, etc.) — this endpoint does not verify anything itself.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin();
     const { newPassword } = Schema.parse(await req.json());
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await db.user.update({ where: { id: params.id }, data: { passwordHash } });
+    await revokeSessionsForSubject(LoginSubjectKind.SHOP_USER, params.id, {
+      adminId,
+      reason: "ADMIN_PASSWORD_RESET",
+    });
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

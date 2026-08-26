@@ -17,7 +17,7 @@ export async function requireSession() {
   const user = session.user as any;
   // Customer / platform-admin sessions carry no shopId — reject them here
   // explicitly so a shop-scoped route can never run with shopId=undefined.
-  if (user.isCustomer || user.isSuperAdmin || !user.shopId) {
+  if (user.disabled || user.isCustomer || user.isSuperAdmin || !user.shopId) {
     throw new UnauthorizedError("Not a shop session");
   }
   return {
@@ -25,6 +25,7 @@ export async function requireSession() {
     shopId: user.shopId as string,
     role: user.role as string,
     name: user.name as string,
+    loginSessionId: user.loginSessionId as string,
   };
 }
 
@@ -63,13 +64,13 @@ export async function requireDeskSession() {
 export async function requireCustomer() {
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
-  if (!user?.isCustomer) throw new UnauthorizedError("Not a customer session");
-  return { customerId: user.id as string, name: user.name as string, phone: user.phone as string };
+  if (!user?.isCustomer || user.disabled) throw new UnauthorizedError("Not a customer session");
+  return { customerId: user.id as string, name: user.name as string, phone: user.phone as string, loginSessionId: user.loginSessionId as string };
 }
 
 export async function requireSuperAdmin() {
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
-  if (!user?.isSuperAdmin) throw new UnauthorizedError("Not a platform admin");
-  return { adminId: user.id as string, name: user.name as string };
+  if (!user?.isSuperAdmin || user.disabled) throw new UnauthorizedError("Not a platform admin");
+  return { adminId: user.id as string, name: user.name as string, loginSessionId: user.loginSessionId as string };
 }

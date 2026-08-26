@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { requireSession, requireRole, UnauthorizedError } from "@/lib/tenant";
 import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
+import { LoginSubjectKind } from "@prisma/client";
+import { revokeSessionsForSubject } from "@/lib/login-sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +41,13 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       data: body as any,
       select: { id: true, name: true, phone: true, role: true, active: true },
     });
+    const phoneChanged = body.phone !== undefined && body.phone !== target.phone;
+    const deactivated = body.active === false && target.active;
+    if (phoneChanged || deactivated) {
+      await revokeSessionsForSubject(LoginSubjectKind.SHOP_USER, target.id, {
+        reason: deactivated ? "STAFF_DEACTIVATED" : "LOGIN_PHONE_CHANGED",
+      });
+    }
     return NextResponse.json({ user });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -81,18 +90,22 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     // refuses for ANY reason (foreign-key constraint being the expected
     // one), we fall back to deactivating rather than surfacing an error —
     // "remove from the shop, keep the history" is exactly the intent.
+    let deactivated = false;
     try {
       await db.user.delete({ where: { id: target.id } });
-      return NextResponse.json({ ok: true, deactivated: false });
     } catch (delErr: any) {
       try {
         await db.user.update({ where: { id: target.id }, data: { active: false } });
-        return NextResponse.json({ ok: true, deactivated: true });
+        deactivated = true;
       } catch (deactErr) {
         console.error("[staff delete] both delete and deactivate failed", delErr, deactErr);
         return NextResponse.json({ message: "حذف کارمند ناموفق بود، دوباره تلاش کنید" }, { status: 500 });
       }
     }
+    await revokeSessionsForSubject(LoginSubjectKind.SHOP_USER, target.id, {
+      reason: deactivated ? "STAFF_DEACTIVATED" : "STAFF_DELETED",
+    });
+    return NextResponse.json({ ok: true, deactivated });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     console.error(e);

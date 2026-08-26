@@ -23,6 +23,8 @@ export interface MyketProduct {
   type: string;
 }
 
+export type StoreContext = "bazaar" | "myket" | "web" | "native";
+
 interface MyketBillingNative {
   isAvailable(): Promise<{ available: boolean; packageName: string; store?: "bazaar" | "myket" }>;
   purchase(options: { publicKey: string; sku: string; payload: string }): Promise<MyketPurchase>;
@@ -41,8 +43,9 @@ export function hasMyketBillingPlugin(): boolean {
   return Capacitor.isPluginAvailable("MyketBilling");
 }
 
-export async function getNativeStore(): Promise<"bazaar" | "myket" | "web"> {
-  if (Capacitor.getPlatform() !== "android" || !Capacitor.isPluginAvailable("AppVersion")) return "web";
+export async function getNativeStore(): Promise<StoreContext> {
+  if (Capacitor.getPlatform() !== "android") return "web";
+  if (!Capacitor.isPluginAvailable("AppVersion")) return "native";
   try {
     const { getNativeAppVersion } = await import("@/lib/native-app-version");
     const info = await getNativeAppVersion();
@@ -50,5 +53,7 @@ export async function getNativeStore(): Promise<"bazaar" | "myket" | "web"> {
     if (info.installer === "com.farsitel.bazaar") return "bazaar";
     if (info.installer === "ir.mservices.market") return "myket";
   } catch {}
-  return "web";
+  // Never expose the web gateway merely because native store detection had
+  // a transient failure.  "native" is intentionally payment-closed.
+  return "native";
 }

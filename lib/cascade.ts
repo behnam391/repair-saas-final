@@ -4,13 +4,19 @@
 // Used only by /api/superadmin/* — never exposed to shop users.
 
 import { db } from "./db";
+import { revokeSessionsForShop, revokeSessionsForSubject } from "./login-sessions";
+import { LoginSubjectKind } from "@prisma/client";
 
 // Fully remove a shop and EVERYTHING scoped to it: staff, customers,
 // tickets (+history/messages/parts), invoices, inventory, market posts and
 // their chats, ratings, returns, part requests, dealer stock, expenses,
 // collaboration links, subscriptions, notifications, tokens — then the shop
 // row itself. Irreversible.
-export async function deleteShopCascade(shopId: string) {
+export async function deleteShopCascade(shopId: string, adminId?: string) {
+  // LoginSession deliberately has no foreign key, so keep the history but
+  // invalidate every live JWT before deleting the shop and its users.
+  await revokeSessionsForShop(shopId, adminId, "SHOP_DELETED");
+
   const [users, tickets, invoices, items, listings, supportTickets, partnerships] = await Promise.all([
     db.user.findMany({ where: { shopId }, select: { id: true } }),
     db.ticket.findMany({ where: { shopId }, select: { id: true } }),
@@ -115,7 +121,14 @@ export async function deleteCustomerCascade(shopId: string, customerId: string) 
 }
 
 // Fully remove a nationwide customer account and their data.
-export async function deletePlatformCustomerCascade(customerId: string) {
+export async function deletePlatformCustomerCascade(customerId: string, adminId?: string) {
+  // Preserve the audit row while ensuring a deleted customer cannot keep an
+  // already-issued JWT alive until its normal expiry.
+  await revokeSessionsForSubject(LoginSubjectKind.CUSTOMER, customerId, {
+    adminId,
+    reason: "ACCOUNT_DELETED",
+  });
+
   await db.$transaction(async (tx) => {
     await tx.rating.deleteMany({ where: { platformCustomerId: customerId } });
     await tx.customerPasswordResetToken.deleteMany({ where: { customerId } });

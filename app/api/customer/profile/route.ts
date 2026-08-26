@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { requireCustomer, UnauthorizedError } from "@/lib/tenant";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { LoginSubjectKind } from "@prisma/client";
+import { revokeSessionsForSubject } from "@/lib/login-sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +34,7 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const { customerId } = await requireCustomer();
+    const { customerId, loginSessionId } = await requireCustomer();
     const { name, email, province, city, currentPassword, newPassword } = Schema.parse(await req.json());
 
     const data: Record<string, unknown> = {};
@@ -58,6 +60,12 @@ export async function PATCH(req: NextRequest) {
       data,
       select: { id: true, name: true, phone: true, email: true, province: true, city: true },
     });
+    if (newPassword) {
+      await revokeSessionsForSubject(LoginSubjectKind.CUSTOMER, customerId, {
+        exceptId: loginSessionId,
+        reason: "PASSWORD_CHANGED",
+      });
+    }
     return NextResponse.json({ customer: updated });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -84,6 +92,12 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "wrong_password", message: "رمز عبور اشتباه است" }, { status: 400 });
     }
 
+    // LoginSession deliberately has no foreign key to PlatformCustomer so
+    // security history survives account deletion. Revoke first, then remove
+    // the account and its dependent customer data atomically.
+    await revokeSessionsForSubject(LoginSubjectKind.CUSTOMER, customerId, {
+      reason: "ACCOUNT_DELETED",
+    });
     await db.$transaction(async (tx) => {
       await tx.rating.deleteMany({ where: { platformCustomerId: customerId } });
       await tx.customerPasswordResetToken.deleteMany({ where: { customerId } });

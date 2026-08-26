@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import Logo from "@/components/Logo";
 import { db } from "@/lib/db";
 import { LATEST_ANDROID_RELEASE } from "@/lib/app-release";
@@ -9,6 +11,10 @@ export const dynamic = "force-dynamic";
 // (تنظیمات ← سایر ← اپلیکیشن اندروید) once the APK is built and the store
 // listings are live, so this page needs no redeploy to go live.
 export default async function DownloadPage() {
+  // Myket/Bazaar builds must update only through their own store.  Fail
+  // closed before rendering any direct-APK or competing-store link.
+  if (/\bPeyvoNativeApp\b/i.test(headers().get("user-agent") || "")) redirect("/login");
+
   let s: any = null;
   try {
     s = await db.platformSettings.findUnique({ where: { id: "singleton" } });

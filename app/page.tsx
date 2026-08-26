@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
@@ -61,6 +62,10 @@ export default async function Home() {
   if (user?.isSuperAdmin) redirect("/superadmin");
   if (user?.isCustomer) redirect("/customer");
   if (user?.shopId) redirect("/tickets");
+  // Store APKs are application clients, not download landing pages.  A
+  // native WebView is sent to the role-specific login instead of exposing
+  // direct APK/store links from the public website.
+  if (/\bPeyvoNativeApp\b/i.test(headers().get("user-agent") || "")) redirect("/login");
 
   const appLinks = await getAppLinks();
 

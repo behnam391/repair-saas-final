@@ -25,3 +25,7 @@ npm-debug.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# Android release signing material must never enter Git.
+*.jks
+*.keystore
+*RECOVERY-PRIVATE*

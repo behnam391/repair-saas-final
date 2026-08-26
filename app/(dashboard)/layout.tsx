@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
-  if (!session?.user) redirect("/login");
+  if (!session?.user || session.user.disabled) redirect("/login");
   const user = session.user;
   if (!user.shopId || !user.role) redirect("/login");
 

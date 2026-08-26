@@ -3,6 +3,13 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { normalizePhone } from "./phone";
+import { LoginSubjectKind } from "@prisma/client";
+import {
+  createLoginSession,
+  markLoginSessionLoggedOut,
+  SESSION_MAX_AGE_SECONDS,
+  validateAndTouchLoginSession,
+} from "./login-sessions";
 
 // Every signed-in shop user is locked to exactly one shop. The session token
 // carries shopId + role so API routes can scope every query without an
@@ -10,7 +17,7 @@ import { normalizePhone } from "./phone";
 // YOUR (the SaaS owner's) login — it never carries a shopId, so it can
 // never accidentally pass a tenant-scoping check.
 export const authOptions: NextAuthOptions = {
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_SECONDS },
   pages: { signIn: "/login" },
   providers: [
     CredentialsProvider({
@@ -20,7 +27,7 @@ export const authOptions: NextAuthOptions = {
         phone: { label: "شماره موبایل", type: "text" },
         password: { label: "رمز عبور", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.phone || !credentials?.password) return null;
 
         // Normalize BEFORE the lookup. A Persian-digit phone (۰۹…) or a
@@ -36,12 +43,26 @@ export const authOptions: NextAuthOptions = {
         const valid = await bcrypt.compare(credentials.password, user.passwordHash);
         if (!valid) return null;
 
+        const loginSession = await createLoginSession({
+          subjectKind: LoginSubjectKind.SHOP_USER,
+          subjectId: user.id,
+          roleAtLogin: user.role,
+          nameAtLogin: user.name,
+          phoneAtLogin: user.phone,
+          shopId: user.shopId,
+          shopNameAtLogin: user.shop.name,
+          provider: "shop-credentials",
+          request,
+        });
+
         return {
           id: user.id,
           name: user.name,
+          phone: user.phone,
           role: user.role,
           shopId: user.shopId,
           shopName: user.shop.name,
+          loginSessionId: loginSession.id,
         } as any;
       },
     }),
@@ -52,7 +73,7 @@ export const authOptions: NextAuthOptions = {
         phone: { label: "شماره موبایل", type: "text" },
         password: { label: "رمز عبور", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.phone || !credentials?.password) return null;
 
         const admin = await db.platformAdmin.findUnique({ where: { phone: normalizePhone(credentials.phone) } });
@@ -61,7 +82,16 @@ export const authOptions: NextAuthOptions = {
         const valid = await bcrypt.compare(credentials.password, admin.passwordHash);
         if (!valid) return null;
 
-        return { id: admin.id, name: admin.name, isSuperAdmin: true } as any;
+        const loginSession = await createLoginSession({
+          subjectKind: LoginSubjectKind.SUPERADMIN,
+          subjectId: admin.id,
+          nameAtLogin: admin.name,
+          phoneAtLogin: admin.phone,
+          provider: "platform-credentials",
+          request,
+        });
+
+        return { id: admin.id, name: admin.name, phone: admin.phone, isSuperAdmin: true, loginSessionId: loginSession.id } as any;
       },
     }),
     // Nationwide customer login — completely separate identity from shop
@@ -75,7 +105,7 @@ export const authOptions: NextAuthOptions = {
         phone: { label: "شماره موبایل", type: "text" },
         password: { label: "رمز عبور", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.phone || !credentials?.password) return null;
 
         const customer = await db.platformCustomer.findUnique({ where: { phone: normalizePhone(credentials.phone) } });
@@ -84,11 +114,21 @@ export const authOptions: NextAuthOptions = {
         const valid = await bcrypt.compare(credentials.password, customer.passwordHash);
         if (!valid) return null;
 
+        const loginSession = await createLoginSession({
+          subjectKind: LoginSubjectKind.CUSTOMER,
+          subjectId: customer.id,
+          nameAtLogin: customer.name,
+          phoneAtLogin: customer.phone,
+          provider: "customer-credentials",
+          request,
+        });
+
         return {
           id: customer.id,
           name: customer.name,
           phone: customer.phone,
           isCustomer: true,
+          loginSessionId: loginSession.id,
         } as any;
       },
     }),
@@ -96,7 +136,7 @@ export const authOptions: NextAuthOptions = {
       id: "impersonation-credentials",
       name: "impersonation",
       credentials: { token: { label: "token", type: "text" } },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.token) return null;
 
         const record = await db.impersonationToken.findUnique({
@@ -108,6 +148,18 @@ export const authOptions: NextAuthOptions = {
 
         await db.impersonationToken.update({ where: { id: record.id }, data: { used: true } });
 
+        const loginSession = await createLoginSession({
+          subjectKind: LoginSubjectKind.SHOP_USER,
+          subjectId: record.user.id,
+          roleAtLogin: record.user.role,
+          nameAtLogin: record.user.name,
+          phoneAtLogin: record.user.phone,
+          shopId: record.user.shopId,
+          shopNameAtLogin: record.user.shop.name,
+          provider: "impersonation-credentials",
+          request,
+        });
+
         return {
           id: record.user.id,
           name: record.user.name,
@@ -115,6 +167,8 @@ export const authOptions: NextAuthOptions = {
           shopId: record.user.shopId,
           shopName: record.user.shop.name,
           isImpersonated: true,
+          phone: record.user.phone,
+          loginSessionId: loginSession.id,
         } as any;
       },
     }),
@@ -122,6 +176,18 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        // A fresh login is always made mutually exclusive: this browser cookie
+        // belongs to exactly one of shop, customer or platform administration.
+        token.isSuperAdmin = false;
+        token.isCustomer = false;
+        token.isImpersonated = false;
+        token.role = undefined;
+        token.shopId = undefined;
+        token.shopName = undefined;
+        token.phone = (user as any).phone;
+        token.loginSessionId = (user as any).loginSessionId;
+        token.sessionBlocked = false;
+        token.disabled = false;
         if ((user as any).isSuperAdmin) {
           token.isSuperAdmin = true;
         } else if ((user as any).isCustomer) {
@@ -135,6 +201,26 @@ export const authOptions: NextAuthOptions = {
           token.isImpersonated = (user as any).isImpersonated ?? false;
         }
         return token;
+      }
+
+      // The JWT authenticates the request; this shadow row lets the platform
+      // owner revoke that JWT immediately without storing the JWT itself.
+      if (!token.loginSessionId || !token.sub) {
+        token.sessionBlocked = true; // legacy/untracked cookie: require a clean login
+      } else {
+        const subjectKind = token.isSuperAdmin
+          ? LoginSubjectKind.SUPERADMIN
+          : token.isCustomer ? LoginSubjectKind.CUSTOMER : LoginSubjectKind.SHOP_USER;
+        try {
+          token.sessionBlocked = !(await validateAndTouchLoginSession({
+            id: token.loginSessionId,
+            subjectId: token.sub,
+            subjectKind,
+          }));
+        } catch (e) {
+          console.error("[auth] login-session validation failed", e);
+          token.sessionBlocked = true;
+        }
       }
 
       // On every SUBSEQUENT request (no fresh `user`), re-check a shop
@@ -183,12 +269,14 @@ export const authOptions: NextAuthOptions = {
       (session.user as any).isSuperAdmin = token.isSuperAdmin ?? false;
       (session.user as any).phone = token.phone;
       (session.user as any).isImpersonated = token.isImpersonated ?? false;
+      (session.user as any).loginSessionId = token.loginSessionId;
 
       // A session that failed revalidation (staff removed/deactivated, shop
       // suspended, or customer suspended/deleted) is stripped of every scope
       // flag, so requireSession / requireCustomer both reject it and the app
       // treats the caller as signed out.
-      if (token.disabled) {
+      if (token.disabled || token.sessionBlocked) {
+        (session.user as any).isSuperAdmin = false;
         (session.user as any).isCustomer = false;
         (session.user as any).role = undefined;
         (session.user as any).shopId = undefined;
@@ -202,6 +290,16 @@ export const authOptions: NextAuthOptions = {
       (session.user as any).shopName = token.shopName;
       (session.user as any).specialty = token.specialty ?? null;
       return session;
+    },
+  },
+  events: {
+    async signOut({ token }) {
+      try {
+        await markLoginSessionLoggedOut(token?.loginSessionId);
+      } catch (e) {
+        // Cookie removal must still succeed even if audit storage is briefly down.
+        console.error("[auth] failed to mark login session as logged out", e);
+      }
     },
   },
 };

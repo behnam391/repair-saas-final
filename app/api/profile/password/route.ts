@@ -4,6 +4,8 @@ import { requireSession, UnauthorizedError } from "@/lib/tenant";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { strongPassword } from "@/lib/security";
+import { LoginSubjectKind } from "@prisma/client";
+import { revokeSessionsForSubject } from "@/lib/login-sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +14,7 @@ const Schema = z.object({ currentPassword: z.string().min(1), newPassword: stron
 // PATCH /api/profile/password — works for any signed-in user (staff or owner).
 export async function PATCH(req: NextRequest) {
   try {
-    const { userId } = await requireSession();
+    const { userId, loginSessionId } = await requireSession();
     const { currentPassword, newPassword } = Schema.parse(await req.json());
 
     const user = await db.user.findUniqueOrThrow({ where: { id: userId } });
@@ -23,6 +25,10 @@ export async function PATCH(req: NextRequest) {
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await db.user.update({ where: { id: userId }, data: { passwordHash } });
+    await revokeSessionsForSubject(LoginSubjectKind.SHOP_USER, userId, {
+      exceptId: loginSessionId,
+      reason: "PASSWORD_CHANGED",
+    });
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

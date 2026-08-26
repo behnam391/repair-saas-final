@@ -13,6 +13,7 @@ declare module "next-auth" {
       isCustomer?: boolean;
       isImpersonated?: boolean;
       disabled?: boolean;
+      loginSessionId?: string;
     };
   }
 }
@@ -28,5 +29,7 @@ declare module "next-auth/jwt" {
     isCustomer?: boolean;
     isImpersonated?: boolean;
     disabled?: boolean;
+    loginSessionId?: string;
+    sessionBlocked?: boolean;
   }
 }

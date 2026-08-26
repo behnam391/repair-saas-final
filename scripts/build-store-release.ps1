@@ -28,6 +28,8 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "کنترل انتشار APK رد شد." }
   $Output = Join-Path $ProjectRoot "output\android-release"
   New-Item -ItemType Directory -Force -Path $Output | Out-Null
-  Copy-Item -LiteralPath $Apk -Destination (Join-Path $Output "peyvo-1.3.4-$Store-release.apk") -Force
+  $Metadata = Get-Content -Raw (Join-Path $ProjectRoot "android\app\build\outputs\apk\$Store\release\output-metadata.json") | ConvertFrom-Json
+  $VersionName = $Metadata.elements[0].versionName
+  Copy-Item -LiteralPath $Apk -Destination (Join-Path $Output "peyvo-$VersionName-$Store-release.apk") -Force
   Write-Host "نسخه نهایی در output\android-release آماده شد." -ForegroundColor Green
 } finally { Pop-Location }

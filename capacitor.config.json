@@ -3,11 +3,12 @@
   "appName": "Peyvo",
   "webDir": "android-shell",
   "server": {
-    "url": "https://peyvo.ir",
+    "url": "https://peyvo.ir/login",
     "cleartext": false,
     "errorPath": "index.html"
   },
   "android": {
-    "backgroundColor": "#10121A"
+    "backgroundColor": "#10121A",
+    "appendUserAgent": "PeyvoNativeApp"
   }
 }

@@ -13,6 +13,8 @@
   .rings { margin-bottom: 18px; }
   h1 { font-size: 20px; margin: 0 0 6px; font-weight: 800; }
   p { font-size: 13px; color: #8A90A3; max-width: 320px; line-height: 1.8; margin: 0; }
+  button { margin-top: 18px; border: 0; border-radius: 12px; padding: 11px 22px; background: #35C9A5; color: #07130f; font: 700 13px Tahoma, sans-serif; cursor: pointer; }
+  small { margin-top: 12px; color: #687083; font-size: 10px; }
 </style>
 </head>
 <body>
@@ -23,8 +25,19 @@
   </svg>
   <h1>Peyvo</h1>
   <p>
-    این صفحه فقط زمانی نمایش داده می‌شود که اتصال به سرور Peyvo برقرار نباشد.
-    لطفاً اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید.
+    اتصال به پیوو برقرار نشد. اینترنت خود را بررسی کنید؛ برنامه به‌صورت خودکار دوباره تلاش می‌کند.
   </p>
+  <button type="button" id="retry">تلاش دوباره</button>
+  <small id="status">تلاش مجدد تا چند لحظه دیگر…</small>
+  <script>
+    const target = "https://peyvo.ir/login";
+    const retry = () => {
+      document.getElementById("status").textContent = "در حال اتصال…";
+      window.location.replace(target);
+    };
+    document.getElementById("retry").addEventListener("click", retry);
+    window.addEventListener("online", retry);
+    setTimeout(retry, 8000);
+  </script>
 </body>
 </html>

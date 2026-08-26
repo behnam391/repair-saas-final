@@ -1248,3 +1248,39 @@ model AiSuggestion {
   @@index([shopId, ticketId])
   @@index([shopId, createdAt])
 }
+
+// Server-side registry for JWT-backed logins. This deliberately has no
+// foreign keys: login history remains useful if an account or shop is later
+// deleted, and an audit write must not cascade into account data.
+enum LoginSubjectKind {
+  SHOP_USER
+  CUSTOMER
+  SUPERADMIN
+}
+
+model LoginSession {
+  id               String           @id @default(cuid())
+  subjectKind      LoginSubjectKind
+  subjectId        String
+  roleAtLogin      String?
+  nameAtLogin      String
+  phoneAtLogin     String
+  shopId           String?
+  shopNameAtLogin  String?
+  provider         String
+  ipAddress        String?
+  userAgent        String?
+  signedInAt       DateTime         @default(now())
+  lastActivityAt   DateTime         @default(now())
+  expiresAt        DateTime
+  loggedOutAt      DateTime?
+  revokedAt        DateTime?
+  revokedByAdminId String?
+  revokedReason    String?
+
+  @@index([subjectKind, subjectId])
+  @@index([shopId])
+  @@index([signedInAt])
+  @@index([lastActivityAt])
+  @@index([revokedAt, loggedOutAt, expiresAt])
+}

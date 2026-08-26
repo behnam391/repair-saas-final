@@ -30,7 +30,7 @@ export default function WalletPage() {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [storeMode, setStoreMode] = useState<"checking" | "web" | "myket" | "bazaar">("checking");
+  const [storeMode, setStoreMode] = useState<"checking" | "web" | "myket" | "bazaar" | "native">("checking");
 
   async function load() {
     const res = await fetch("/api/wallet");
@@ -68,18 +68,20 @@ export default function WalletPage() {
     return <div className="p-6 text-center text-xs text-muted">در حال بررسی روش پرداخت...</div>;
   }
 
-  if (storeMode === "myket" || storeMode === "bazaar") {
+  if (storeMode === "myket" || storeMode === "bazaar" || storeMode === "native") {
     return (
       <div className="p-4 max-w-xl mx-auto">
         <div className="bg-gradient-to-br from-teal/15 to-surface border border-teal/40 rounded-2xl p-6 text-center mt-6">
           <div className="text-3xl mb-3">🟢</div>
-          <h1 className="display-heading text-lg mb-2">پرداخت امن {storeMode === "bazaar" ? "بازار" : "مایکت"}</h1>
+          <h1 className="display-heading text-lg mb-2">{storeMode === "native" ? "پرداخت فروشگاهی در دسترس نیست" : `پرداخت امن ${storeMode === "bazaar" ? "بازار" : "مایکت"}`}</h1>
           <p className="text-xs text-muted leading-6 mb-5">
-            در نسخه فروشگاهی، خرید و تمدید اشتراک فقط از طریق پرداخت درون‌برنامه‌ای همان فروشگاه انجام می‌شود و شارژ مستقیم کیف پول در دسترس نیست.
+            {storeMode === "native"
+              ? "فروشگاه نصب‌کننده شناسایی نشد. برنامه را از صفحه رسمی مایکت یا بازار نصب و دوباره اجرا کنید؛ هیچ درگاه جایگزینی در نسخه فروشگاهی نمایش داده نمی‌شود."
+              : "در نسخه فروشگاهی، خرید و تمدید اشتراک فقط از طریق پرداخت درون‌برنامه‌ای همان فروشگاه انجام می‌شود و شارژ مستقیم کیف پول در دسترس نیست."}
           </p>
-          <a href="/admin/billing" className="inline-flex bg-teal text-white font-bold rounded-xl px-5 py-2.5 text-sm">
+          {storeMode !== "native" && <a href="/admin/billing" className="inline-flex bg-teal text-white font-bold rounded-xl px-5 py-2.5 text-sm">
             مشاهده پلن‌ها و خرید از {storeMode === "bazaar" ? "بازار" : "مایکت"}
-          </a>
+          </a>}
         </div>
       </div>
     );

@@ -83,7 +83,7 @@ export function PasswordField({ value, onChange, status = "idle" }: { value: str
       <span>رمز عبور</span>
       <div className={`auth-password-box is-${status}`}>
         <LockKeyhole size={18} />
-        <input value={value} onChange={(e) => onChange(e.target.value)} type={show ? "text" : "password"} dir="ltr" placeholder="رمز عبور خود را وارد کنید" autoComplete="current-password" />
+        <input value={value} onChange={(e) => onChange(e.target.value)} type={show ? "text" : "password"} dir="ltr" placeholder="رمز عبور خود را وارد کنید" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} />
         {status === "checking" && <LoaderCircle size={18} className="auth-status-icon is-checking" />}
         {status === "success" && <CheckCircle2 size={19} className="auth-status-icon is-success" />}
         {status === "error" && <XCircle size={19} className="auth-status-icon is-error" />}

@@ -30,6 +30,7 @@ export default function CustomerShopsPage() {
   const [appliedQuery, setAppliedQuery] = useState("");
   const [shops, setShops] = useState<ShopItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [myPos, setMyPos] = useState<{ lat: number; lng: number } | null>(null);
   const [sortByDistance, setSortByDistance] = useState(false);
   const [geoError, setGeoError] = useState("");
@@ -69,14 +70,19 @@ export default function CustomerShopsPage() {
   const load = useCallback(async (p: string, c: string, query: string) => {
     const currentRequest = ++requestId.current;
     setLoading(true);
+    setLoadError("");
     const params = new URLSearchParams();
     if (p) params.set("province", p);
     if (c) params.set("city", c);
     if (query) params.set("q", query);
     try {
       const res = await fetch(`/api/customer/shops?${params.toString()}`, { cache: "no-store" });
-      if (res.ok && currentRequest === requestId.current) {
-        setShops((await res.json()).shops ?? []);
+      if (!res.ok) throw new Error("shops_request_failed");
+      if (currentRequest === requestId.current) setShops((await res.json()).shops ?? []);
+    } catch {
+      if (currentRequest === requestId.current) {
+        setShops([]);
+        setLoadError("دریافت فهرست تعمیرگاه‌ها ممکن نشد. اتصال اینترنت را بررسی و دوباره تلاش کنید.");
       }
     } finally {
       if (currentRequest === requestId.current) setLoading(false);
@@ -126,6 +132,9 @@ export default function CustomerShopsPage() {
     <div className="p-4 max-w-2xl mx-auto">
       <h1 className="display-heading text-lg mb-1">تعمیرگاه‌های اطراف شما</h1>
       <p className="text-xs text-muted mb-4">مغازه‌ها را بر اساس شهر، امتیاز مشتریان یا فاصله مقایسه کنید و مطمئن انتخاب کنید.</p>
+      <div className="mb-4 rounded-xl border border-teal/30 bg-teal/10 px-3 py-2.5 text-[11px] leading-5 text-teal">
+        پوشش اولیه پیوو فعلاً در شهر اردبیل فعال است؛ شهرهای دیگر هم‌زمان با پیوستن تعمیرگاه‌های همان منطقه اضافه می‌شوند.
+      </div>
 
       <div className="grid grid-cols-2 gap-2 mb-2">
         <select className="bg-surface2 border border-surface2 rounded-lg px-2 py-2 text-sm"
@@ -188,8 +197,21 @@ export default function CustomerShopsPage() {
 
       {view === "list" && (loading ? (
         <p className="text-muted text-sm text-center py-8">در حال بارگذاری...</p>
+      ) : loadError ? (
+        <div className="rounded-xl border border-danger/30 bg-danger/10 p-5 text-center">
+          <p className="text-xs text-danger leading-6">{loadError}</p>
+          <button onClick={() => load(province, city, appliedQuery)} className="mt-3 rounded-lg bg-surface2 px-4 py-2 text-xs font-bold">تلاش دوباره</button>
+        </div>
       ) : display.length === 0 ? (
-        <p className="text-xs text-muted text-center py-8">مغازه‌ای در این محدوده پیدا نشد.</p>
+        <div className="rounded-xl border border-surface2 bg-surface p-5 text-center">
+          <div className="text-2xl mb-2">📍</div>
+          <h2 className="text-sm font-bold mb-1">هنوز تعمیرگاه فعالی در این محدوده نداریم</h2>
+          <p className="text-[11px] text-muted leading-6">پوشش فعلی پیوو در اردبیل است. می‌توانید مراکز فعال اردبیل یا همه تعمیرگاه‌های ثبت‌شده را ببینید.</p>
+          <div className="mt-3 flex justify-center gap-2 flex-wrap">
+            <button onClick={() => { setProvince("اردبیل"); setCity(""); setQ(""); setAppliedQuery(""); }} className="rounded-lg bg-teal px-3 py-2 text-[11px] font-bold text-white">نمایش مراکز اردبیل</button>
+            <button onClick={() => { setProvince(""); setCity(""); setQ(""); setAppliedQuery(""); }} className="rounded-lg bg-surface2 px-3 py-2 text-[11px] font-bold">حذف همه فیلترها</button>
+          </div>
+        </div>
       ) : (
         <div className="space-y-2">
           {display.map((s) => (

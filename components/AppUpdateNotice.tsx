@@ -16,10 +16,13 @@ export default function AppUpdateNotice() {
       fetch("/api/app-version", { cache: "no-store" }).then((res) => res.json()),
     ]).then(([installed, latest]) => {
       const dismissed = localStorage.getItem("dismissed-app-version");
-      const store = installed.store || (installed.installer === "com.farsitel.bazaar" ? "bazaar" : installed.installer === "ir.mservices.market" ? "myket" : "web");
+      const store = installed.store || (installed.installer === "com.farsitel.bazaar" ? "bazaar" : installed.installer === "ir.mservices.market" ? "myket" : "unknown");
       // Store builds must never update from a website/APK link. If the listing
       // URL is not configured yet, do not show a broken or policy-violating CTA.
-      const updateUrl = store === "bazaar" || store === "myket" ? latest.storeUrls?.[store] : latest.downloadUrl;
+      // This component only runs in Android. Unknown/sideloaded Android builds
+      // must fail closed rather than exposing the website/direct APK as a
+      // parallel update channel inside a marketplace build.
+      const updateUrl = store === "bazaar" || store === "myket" ? latest.storeUrls?.[store] : "";
       if (updateUrl && Number(latest.versionCode) > Number(installed.versionCode) && dismissed !== String(latest.versionCode)) {
         setRelease({ ...latest, updateUrl });
       }

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { requireSuperAdmin, UnauthorizedError } from "@/lib/tenant";
 import { getPricing, PlanKey } from "@/lib/plans";
 import { deleteShopCascade } from "@/lib/cascade";
+import { revokeSessionsForShop } from "@/lib/login-sessions";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,7 @@ const UpdateSchema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin();
     const body = UpdateSchema.parse(await req.json());
 
     // Handle a direct subscription gift separately from the simple toggles.
@@ -43,6 +44,9 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
     const { active, supportAccessEnabled } = body;
     const shop = await db.shop.update({ where: { id: params.id }, data: { active, supportAccessEnabled } });
+    if (active === false) {
+      await revokeSessionsForShop(params.id, adminId, "SHOP_DISABLED");
+    }
     return NextResponse.json({ shop });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
@@ -56,11 +60,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 // data (super-admin only). Irreversible — meant for clearing test shops.
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin();
     const shop = await db.shop.findUnique({ where: { id: params.id }, select: { id: true } });
     if (!shop) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
-    await deleteShopCascade(params.id);
+    await deleteShopCascade(params.id, adminId);
     return NextResponse.json({ ok: true });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
