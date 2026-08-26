@@ -18,6 +18,13 @@ export type FontOption = {
 
 export const FONT_OPTIONS: FontOption[] = [
   {
+    key: "estedad",
+    label: "استعداد",
+    note: "مدرن و حرفه‌ای — مناسب تیتر و رابط کاربری",
+    family: "'Estedad', 'Vazirmatn', sans-serif",
+    url: null,
+  },
+  {
     key: "vazirmatn",
     label: "وزیرمتن",
     note: "پیش‌فرض — مدرن، خوانا و کامل",
@@ -54,7 +61,7 @@ export const FONT_OPTIONS: FontOption[] = [
   },
 ];
 
-export const DEFAULT_FONT: FontOption = FONT_OPTIONS[0];
+export const DEFAULT_FONT: FontOption = FONT_OPTIONS.find((font) => font.key === "vazirmatn")!;
 
 // Never throws — an unknown/legacy key falls back to the default font.
 export function getFont(key?: string | null): FontOption {
