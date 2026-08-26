@@ -45,6 +45,8 @@ type LoginSession = {
   expiresAt: string | null;
   loggedOutAt: string | null;
   revokedAt: string | null;
+  restoredAt?: string | null;
+  restorationCount?: number;
   status: SessionStatus;
   onlineNow: boolean;
   isCurrent: boolean;
@@ -168,6 +170,8 @@ export default function SuperAdminSessionsPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [revokeTarget, setRevokeTarget] = useState<LoginSession | null>(null);
   const [revoking, setRevoking] = useState(false);
+  const [restoreTarget, setRestoreTarget] = useState<LoginSession | null>(null);
+  const [restoring, setRestoring] = useState(false);
 
   const isSuperAdmin = Boolean((authSession?.user as { isSuperAdmin?: boolean } | undefined)?.isSuperAdmin);
 
@@ -229,6 +233,25 @@ export default function SuperAdminSessionsPage() {
     }
   }
 
+  async function restoreSession() {
+    if (!restoreTarget) return;
+    setRestoring(true);
+    setError("");
+    try {
+      const response = await fetch(`/api/superadmin/sessions/${encodeURIComponent(restoreTarget.id)}/restore`, { method: "POST" });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "بازگردانی نشست انجام نشد.");
+      setNotice(`نشست ${restoreTarget.nameAtLogin || restoreTarget.phoneAtLogin || "کاربر"} دوباره فعال شد.`);
+      setRestoreTarget(null);
+      window.setTimeout(() => setNotice(""), 4500);
+      await loadSessions(true);
+    } catch (restoreError) {
+      setError(restoreError instanceof Error ? restoreError.message : "بازگردانی نشست انجام نشد.");
+    } finally {
+      setRestoring(false);
+    }
+  }
+
   const derivedCounts = useMemo(() => {
     const total = countValue(counts, ["total"], sessions.length);
     const active = countValue(counts, ["active", "ACTIVE"], sessions.filter((item) => item.status === "ACTIVE").length);
@@ -255,6 +278,9 @@ export default function SuperAdminSessionsPage() {
           <h1 className="text-xl font-black tracking-tight md:text-2xl">نشست‌ها و ورودها</h1>
           <p className="mt-1 max-w-2xl text-[11px] leading-6 text-muted md:text-xs">
             دستگاه‌های واردشده، آخرین فعالیت و مسیر ورود کاربران را ببینید و نشست‌های مشکوک را فوراً قطع کنید.
+          </p>
+          <p className="mt-2 max-w-2xl rounded-lg border border-amber/20 bg-amber/10 px-2.5 py-2 text-[10px] leading-5 text-amber">
+            ورود دوباره، نشست جدیدی می‌سازد و سابقه قطع‌شده را تغییر نمی‌دهد. «بازگردانی» فقط همان توکن قبلی را دوباره معتبر می‌کند؛ پس صرفاً برای نشست مطمئن استفاده شود.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -387,7 +413,7 @@ export default function SuperAdminSessionsPage() {
                       <td className="whitespace-nowrap px-3 py-3.5"><b className="block text-[10px]">{relativeActivity(item.lastActivityAt)}</b><small className="text-[9px] text-muted">{formatJalaliDateTime(item.lastActivityAt)}</small></td>
                       <td className="px-3 py-3.5"><SessionStatusBadge session={item} /></td>
                       <td className="px-4 py-3.5">
-                        {item.status === "ACTIVE" && !item.isCurrent ? <button type="button" onClick={() => setRevokeTarget(item)} className="rounded-lg border border-danger/20 bg-danger/10 px-2.5 py-1.5 text-[10px] font-bold text-danger transition hover:bg-danger/20">قطع نشست</button> : item.isCurrent ? <span className="text-[9px] text-muted">محافظت‌شده</span> : <span className="text-muted">—</span>}
+                        {item.status === "ACTIVE" && !item.isCurrent ? <button type="button" onClick={() => setRevokeTarget(item)} className="rounded-lg border border-danger/20 bg-danger/10 px-2.5 py-1.5 text-[10px] font-bold text-danger transition hover:bg-danger/20">قطع نشست</button> : item.status === "REVOKED" ? <button type="button" onClick={() => setRestoreTarget(item)} className="rounded-lg border border-teal/20 bg-teal/10 px-2.5 py-1.5 text-[10px] font-bold text-teal transition hover:bg-teal/20">بازگردانی</button> : item.isCurrent ? <span className="text-[9px] text-muted">محافظت‌شده</span> : <span className="text-muted">—</span>}
                       </td>
                     </tr>
                   ))}
@@ -417,6 +443,7 @@ export default function SuperAdminSessionsPage() {
                   <div className="mt-3 flex items-center justify-between gap-2">
                     <span className="text-[9px] text-muted">{providerLabel(item.provider)}</span>
                     {item.status === "ACTIVE" && !item.isCurrent && <button type="button" onClick={() => setRevokeTarget(item)} className="rounded-lg border border-danger/20 bg-danger/10 px-3 py-1.5 text-[10px] font-bold text-danger">قطع نشست</button>}
+                    {item.status === "REVOKED" && <button type="button" onClick={() => setRestoreTarget(item)} className="rounded-lg border border-teal/20 bg-teal/10 px-3 py-1.5 text-[10px] font-bold text-teal">بازگردانی</button>}
                   </div>
                 </article>
               ))}
@@ -438,6 +465,20 @@ export default function SuperAdminSessionsPage() {
             <div className="mt-5 flex gap-2">
               <button type="button" onClick={() => void revokeSession()} disabled={revoking} className="flex-[2] rounded-xl bg-danger px-4 py-2.5 text-xs font-extrabold text-white transition hover:brightness-110 disabled:opacity-60">{revoking ? "در حال قطع نشست..." : "بله، نشست را قطع کن"}</button>
               <button type="button" onClick={() => setRevokeTarget(null)} disabled={revoking} className="flex-1 rounded-xl border border-border bg-surface2 px-4 py-2.5 text-xs font-bold text-muted disabled:opacity-60">انصراف</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {restoreTarget && (
+        <div className="fixed inset-0 z-[80] grid place-items-center bg-[#050914]/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="restore-title" onMouseDown={(event) => { if (event.target === event.currentTarget && !restoring) setRestoreTarget(null); }}>
+          <div className="w-full max-w-md rounded-2xl border border-teal/25 bg-surface p-5 shadow-2xl">
+            <span className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-teal/15 text-teal"><RefreshCw size={21} /></span>
+            <h2 id="restore-title" className="text-base font-extrabold">این نشست دوباره فعال شود؟</h2>
+            <p className="mt-2 text-[11px] leading-6 text-muted">توکن قبلی <b className="text-ink">{restoreTarget.nameAtLogin || restoreTarget.phoneAtLogin || "این کاربر"}</b> دوباره اجازه دسترسی می‌گیرد. این کار را فقط زمانی انجام دهید که دستگاه و ورود را می‌شناسید.</p>
+            <div className="mt-5 flex gap-2">
+              <button type="button" onClick={() => void restoreSession()} disabled={restoring} className="flex-[2] rounded-xl bg-teal px-4 py-2.5 text-xs font-extrabold text-white transition hover:brightness-110 disabled:opacity-60">{restoring ? "در حال بازگردانی..." : "بله، نشست را بازگردان"}</button>
+              <button type="button" onClick={() => setRestoreTarget(null)} disabled={restoring} className="flex-1 rounded-xl border border-border bg-surface2 px-4 py-2.5 text-xs font-bold text-muted disabled:opacity-60">انصراف</button>
             </div>
           </div>
         </div>

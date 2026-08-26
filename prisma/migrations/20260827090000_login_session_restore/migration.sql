@@ -1,0 +1,5 @@
+ALTER TABLE "LoginSession"
+ADD COLUMN "lastRevokedAt" TIMESTAMP(3),
+ADD COLUMN "restoredAt" TIMESTAMP(3),
+ADD COLUMN "restoredByAdminId" TEXT,
+ADD COLUMN "restorationCount" INTEGER NOT NULL DEFAULT 0;

@@ -1277,6 +1277,10 @@ model LoginSession {
   revokedAt        DateTime?
   revokedByAdminId String?
   revokedReason    String?
+  lastRevokedAt    DateTime?
+  restoredAt       DateTime?
+  restoredByAdminId String?
+  restorationCount Int              @default(0)
 
   @@index([subjectKind, subjectId])
   @@index([shopId])
