@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ChevronLeft, ChevronRight, Cpu, Megaphone, Sparkles, type LucideIcon } from "lucide-react";
 
 type Slide = { kicker: string; title: string; text: string; cta: string; href: string; icon: LucideIcon; className: string; imageUrl?: string };
@@ -30,7 +29,7 @@ export default function LandingShowcase() {
   return <section className="landing-showcase" aria-label="پیشنهادها و اطلاعیه‌های پیوو">
     <div className="landing-showcase-label"><span><i /> ویترین پیوو</span><small>قابل مدیریت از پنل سوپرادمین</small></div>
     <div className={`landing-slider ${slide.className}`} style={slide.imageUrl ? { "--campaign-image": `url("${slide.imageUrl.replace(/["\\]/g, "")}")` } as CSSProperties : undefined}>
-      <AnimatePresence mode="wait"><motion.div key={safeActive} className="landing-slide-content" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: .5 }}><div className="landing-slide-icon"><Icon size={19} /></div><span>{slide.kicker}</span><h2>{slide.title}</h2><p>{slide.text}</p><Link href={slide.href}>{slide.cta}<ArrowLeft size={17} /></Link></motion.div></AnimatePresence>
+      <div key={safeActive} className="landing-slide-content landing-slide-enter"><div className="landing-slide-icon"><Icon size={19} /></div><span>{slide.kicker}</span><h2>{slide.title}</h2><p>{slide.text}</p><Link href={slide.href}>{slide.cta}<ArrowLeft size={17} /></Link></div>
       <div className="landing-slider-tech" aria-hidden><i /><i /><i /><span>SMART FLOW</span></div>
       <div className="landing-slider-controls"><button onClick={() => go(safeActive - 1)} aria-label="اسلاید قبلی"><ChevronRight size={18} /></button><div>{slides.map((_, index) => <button key={index} onClick={() => go(index)} className={index === safeActive ? "active" : ""} aria-label={`رفتن به اسلاید ${index + 1}`}><i /></button>)}</div><button onClick={() => go(safeActive + 1)} aria-label="اسلاید بعدی"><ChevronLeft size={18} /></button></div>
       <span className="landing-slide-count">۰{safeActive + 1} / ۰{slides.length}</span>

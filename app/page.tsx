@@ -1,5 +1,4 @@
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
@@ -7,30 +6,54 @@ import {
   Headphones, MessageSquareText, PackageCheck, QrCode, ShieldCheck,
   ShoppingBag, Smartphone, Sparkles, UsersRound, Wrench,
 } from "lucide-react";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { LATEST_ANDROID_RELEASE } from "@/lib/app-release";
 import Logo from "@/components/Logo";
 import EnamadBadge from "@/components/EnamadBadge";
 import EnamadServerBadge from "@/components/EnamadServerBadge";
 import ZarinpalTrustBadge from "@/components/ZarinpalTrustBadge";
 import LandingShowcase from "@/components/LandingShowcase";
-import { db } from "@/lib/db";
-import { LATEST_ANDROID_RELEASE } from "@/lib/app-release";
 
 export const dynamic = "force-dynamic";
 
 const features = [
-  { icon: Wrench, title: "مدیریت کامل تعمیرات", text: "از پذیرش و عیب‌یابی تا تخصیص تعمیرکار، ثبت قطعه و تحویل نهایی؛ همه در یک مسیر شفاف.", tone: "blue", large: true },
-  { icon: MessageSquareText, title: "ارتباط خودکار با مشتری", text: "پیامک وضعیت، پنل پیگیری و گفت‌وگوی مستقیم؛ بدون تماس‌های تکراری.", tone: "green" },
-  { icon: BarChart3, title: "سود واقعی، نه حدس", text: "درآمد، هزینه، دستمزد و سود هر تعمیر را لحظه‌ای ببینید.", tone: "violet" },
-  { icon: PackageCheck, title: "انبار هوشمند قطعات", text: "موجودی، هشدار کمبود و مصرف قطعات را دقیق کنترل کنید.", tone: "amber" },
-  { icon: QrCode, title: "پذیرش سریع با QR", text: "مشتری اطلاعات دستگاه را ثبت می‌کند و صف پذیرش سریع‌تر پیش می‌رود.", tone: "cyan" },
-  { icon: UsersRound, title: "شبکه همکاری تعمیرگاه‌ها", text: "ارجاع تخصصی، همکاری امن و ساختن یک شبکه حرفه‌ای از همکاران.", tone: "green", large: true },
+  { icon: Wrench, index: "01", title: "گردش‌کار تعمیرات", text: "از پذیرش و عیب‌یابی تا تخصیص، ثبت قطعه و تحویل؛ یک مسیر روشن و بدون دوباره‌کاری.", tone: "blue", wide: true },
+  { icon: MessageSquareText, index: "02", title: "ارتباط هوشمند", text: "اطلاع‌رسانی وضعیت و پیگیری مشتری بدون تماس‌های تکراری.", tone: "green" },
+  { icon: BarChart3, index: "03", title: "دید مالی واقعی", text: "درآمد، هزینه، دستمزد و سود هر تعمیر در یک نگاه.", tone: "violet" },
+  { icon: PackageCheck, index: "04", title: "انبار دقیق", text: "کنترل موجودی، مصرف قطعه و هشدار کمبود پیش از توقف کار.", tone: "amber" },
+  { icon: QrCode, index: "05", title: "پذیرش با QR", text: "ورود سریع اطلاعات دستگاه و تجربه حرفه‌ای از همان لحظه اول.", tone: "cyan" },
+  { icon: UsersRound, index: "06", title: "همکاری بین تعمیرگاه‌ها", text: "ارجاع تخصصی، ثبت مسیر ارسال و تسویه شفاف با همکاران مورد اعتماد.", tone: "green", wide: true },
 ];
 
-const steps = [
-  { n: "۰۱", title: "تعمیرگاهت را بساز", text: "رایگان ثبت‌نام کن و اطلاعات، خدمات و اعضای تیمت را وارد کن." },
-  { n: "۰۲", title: "پذیرش را شروع کن", text: "دستگاه را ثبت، تعمیرکار را مشخص و مشتری را خودکار مطلع کن." },
-  { n: "۰۳", title: "دقیق‌تر رشد کن", text: "با گزارش سود، رضایت مشتری و عملکرد تیم تصمیم‌های بهتر بگیر." },
+const workflow = [
+  { n: "۰۱", title: "راه‌اندازی", text: "تعمیرگاه، خدمات و تیم را تعریف کنید." },
+  { n: "۰۲", title: "اجرای روزانه", text: "پذیرش، تعمیر و ارتباط با مشتری را یکپارچه کنید." },
+  { n: "۰۳", title: "رشد آگاهانه", text: "با گزارش‌های روشن، تصمیم دقیق‌تری بگیرید." },
 ];
+
+type AppLinks = { apk: string; bazaar: string; myket: string };
+
+async function getAppLinks(): Promise<AppLinks> {
+  const fallback = { apk: LATEST_ANDROID_RELEASE.directApkUrl, bazaar: "", myket: "" };
+  try {
+    const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } }) as any;
+    return {
+      apk: settings?.androidApkUrl || fallback.apk,
+      bazaar: /^https:\/\/(?:www\.)?cafebazaar\.ir\//i.test(settings?.bazaarUrl || "") ? settings.bazaarUrl : "",
+      myket: /^https:\/\/(?:www\.)?myket\.ir\//i.test(settings?.myketUrl || "") ? settings.myketUrl : "",
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function StoreChoice({ href, store, label }: { href: string; store: string; label: string }) {
+  const body = <><i><ShoppingBag size={17} /></i><span><small>{href ? label : "در حال بررسی و انتشار"}</small><strong>{store}</strong></span></>;
+  return href
+    ? <a href={href} target="_blank" rel="noopener noreferrer" className="home-store-choice">{body}</a>
+    : <div className="home-store-choice is-pending" aria-label={`${store}؛ در حال بررسی`}>{body}</div>;
+}
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -39,200 +62,171 @@ export default async function Home() {
   if (user?.isCustomer) redirect("/customer");
   if (user?.shopId) redirect("/tickets");
 
-  let appLinks: { apk: string; bazaar: string; myket: string } = {
-    apk: LATEST_ANDROID_RELEASE.directApkUrl,
-    bazaar: "",
-    myket: "",
-  };
-  try {
-    const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } }) as any;
-    appLinks = {
-      apk: settings?.androidApkUrl || LATEST_ANDROID_RELEASE.directApkUrl,
-      bazaar: /^https:\/\/(?:www\.)?cafebazaar\.ir\//i.test(settings?.bazaarUrl || "") ? settings.bazaarUrl : "",
-      myket: /^https:\/\/(?:www\.)?myket\.ir\//i.test(settings?.myketUrl || "") ? settings.myketUrl : "",
-    };
-  } catch {
-    // The direct download remains available when platform settings are offline.
-  }
+  const appLinks = await getAppLinks();
 
   return (
-    <main className="landing-root">
-      <div className="landing-noise" aria-hidden />
-      <header className="landing-header">
-        <div className="landing-nav">
-          <Logo size={31} textClassName="text-xl" />
-          <nav className="landing-nav-links" aria-label="ناوبری اصلی">
+    <main className="landing-root home-v2">
+      <div className="home-atmosphere" aria-hidden><i /><i /><i /></div>
+
+      <header className="home-header">
+        <div className="home-nav">
+          <Link href="/" aria-label="صفحه اصلی پیوو" className="home-brand"><Logo size={32} textClassName="text-xl" /></Link>
+          <nav className="home-nav-links" aria-label="ناوبری اصلی">
+            <a href="#product">محصول</a>
             <a href="#features">امکانات</a>
             <a href="#workflow">نحوه کار</a>
-            <Link href="/about">درباره پیوو</Link>
+            <a href="#trust">اعتماد و مجوزها</a>
           </nav>
-          <div className="landing-nav-actions">
-            <Link href="/login" className="landing-login-link">ورود</Link>
-            <Link href="/signup" className="landing-nav-cta">شروع رایگان <ChevronLeft size={15} /></Link>
+          <div className="home-nav-actions">
+            <Link href="/login" className="home-nav-login">ورود به پنل</Link>
+            <Link href="/download" className="home-nav-download"><Download size={15} /> دانلود برنامه</Link>
           </div>
         </div>
       </header>
 
-      <section className="landing-hero">
-        <div className="landing-hero-glow landing-glow-blue" aria-hidden />
-        <div className="landing-hero-glow landing-glow-green" aria-hidden />
-        <div className="landing-hero-copy">
-          <div className="landing-pill"><Sparkles size={14} /> نسل جدید مدیریت تعمیرگاه موبایل <span>جدید</span></div>
-          <h1>تعمیرگاهت را<br /><em>حرفه‌ای‌تر</em> مدیریت کن.</h1>
-          <p>پیوو پذیرش، تعمیرات، مشتریان، انبار و حساب‌وکتاب را در یک فضای سریع و یکپارچه کنار هم می‌آورد؛ تا شما روی رشد تمرکز کنید.</p>
-          <div className="landing-hero-actions">
-            <Link href="/signup" className="landing-primary-btn">ساخت حساب رایگان <ArrowLeft size={18} /></Link>
-            <Link href="/customer/login" className="landing-secondary-btn"><Smartphone size={17} /> ورود مشتریان</Link>
+      <section className="home-hero" id="product">
+        <div className="home-hero-copy">
+          <div className="home-eyebrow"><span><i /> سامانه فعال و آنلاین</span><b>ساخته‌شده برای تعمیرگاه‌های ایران</b></div>
+          <h1>تعمیرگاه، این‌بار<br /><em>واقعاً هوشمند.</em></h1>
+          <p>پیوو مرکز فرماندهی یکپارچه تعمیرگاه شماست؛ پذیرش، تعمیرات، مشتریان، انبار و امور مالی را دقیق، سریع و حرفه‌ای مدیریت کنید.</p>
+          <div className="home-hero-actions">
+            <Link href="/signup" className="home-primary-action">شروع رایگان <ArrowLeft size={18} /></Link>
+            <Link href="/customer/login" className="home-secondary-action"><Smartphone size={17} /> ورود مشتریان</Link>
           </div>
-          <div className="landing-trust-row">
-            <span><Check size={14} /> بدون هزینه شروع</span>
-            <span><Check size={14} /> بدون نیاز به نصب</span>
-            <span><Check size={14} /> راه‌اندازی سریع</span>
+          <div className="home-reassurance">
+            <span><Check size={13} /> شروع بدون هزینه</span>
+            <span><Check size={13} /> راه‌اندازی سریع</span>
+            <span><Check size={13} /> پشتیبانی فارسی</span>
+          </div>
+
+          <div className="home-install-panel" aria-label="روش‌های دریافت اپلیکیشن پیوو">
+            <a href={appLinks.apk || "/download"} className="home-store-choice is-direct">
+              <i><Download size={18} /></i><span><small>نسخه {LATEST_ANDROID_RELEASE.versionName}</small><strong>دانلود مستقیم</strong></span>
+            </a>
+            <StoreChoice href={appLinks.bazaar} store="کافه‌بازار" label="دریافت از" />
+            <StoreChoice href={appLinks.myket} store="مایکت" label="دریافت از" />
           </div>
         </div>
 
-        <div className="landing-product-wrap" aria-label="پیش‌نمایش داشبورد پیوو">
-          <div className="landing-float-chip landing-chip-online"><i /> سامانه آنلاین</div>
-          <div className="landing-float-chip landing-chip-rating"><span>★</span><b>۴.۹</b><small>رضایت مشتری</small></div>
-          <div className="landing-dashboard">
-            <div className="landing-window-bar"><div><i /><i /><i /></div><span>app.peyvo.ir</span><ShieldCheck size={13} /></div>
-            <div className="landing-dashboard-body">
-              <aside className="landing-mini-side">
-                <div className="landing-mini-logo"><Logo size={22} /></div>
-                {["خانه", "تعمیرات", "مشتریان", "انبار", "گزارش‌ها"].map((item, index) => <div key={item} className={index === 1 ? "active" : ""}><i />{item}</div>)}
+        <div className="home-product-stage" aria-label="نمایی از مرکز عملیات پیوو">
+          <div className="home-stage-orbit" aria-hidden><i /><i /></div>
+          <div className="home-live-chip"><i /> همگام‌سازی زنده</div>
+          <div className="home-score-chip"><span>وضعیت سامانه</span><strong>پایدار</strong><b><ShieldCheck size={18} /></b></div>
+
+          <div className="home-product-window">
+            <div className="home-window-top">
+              <div><i /><i /><i /></div>
+              <span><ShieldCheck size={12} /> app.peyvo.ir</span>
+              <b>مرکز عملیات</b>
+            </div>
+            <div className="home-window-body">
+              <aside className="home-window-side">
+                <Logo size={21} />
+                {["نمای کلی", "تعمیرات", "مشتریان", "انبار", "گزارش‌ها"].map((item, index) => <div key={item} className={index === 1 ? "active" : ""}><i /> <span>{item}</span></div>)}
+                <small><i /> سیستم آنلاین</small>
               </aside>
-              <div className="landing-mini-main">
-                <div className="landing-mini-head"><div><small>داشبورد تعمیرگاه</small><strong>سلام، روز خوبی داشته باشید 👋</strong></div><span><span /> آنلاین</span></div>
-                <div className="landing-stat-grid">
-                  <article><Wrench size={16} /><small>در حال تعمیر</small><strong>۱۲</strong><em>+۳ امروز</em></article>
-                  <article><PackageCheck size={16} /><small>آماده تحویل</small><strong>۸</strong><em>+۲ امروز</em></article>
-                  <article><CircleDollarSign size={16} /><small>فروش امروز</small><strong>۶.۴م</strong><em>۱۸٪ رشد</em></article>
+              <div className="home-window-main">
+                <header><div><small>امروز در تعمیرگاه</small><strong>مرکز عملیات تعمیرگاه</strong></div><span><i /> زنده</span></header>
+                <div className="home-kpis">
+                  <article><span><Wrench size={14} /> در حال تعمیر</span><strong>۱۲</strong><small>۳ مورد جدید</small></article>
+                  <article><span><PackageCheck size={14} /> آماده تحویل</span><strong>۸</strong><small>۲ مورد امروز</small></article>
+                  <article><span><CircleDollarSign size={14} /> فروش امروز</span><strong>۶.۴م</strong><small>۱۸٪ رشد</small></article>
                 </div>
-                <div className="landing-board-head"><strong>جریان تعمیرات</strong><span>مشاهده همه</span></div>
-                <div className="landing-kanban">
-                  <div><header><i className="blue" />پذیرش شده <b>۳</b></header><article><strong>iPhone 13</strong><small>تعویض ال‌سی‌دی</small><span>امیر رضایی</span></article><article><strong>Galaxy A54</strong><small>مشکل شارژ</small><span>سارا احمدی</span></article></div>
-                  <div><header><i className="violet" />در حال تعمیر <b>۲</b></header><article><strong>iPhone 14 Pro</strong><small>تعمیر برد</small><span>محمد کریمی</span></article></div>
-                  <div><header><i className="green" />آماده تحویل <b>۴</b></header><article><strong>Redmi Note 12</strong><small>تعویض باتری</small><span>علی مرادی</span></article></div>
+                <div className="home-flow-title"><strong>جریان تعمیرات</strong><span>مشاهده همه <ChevronLeft size={11} /></span></div>
+                <div className="home-flow-board">
+                  <div><header><span><i className="blue" /> پذیرش شده</span><b>۳</b></header><article><strong>iPhone 13</strong><small>تعویض ال‌سی‌دی</small><em>امیر رضایی</em></article><article><strong>Galaxy A54</strong><small>مشکل شارژ</small><em>سارا احمدی</em></article></div>
+                  <div><header><span><i className="violet" /> در حال تعمیر</span><b>۲</b></header><article><strong>iPhone 14 Pro</strong><small>تعمیر برد</small><em>محمد کریمی</em></article></div>
+                  <div><header><span><i className="green" /> آماده تحویل</span><b>۴</b></header><article><strong>Redmi Note 12</strong><small>تعویض باتری</small><em>علی مرادی</em></article></div>
                 </div>
+                <div className="home-window-insight"><Sparkles size={13} /><span><small>پیشنهاد هوشمند</small><strong>سه دستگاه نیازمند پیگیری امروز هستند.</strong></span><ChevronLeft size={14} /></div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="landing-download-strip" aria-labelledby="app-download-title">
-        <div className="landing-download-intro">
-          <span><Smartphone size={15} /> اپلیکیشن اندروید پیوو</span>
-          <h2 id="app-download-title">پیوو، همیشه در دسترس شما</h2>
-          <p>نسخه {LATEST_ANDROID_RELEASE.versionName} را مستقیم دریافت کنید یا پس از انتشار، از فروشگاه موردنظر نصب کنید.</p>
-        </div>
-        <div className="landing-download-actions">
-          <a href={appLinks.apk || "/download"} className="landing-store-btn is-direct">
-            <i><Download size={22} /></i><span><small>دریافت آخرین نسخه</small><strong>دانلود مستقیم APK</strong></span>
-          </a>
-          {appLinks.bazaar ? (
-            <a href={appLinks.bazaar} target="_blank" rel="noopener noreferrer" className="landing-store-btn">
-              <i><ShoppingBag size={21} /></i><span><small>دریافت امن از</small><strong>کافه‌بازار</strong></span>
-            </a>
-          ) : (
-            <div className="landing-store-btn is-pending" aria-label="کافه‌بازار؛ در حال بررسی">
-              <i><ShoppingBag size={21} /></i><span><small>در حال بررسی و انتشار</small><strong>کافه‌بازار</strong></span>
-            </div>
-          )}
-          {appLinks.myket ? (
-            <a href={appLinks.myket} target="_blank" rel="noopener noreferrer" className="landing-store-btn">
-              <i><ShoppingBag size={21} /></i><span><small>دریافت امن از</small><strong>مایکت</strong></span>
-            </a>
-          ) : (
-            <div className="landing-store-btn is-pending" aria-label="مایکت؛ در حال بررسی">
-              <i><ShoppingBag size={21} /></i><span><small>در حال بررسی و انتشار</small><strong>مایکت</strong></span>
-            </div>
-          )}
-        </div>
+      <section className="home-proof" aria-label="مزیت‌های پیوو">
+        <div><strong>یک پنل؛ تمام تعمیرگاه</strong><small>از پذیرش تا تسویه و تحویل</small></div>
+        <span><Clock3 /> پیگیری لحظه‌ای</span>
+        <span><ShieldCheck /> زیرساخت امن</span>
+        <span><Headphones /> پشتیبانی واقعی</span>
+        <span><CircleDollarSign /> گزارش مالی دقیق</span>
       </section>
 
-      <section className="landing-proof">
-        <div><strong>یک پنل، تمام تعمیرگاه</strong><span>از لحظه پذیرش تا تحویل دستگاه</span></div>
-        <div className="landing-proof-items">
-          <span><Clock3 /> پیگیری لحظه‌ای</span><span><ShieldCheck /> اطلاعات امن</span><span><Headphones /> پشتیبانی واقعی</span><span><CircleDollarSign /> حسابداری دقیق</span>
+      <section id="features" className="home-section home-capabilities">
+        <div className="home-section-head">
+          <span><Sparkles size={14} /> همه‌چیز در یک جریان</span>
+          <h2>نظم حرفه‌ای، بدون پیچیدگی.</h2>
+          <p>هر ابزاری که برای اداره یک تعمیرگاه مدرن لازم دارید؛ دقیقاً جایی که باید باشد.</p>
         </div>
-      </section>
-
-      <LandingShowcase />
-
-      <section className="landing-intelligence">
-        <div className="landing-intelligence-copy">
-          <span><Sparkles size={14} /> هوشمندی در خدمت تعمیرگاه</span>
-          <h2>پیوو فقط ثبت نمی‌کند؛<br /><em>به شما دید می‌دهد.</em></h2>
-          <p>اطلاعات پراکنده را به نشانه‌های قابل‌فهم تبدیل کنید؛ ببینید کدام مرحله کند شده، چه قطعه‌ای رو به اتمام است و امروز باید روی چه چیزی تمرکز کنید.</p>
-          <div className="landing-intelligence-tags"><span>تشخیص گلوگاه</span><span>هشدار موجودی</span><span>دید مالی</span></div>
-        </div>
-        <div className="landing-ai-console">
-          <div className="landing-ai-top"><span><i /> مرکز هوشمندی پیوو</span><b>LIVE</b></div>
-          <div className="landing-ai-prompt"><Sparkles size={16} /><div><small>پیشنهاد امروز</small><strong>سه دستگاه بیش از میانگین زمان تعمیر منتظر مانده‌اند.</strong></div></div>
-          <div className="landing-ai-metrics"><article><small>فشار کاری</small><strong>۷۲٪</strong><i><b style={{ width: "72%" }} /></i></article><article><small>سلامت جریان</small><strong>عالی</strong><i><b style={{ width: "91%" }} /></i></article></div>
-          <div className="landing-ai-action"><span>اولویت پیشنهادی</span><strong>بررسی تعمیرات بخش برد</strong><button>مشاهده جزئیات <ChevronLeft size={14} /></button></div>
-        </div>
-      </section>
-
-      <section id="features" className="landing-section landing-features">
-        <div className="landing-section-head"><span>همه‌چیز یکجا</span><h2>ابزارهایی که تعمیرگاه<br />واقعاً به آن‌ها نیاز دارد</h2><p>پیچیدگی کمتر، کنترل بیشتر و تجربه‌ای حرفه‌ای‌تر برای تیم و مشتری شما.</p></div>
-        <div className="landing-bento">
-          {features.map(({ icon: Icon, title, text, tone, large }) => (
-            <article key={title} className={`landing-feature-card tone-${tone} ${large ? "is-large" : ""}`}>
-              <div className="landing-feature-icon"><Icon size={23} /></div><span className="landing-feature-arrow">↖</span>
+        <div className="home-bento">
+          {features.map(({ icon: Icon, index, title, text, tone, wide }) => (
+            <article key={title} className={`home-feature tone-${tone} ${wide ? "is-wide" : ""}`}>
+              <div className="home-feature-top"><i><Icon size={21} /></i><span>{index}</span></div>
               <h3>{title}</h3><p>{text}</p>
-              {large && <div className="landing-feature-visual"><i /><i /><i /><span /></div>}
+              {wide && <div className="home-feature-signal" aria-hidden><i /><i /><i /><i /><span /></div>}
             </article>
           ))}
         </div>
       </section>
 
-      <section id="workflow" className="landing-section landing-workflow">
-        <div className="landing-section-head centered"><span>شروع ساده</span><h2>سه قدم تا یک تعمیرگاه منظم</h2><p>نه آموزش پیچیده‌ای لازم است و نه نصب نرم‌افزار سنگین.</p></div>
-        <div className="landing-steps">
-          {steps.map((step, index) => <article key={step.n}><div className="landing-step-number">{step.n}</div>{index < 2 && <div className="landing-step-line" />}<h3>{step.title}</h3><p>{step.text}</p></article>)}
-        </div>
-      </section>
+      <div className="home-showcase-shell"><LandingShowcase /></div>
 
-      <section className="landing-final-wrap">
-        <div className="landing-final-card">
-          <div className="landing-final-orb" aria-hidden />
-          <span>وقت یک تغییر حرفه‌ای است</span><h2>تعمیرگاه آینده‌ات را<br />همین امروز بساز.</h2><p>رایگان شروع کن، امکانات پیوو را امتحان کن و هر زمان آماده بودی ارتقا بده.</p>
-          <Link href="/signup" className="landing-primary-btn">شروع رایگان پیوو <ArrowLeft size={18} /></Link>
+      <section className="home-section home-intelligence">
+        <div className="home-intelligence-copy">
+          <span><Sparkles size={14} /> هوشمندی کاربردی، نه نمایشی</span>
+          <h2>اطلاعات را ثبت نکنید؛<br /><em>از آن تصمیم بسازید.</em></h2>
+          <p>پیوو جریان روزانه تعمیرگاه را به نشانه‌های ساده و قابل اقدام تبدیل می‌کند؛ بدانید چه چیزی عقب افتاده، کدام قطعه رو به اتمام است و امروز کجا باید تمرکز کنید.</p>
+          <div><span><Check size={13} /> تشخیص گلوگاه</span><span><Check size={13} /> هشدار موجودی</span><span><Check size={13} /> دید مالی</span></div>
         </div>
-      </section>
-
-      <section className="landing-trust-seal" aria-labelledby="trust-title">
-        <div className="landing-trust-copy">
-          <span><ShieldCheck size={15} /> مجوزها و اعتماد</span>
-          <h2 id="trust-title">خرید و استفاده با خیال راحت</h2>
-          <p>هویت صاحب امتیاز و دامنه پیوو توسط مرکز توسعه تجارت الکترونیکی بررسی شده است. برای مشاهده جزئیات اعتبار، روی نشان اعتماد کلیک کنید.</p>
-          <div><i><Check size={13} /> دامنه ثبت‌شده</i><i><Check size={13} /> هویت تأییدشده</i><i><Check size={13} /> ارتباط امن</i></div>
-        </div>
-        <div className="landing-seal-cards">
-          <div className="landing-seal-card">
-            <EnamadServerBadge />
-            <strong>نماد اعتماد الکترونیکی</strong>
-            <small>قابل استعلام از سامانه رسمی اینماد</small>
+        <div className="home-command-card">
+          <header><span><i /> تحلیل امروز</span><b>LIVE</b></header>
+          <div className="home-command-message"><Sparkles size={18} /><span><small>اولویت پیشنهادی</small><strong>تعمیرات بخش برد بیشتر از میانگین زمان منتظر مانده‌اند.</strong></span></div>
+          <div className="home-command-metrics">
+            <article><span><small>سلامت جریان</small><strong>عالی</strong></span><i><b style={{ width: "91%" }} /></i></article>
+            <article><span><small>ظرفیت امروز</small><strong>۷۲٪</strong></span><i><b style={{ width: "72%" }} /></i></article>
           </div>
-          <div className="landing-seal-card">
-            <ZarinpalTrustBadge />
-            <strong>درگاه پرداخت زرین‌پال</strong>
-            <small>مشاهده اعتبار درگاه برای همین دامنه</small>
-          </div>
+          <div className="home-command-footer"><span>آخرین تحلیل: همین حالا</span><strong>پیشنهاد خودکار پیوو</strong></div>
         </div>
       </section>
 
-      <footer className="landing-footer">
-        <div className="landing-footer-top">
-          <div className="landing-footer-brand"><Logo size={32} /><p>سامانه یکپارچه مدیریت تعمیرگاه؛ از پذیرش دستگاه تا تحویل، فاکتور و ارتباط با مشتری.</p><Link href="/download" className="landing-footer-app">دانلود اپلیکیشن اندروید <ArrowLeft size={15} /></Link></div>
-          <div className="landing-footer-column"><strong>پیوو</strong><Link href="/about">درباره ما</Link><Link href="/#features">امکانات سامانه</Link><Link href="/signup">شروع رایگان</Link></div>
-          <div className="landing-footer-column"><strong>پشتیبانی</strong><Link href="/support">ارتباط با پشتیبانی</Link><Link href="/download">دانلود اپلیکیشن</Link><Link href="/login">ورود به پنل</Link></div>
-          <div className="landing-footer-column"><strong>قوانین و اعتماد</strong><Link href="/terms">شرایط استفاده</Link><Link href="/privacy">حریم خصوصی</Link><Link href="/refund">بازگشت وجه</Link></div>
-          <div className="landing-footer-trust"><EnamadBadge /><span>کسب‌وکار دارای هویت تأییدشده</span></div>
+      <section id="workflow" className="home-section home-workflow">
+        <div className="home-section-head compact"><span>شروع ساده</span><h2>سه قدم تا یک تعمیرگاه منظم</h2></div>
+        <div className="home-workflow-grid">
+          {workflow.map((step, index) => <article key={step.n}><div><span>{step.n}</span>{index < workflow.length - 1 && <i />}</div><h3>{step.title}</h3><p>{step.text}</p></article>)}
         </div>
-        <div className="landing-footer-bottom"><span>© ۱۴۰۵ پیوو؛ تمامی حقوق محفوظ است.</span><span>زیرساخت حرفه‌ای برای تعمیرکاران ایران</span></div>
+      </section>
+
+      <section id="trust" className="home-section home-trust">
+        <div className="home-trust-copy">
+          <span><ShieldCheck size={15} /> هویت تأییدشده و پرداخت امن</span>
+          <h2>اعتمادی که قابل استعلام است.</h2>
+          <p>هویت صاحب امتیاز و دامنه پیوو در سامانه رسمی اینماد بررسی شده و پرداخت‌های وب از مسیر امن زرین‌پال انجام می‌شود.</p>
+          <div><span><Check size={12} /> دامنه ثبت‌شده</span><span><Check size={12} /> هویت تأییدشده</span><span><Check size={12} /> ارتباط رمزنگاری‌شده</span></div>
+        </div>
+        <div className="home-seals">
+          <article><EnamadServerBadge /><strong>نماد اعتماد الکترونیکی</strong><small>استعلام از سامانه رسمی</small></article>
+          <article><ZarinpalTrustBadge /><strong>درگاه پرداخت زرین‌پال</strong><small>پرداخت امن برای همین دامنه</small></article>
+        </div>
+      </section>
+
+      <section className="home-final">
+        <div className="home-final-glow" aria-hidden />
+        <span>آماده یک شروع حرفه‌ای هستید؟</span>
+        <h2>مرکز فرماندهی تعمیرگاه شما،<br />همین حالا آماده است.</h2>
+        <p>رایگان شروع کنید و پیوو را با جریان واقعی تعمیرگاه خودتان بسنجید.</p>
+        <div><Link href="/signup" className="home-primary-action">ساخت حساب رایگان <ArrowLeft size={18} /></Link><Link href="/download" className="home-final-download"><Download size={16} /> دانلود برنامه</Link></div>
+      </section>
+
+      <footer className="home-footer">
+        <div className="home-footer-main">
+          <div className="home-footer-brand"><Logo size={34} /><p>زیرساخت یکپارچه مدیریت تعمیرگاه؛ دقیق، سریع و قابل اعتماد.</p><div><i /> سامانه فعال</div></div>
+          <div><strong>محصول</strong><a href="#features">امکانات</a><a href="#workflow">نحوه کار</a><Link href="/download">دانلود برنامه</Link></div>
+          <div><strong>دسترسی</strong><Link href="/login">ورود تعمیرگاه</Link><Link href="/customer/login">ورود مشتری</Link><Link href="/signup">ثبت‌نام رایگان</Link></div>
+          <div><strong>پشتیبانی و قوانین</strong><Link href="/support">پشتیبانی</Link><Link href="/terms">شرایط استفاده</Link><Link href="/privacy">حریم خصوصی</Link></div>
+          <div className="home-footer-seal"><EnamadBadge /><small>هویت کسب‌وکار تأیید شده</small></div>
+        </div>
+        <div className="home-footer-bottom"><span>© ۱۴۰۵ پیوو؛ تمامی حقوق محفوظ است.</span><span>ساخته‌شده برای تعمیرکاران ایران</span></div>
       </footer>
     </main>
   );
