@@ -3,15 +3,17 @@ import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
-  ArrowLeft, BarChart3, Check, ChevronLeft, CircleDollarSign, Clock3,
+  ArrowLeft, BarChart3, Check, ChevronLeft, CircleDollarSign, Clock3, Download,
   Headphones, MessageSquareText, PackageCheck, QrCode, ShieldCheck,
-  Smartphone, Sparkles, UsersRound, Wrench,
+  ShoppingBag, Smartphone, Sparkles, UsersRound, Wrench,
 } from "lucide-react";
 import Logo from "@/components/Logo";
 import EnamadBadge from "@/components/EnamadBadge";
 import EnamadServerBadge from "@/components/EnamadServerBadge";
 import ZarinpalTrustBadge from "@/components/ZarinpalTrustBadge";
 import LandingShowcase from "@/components/LandingShowcase";
+import { db } from "@/lib/db";
+import { LATEST_ANDROID_RELEASE } from "@/lib/app-release";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +38,22 @@ export default async function Home() {
   if (user?.isSuperAdmin) redirect("/superadmin");
   if (user?.isCustomer) redirect("/customer");
   if (user?.shopId) redirect("/tickets");
+
+  let appLinks: { apk: string; bazaar: string; myket: string } = {
+    apk: LATEST_ANDROID_RELEASE.directApkUrl,
+    bazaar: "",
+    myket: "",
+  };
+  try {
+    const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } }) as any;
+    appLinks = {
+      apk: settings?.androidApkUrl || LATEST_ANDROID_RELEASE.directApkUrl,
+      bazaar: /^https:\/\/(?:www\.)?cafebazaar\.ir\//i.test(settings?.bazaarUrl || "") ? settings.bazaarUrl : "",
+      myket: /^https:\/\/(?:www\.)?myket\.ir\//i.test(settings?.myketUrl || "") ? settings.myketUrl : "",
+    };
+  } catch {
+    // The direct download remains available when platform settings are offline.
+  }
 
   return (
     <main className="landing-root">
@@ -99,6 +117,37 @@ export default async function Home() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="landing-download-strip" aria-labelledby="app-download-title">
+        <div className="landing-download-intro">
+          <span><Smartphone size={15} /> اپلیکیشن اندروید پیوو</span>
+          <h2 id="app-download-title">پیوو، همیشه در دسترس شما</h2>
+          <p>نسخه {LATEST_ANDROID_RELEASE.versionName} را مستقیم دریافت کنید یا پس از انتشار، از فروشگاه موردنظر نصب کنید.</p>
+        </div>
+        <div className="landing-download-actions">
+          <a href={appLinks.apk || "/download"} className="landing-store-btn is-direct">
+            <i><Download size={22} /></i><span><small>دریافت آخرین نسخه</small><strong>دانلود مستقیم APK</strong></span>
+          </a>
+          {appLinks.bazaar ? (
+            <a href={appLinks.bazaar} target="_blank" rel="noopener noreferrer" className="landing-store-btn">
+              <i><ShoppingBag size={21} /></i><span><small>دریافت امن از</small><strong>کافه‌بازار</strong></span>
+            </a>
+          ) : (
+            <div className="landing-store-btn is-pending" aria-label="کافه‌بازار؛ در حال بررسی">
+              <i><ShoppingBag size={21} /></i><span><small>در حال بررسی و انتشار</small><strong>کافه‌بازار</strong></span>
+            </div>
+          )}
+          {appLinks.myket ? (
+            <a href={appLinks.myket} target="_blank" rel="noopener noreferrer" className="landing-store-btn">
+              <i><ShoppingBag size={21} /></i><span><small>دریافت امن از</small><strong>مایکت</strong></span>
+            </a>
+          ) : (
+            <div className="landing-store-btn is-pending" aria-label="مایکت؛ در حال بررسی">
+              <i><ShoppingBag size={21} /></i><span><small>در حال بررسی و انتشار</small><strong>مایکت</strong></span>
+            </div>
+          )}
         </div>
       </section>
 
