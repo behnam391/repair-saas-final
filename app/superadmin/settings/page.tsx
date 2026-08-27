@@ -41,6 +41,8 @@ export default function SuperAdminSettingsPage() {
     aiTimeoutMs: 20000, aiMaxRetries: 2, aiShopDailyLimit: 200,
   });
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveFeedback, setSaveFeedback] = useState<{ ok: boolean; text: string } | null>(null);
   const [testEmailTo, setTestEmailTo] = useState("");
   const [testMsg, setTestMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [testing, setTesting] = useState(false);
@@ -124,21 +126,59 @@ export default function SuperAdminSettingsPage() {
     });
   }, []);
 
-  async function save() {
+  async function persistSettings(payload: Record<string, unknown>) {
     setSaved(false);
-    const res = await fetch("/api/superadmin/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    if (res.ok) {
-      if (form.myketRsaPublicKey) setMyketSecretSet((s) => ({ ...s, publicKey: true }));
-      if (form.myketAccessToken) setMyketSecretSet((s) => ({ ...s, accessToken: true }));
-      setForm((f) => ({ ...f, myketRsaPublicKey: "", myketAccessToken: "" }));
+    setSaving(true);
+    setSaveFeedback(null);
+    try {
+      const res = await fetch("/api/superadmin/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const text = res.status === 401
+          ? "نشست مدیریت منقضی شده است؛ دوباره وارد شوید."
+          : data?.error === "invalid_input"
+            ? "یکی از مقادیر تنظیمات معتبر نیست. فیلدهای این بخش را بررسی کنید."
+            : "ذخیره تنظیمات انجام نشد. دوباره تلاش کنید.";
+        setSaveFeedback({ ok: false, text });
+        return false;
+      }
+      if (typeof payload.myketRsaPublicKey === "string" && payload.myketRsaPublicKey) {
+        setMyketSecretSet((s) => ({ ...s, publicKey: true }));
+      }
+      if (typeof payload.myketAccessToken === "string" && payload.myketAccessToken) {
+        setMyketSecretSet((s) => ({ ...s, accessToken: true }));
+      }
+      if ("myketRsaPublicKey" in payload || "myketAccessToken" in payload) {
+        setForm((f) => ({ ...f, myketRsaPublicKey: "", myketAccessToken: "" }));
+      }
       setSaved(true);
+      setSaveFeedback({ ok: true, text: "تنظیمات با موفقیت ذخیره شد." });
       setTimeout(() => setSaved(false), 2500);
+      return true;
+    } catch {
+      setSaveFeedback({ ok: false, text: "ارتباط با سرور برقرار نشد. دوباره تلاش کنید." });
+      return false;
+    } finally {
+      setSaving(false);
     }
-    return res.ok;
+  }
+
+  async function save() {
+    return persistSettings(form);
+  }
+
+  async function saveAppLinks() {
+    const links = {
+      androidApkUrl: form.androidApkUrl.trim(),
+      bazaarUrl: form.bazaarUrl.trim(),
+      myketUrl: form.myketUrl.trim(),
+    };
+    const ok = await persistSettings(links);
+    if (ok) setForm((f) => ({ ...f, ...links }));
   }
 
   // Persist the current SMTP settings first, then ask the server to send a real
@@ -512,6 +552,11 @@ export default function SuperAdminSettingsPage() {
           <label className="block text-[11px] text-muted mb-1">لینک مایکت</label>
           <input dir="ltr" placeholder="https://myket.ir/app/com.peyvo.app" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
             value={form.myketUrl} onChange={(e) => setForm({ ...form, myketUrl: e.target.value })} />
+          <button type="button" onClick={saveAppLinks} disabled={saving}
+            className="mt-3 w-full rounded-lg bg-teal px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">
+            {saving ? "در حال ذخیره…" : "ذخیره لینک‌های اپلیکیشن"}
+          </button>
+          {saveFeedback && <p className={`mt-2 text-xs ${saveFeedback.ok ? "text-teal" : "text-danger"}`}>{saveFeedback.text}</p>}
         </div>
 
         <div className="bg-surface border border-surface2 rounded-xl p-3 mb-4">
@@ -623,9 +668,10 @@ export default function SuperAdminSettingsPage() {
       </div>
       )}
 
-      <button onClick={save} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
-        {saved ? "✅ ذخیره شد" : "ذخیره تنظیمات"}
+      <button onClick={save} disabled={saving} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm disabled:opacity-50">
+        {saving ? "در حال ذخیره…" : saved ? "✅ ذخیره شد" : "ذخیره تنظیمات"}
       </button>
+      {tab !== "other" && saveFeedback && <p className={`mt-2 text-center text-xs ${saveFeedback.ok ? "text-teal" : "text-danger"}`}>{saveFeedback.text}</p>}
     </div>
   );
 }
