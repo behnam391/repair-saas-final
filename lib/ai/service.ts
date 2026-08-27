@@ -64,6 +64,7 @@ async function attemptSlot(
         maxTokens: req.maxTokens ?? config.maxTokens,
         temperature: req.temperature ?? config.temperature,
         signal: controller.signal,
+        responseFormat: req.responseFormat,
       };
       const out = await provider.generate(pr, { baseUrl: slot.baseUrl, apiKey: slot.apiKey });
       clearTimeout(timer);

@@ -51,6 +51,7 @@ export interface AiRequest {
   maxTokens?: number;
   temperature?: number;
   timeoutMs?: number;
+  responseFormat?: "text" | "json";
 }
 
 // What the domain service ALWAYS returns (never throws). On any failure `ok`
@@ -77,6 +78,7 @@ export interface ProviderRequest {
   maxTokens: number;
   temperature: number;
   signal: AbortSignal;
+  responseFormat?: "text" | "json";
 }
 
 export interface ProviderResult {

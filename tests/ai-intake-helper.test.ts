@@ -59,14 +59,18 @@ test("drops non-string / empty questions defensively", () => {
   assert.deepEqual(r!.questions, ["ok"]);
 });
 
-test("returns null for a non-JSON reply (e.g. the mock provider output)", () => {
-  assert.equal(parseIntakeHelperResult("[mock:m1] ok (input_chars=12)"), null);
+test("keeps a non-JSON provider reply as a fallback summary", () => {
+  assert.deepEqual(parseIntakeHelperResult("پیشنهاد اولیه برای بررسی بیشتر"), {
+    summary: "پیشنهاد اولیه برای بررسی بیشتر",
+    questions: [],
+    customerExplanation: "",
+  });
 });
 
 test("returns null for empty / whitespace / broken JSON", () => {
   assert.equal(parseIntakeHelperResult(""), null);
   assert.equal(parseIntakeHelperResult(null), null);
-  assert.equal(parseIntakeHelperResult("{ not valid json "), null);
+  assert.equal(parseIntakeHelperResult("{ not valid json ")?.summary, "{ not valid json");
   assert.equal(parseIntakeHelperResult('{"summary":"","questions":[],"customerExplanation":""}'), null);
 });
 

@@ -33,8 +33,12 @@ export class OpenAiCompatProvider implements AiProvider {
             { role: "system", content: req.system },
             { role: "user", content: req.input },
           ],
-          max_tokens: req.maxTokens,
-          temperature: req.temperature,
+          // GPT-5 family uses max_completion_tokens. Older/OpenAI-compatible
+          // models generally use max_tokens, so retain that shape for them.
+          ...(req.model.startsWith("gpt-5")
+            ? { max_completion_tokens: req.maxTokens }
+            : { max_tokens: req.maxTokens, temperature: req.temperature }),
+          ...(req.responseFormat === "json" ? { response_format: { type: "json_object" } } : {}),
         }),
         signal: req.signal,
       });

@@ -91,7 +91,15 @@ export async function POST(req: NextRequest) {
       customerDamageNotes: ticket.customerDamageNotes,
     });
 
-    const ai = await runCompletion({ shopId, task: "intake.helper", system, input });
+    const ai = await runCompletion({
+      shopId,
+      task: "intake.helper",
+      system,
+      input,
+      responseFormat: "json",
+      // Leave enough room for reasoning-capable models plus the short JSON.
+      maxTokens: 2048,
+    });
 
     // AI-level failure (disabled / quota / provider error) → clean soft status.
     if (!ai.ok) {

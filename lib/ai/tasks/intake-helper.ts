@@ -67,13 +67,20 @@ function extractJson(text: string): string | null {
 export function parseIntakeHelperResult(text: string | undefined | null): IntakeHelperResult | null {
   if (!text) return null;
   const json = extractJson(text);
-  if (!json) return null;
+  if (!json) {
+    // Last-resort compatibility for providers that ignore JSON mode: never
+    // discard a non-empty answer. Present it as a neutral summary while the
+    // disclaimer still makes clear that it is only an AI suggestion.
+    const summary = text.replace(/```(?:json)?|```/gi, "").trim().slice(0, 4000);
+    return summary ? { summary, questions: [], customerExplanation: "" } : null;
+  }
 
   let obj: any;
   try {
     obj = JSON.parse(json);
   } catch {
-    return null;
+    const summary = text.replace(/```(?:json)?|```/gi, "").trim().slice(0, 4000);
+    return summary ? { summary, questions: [], customerExplanation: "" } : null;
   }
   if (!obj || typeof obj !== "object") return null;
 
