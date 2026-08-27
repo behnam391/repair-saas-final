@@ -9,8 +9,8 @@ param(
 
 $ErrorActionPreference = "Stop"
 $ExpectedPackage = "com.peyvo.app"
-$ExpectedVersionCode = 9
-$ExpectedVersionName = "1.3.5"
+$ExpectedVersionCode = 10
+$ExpectedVersionName = "1.3.6"
 # Permanent Peyvo signing identity created for the unpublished store launch.
 # Public certificate fingerprints are safe to keep in source control; the
 # private .jks and its password stay outside the repository.
