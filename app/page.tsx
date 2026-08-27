@@ -56,6 +56,31 @@ function StoreChoice({ href, store, label }: { href: string; store: string; labe
     : <div className="home-store-choice is-pending" aria-label={`${store}؛ در حال بررسی`}>{body}</div>;
 }
 
+function StoreTrustBadge({
+  href, store, logo, publishedLabel,
+}: {
+  href: string;
+  store: string;
+  logo: string;
+  publishedLabel: string;
+}) {
+  const logoNode = (
+    <span className="home-store-seal-logo">
+      <img src={logo} alt={`لوگوی رسمی ${store}`} />
+    </span>
+  );
+
+  return (
+    <article className={`home-store-seal ${href ? "is-published" : "is-pending"}`}>
+      {href
+        ? <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`مشاهده صفحه رسمی پیوو در ${store}`}>{logoNode}</a>
+        : logoNode}
+      <strong>{href ? publishedLabel : store}</strong>
+      <small>{href ? "مشاهده صفحه رسمی پیوو" : "در حال بررسی و انتشار"}</small>
+    </article>
+  );
+}
+
 export default async function Home() {
   const session = await getServerSession(authOptions);
   const user = session?.user;
@@ -204,14 +229,16 @@ export default async function Home() {
 
       <section id="trust" className="home-section home-trust">
         <div className="home-trust-copy">
-          <span><ShieldCheck size={15} /> هویت تأییدشده و پرداخت امن</span>
+          <span><ShieldCheck size={15} /> هویت، پرداخت و انتشار رسمی</span>
           <h2>اعتمادی که قابل استعلام است.</h2>
-          <p>هویت صاحب امتیاز و دامنه پیوو در سامانه رسمی اینماد بررسی شده و پرداخت‌های وب از مسیر امن زرین‌پال انجام می‌شود.</p>
-          <div><span><Check size={12} /> دامنه ثبت‌شده</span><span><Check size={12} /> هویت تأییدشده</span><span><Check size={12} /> ارتباط رمزنگاری‌شده</span></div>
+          <p>هویت و دامنه پیوو در سامانه رسمی اینماد بررسی شده، پرداخت‌های وب از مسیر امن زرین‌پال انجام می‌شود و نسخه اندروید از کانال‌های معتبر فروشگاهی در دسترس قرار می‌گیرد.</p>
+          <div><span><Check size={12} /> دامنه ثبت‌شده</span><span><Check size={12} /> هویت تأییدشده</span><span><Check size={12} /> انتشار رسمی اپلیکیشن</span></div>
         </div>
         <div className="home-seals">
           <article><EnamadServerBadge /><strong>نماد اعتماد الکترونیکی</strong><small>استعلام از سامانه رسمی</small></article>
           <article><ZarinpalTrustBadge /><strong>درگاه پرداخت زرین‌پال</strong><small>پرداخت امن برای همین دامنه</small></article>
+          <StoreTrustBadge href={appLinks.bazaar} store="کافه‌بازار" logo="/images/trust/cafebazaar-official.png" publishedLabel="انتشار رسمی کافه‌بازار" />
+          <StoreTrustBadge href={appLinks.myket} store="مایکت" logo="/images/trust/myket-official.png" publishedLabel="انتشار رسمی مایکت" />
         </div>
       </section>
 
