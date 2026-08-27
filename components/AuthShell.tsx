@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { ReactNode, useState } from "react";
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole, ShieldCheck, Smartphone, XCircle } from "lucide-react";
 import Logo from "@/components/Logo";
 import { motion } from "framer-motion";
+import WebHomeLink from "@/components/WebHomeLink";
 
 type Accent = "blue" | "green" | "violet";
 
@@ -31,7 +31,7 @@ export function AuthShell({
     <main className="auth-scene min-h-screen" style={{ "--auth-accent": a.color, "--auth-soft": a.soft, "--auth-gradient": a.gradient } as React.CSSProperties}>
       <div className="auth-orb auth-orb-one" aria-hidden />
       <div className="auth-orb auth-orb-two" aria-hidden />
-      <Link href="/" className="auth-home-link"><ArrowLeft size={15} /> بازگشت به سایت</Link>
+      <WebHomeLink className="auth-home-link"><ArrowLeft size={15} /> بازگشت به سایت</WebHomeLink>
 
       <div className="auth-shell">
         <section className="auth-form-panel">

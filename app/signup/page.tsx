@@ -9,6 +9,7 @@ import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Building2, Check, ChevronLeft, CircuitBoard, Code2, Crown, Eye, EyeOff, LockKeyhole, MonitorSmartphone, ShieldCheck, ShoppingBag, Smartphone, Sparkles, Store, UserRound, UsersRound, Wrench } from "lucide-react";
 import Logo from "@/components/Logo";
+import WebHomeLink from "@/components/WebHomeLink";
 
 const BUSINESS_SIZE_OPTIONS = [
   { key: "SOLO", label: "استودیوی شخصی", eyebrow: "فقط خودم", desc: "برای تعمیرکار مستقلی که پذیرش، تعمیر و تحویل را خودش مدیریت می‌کند.", meta: "۱ نفر", icon: UserRound, popular: false },
@@ -103,7 +104,7 @@ export default function SignupPage() {
     return (
       <main className="signup-scene">
         <div className="signup-ambient" aria-hidden><i /><i /><i /></div>
-        <Link href="/" className="signup-home"><ArrowRight size={15} /> بازگشت به سایت</Link>
+        <WebHomeLink className="signup-home"><ArrowRight size={15} /> بازگشت به سایت</WebHomeLink>
         <div className="relative z-10 mx-auto w-[min(92vw,760px)] rounded-3xl border border-white/10 bg-surface/95 p-5 shadow-2xl sm:p-8">
           <div className="mb-6 text-center">
             <Logo size={35} textClassName="text-2xl" />
@@ -133,7 +134,7 @@ export default function SignupPage() {
   return (
     <main className="signup-scene">
       <div className="signup-ambient" aria-hidden><i /><i /><i /></div>
-      <Link href="/" className="signup-home"><ArrowRight size={15} /> بازگشت به سایت</Link>
+      <WebHomeLink className="signup-home"><ArrowRight size={15} /> بازگشت به سایت</WebHomeLink>
 
       <div className="signup-shell">
         <aside className="signup-rail">

@@ -2,6 +2,7 @@ import "./globals.css";
 import "./styles/public-experience.css";
 import "./styles/home-premium.css";
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { Providers } from "./providers";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import DigitInputFixer from "@/components/DigitInputFixer";
@@ -57,6 +58,7 @@ async function getAppearance(): Promise<{ fontKey: string; theme: string }> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { fontKey, theme } = await getAppearance();
   const font = getFont(fontKey);
+  const isNativeApp = /\bPeyvoNativeApp\b/i.test(headers().get("user-agent") || "");
 
   return (
     // --app-font is set as an inline CSS variable right on <html> (read by
@@ -83,7 +85,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             (valid, and React hoists rel=stylesheet links) rather than as a
             raw child of <html>. */}
         {font.url && <link rel="stylesheet" href={font.url} />}
-        <Providers>{children}</Providers>
+        <Providers isNativeApp={isNativeApp}>{children}</Providers>
         <ServiceWorkerRegister />
         <DigitInputFixer />
         <MobilePreviewToggle />

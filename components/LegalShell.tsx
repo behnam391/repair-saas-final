@@ -1,5 +1,6 @@
 import Link from "next/link";
 import EnamadBadge from "./EnamadBadge";
+import WebHomeLink from "./WebHomeLink";
 
 // Shared shell for the public legal pages (terms / privacy / refund) so they
 // share styling and cross-link to each other — the layout payment gateways
@@ -15,7 +16,7 @@ export default function LegalShell({
 }) {
   return (
     <div className="min-h-screen p-4 max-w-2xl mx-auto">
-      <Link href="/" className="text-xs text-copper">← بازگشت به سایت</Link>
+      <WebHomeLink className="text-xs text-copper">← بازگشت به سایت</WebHomeLink>
       <h1 className="display-heading text-xl mt-3 mb-1">{title}</h1>
       {updated && <p className="text-[11px] text-muted mb-6">آخرین به‌روزرسانی: {updated}</p>}
 

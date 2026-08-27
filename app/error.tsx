@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import WebHomeLink from "@/components/WebHomeLink";
 
 // Route-segment error boundary. Next.js renders this in place of a page
 // subtree that threw during render. It reports the error to the خطاها panel
@@ -51,12 +52,11 @@ export default function Error({
           >
             تلاش دوباره
           </button>
-          <a
-            href="/"
+          <WebHomeLink
             className="flex-1 bg-surface2 border border-border rounded-lg py-2.5 text-sm flex items-center justify-center"
           >
             خانه
-          </a>
+          </WebHomeLink>
         </div>
       </div>
     </div>
