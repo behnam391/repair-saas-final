@@ -63,12 +63,16 @@ export async function loadAiConfig(): Promise<AiConfig> {
   // saving the token is sufficient. A manually entered Base URL or model
   // always wins, preserving support for other compatible providers.
   const isTokenOnlyOpenAi = provider === "openai-compat" && !!apiKey;
+  const configuredModel = str(s?.aiModel) ?? str(process.env.AI_MODEL);
+  const model = isTokenOnlyOpenAi && (!configuredModel || configuredModel === "mock-model")
+    ? "gpt-5-mini"
+    : configuredModel ?? "mock-model";
 
   return {
     enabled,
     provider,
     fallbackProvider,
-    model: str(s?.aiModel) ?? str(process.env.AI_MODEL) ?? (isTokenOnlyOpenAi ? "gpt-5-mini" : "mock-model"),
+    model,
     baseUrl: str(s?.aiBaseUrl) ?? str(process.env.AI_BASE_URL) ?? (isTokenOnlyOpenAi ? "https://api.openai.com/v1" : undefined),
     apiKey,
     fallbackModel: str(s?.aiFallbackModel) ?? str(process.env.AI_FALLBACK_MODEL),

@@ -34,8 +34,8 @@ test("AI_ENABLED without a provider stays disabled (no accidental calls)", async
   assert.equal(r.error?.kind, "disabled");
 });
 
-test("OpenAI token-only setup receives the official endpoint and default model", async () => {
-  setEnv({ AI_ENABLED: "true", AI_PROVIDER: "openai-compat", AI_API_KEY: "sk-test-token" });
+test("OpenAI token-only setup replaces legacy mock defaults", async () => {
+  setEnv({ AI_ENABLED: "true", AI_PROVIDER: "openai-compat", AI_API_KEY: "sk-test-token", AI_MODEL: "mock-model" });
   const cfg = await loadAiConfig();
   assert.equal(cfg.baseUrl, "https://api.openai.com/v1");
   assert.equal(cfg.model, "gpt-5-mini");
