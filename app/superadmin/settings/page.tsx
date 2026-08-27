@@ -171,6 +171,19 @@ export default function SuperAdminSettingsPage() {
     return persistSettings(form);
   }
 
+  // One-click preset for the official OpenAI endpoint. The token still goes
+  // through the same server-only encrypted secret path as every other key.
+  function useOpenAiToken() {
+    setForm((current) => ({
+      ...current,
+      aiEnabled: true,
+      aiProvider: "openai-compat",
+      aiBaseUrl: "https://api.openai.com/v1",
+      aiModel: current.aiModel.trim() || "gpt-5-mini",
+    }));
+    setAiTest(null);
+  }
+
   async function saveAppLinks() {
     const links = {
       androidApkUrl: form.androidApkUrl.trim(),
@@ -591,7 +604,13 @@ export default function SuperAdminSettingsPage() {
             {form.aiEnabled ? "فعال" : "غیرفعال"}
           </button>
         </div>
-        <p className="text-[10px] text-muted">کلیدهای API به‌صورت رمزنگاری‌شده ذخیره می‌شوند و هرگز به مرورگر بازگردانده نمی‌شوند. این مقادیر بر متغیرهای محیطی اولویت دارند.</p>
+        <p className="text-[10px] text-muted">توکن یا کلید API به‌صورت امن در سرور نگهداری می‌شود، هرگز دوباره به مرورگر برگردانده نمی‌شود و بر مقدار تنظیم‌شده در Vercel اولویت دارد.</p>
+
+        <button type="button" onClick={useOpenAiToken}
+          className="w-full rounded-xl border border-teal/30 bg-teal/10 px-3 py-3 text-right transition hover:bg-teal/15">
+          <span className="block text-sm font-extrabold text-teal">اتصال مستقیم با توکن OpenAI</span>
+          <span className="mt-1 block text-[10px] leading-5 text-muted">با انتخاب این گزینه، آدرس رسمی OpenAI و مدل پیشنهادی خودکار تنظیم می‌شوند؛ فقط توکن را در کادر پایین وارد کن.</span>
+        </button>
 
         {/* Primary provider */}
         <div className="border-t border-surface2 pt-3">
@@ -601,18 +620,19 @@ export default function SuperAdminSettingsPage() {
             value={form.aiProvider} onChange={(e) => setForm({ ...form, aiProvider: e.target.value })}>
             <option value="disabled">disabled (خاموش)</option>
             <option value="mock">mock (تست محلی)</option>
-            <option value="openai-compat">openai-compat</option>
+            <option value="openai-compat">OpenAI / سرویس سازگار</option>
           </select>
           <label className="block text-[11px] text-muted mb-1">مدل</label>
-          <input dir="ltr" placeholder="gpt-4o-mini / llama3 …" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono"
+          <input dir="ltr" placeholder="gpt-5-mini" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono"
             value={form.aiModel} onChange={(e) => setForm({ ...form, aiModel: e.target.value })} />
           <label className="block text-[11px] text-muted mb-1">Base URL</label>
           <input dir="ltr" placeholder="https://…/v1" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono"
             value={form.aiBaseUrl} onChange={(e) => setForm({ ...form, aiBaseUrl: e.target.value })} />
-          <label className="block text-[11px] text-muted mb-1">کلید API {aiSecretSet.apiKey && <span className="text-teal">(ذخیره‌شده ✓ — برای تغییر مقدار جدید وارد کن)</span>}</label>
+          <label className="block text-[11px] text-muted mb-1">توکن OpenAI / کلید API {aiSecretSet.apiKey && <span className="text-teal">(ذخیره‌شده ✓ — برای تغییر مقدار جدید وارد کن)</span>}</label>
           <input type="password" dir="ltr" autoComplete="off" placeholder={aiSecretSet.apiKey ? "•••••• (بدون تغییر)" : ""}
             className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
             value={form.aiApiKey} onChange={(e) => setForm({ ...form, aiApiKey: e.target.value })} />
+          <p className="mt-1.5 text-[10px] leading-5 text-muted">توکن در APK یا صفحات عمومی قرار نمی‌گیرد. پس از ذخیره نیز مقدار اصلی آن قابل مشاهده نیست.</p>
         </div>
 
         {/* Fallback provider */}
