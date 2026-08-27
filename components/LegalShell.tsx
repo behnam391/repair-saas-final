@@ -1,6 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import EnamadBadge from "./EnamadBadge";
-import WebHomeLink from "./WebHomeLink";
+import { useIsNativeApp } from "./NativeAppContext";
 
 // Shared shell for the public legal pages (terms / privacy / refund) so they
 // share styling and cross-link to each other — the layout payment gateways
@@ -14,9 +16,11 @@ export default function LegalShell({
   updated?: string;
   children: React.ReactNode;
 }) {
+  const isNativeApp = useIsNativeApp();
+
   return (
     <div className="min-h-screen p-4 max-w-2xl mx-auto">
-      <WebHomeLink className="text-xs text-copper">← بازگشت به سایت</WebHomeLink>
+      {!isNativeApp && <Link href="/" className="text-xs text-copper">← بازگشت به سایت</Link>}
       <h1 className="display-heading text-xl mt-3 mb-1">{title}</h1>
       {updated && <p className="text-[11px] text-muted mb-6">آخرین به‌روزرسانی: {updated}</p>}
 
