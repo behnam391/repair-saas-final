@@ -42,6 +42,13 @@ test("OpenAI token-only setup replaces legacy mock defaults", async () => {
   assert.equal(cfg.apiKey, "sk-test-token");
 });
 
+test("legacy mock selection cannot swallow a configured OpenAI token", async () => {
+  setEnv({ AI_ENABLED: "true", AI_PROVIDER: "mock", AI_API_KEY: "sk-test-token", AI_MODEL: "gpt-5-mini" });
+  const cfg = await loadAiConfig();
+  assert.equal(cfg.provider, "openai-compat");
+  assert.equal(cfg.baseUrl, "https://api.openai.com/v1");
+});
+
 test("mock provider returns a marked, ok result without echoing raw input", async () => {
   setEnv({ AI_ENABLED: "true", AI_PROVIDER: "mock", AI_MODEL: "m1", AI_SHOP_DAILY_LIMIT: "0" });
   const r = await runCompletion(baseReq);

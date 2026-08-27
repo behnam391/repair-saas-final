@@ -50,20 +50,28 @@ export async function loadAiConfig(): Promise<AiConfig> {
     }
   }
 
-  const provider = toProvider(s?.aiProvider) ?? toProvider(process.env.AI_PROVIDER) ?? "disabled";
+  const apiKey = secret(s?.aiApiKey) ?? str(process.env.AI_API_KEY);
+  const configuredModel = str(s?.aiModel) ?? str(process.env.AI_MODEL);
+  const configuredBaseUrl = str(s?.aiBaseUrl) ?? str(process.env.AI_BASE_URL);
+  const selectedProvider = toProvider(s?.aiProvider) ?? toProvider(process.env.AI_PROVIDER) ?? "disabled";
+  // Repair legacy panel state where the OpenAI preset stored its token/model
+  // but the old `mock` provider selection survived. A real token together
+  // with an OpenAI model or endpoint is unambiguous and must never hit mock.
+  const looksLikeOpenAi = !!apiKey && (
+    configuredBaseUrl?.includes("api.openai.com") || configuredModel?.startsWith("gpt-")
+  );
+  const provider: ProviderKey = selectedProvider === "mock" && looksLikeOpenAi ? "openai-compat" : selectedProvider;
   const enabledRaw = bool(s?.aiEnabled) ?? bool(process.env.AI_ENABLED) ?? false;
   const enabled = enabledRaw && provider !== "disabled";
 
   const fbRaw = toProvider(s?.aiFallbackProvider) ?? toProvider(process.env.AI_FALLBACK_PROVIDER) ?? "disabled";
   const fallbackProvider = fbRaw !== "disabled" && fbRaw !== provider ? fbRaw : null;
-  const apiKey = secret(s?.aiApiKey) ?? str(process.env.AI_API_KEY);
   // The super-admin UI calls the OpenAI-compatible adapter for both OpenAI
   // and custom gateways. When an OpenAI token is present and no custom
   // endpoint/model was supplied, choose safe official defaults so merely
   // saving the token is sufficient. A manually entered Base URL or model
   // always wins, preserving support for other compatible providers.
   const isTokenOnlyOpenAi = provider === "openai-compat" && !!apiKey;
-  const configuredModel = str(s?.aiModel) ?? str(process.env.AI_MODEL);
   const model = isTokenOnlyOpenAi && (!configuredModel || configuredModel === "mock-model")
     ? "gpt-5-mini"
     : configuredModel ?? "mock-model";
@@ -73,7 +81,7 @@ export async function loadAiConfig(): Promise<AiConfig> {
     provider,
     fallbackProvider,
     model,
-    baseUrl: str(s?.aiBaseUrl) ?? str(process.env.AI_BASE_URL) ?? (isTokenOnlyOpenAi ? "https://api.openai.com/v1" : undefined),
+    baseUrl: configuredBaseUrl ?? (isTokenOnlyOpenAi ? "https://api.openai.com/v1" : undefined),
     apiKey,
     fallbackModel: str(s?.aiFallbackModel) ?? str(process.env.AI_FALLBACK_MODEL),
     fallbackBaseUrl: str(s?.aiFallbackBaseUrl) ?? str(process.env.AI_FALLBACK_BASE_URL),
