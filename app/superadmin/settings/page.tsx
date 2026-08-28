@@ -50,6 +50,8 @@ export default function SuperAdminSettingsPage() {
   const [myketSecretSet, setMyketSecretSet] = useState<{ publicKey: boolean; accessToken: boolean }>({ publicKey: false, accessToken: false });
   const [aiTest, setAiTest] = useState<{ ok: boolean; text: string } | null>(null);
   const [aiTesting, setAiTesting] = useState(false);
+  const [aiModels, setAiModels] = useState<string[]>([]);
+  const [aiModelsLoading, setAiModelsLoading] = useState(false);
 
   useEffect(() => {
     if (status === "authenticated" && !(session?.user as any)?.isSuperAdmin) router.push("/superadmin/login");
@@ -196,17 +198,33 @@ export default function SuperAdminSettingsPage() {
     setAiTest(null);
   }
 
-  function useDeepSeekFallback() {
+  function useHetznerFallback() {
     setForm((current) => ({
       ...current,
       aiEnabled: true,
       aiFallbackProvider: "openai-compat",
-      aiFallbackBaseUrl: "https://api.deepseek.com",
-      aiFallbackModel: "deepseek-v4-pro",
+      aiFallbackBaseUrl: "https://inference.hetzner.com/v1",
+      aiFallbackApiKey: "",
+      aiFallbackModel: "deepseek-ai/deepseek-v3",
       // One attempt per provider is enough; the fallback itself is the retry.
       aiMaxRetries: 0,
     }));
     setAiTest(null);
+  }
+
+  async function loadProviderModels() {
+    setAiModelsLoading(true);
+    const res = await fetch("/api/superadmin/ai-models", { cache: "no-store" });
+    const data = await res.json().catch(() => ({}));
+    setAiModelsLoading(false);
+    if (!res.ok || !Array.isArray(data.models)) {
+      setAiTest({ ok: false, text: "دریافت فهرست مدل‌های هتزنر ممکن نشد؛ اتصال را دوباره تست کن." });
+      return;
+    }
+    setAiModels(data.models);
+    const deepSeek = data.models.find((model: string) => model.toLowerCase().includes("deepseek"));
+    if (deepSeek) setForm((current) => ({ ...current, aiFallbackProvider: "openai-compat", aiFallbackBaseUrl: "https://inference.hetzner.com/v1", aiFallbackApiKey: "", aiFallbackModel: deepSeek, aiMaxRetries: 0 }));
+    setAiTest({ ok: true, text: deepSeek ? `مدل جایگزین هتزنر انتخاب شد: ${deepSeek}` : `${data.models.length.toLocaleString("fa-IR")} مدل دریافت شد؛ مدل جایگزین را از فهرست انتخاب کن.` });
   }
 
   async function saveAppLinks() {
@@ -671,12 +689,13 @@ export default function SuperAdminSettingsPage() {
         <div className="border-t border-surface2 pt-3">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="text-[12px] font-bold">ارائه‌دهنده جایگزین (اختیاری)</div>
-            <button type="button" onClick={useDeepSeekFallback}
+            <button type="button" onClick={useHetznerFallback}
               className="rounded-lg border border-teal/30 bg-teal/10 px-3 py-1.5 text-[10px] font-bold text-teal hover:bg-teal/15">
-              تنظیم خودکار DeepSeek جایگزین
+              استفاده از همان API هتزنر
             </button>
           </div>
-          <p className="mb-2 text-[10px] leading-5 text-muted">اگر Hetzner پاسخ ندهد، درخواست به‌صورت خودکار با کلید مستقل DeepSeek ادامه پیدا می‌کند. کلید DeepSeek را در فیلد پایین وارد کن.</p>
+          <p className="mb-2 text-[10px] leading-5 text-muted">برای Qwen و DeepSeek همان توکن هتزنر استفاده می‌شود. آدرس DeepSeek به‌صورت خودکار روی مسیر جدید <span dir="ltr">inference.hetzner.com/v1</span> تنظیم می‌شود و فیلد کلید جایگزین باید خالی بماند.</p>
+          <button type="button" onClick={loadProviderModels} disabled={aiModelsLoading} className="mb-2 rounded-lg bg-surface2 px-3 py-2 text-[10px] font-bold disabled:opacity-50">{aiModelsLoading ? "در حال دریافت مدل‌ها…" : "دریافت مدل‌های فعال از هتزنر"}</button>
           <label className="block text-[11px] text-muted mb-1">نوع</label>
           <select dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2"
             value={form.aiFallbackProvider} onChange={(e) => setForm({ ...form, aiFallbackProvider: e.target.value })}>
@@ -687,6 +706,7 @@ export default function SuperAdminSettingsPage() {
           <label className="block text-[11px] text-muted mb-1">مدل جایگزین</label>
           <input dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono"
             value={form.aiFallbackModel} onChange={(e) => setForm({ ...form, aiFallbackModel: e.target.value })} />
+          {aiModels.length > 0 && <select dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-xs mb-2" value={form.aiFallbackModel} onChange={(e)=>setForm({...form,aiFallbackModel:e.target.value})}><option value="">انتخاب مدل جایگزین…</option>{aiModels.map(model=><option key={model} value={model}>{model}</option>)}</select>}
           <label className="block text-[11px] text-muted mb-1">Base URL جایگزین</label>
           <input dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono"
             value={form.aiFallbackBaseUrl} onChange={(e) => setForm({ ...form, aiFallbackBaseUrl: e.target.value })} />

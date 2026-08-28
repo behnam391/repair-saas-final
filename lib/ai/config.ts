@@ -66,7 +66,9 @@ export async function loadAiConfig(): Promise<AiConfig> {
   const enabled = enabledRaw && provider !== "disabled";
 
   const fbRaw = toProvider(s?.aiFallbackProvider) ?? toProvider(process.env.AI_FALLBACK_PROVIDER) ?? "disabled";
-  const fallbackProvider = fbRaw !== "disabled" && fbRaw !== provider ? fbRaw : null;
+  // A second model on the same OpenAI-compatible gateway is a valid fallback
+  // (for example Qwen -> DeepSeek through one Hetzner Inference account).
+  const fallbackProvider = fbRaw !== "disabled" ? fbRaw : null;
   // The super-admin UI calls the OpenAI-compatible adapter for both OpenAI
   // and custom gateways. When an OpenAI token is present and no custom
   // endpoint/model was supplied, choose safe official defaults so merely
@@ -87,8 +89,8 @@ export async function loadAiConfig(): Promise<AiConfig> {
     baseUrl: configuredBaseUrl ?? (isTokenOnlyOpenAi ? "https://api.openai.com/v1" : undefined),
     apiKey,
     fallbackModel: str(s?.aiFallbackModel) ?? str(process.env.AI_FALLBACK_MODEL),
-    fallbackBaseUrl: str(s?.aiFallbackBaseUrl) ?? str(process.env.AI_FALLBACK_BASE_URL),
-    fallbackApiKey: secret(s?.aiFallbackApiKey) ?? str(process.env.AI_FALLBACK_API_KEY),
+    fallbackBaseUrl: str(s?.aiFallbackBaseUrl) ?? str(process.env.AI_FALLBACK_BASE_URL) ?? (fallbackProvider === provider ? configuredBaseUrl : undefined),
+    fallbackApiKey: secret(s?.aiFallbackApiKey) ?? str(process.env.AI_FALLBACK_API_KEY) ?? (fallbackProvider === provider ? apiKey : undefined),
     timeoutMs: isHetznerInference ? Math.max(configuredTimeout, 75000) : configuredTimeout,
     maxRetries: num(s?.aiMaxRetries) ?? num(process.env.AI_MAX_RETRIES) ?? 2,
     maxTokens: num(process.env.AI_MAX_TOKENS) ?? 1024, // not exposed in the admin UI
