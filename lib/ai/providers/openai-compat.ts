@@ -68,7 +68,15 @@ export class OpenAiCompatProvider implements AiProvider {
       throw new AiProviderError("invalid_response", "provider returned non-JSON", false);
     }
 
-    const text = data?.choices?.[0]?.message?.content;
+    const content = data?.choices?.[0]?.message?.content;
+    // Most providers return a string. Some OpenAI-compatible gateways return
+    // an array of typed text parts, so normalize both without leaking their
+    // provider-specific response shape into the rest of the application.
+    const text = typeof content === "string"
+      ? content
+      : Array.isArray(content)
+        ? content.map((part: any) => typeof part === "string" ? part : part?.text ?? "").join("")
+        : undefined;
     if (typeof text !== "string") {
       throw new AiProviderError("invalid_response", "missing choices[0].message.content", false);
     }

@@ -64,7 +64,11 @@ export async function probeAiConnection(): Promise<ProbeResult> {
         system: "Connectivity probe. Reply with the single word: OK.",
         input: redactForPrompt("ping"),
         model,
-        maxTokens: 8,
+        // Reasoning-capable open models (including Hetzner's Qwen models)
+        // may consume a small completion budget before producing visible
+        // text. Eight tokens can therefore yield a valid 200 response with
+        // empty content; 256 remains tiny but is enough for a reliable probe.
+        maxTokens: provider === "mock" ? 8 : 256,
         temperature: 0,
         signal: controller.signal,
       },
