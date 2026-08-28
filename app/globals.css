@@ -674,7 +674,6 @@ select option {
 .super-shell { min-height: 100vh; display: grid; grid-template-columns: 244px minmax(0,1fr); background: linear-gradient(145deg,rgb(var(--rgb-copper) / .025),transparent 40%); transition: grid-template-columns .25s ease; }
 .super-shell.is-collapsed { grid-template-columns: 78px minmax(0,1fr); }
 .super-sidebar { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; padding: 18px 14px; background: color-mix(in srgb,var(--glass-menu) 90%,#050914); border-left: 1px solid var(--color-border); box-shadow: -15px 0 45px rgba(2,6,20,.18); backdrop-filter: blur(26px) saturate(1.35); }
-.super-collapse { position: absolute; top: 31px; left: -14px; z-index: 3; width: 29px; height: 29px; display: grid; place-items: center; border-radius: 10px; color: var(--color-copper); background: var(--glass-menu); border: 1px solid var(--color-border); box-shadow: 0 8px 22px rgba(0,0,0,.2); }
 .super-shell.is-collapsed .super-brand span,.super-shell.is-collapsed .super-nav-group > small,.super-shell.is-collapsed .super-nav-group a span,.super-shell.is-collapsed .super-sidebar-profile span,.super-shell.is-collapsed .super-logout span { display: none; }
 .super-shell.is-collapsed .super-brand,.super-shell.is-collapsed .super-nav-group a,.super-shell.is-collapsed .super-logout { justify-content: center; padding-inline: 0; }
 .super-brand { display: flex; align-items: center; gap: 10px; padding: 3px 7px 20px; border-bottom: 1px solid var(--color-border); }
@@ -688,6 +687,7 @@ select option {
 .super-logout { min-height: 40px; display: flex; align-items: center; gap: 9px; padding: 0 12px; border-radius: 11px; color: var(--color-muted); background: var(--color-surface); font-size: 10px; font-weight: 700; }.super-logout:hover { color: var(--color-danger); }
 .super-sidebar-profile { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; padding: 10px; border-radius: 13px; background: rgb(var(--rgb-copper) / .07); border: 1px solid rgb(var(--rgb-copper) / .13); color: var(--color-copper); }.super-sidebar-profile b,.super-sidebar-profile small { display:block; white-space:nowrap; }.super-sidebar-profile b { color:var(--color-ink); font-size:9px; }.super-sidebar-profile small { color:var(--color-muted); font-size:7px; margin-top:2px; }
 .super-main { min-width: 0; padding: 24px clamp(18px,3vw,42px) 50px; }
+.super-commandbar { height: 42px; display:flex; align-items:center; justify-content:space-between; gap:12px; margin:-8px 0 18px; padding:5px 7px; border-radius:14px; background:var(--glass-menu); border:1px solid var(--color-border); box-shadow:inset 0 1px var(--glass-highlight); backdrop-filter:blur(18px); }.super-commandbar>button { min-height:30px; display:flex; align-items:center; gap:7px; padding:0 10px; border-radius:9px; color:var(--color-copper); background:rgb(var(--rgb-copper) / .1); font-size:9px; font-weight:800; }.super-commandbar>button:hover { background:rgb(var(--rgb-copper) / .18); }.super-commandbar>span { display:flex; align-items:center; gap:6px; color:var(--color-muted); font-size:8px; font-weight:700; }
 .super-mobile-brand { display: none; }
 .super-page-frame > .min-h-screen { min-height: auto !important; max-width: 980px !important; margin-inline: auto !important; padding: 0 !important; }
 .super-page-frame > .min-h-screen > a[href="/superadmin"] { display: none; }
@@ -765,6 +765,7 @@ select option {
 
 @media (max-width: 980px) {
   .super-charts { grid-template-columns: 1fr; }
+  .super-commandbar { display: none; }
 }
 @media (max-width: 680px) {
   .morning-insights-grid { grid-template-columns: 1fr; }
