@@ -196,6 +196,19 @@ export default function SuperAdminSettingsPage() {
     setAiTest(null);
   }
 
+  function useDeepSeekFallback() {
+    setForm((current) => ({
+      ...current,
+      aiEnabled: true,
+      aiFallbackProvider: "openai-compat",
+      aiFallbackBaseUrl: "https://api.deepseek.com",
+      aiFallbackModel: "deepseek-v4-pro",
+      // One attempt per provider is enough; the fallback itself is the retry.
+      aiMaxRetries: 0,
+    }));
+    setAiTest(null);
+  }
+
   async function saveAppLinks() {
     const links = {
       androidApkUrl: form.androidApkUrl.trim(),
@@ -656,7 +669,14 @@ export default function SuperAdminSettingsPage() {
 
         {/* Fallback provider */}
         <div className="border-t border-surface2 pt-3">
-          <div className="text-[12px] font-bold mb-2">ارائه‌دهنده جایگزین (اختیاری)</div>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="text-[12px] font-bold">ارائه‌دهنده جایگزین (اختیاری)</div>
+            <button type="button" onClick={useDeepSeekFallback}
+              className="rounded-lg border border-teal/30 bg-teal/10 px-3 py-1.5 text-[10px] font-bold text-teal hover:bg-teal/15">
+              تنظیم خودکار DeepSeek جایگزین
+            </button>
+          </div>
+          <p className="mb-2 text-[10px] leading-5 text-muted">اگر Hetzner پاسخ ندهد، درخواست به‌صورت خودکار با کلید مستقل DeepSeek ادامه پیدا می‌کند. کلید DeepSeek را در فیلد پایین وارد کن.</p>
           <label className="block text-[11px] text-muted mb-1">نوع</label>
           <select dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2"
             value={form.aiFallbackProvider} onChange={(e) => setForm({ ...form, aiFallbackProvider: e.target.value })}>

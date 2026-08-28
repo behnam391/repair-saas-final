@@ -102,7 +102,9 @@ export async function POST(req: NextRequest) {
       maxTokens: 320,
       // This task is intentionally tiny. One attempt with a generous deadline
       // is faster and more predictable than retrying a slow reasoning model.
-      timeoutMs: 65000,
+      // With a fallback configured, two provider slots still finish before
+      // the browser/server deadline (30s primary + 30s fallback at most).
+      timeoutMs: 30000,
       maxRetries: 0,
     });
 
