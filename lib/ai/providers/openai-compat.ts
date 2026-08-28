@@ -38,7 +38,12 @@ export class OpenAiCompatProvider implements AiProvider {
           ...(req.model.startsWith("gpt-5")
             ? { max_completion_tokens: req.maxTokens }
             : { max_tokens: req.maxTokens, temperature: req.temperature }),
-          ...(req.responseFormat === "json" ? { response_format: { type: "json_object" } } : {}),
+          // Hetzner documents the standard chat-completions shape but does not
+          // advertise JSON mode. The prompt already requires strict JSON, so
+          // omit this optional OpenAI extension for maximum compatibility.
+          ...(req.responseFormat === "json" && !cfg.baseUrl.includes("inference.hetzner.com")
+            ? { response_format: { type: "json_object" } }
+            : {}),
         }),
         signal: req.signal,
       });

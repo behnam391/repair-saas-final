@@ -51,6 +51,7 @@ export interface AiRequest {
   maxTokens?: number;
   temperature?: number;
   timeoutMs?: number;
+  maxRetries?: number;
   responseFormat?: "text" | "json";
 }
 

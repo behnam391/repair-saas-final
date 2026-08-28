@@ -46,7 +46,7 @@ async function attemptSlot(
   config: AiConfig
 ): Promise<{ result: AiResult; attempts: number }> {
   const provider = getProvider(slot.provider);
-  const maxRetries = Math.max(0, Math.floor(config.maxRetries));
+  const maxRetries = Math.max(0, Math.floor(req.maxRetries ?? config.maxRetries));
   const timeoutMs = req.timeoutMs ?? config.timeoutMs;
   let attempts = 0;
   let lastErr: AiProviderError | null = null;
