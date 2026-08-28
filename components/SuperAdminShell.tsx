@@ -4,7 +4,7 @@ import { ReactNode, useState } from "react";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import type { LucideIcon } from "lucide-react";
-import { BadgeCheck, BellRing, Bug, CircleUserRound, DatabaseBackup, Gift, Headphones, KeyRound, LayoutDashboard, LogOut, Menu, MessageCircle, MonitorSmartphone, PanelRightClose, PanelRightOpen, Settings2, Store, UsersRound } from "lucide-react";
+import { BadgeCheck, BellRing, Bug, ChevronLeft, CircleUserRound, DatabaseBackup, Gift, Headphones, KeyRound, LayoutDashboard, LogOut, Menu, MessageCircle, MonitorSmartphone, Settings2, Store, UsersRound } from "lucide-react";
 import Logo from "@/components/Logo";
 
 const GROUPS: { label: string; items: { href: string; label: string; Icon: LucideIcon }[] }[] = [
@@ -40,22 +40,17 @@ export default function SuperAdminShell({ children }: { children: ReactNode }) {
   if (pathname === "/superadmin/login") return <>{children}</>;
   const isActive = (href: string) => href === "/superadmin" ? pathname === href : pathname.startsWith(href);
 
-  const adminName = session?.user?.name || "بهنام شفیعی";
+  const rawAdminName = session?.user?.name?.trim() || "";
+  const adminName = rawAdminName && !/^\?+$/.test(rawAdminName) ? rawAdminName : "بهنام شفیعی";
   return <div className={`super-shell ${collapsed ? "is-collapsed" : ""}`}>
     <aside className="super-sidebar">
       <a href="/superadmin" className="super-brand"><div><Logo size={25} withText={false} /></div><span><b>Peyvo</b><small>Platform console</small></span></a>
+      <button className="super-collapse" onClick={() => setCollapsed(v => !v)} title={collapsed ? "باز کردن منو" : "جمع کردن منو"} aria-label={collapsed ? "باز کردن منوی مدیریت" : "جمع کردن منوی مدیریت"}>{collapsed ? <Menu size={17} /> : <ChevronLeft size={17} />}</button>
       <nav>{GROUPS.map((group) => <div className="super-nav-group" key={group.label}><small>{group.label}</small>{group.items.map((item) => <a key={item.href} href={item.href} className={isActive(item.href) ? "is-active" : ""}><item.Icon size={17} /><span>{item.label}</span>{isActive(item.href) && <i />}</a>)}</div>)}</nav>
       <div className="super-sidebar-profile"><CircleUserRound size={18} /><span><b>{adminName}</b><small>مدیر اصلی</small></span></div>
       <button onClick={() => signOut({ callbackUrl: "/superadmin/login" })} className="super-logout"><LogOut size={16} /><span>خروج امن</span></button>
     </aside>
     <main className="super-main">
-      <div className="super-commandbar">
-        <button type="button" onClick={() => setCollapsed(v => !v)} aria-label={collapsed ? "باز کردن منوی مدیریت" : "جمع کردن منوی مدیریت"} aria-expanded={!collapsed}>
-          {collapsed ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}
-          <span>{collapsed ? "باز کردن منو" : "جمع کردن منو"}</span>
-        </button>
-        <span><Menu size={14} /> پنل مدیریت پیوو</span>
-      </div>
       <div className="super-mobile-brand"><a href="/superadmin"><Logo size={23} /></a><span>مرکز مدیریت پلتفرم</span><button onClick={() => signOut({ callbackUrl: "/superadmin/login" })}><LogOut size={16} /></button></div>
       <div className="super-mobile-nav">{GROUPS.flatMap((g) => g.items).map((item) => <a key={item.href} href={item.href} className={isActive(item.href) ? "is-active" : ""}><item.Icon size={16} /><span>{item.label}</span></a>)}</div>
       <div className="super-page-frame">{children}</div>
