@@ -184,6 +184,17 @@ export default function SuperAdminSettingsPage() {
     setAiTest(null);
   }
 
+  function useHetznerToken() {
+    setForm((current) => ({
+      ...current,
+      aiEnabled: true,
+      aiProvider: "openai-compat",
+      aiBaseUrl: "https://inference.hetzner.com/api/v1",
+      aiModel: "Qwen/Qwen3.6-35B-A3B-FP8",
+    }));
+    setAiTest(null);
+  }
+
   async function saveAppLinks() {
     const links = {
       androidApkUrl: form.androidApkUrl.trim(),
@@ -606,11 +617,18 @@ export default function SuperAdminSettingsPage() {
         </div>
         <p className="text-[10px] text-muted">توکن یا کلید API به‌صورت امن در سرور نگهداری می‌شود، هرگز دوباره به مرورگر برگردانده نمی‌شود و بر مقدار تنظیم‌شده در Vercel اولویت دارد.</p>
 
-        <button type="button" onClick={useOpenAiToken}
-          className="w-full rounded-xl border border-teal/30 bg-teal/10 px-3 py-3 text-right transition hover:bg-teal/15">
-          <span className="block text-sm font-extrabold text-teal">اتصال مستقیم با توکن OpenAI</span>
-          <span className="mt-1 block text-[10px] leading-5 text-muted">با انتخاب این گزینه، آدرس رسمی OpenAI و مدل پیشنهادی خودکار تنظیم می‌شوند؛ فقط توکن را در کادر پایین وارد کن.</span>
-        </button>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <button type="button" onClick={useHetznerToken}
+            className="w-full rounded-xl border border-copper/35 bg-copper/10 px-3 py-3 text-right transition hover:bg-copper/15">
+            <span className="block text-sm font-extrabold text-copper">اتصال رایگان Hetzner</span>
+            <span className="mt-1 block text-[10px] leading-5 text-muted">آدرس Inference و مدل Qwen خودکار تنظیم می‌شود؛ فقط توکن Hetzner را پایین وارد کن.</span>
+          </button>
+          <button type="button" onClick={useOpenAiToken}
+            className="w-full rounded-xl border border-teal/30 bg-teal/10 px-3 py-3 text-right transition hover:bg-teal/15">
+            <span className="block text-sm font-extrabold text-teal">اتصال مستقیم OpenAI</span>
+            <span className="mt-1 block text-[10px] leading-5 text-muted">آدرس رسمی OpenAI و مدل پیشنهادی خودکار تنظیم می‌شوند؛ نیازمند اعتبار API است.</span>
+          </button>
+        </div>
 
         {/* Primary provider */}
         <div className="border-t border-surface2 pt-3">
@@ -628,7 +646,7 @@ export default function SuperAdminSettingsPage() {
           <label className="block text-[11px] text-muted mb-1">Base URL</label>
           <input dir="ltr" placeholder="https://…/v1" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-2 mono"
             value={form.aiBaseUrl} onChange={(e) => setForm({ ...form, aiBaseUrl: e.target.value })} />
-          <label className="block text-[11px] text-muted mb-1">توکن OpenAI / کلید API {aiSecretSet.apiKey && <span className="text-teal">(ذخیره‌شده ✓ — برای تغییر مقدار جدید وارد کن)</span>}</label>
+          <label className="block text-[11px] text-muted mb-1">توکن ارائه‌دهنده / کلید API {aiSecretSet.apiKey && <span className="text-teal">(ذخیره‌شده ✓ — برای تغییر مقدار جدید وارد کن)</span>}</label>
           <input type="password" dir="ltr" autoComplete="off" placeholder={aiSecretSet.apiKey ? "•••••• (بدون تغییر)" : ""}
             className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
             value={form.aiApiKey} onChange={(e) => setForm({ ...form, aiApiKey: e.target.value })} />
