@@ -38,7 +38,6 @@ export default function SuperAdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [collapsed, setCollapsed] = useState(false);
-  if (pathname === "/superadmin/login") return <>{children}</>;
   const isActive = (href: string) => href === "/superadmin" ? pathname === href : pathname.startsWith(href);
 
   const currentGroup = useMemo(() => GROUPS.find(g => g.items.some(i => i.href === "/superadmin" ? pathname === i.href : pathname.startsWith(i.href)))?.label ?? GROUPS[0].label, [pathname]);
@@ -49,6 +48,7 @@ export default function SuperAdminShell({ children }: { children: ReactNode }) {
   const platformPermissions = String((session?.user as any)?.platformPermissions ?? "").split(",").filter(Boolean);
   const permissionFor = (href: string) => href.includes("/managers") || href.includes("/profile") ? "owner" : href.includes("/customers") ? "customers" : href.includes("/support") || href.includes("/conversations") ? "support" : href.includes("/verification") ? "verification" : href.includes("/notifications") || href.includes("/ads") || href.includes("/gift-codes") ? "marketing" : href.includes("/sessions") || href.includes("/errors") ? "sessions" : href.includes("/settings") || href.includes("/external-keys") ? "settings" : href.includes("/maintenance") ? "maintenance" : "shops";
   const canSee = (href: string) => platformRole === "OWNER" || (permissionFor(href) !== "owner" && platformPermissions.includes(permissionFor(href)));
+  if (pathname === "/superadmin/login") return <>{children}</>;
   return <div className={`super-shell ${collapsed ? "is-collapsed" : ""}`}>
     <aside className="super-sidebar">
       <a href="/superadmin" className="super-brand"><div><Logo size={25} withText={false} /></div><span><b>Peyvo</b><small>Platform console</small></span></a>
