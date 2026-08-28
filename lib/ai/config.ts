@@ -76,6 +76,8 @@ export async function loadAiConfig(): Promise<AiConfig> {
   const model = isTokenOnlyOpenAi && (!configuredModel || configuredModel === "mock-model")
     ? "gpt-5-mini"
     : configuredModel ?? "mock-model";
+  const configuredTimeout = num(s?.aiTimeoutMs) ?? num(process.env.AI_TIMEOUT_MS) ?? 20000;
+  const isHetznerInference = configuredBaseUrl?.includes("inference.hetzner.com") ?? false;
 
   return {
     enabled,
@@ -87,7 +89,7 @@ export async function loadAiConfig(): Promise<AiConfig> {
     fallbackModel: str(s?.aiFallbackModel) ?? str(process.env.AI_FALLBACK_MODEL),
     fallbackBaseUrl: str(s?.aiFallbackBaseUrl) ?? str(process.env.AI_FALLBACK_BASE_URL),
     fallbackApiKey: secret(s?.aiFallbackApiKey) ?? str(process.env.AI_FALLBACK_API_KEY),
-    timeoutMs: num(s?.aiTimeoutMs) ?? num(process.env.AI_TIMEOUT_MS) ?? 20000,
+    timeoutMs: isHetznerInference ? Math.max(configuredTimeout, 75000) : configuredTimeout,
     maxRetries: num(s?.aiMaxRetries) ?? num(process.env.AI_MAX_RETRIES) ?? 2,
     maxTokens: num(process.env.AI_MAX_TOKENS) ?? 1024, // not exposed in the admin UI
     temperature: num(process.env.AI_TEMPERATURE) ?? 0.2,

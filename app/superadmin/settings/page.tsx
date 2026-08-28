@@ -191,6 +191,7 @@ export default function SuperAdminSettingsPage() {
       aiProvider: "openai-compat",
       aiBaseUrl: "https://inference.hetzner.com/api/v1",
       aiModel: "Qwen/Qwen3.6-35B-A3B-FP8",
+      aiTimeoutMs: Math.max(current.aiTimeoutMs, 75000),
     }));
     setAiTest(null);
   }
@@ -700,7 +701,7 @@ export default function SuperAdminSettingsPage() {
             className="bg-teal text-white font-bold rounded-lg px-4 py-2 text-sm disabled:opacity-50">
             {aiTesting ? "در حال تست…" : "تست اتصال"}
           </button>
-          <p className="text-[10px] text-muted mt-1">اول تنظیمات ذخیره می‌شود، بعد یک درخواست کوچک آزمایشی به ارائه‌دهنده فرستاده می‌شود.</p>
+          <p className="text-[10px] text-muted mt-1">اول تنظیمات ذخیره می‌شود، بعد یک درخواست کوچک آزمایشی فرستاده می‌شود. برای Hetzner زمان انتظار حداقل ۷۵ ثانیه در نظر گرفته می‌شود.</p>
           {aiTest && <p className={`text-xs mt-2 ${aiTest.ok ? "text-teal" : "text-danger"}`}>{aiTest.text}</p>}
         </div>
       </div>

@@ -10,6 +10,7 @@ import {
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 90;
 
 const Schema = z.object({ ticketId: z.string().min(1) });
 
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
       input,
       responseFormat: "json",
       // Leave enough room for reasoning-capable models plus the short JSON.
-      maxTokens: 2048,
+      maxTokens: 1024,
     });
 
     // AI-level failure (disabled / quota / provider error) → clean soft status.

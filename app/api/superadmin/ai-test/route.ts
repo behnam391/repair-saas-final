@@ -3,6 +3,7 @@ import { requireSuperAdmin, UnauthorizedError } from "@/lib/tenant";
 import { probeAiConnection } from "@/lib/ai/probe";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 90;
 
 // POST /api/superadmin/ai-test — Super Admin only. Runs a minimal server-side
 // AI request against the currently-saved configuration and reports the outcome.

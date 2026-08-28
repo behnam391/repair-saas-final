@@ -49,6 +49,16 @@ test("legacy mock selection cannot swallow a configured OpenAI token", async () 
   assert.equal(cfg.baseUrl, "https://api.openai.com/v1");
 });
 
+test("Hetzner inference receives a production-safe minimum timeout", async () => {
+  setEnv({
+    AI_ENABLED: "true", AI_PROVIDER: "openai-compat", AI_API_KEY: "hetzner-token",
+    AI_BASE_URL: "https://inference.hetzner.com/api/v1", AI_MODEL: "Qwen/Qwen3.6-35B-A3B-FP8",
+    AI_TIMEOUT_MS: "20000",
+  });
+  const cfg = await loadAiConfig();
+  assert.equal(cfg.timeoutMs, 75000);
+});
+
 test("mock provider returns a marked, ok result without echoing raw input", async () => {
   setEnv({ AI_ENABLED: "true", AI_PROVIDER: "mock", AI_MODEL: "m1", AI_SHOP_DAILY_LIMIT: "0" });
   const r = await runCompletion(baseReq);
@@ -92,7 +102,7 @@ test("quota store unreachable fails OPEN (AI stays available)", async () => {
   // limit > 0 makes checkShopQuota call rateLimit → DB, which is absent here;
   // the service must catch and allow, not break.
   setEnv({ AI_ENABLED: "true", AI_PROVIDER: "mock", AI_SHOP_DAILY_LIMIT: "5" });
-  const r = await runCompletion(baseReq);
+  const r = await runCompletion({ ...baseReq, shopId: `shop_quota_probe_${Date.now()}` });
   assert.equal(r.ok, true);
   assert.equal(r.provider, "mock");
 });
