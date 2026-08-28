@@ -34,7 +34,8 @@ function bool(v: unknown): boolean | undefined {
 // A decrypted secret from the DB, or undefined if empty/unreadable.
 function secret(v: unknown): string | undefined {
   const d = decryptSecret(typeof v === "string" ? v : null);
-  return d ? d : undefined;
+  const clean = d.trim();
+  return clean || undefined;
 }
 
 export async function loadAiConfig(): Promise<AiConfig> {

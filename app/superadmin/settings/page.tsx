@@ -650,7 +650,7 @@ export default function SuperAdminSettingsPage() {
           <input type="password" dir="ltr" autoComplete="off" placeholder={aiSecretSet.apiKey ? "•••••• (بدون تغییر)" : ""}
             className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
             value={form.aiApiKey} onChange={(e) => setForm({ ...form, aiApiKey: e.target.value })} />
-          <p className="mt-1.5 text-[10px] leading-5 text-muted">توکن در APK یا صفحات عمومی قرار نمی‌گیرد. پس از ذخیره نیز مقدار اصلی آن قابل مشاهده نیست.</p>
+          <p className="mt-1.5 text-[10px] leading-5 text-muted">توکن در APK یا صفحات عمومی قرار نمی‌گیرد. برای Hetzner حتماً توکن را از <span dir="ltr">experiments.hetzner.com → Inference → Create API Token</span> بگیر؛ توکن بخش Cloud/Security معتبر نیست.</p>
         </div>
 
         {/* Fallback provider */}
