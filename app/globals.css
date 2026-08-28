@@ -772,3 +772,35 @@ select option {
   .morning-insights-grid { grid-template-columns: 1fr; }
   .super-plan-chart { gap: 14px; }
 }
+
+/* Super-admin visual refinement: compact data, readable typography and an
+   accordion navigation that never needs an internal scrollbar. */
+.super-shell { background:
+  radial-gradient(circle at 15% 5%,rgb(var(--rgb-copper) / .08),transparent 28%),
+  radial-gradient(circle at 75% 85%,rgb(var(--rgb-teal) / .045),transparent 32%),
+  var(--color-bg); }
+.super-sidebar { padding:16px 12px; background:linear-gradient(180deg,color-mix(in srgb,var(--glass-menu) 96%,#061124),color-mix(in srgb,var(--glass-menu) 90%,#091a2d)); }
+.super-sidebar nav { overflow:hidden; padding:12px 0 6px; }
+.super-nav-group { margin:0 0 7px; padding:4px; border-radius:14px; border:1px solid transparent; transition:.2s ease; }
+.super-nav-group.is-open { background:rgb(var(--rgb-copper) / .035); border-color:rgb(var(--rgb-copper) / .08); }
+.super-nav-group-title { width:100%; min-height:34px; display:flex; align-items:center; justify-content:space-between; padding:0 8px; color:var(--color-muted); font-size:11px; font-weight:900; }
+.super-nav-group-title svg { transition:transform .2s; }.super-nav-group.is-open .super-nav-group-title { color:var(--color-ink); }.super-nav-group.is-open .super-nav-group-title svg { transform:rotate(180deg); }
+.super-nav-items { display:grid; grid-template-rows:0fr; overflow:hidden; opacity:0; transition:grid-template-rows .22s ease,opacity .18s ease; }.super-nav-group.is-open .super-nav-items { grid-template-rows:1fr; opacity:1; }.super-nav-items::before { content:""; min-height:0; grid-row:1; }
+.super-nav-items a { grid-row:auto; }
+.super-nav-group:not(.is-open) .super-nav-items a { display:none; }
+.super-nav-group a { min-height:38px; padding:0 10px; font-size:12px; border-radius:10px; }
+.super-nav-group a.is-active { color:#9ed4ff; background:linear-gradient(90deg,rgb(var(--rgb-copper) / .17),rgb(var(--rgb-teal) / .08)); box-shadow:inset 3px 0 0 rgb(var(--rgb-copper)); }
+.super-sidebar-profile { padding:10px 11px; }.super-sidebar-profile b { font-size:11px; }.super-sidebar-profile small { font-size:9px; }.super-logout { font-size:11px; }
+.super-shell.is-collapsed .super-nav-group-title span { display:none; }.super-shell.is-collapsed .super-nav-group-title { justify-content:center; }.super-shell.is-collapsed .super-nav-group-title svg { transform:none; }
+.super-page-frame { font-size:13px; }.super-topbar p,.super-panel-head p { font-size:11px; }.super-live { font-size:10px; }.super-admin-avatar b { font-size:11px; }.super-admin-avatar small { font-size:9px; }
+.super-kpi small { font-size:10px; }.super-kpi p { font-size:9px; }.super-chart-title b { font-size:12px; }.super-chart-title small,.super-bars small,.super-bars span i,.super-plan-chart p { font-size:9px; }
+.super-panel { padding:15px; background:linear-gradient(145deg,color-mix(in srgb,var(--color-surface) 94%,#102748),var(--color-surface)); }
+.super-panel-head { margin-bottom:12px; }.super-panel-head h2 { font-size:15px; }.super-filter input { font-size:12px; }.super-filter select { font-size:11px; }
+.super-shop-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+.super-shop-card { padding:11px; border-radius:15px; background:linear-gradient(145deg,color-mix(in srgb,var(--color-surface2) 90%,#17335a),color-mix(in srgb,var(--color-surface) 96%,transparent)); box-shadow:inset 0 1px var(--glass-highlight); }
+.super-shop-title { grid-template-columns:34px 1fr 24px; gap:8px; }.super-shop-title>span { width:34px;height:34px;border-radius:10px; }.super-shop-title h3 { font-size:12.5px; }.super-shop-title p { font-size:9px; }.super-shop-title>button { width:24px;height:24px; }
+.super-shop-meta { margin:8px 0; }.super-shop-meta>span { font-size:9px; padding:3px 6px; }.super-shop-numbers { padding:7px 0; }.super-shop-numbers b { font-size:11px; }.super-shop-numbers small { font-size:8.5px; }.super-expire { font-size:9px; margin-top:7px; }
+.super-shop-actions { margin-top:8px; }.super-shop-actions button { min-height:29px; font-size:9px; }.super-delete-link { font-size:9px; margin-top:6px; }
+.super-pagination button { font-size:11px; }.super-pagination span { font-size:10px; }
+@media (max-width:1250px) { .super-shop-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:680px) { .super-shop-grid { grid-template-columns:1fr; } }

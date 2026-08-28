@@ -6,7 +6,6 @@ import { headers } from "next/headers";
 import { Providers } from "./providers";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import DigitInputFixer from "@/components/DigitInputFixer";
-import MobilePreviewToggle from "@/components/MobilePreviewToggle";
 import ClientErrorReporter from "@/components/ClientErrorReporter";
 import AppUpdateNotice from "@/components/AppUpdateNotice";
 import { db } from "@/lib/db";
@@ -88,7 +87,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Providers isNativeApp={isNativeApp}>{children}</Providers>
         <ServiceWorkerRegister />
         <DigitInputFixer />
-        <MobilePreviewToggle />
         <ClientErrorReporter />
         <AppUpdateNotice />
       </body>

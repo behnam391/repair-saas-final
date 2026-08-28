@@ -300,6 +300,22 @@ export const authOptions: NextAuthOptions = {
         // Cookie removal must still succeed even if audit storage is briefly down.
         console.error("[auth] failed to mark login session as logged out", e);
       }
+
+      // Keep the platform owner's display name live as well. Early seed data
+      // on one deployment was stored as question marks after an encoding
+      // issue; repair that legacy value once and refresh the active JWT.
+      if (token.isSuperAdmin && token.sub) {
+        try {
+          const admin = await db.platformAdmin.findUnique({ where: { id: token.sub as string }, select: { name: true } });
+          if (admin) {
+            const cleanName = /^[?\s]+$/.test(admin.name) ? "بهنام شفیعی" : admin.name;
+            if (cleanName !== admin.name) await db.platformAdmin.update({ where: { id: token.sub as string }, data: { name: cleanName } });
+            token.name = cleanName;
+          }
+        } catch (e) {
+          console.error("[auth] platform-admin name refresh failed", e);
+        }
+      }
     },
   },
 };
