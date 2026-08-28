@@ -26,7 +26,7 @@ async function subjectIsActive(subjectKind: LoginSubjectKind, subjectId: string)
 
 export async function POST(_req: Request, { params }: { params: { id: string } }) {
   try {
-    const admin = await requireSuperAdmin();
+    const admin = await requireSuperAdmin("sessions");
     const row = await db.loginSession.findUnique({ where: { id: params.id } });
     if (!row) return NextResponse.json({ error: "not_found" }, { status: 404 });
     if (!row.revokedAt) {

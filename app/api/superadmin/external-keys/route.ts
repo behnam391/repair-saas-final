@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("settings");
     const keys = await db.externalApiKey.findMany({ orderBy: { createdAt: "desc" } });
     return NextResponse.json({ keys });
   } catch (e) {
@@ -21,7 +21,7 @@ const Schema = z.object({ label: z.string().min(1), scopes: z.array(z.string()).
 
 export async function POST(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("settings");
     const { label, scopes } = Schema.parse(await req.json());
     const apiKey = randomBytes(24).toString("hex");
     const key = await db.externalApiKey.create({ data: { label, apiKey, scopes: scopes.join(",") } });

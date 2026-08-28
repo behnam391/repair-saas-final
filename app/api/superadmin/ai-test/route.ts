@@ -10,7 +10,7 @@ export const maxDuration = 90;
 // Never returns the API key or any provider internals — only a safe message.
 export async function POST() {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("settings");
     const r = await probeAiConnection();
     return NextResponse.json({
       ok: r.ok,

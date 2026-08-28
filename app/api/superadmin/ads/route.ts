@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("marketing");
     const ads = await db.adBanner.findMany({ orderBy: { sortOrder: "asc" } });
     return NextResponse.json({ ads });
   } catch (e) {
@@ -25,7 +25,7 @@ const Schema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("marketing");
     const body = Schema.parse(await req.json());
     const ad = await db.adBanner.create({ data: body });
     return NextResponse.json({ ad }, { status: 201 });

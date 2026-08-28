@@ -27,7 +27,7 @@ const RESTORE_ORDER = [
 // not fatal. Super-admin only.
 export async function POST(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("maintenance");
     const contentLength = Number(req.headers.get("content-length") || 0);
     if (contentLength > 50 * 1024 * 1024) return NextResponse.json({ error: "backup_too_large" }, { status: 413 });
     const body = await req.json().catch(() => null);

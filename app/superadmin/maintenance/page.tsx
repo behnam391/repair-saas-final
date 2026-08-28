@@ -20,7 +20,7 @@ export default function MaintenancePage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [confirm, setConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [tg, setTg] = useState({ token: "", chatId: "" });
+  const [tg, setTg] = useState({ token: "", chatId: "", enabled: false, hour: 3 });
   const [tgMsg, setTgMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [tgBusy, setTgBusy] = useState<"save" | "test" | null>(null);
   const [restoreConfirm, setRestoreConfirm] = useState<any>(null);
@@ -33,7 +33,7 @@ export default function MaintenancePage() {
 
   useEffect(() => {
     fetch("/api/superadmin/settings").then((r) => r.json()).then((d) => {
-      setTg({ token: d.settings?.telegramBotToken ?? "", chatId: d.settings?.telegramChatId ?? "" });
+      setTg({ token: d.settings?.telegramBotToken ?? "", chatId: d.settings?.telegramChatId ?? "", enabled: d.settings?.telegramBackupEnabled ?? false, hour: d.settings?.telegramBackupHour ?? 3 });
     }).catch(() => {});
   }, []);
 
@@ -84,7 +84,7 @@ export default function MaintenancePage() {
     setTgBusy(then ?? "save"); setTgMsg(null);
     const res = await fetch("/api/superadmin/settings", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ telegramBotToken: tg.token, telegramChatId: tg.chatId }),
+      body: JSON.stringify({ telegramBotToken: tg.token, telegramChatId: tg.chatId, telegramBackupEnabled: tg.enabled, telegramBackupHour: tg.hour }),
     });
     if (!res.ok) { setTgBusy(null); setTgMsg({ ok: false, text: "ذخیره ناموفق بود." }); return false; }
     if (!then) { setTgBusy(null); setTgMsg({ ok: true, text: "✅ ذخیره شد." }); }
@@ -164,6 +164,11 @@ export default function MaintenancePage() {
         <label className="block text-[11px] text-muted mb-1">شناسه‌ی چت (Chat ID)</label>
         <input dir="ltr" placeholder="123456789" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono mb-3"
           value={tg.chatId} onChange={(e) => setTg({ ...tg, chatId: e.target.value })} />
+        <div className="grid sm:grid-cols-2 gap-3 mb-3">
+          <label className="flex items-center gap-2 rounded-xl border border-border bg-surface2 px-3 py-2.5 text-xs font-bold"><input type="checkbox" checked={tg.enabled} onChange={(e)=>setTg({...tg,enabled:e.target.checked})}/> بکاپ خودکار روزانه فعال باشد</label>
+          <label className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface2 px-3 py-2 text-xs"><span>ساعت اجرا به وقت ایران</span><select value={tg.hour} onChange={(e)=>setTg({...tg,hour:Number(e.target.value)})} className="rounded-lg bg-surface px-2 py-1.5 font-bold">{Array.from({length:24},(_,h)=><option key={h} value={h}>{h.toLocaleString("fa-IR")}:۰۰</option>)}</select></label>
+        </div>
+        <p className="text-[10px] text-amber mb-3">در پلن رایگان Vercel ممکن است اجرا در بازه همان ساعت و با کمی تأخیر انجام شود.</p>
         <div className="flex gap-2 flex-wrap">
           <button onClick={() => saveTelegram()} disabled={tgBusy !== null}
             className="bg-copper text-[#1A1410] font-bold rounded-lg px-4 py-2 text-sm disabled:opacity-50">

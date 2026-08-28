@@ -19,7 +19,7 @@ const UpdateSchema = z.object({
 // info (e.g. a shop owner who changed their number and can't get in).
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { adminId } = await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin("shops");
     const body = UpdateSchema.parse(await req.json());
 
     const existing = await db.user.findUnique({

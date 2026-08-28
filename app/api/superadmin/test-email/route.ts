@@ -13,7 +13,7 @@ const Schema = z.object({ to: z.string().email() });
 // SMTP error (e.g. bad auth) is returned so misconfiguration is easy to debug.
 export async function POST(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("settings");
     const { to } = Schema.parse(await req.json());
 
     if (!(await isEmailConfigured())) {

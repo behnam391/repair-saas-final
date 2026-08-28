@@ -68,9 +68,12 @@ export async function requireCustomer() {
   return { customerId: user.id as string, name: user.name as string, phone: user.phone as string, loginSessionId: user.loginSessionId as string };
 }
 
-export async function requireSuperAdmin() {
+export async function requireSuperAdmin(permission?: string) {
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
   if (!user?.isSuperAdmin || user.disabled) throw new UnauthorizedError("Not a platform admin");
-  return { adminId: user.id as string, name: user.name as string, loginSessionId: user.loginSessionId as string };
+  const isOwner = user.platformRole === "OWNER";
+  const permissions = String(user.platformPermissions ?? "").split(",").filter(Boolean);
+  if (!isOwner && (!permission || !permissions.includes(permission))) throw new UnauthorizedError("Platform permission denied");
+  return { adminId: user.id as string, name: user.name as string, isOwner, permissions, loginSessionId: user.loginSessionId as string };
 }

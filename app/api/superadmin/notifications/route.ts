@@ -9,7 +9,7 @@ const Schema = z.object({ title: z.string().min(1), message: z.string().min(1), 
 
 export async function POST(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("marketing");
     const { title, message, link } = Schema.parse(await req.json());
     await broadcastNotification(title, message, link);
     return NextResponse.json({ ok: true });

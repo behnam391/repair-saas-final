@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function PATCH(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("verification");
     const shop = await db.shop.update({ where: { id: params.id }, data: { verificationLevel: 3 } });
     return NextResponse.json({ shop });
   } catch (e) {

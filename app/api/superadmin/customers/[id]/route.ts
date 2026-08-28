@@ -15,7 +15,7 @@ const Schema = z.object({ active: z.boolean() });
 // lib/auth.ts) — their existing ratings stay, but they can't add more.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { adminId } = await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin("customers");
     const { active } = Schema.parse(await req.json());
     const customer = await db.platformCustomer.update({
       where: { id: params.id },
@@ -40,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 // customer account and their data (super-admin only). Irreversible.
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { adminId } = await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin("customers");
     const customer = await db.platformCustomer.findUnique({ where: { id: params.id }, select: { id: true } });
     if (!customer) return NextResponse.json({ error: "not_found" }, { status: 404 });
 

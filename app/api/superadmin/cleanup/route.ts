@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("maintenance");
     const shops = await (db as any).shop.findMany({
       select: {
         id: true, name: true, plan: true, createdAt: true, active: true, isTest: true,
@@ -40,7 +40,7 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("maintenance");
     const body = await req.json().catch(() => ({}));
     if (typeof body?.shopId !== "string") return NextResponse.json({ error: "invalid_input" }, { status: 400 });
     await (db as any).shop.update({ where: { id: body.shopId }, data: { isTest: body.isTest !== false } });
@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("maintenance");
     const body = await req.json().catch(() => ({}));
     const ids: string[] = Array.isArray(body?.shopIds) ? body.shopIds.filter((x: unknown) => typeof x === "string") : [];
     if (ids.length === 0) return NextResponse.json({ error: "invalid_input", message: "موردی انتخاب نشده" }, { status: 400 });

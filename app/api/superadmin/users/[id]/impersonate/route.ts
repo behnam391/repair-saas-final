@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 // if that flag gets turned off before the link is used.
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { adminId } = await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin("shops");
 
     const user = await db.user.findUnique({ where: { id: params.id }, include: { shop: true } });
     if (!user) return NextResponse.json({ error: "not_found" }, { status: 404 });

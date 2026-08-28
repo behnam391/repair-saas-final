@@ -17,7 +17,7 @@ const Schema = z.object({ newPassword: strongPassword });
 // documents, etc.) — this endpoint does not verify anything itself.
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { adminId } = await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin("shops");
     const { newPassword } = Schema.parse(await req.json());
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await db.user.update({ where: { id: params.id }, data: { passwordHash } });

@@ -21,7 +21,7 @@ function redactSecrets(settings: any): any {
 
 export async function GET() {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("settings");
     const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } });
     return NextResponse.json({ settings: redactSecrets(settings) });
   } catch (e) {
@@ -35,6 +35,8 @@ const Schema = z.object({
   kavenegarSender: z.string().optional(),
   telegramBotToken: z.string().optional(),
   telegramChatId: z.string().optional(),
+  telegramBackupEnabled: z.boolean().optional(),
+  telegramBackupHour: z.number().int().min(0).max(23).optional(),
   androidApkUrl: z.string().optional(),
   bazaarUrl: z.string().optional(),
   myketUrl: z.string().optional(),
@@ -95,7 +97,7 @@ const AI_SECRET_FIELDS = ["aiApiKey", "aiFallbackApiKey"];
 
 export async function PATCH(req: NextRequest) {
   try {
-    const { adminId } = await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin("settings");
     const body = Schema.parse(await req.json());
 
     // Encrypt any secret field that carries a new value; SKIP secret fields

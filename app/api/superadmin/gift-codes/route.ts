@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 // GET — all gift codes, newest first, with the redeeming shop's name.
 export async function GET() {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("marketing");
     const codes = await db.giftCode.findMany({ orderBy: { createdAt: "desc" }, take: 200 });
     const shopIds = codes.map((c: any) => c.redeemedByShopId).filter(Boolean) as string[];
     const shops = shopIds.length
@@ -42,7 +42,7 @@ function genCode() {
 // POST — generate one or more gift codes.
 export async function POST(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("marketing");
     const { plan, months, count, note } = CreateSchema.parse(await req.json());
     const created = [];
     for (let i = 0; i < count; i++) {

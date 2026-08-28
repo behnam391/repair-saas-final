@@ -131,6 +131,9 @@ model PlatformAdmin {
   name         String
   phone        String   @unique
   passwordHash String
+  role         String   @default("MANAGER") // OWNER | MANAGER
+  permissions  String   @default("") // comma-separated platform capabilities
+  active       Boolean  @default(true)
   createdAt    DateTime @default(now())
 }
 
@@ -734,6 +737,8 @@ model PlatformSettings {
   // (/api/cron/backup) sends a full JSON snapshot to this chat via the Bot API.
   telegramBotToken        String? // from @BotFather
   telegramChatId          String? // the chat/channel id the backup file is sent to
+  telegramBackupEnabled   Boolean? @default(false)
+  telegramBackupHour      Int?     @default(3) // Iran local hour (0..23)
   // Android app distribution links, shown on the public /download page and the
   // landing footer. Set once the APK is built and the store listings are live.
   androidApkUrl           String? // direct .apk download link (site download)

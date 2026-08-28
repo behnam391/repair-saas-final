@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("support");
     const tickets = await db.supportTicket.findMany({
       include: { shop: { select: { name: true } }, user: { select: { name: true, phone: true } }, replies: { orderBy: { createdAt: "asc" } } },
       orderBy: { createdAt: "desc" },

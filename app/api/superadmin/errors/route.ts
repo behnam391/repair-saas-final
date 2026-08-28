@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("sessions");
     const { searchParams } = new URL(req.url);
     const filter = searchParams.get("filter") || "unresolved";
     const limit = Math.min(Math.max(Number(searchParams.get("limit")) || 200, 1), 500);
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("sessions");
     const body = await req.json().catch(() => ({}));
 
     if (body?.resolveAll === true) {
@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("sessions");
     const { searchParams } = new URL(req.url);
     const scope = searchParams.get("scope") || "resolved";
     const where = scope === "all" ? {} : { resolved: true };

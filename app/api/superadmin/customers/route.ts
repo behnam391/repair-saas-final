@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 // with how many direct ratings each has submitted (spam moderation aid).
 export async function GET(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("customers");
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q");
     const page = Math.max(1, Number(searchParams.get("page")) || 1);

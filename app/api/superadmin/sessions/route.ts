@@ -24,7 +24,7 @@ function typeWhere(type: string): Prisma.LoginSessionWhereInput {
 
 export async function GET(req: NextRequest) {
   try {
-    const admin = await requireSuperAdmin();
+    const admin = await requireSuperAdmin("sessions");
     const { searchParams } = new URL(req.url);
     const now = new Date();
     const onlineSince = new Date(now.getTime() - 5 * 60_000);

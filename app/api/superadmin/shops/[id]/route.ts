@@ -19,7 +19,7 @@ const UpdateSchema = z.object({
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { adminId } = await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin("shops");
     const body = UpdateSchema.parse(await req.json());
 
     // Handle a direct subscription gift separately from the simple toggles.
@@ -60,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 // data (super-admin only). Irreversible — meant for clearing test shops.
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { adminId } = await requireSuperAdmin();
+    const { adminId } = await requireSuperAdmin("shops");
     const shop = await db.shop.findUnique({ where: { id: params.id }, select: { id: true } });
     if (!shop) return NextResponse.json({ error: "not_found" }, { status: 404 });
 

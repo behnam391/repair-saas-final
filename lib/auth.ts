@@ -77,7 +77,7 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.phone || !credentials?.password) return null;
 
         const admin = await db.platformAdmin.findUnique({ where: { phone: normalizePhone(credentials.phone) } });
-        if (!admin) return null;
+        if (!admin || !admin.active) return null;
 
         const valid = await bcrypt.compare(credentials.password, admin.passwordHash);
         if (!valid) return null;
@@ -91,7 +91,7 @@ export const authOptions: NextAuthOptions = {
           request,
         });
 
-        return { id: admin.id, name: admin.name, phone: admin.phone, isSuperAdmin: true, loginSessionId: loginSession.id } as any;
+        return { id: admin.id, name: admin.name, phone: admin.phone, isSuperAdmin: true, platformRole: admin.role, platformPermissions: admin.permissions, loginSessionId: loginSession.id } as any;
       },
     }),
     // Nationwide customer login — completely separate identity from shop
@@ -190,6 +190,8 @@ export const authOptions: NextAuthOptions = {
         token.disabled = false;
         if ((user as any).isSuperAdmin) {
           token.isSuperAdmin = true;
+          token.platformRole = (user as any).platformRole;
+          token.platformPermissions = (user as any).platformPermissions;
         } else if ((user as any).isCustomer) {
           token.isCustomer = true;
           token.phone = (user as any).phone;
@@ -270,6 +272,8 @@ export const authOptions: NextAuthOptions = {
       (session.user as any).phone = token.phone;
       (session.user as any).isImpersonated = token.isImpersonated ?? false;
       (session.user as any).loginSessionId = token.loginSessionId;
+      (session.user as any).platformRole = token.platformRole;
+      (session.user as any).platformPermissions = token.platformPermissions;
 
       // A session that failed revalidation (staff removed/deactivated, shop
       // suspended, or customer suspended/deleted) is stripped of every scope
@@ -306,11 +310,14 @@ export const authOptions: NextAuthOptions = {
       // issue; repair that legacy value once and refresh the active JWT.
       if (token.isSuperAdmin && token.sub) {
         try {
-          const admin = await db.platformAdmin.findUnique({ where: { id: token.sub as string }, select: { name: true } });
+          const admin = await db.platformAdmin.findUnique({ where: { id: token.sub as string }, select: { name: true, active: true, role: true, permissions: true } });
           if (admin) {
+            token.disabled = !admin.active;
             const cleanName = /^[?\s]+$/.test(admin.name) ? "بهنام شفیعی" : admin.name;
             if (cleanName !== admin.name) await db.platformAdmin.update({ where: { id: token.sub as string }, data: { name: cleanName } });
             token.name = cleanName;
+            token.platformRole = admin.role;
+            token.platformPermissions = admin.permissions;
           }
         } catch (e) {
           console.error("[auth] platform-admin name refresh failed", e);

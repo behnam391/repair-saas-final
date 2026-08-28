@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // are and reset their password manually.
 export async function GET(req: NextRequest) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("shops");
     const { searchParams } = new URL(req.url);
     const page = Math.max(1, Number(searchParams.get("page")) || 1);
     const pageSize = Math.min(50, Math.max(5, Number(searchParams.get("pageSize")) || 15));

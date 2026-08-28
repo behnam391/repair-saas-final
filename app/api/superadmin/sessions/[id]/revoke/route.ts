@@ -4,7 +4,7 @@ import { requireSuperAdmin, UnauthorizedError } from "@/lib/tenant";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const admin = await requireSuperAdmin();
+    const admin = await requireSuperAdmin("sessions");
     if (params.id === admin.loginSessionId) {
       return NextResponse.json({ error: "current_session", message: "نشست فعلی را نمی‌توان از همین صفحه قطع کرد." }, { status: 409 });
     }

@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("support");
     const conversations = await db.conversation.findMany({
       include: {
         listing: { select: { title: true, author: { select: { name: true, phone: true } } } },

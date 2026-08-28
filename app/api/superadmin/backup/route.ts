@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 // database provider's own PITR is the automatic safety net.
 export async function GET() {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("maintenance");
     const { json, filename } = await buildBackupJson(new Date().toISOString());
     return new NextResponse(json, {
       status: 200,
@@ -32,7 +32,7 @@ export async function GET() {
 // the bot config (the daily cron does the same automatically).
 export async function POST() {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("maintenance");
     const s = (await db.platformSettings.findUnique({ where: { id: "singleton" } })) as any;
     if (!s?.telegramBotToken || !s?.telegramChatId) {
       return NextResponse.json({ error: "not_configured", message: "ابتدا توکن ربات و شناسه‌ی چت تلگرام را ذخیره کن." }, { status: 400 });

@@ -9,7 +9,7 @@ const Schema = z.object({ active: z.boolean().optional(), sortOrder: z.number().
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("marketing");
     const body = Schema.parse(await req.json());
     const ad = await db.adBanner.update({ where: { id: params.id }, data: body });
     return NextResponse.json({ ad });
@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
 export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("marketing");
     await db.adBanner.delete({ where: { id: params.id } });
     return NextResponse.json({ ok: true });
   } catch (e) {

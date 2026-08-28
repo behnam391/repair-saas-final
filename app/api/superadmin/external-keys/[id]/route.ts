@@ -9,7 +9,7 @@ const Schema = z.object({ active: z.boolean().optional(), scopes: z.array(z.stri
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await requireSuperAdmin();
+    await requireSuperAdmin("settings");
     const body = Schema.parse(await req.json().catch(() => ({})));
     const data: any = {};
     if (body.active !== undefined) data.active = body.active;
