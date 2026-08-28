@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { formatJalaliDate } from "@/lib/jalali";
 import { useToast } from "@/components/ToastProvider";
 import type { LucideIcon } from "lucide-react";
-import { Activity, BadgeCheck, CircleDollarSign, Gift, Headphones, MoreVertical, Search, ShieldCheck, Store } from "lucide-react";
+import { Activity, BadgeCheck, ChevronLeft, ChevronRight, CircleDollarSign, Gift, Headphones, MoreVertical, Search, ShieldCheck, Store, TrendingUp } from "lucide-react";
 
 const PLAN_LABEL: Record<string, string> = { free: "رایگان", pro: "حرفه‌ای", business: "تجاری" };
 
@@ -21,6 +21,8 @@ export default function SuperAdminClient() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [planFilter, setPlanFilter] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
 
   async function load() {
     setLoading(true);
@@ -88,6 +90,14 @@ export default function SuperAdminClient() {
 
   const activeCount = shops.filter((s) => s.active).length;
   const paidCount = shops.filter((s) => s.plan !== "free").length;
+  const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const visible = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const planStats = ["free", "pro", "business"].map(plan => ({ plan, count: shops.filter(s => s.plan === plan).length }));
+  const recentMonths = Array.from({ length: 6 }, (_, i) => { const d = new Date(); d.setMonth(d.getMonth() - (5 - i)); return d; });
+  const growth = recentMonths.map(date => ({ label: new Intl.DateTimeFormat("fa-IR", { month: "short" }).format(date), count: shops.filter(s => { const d = new Date(s.createdAt); return d.getFullYear() === date.getFullYear() && d.getMonth() === date.getMonth(); }).length }));
+  const maxGrowth = Math.max(1, ...growth.map(x => x.count));
+
+  useEffect(() => { setPage(1); }, [search, planFilter]);
 
   return (
     <>
@@ -100,11 +110,16 @@ export default function SuperAdminClient() {
           <SuperKpi icon={CircleDollarSign} label="درآمد اشتراک" value={totalRevenue.toLocaleString("fa-IR")} hint="تومان · مجموع پرداخت" tone="amber" />
         </section>
 
+        <section className="super-charts">
+          <div className="super-chart-card"><div className="super-chart-title"><span><TrendingUp size={17} /></span><div><b>رشد فروشگاه‌ها</b><small>ثبت‌نام شش ماه اخیر</small></div></div><div className="super-bars">{growth.map((item) => <div key={item.label}><span title={`${item.count} فروشگاه`} style={{ height: `${Math.max(8, item.count / maxGrowth * 100)}%` }}><i>{item.count.toLocaleString("fa-IR")}</i></span><small>{item.label}</small></div>)}</div></div>
+          <div className="super-chart-card"><div className="super-chart-title"><span><BadgeCheck size={17} /></span><div><b>ترکیب اشتراک‌ها</b><small>سهم هر پلن از شبکه</small></div></div><div className="super-plan-chart"><div className="super-donut" style={{ background: `conic-gradient(#2dd4bf 0 ${shops.length ? planStats[0].count / shops.length * 100 : 100}%, #609cff 0 ${shops.length ? (planStats[0].count + planStats[1].count) / shops.length * 100 : 100}%, #a997ff 0)` }}><span>{shops.length.toLocaleString("fa-IR")}</span></div><div>{planStats.map((x, i) => <p key={x.plan}><i className={`dot-${i}`} /><span>{PLAN_LABEL[x.plan]}</span><b>{x.count.toLocaleString("fa-IR")}</b></p>)}</div></div></div>
+        </section>
+
         <section className="super-panel">
           <div className="super-panel-head"><div><h2>مدیریت فروشگاه‌ها</h2><p>{filtered.length.toLocaleString("fa-IR")} نتیجه از {shops.length.toLocaleString("fa-IR")} فروشگاه</p></div><div className="super-filter"><Search size={16} /><input placeholder="جستجوی نام فروشگاه..." value={search} onChange={(e) => setSearch(e.target.value)} /><select value={planFilter} onChange={(e) => setPlanFilter(e.target.value)}><option value="">همه پلن‌ها</option><option value="free">رایگان</option><option value="pro">حرفه‌ای</option><option value="business">تجاری</option></select></div></div>
 
-          {loading ? <div className="super-loading">{[1,2,3].map((i) => <i key={i} className="skeleton" />)}</div> : filtered.length === 0 ? <div className="empty-state">فروشگاهی با این مشخصات پیدا نشد.</div> : <div className="super-shop-grid">
-            {filtered.map((s) => <article key={s.id} className={`super-shop-card ${!s.active ? "is-suspended" : ""}`}>
+          {loading ? <div className="super-loading">{[1,2,3].map((i) => <i key={i} className="skeleton" />)}</div> : filtered.length === 0 ? <div className="empty-state">فروشگاهی با این مشخصات پیدا نشد.</div> : <><div className="super-shop-grid">
+            {visible.map((s) => <article key={s.id} className={`super-shop-card ${!s.active ? "is-suspended" : ""}`}>
               <div className="super-shop-title"><span><Store size={18} /></span><div><h3>{s.name}</h3><p>عضویت از {formatJalaliDate(s.createdAt)}</p></div><button aria-label="عملیات"><MoreVertical size={17} /></button></div>
               <div className="super-shop-meta"><span className={`plan-${s.plan}`}>پلن {PLAN_LABEL[s.plan] ?? s.plan}</span><span className={s.active ? "is-online" : "is-offline"}><i />{s.active ? "فعال" : "معلق"}</span></div>
               <div className="super-shop-numbers"><div><b>{s.userCount.toLocaleString("fa-IR")}</b><small>کاربر</small></div><div><b>{s.ticketCount.toLocaleString("fa-IR")}</b><small>تیکت</small></div><div><b>{s.totalPaid.toLocaleString("fa-IR")}</b><small>پرداختی</small></div></div>
@@ -112,7 +127,7 @@ export default function SuperAdminClient() {
               <div className="super-shop-actions"><button onClick={() => toggleActive(s.id, s.active)} className={s.active ? "is-danger" : "is-success"}>{s.active ? "تعلیق" : "فعال‌سازی"}</button><button onClick={() => toggleSupportAccess(s.id, s.supportAccessEnabled)} className={s.supportAccessEnabled ? "is-active" : ""}><Headphones size={14} /> پشتیبانی</button><button onClick={() => setGiftShop(s)}><Gift size={14} /> هدیه</button></div>
               {confirmDelete === s.id ? <div className="super-delete-confirm"><p>«{s.name}» و تمام داده‌هایش برای همیشه حذف شود؟</p><div><button onClick={() => deleteShop(s.id)} disabled={deletingId === s.id}>{deletingId === s.id ? "در حال حذف..." : "حذف قطعی"}</button><button onClick={() => setConfirmDelete(null)}>انصراف</button></div></div> : <button onClick={() => setConfirmDelete(s.id)} className="super-delete-link">حذف کامل فروشگاه</button>}
             </article>)}
-          </div>}
+          </div><div className="super-pagination"><button disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronRight size={15} /> قبلی</button><span>صفحه {page.toLocaleString("fa-IR")} از {pages.toLocaleString("fa-IR")}</span><button disabled={page === pages} onClick={() => setPage(p => p + 1)}>بعدی <ChevronLeft size={15} /></button></div></>}
         </section>
 
       {giftShop && (

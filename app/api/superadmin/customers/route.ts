@@ -11,19 +11,21 @@ export async function GET(req: NextRequest) {
     await requireSuperAdmin();
     const { searchParams } = new URL(req.url);
     const q = searchParams.get("q");
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
+    const pageSize = Math.min(50, Math.max(5, Number(searchParams.get("pageSize")) || 15));
+    const where = q
+      ? { OR: [
+          { name: { contains: q, mode: "insensitive" as const } },
+          { phone: { contains: q } },
+          { email: { contains: q, mode: "insensitive" as const } },
+        ] }
+      : undefined;
 
     const customers = await db.platformCustomer.findMany({
-      where: q
-        ? {
-            OR: [
-              { name: { contains: q, mode: "insensitive" } },
-              { phone: { contains: q } },
-              { email: { contains: q, mode: "insensitive" } },
-            ],
-          }
-        : undefined,
+      where,
       orderBy: { createdAt: "desc" },
-      take: 200,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
       select: {
         id: true, name: true, phone: true, email: true, province: true, city: true,
         active: true, createdAt: true,
@@ -33,7 +35,9 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       customers: customers.map((c) => ({ ...c, ratingCount: c._count.ratings })),
-      total: await db.platformCustomer.count(),
+      total: await db.platformCustomer.count({ where }),
+      page,
+      pageSize,
     });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

@@ -17,7 +17,10 @@ type State =
   | { kind: "done"; suggestion: Suggestion; disclaimer: string }
   | { kind: "message"; message: string };
 
-const CLIENT_TIMEOUT_MS = 30000;
+// Hetzner's reasoning models can legitimately need more than 30 seconds.
+// Keep the browser deadline slightly above the server/provider deadline so
+// the UI never aborts a request that is still progressing successfully.
+const CLIENT_TIMEOUT_MS = 85000;
 
 export default function AiIntakeHelper({ ticketId }: { ticketId: string }) {
   const [state, setState] = useState<State>({ kind: "idle" });

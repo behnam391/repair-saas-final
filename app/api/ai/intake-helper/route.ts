@@ -99,7 +99,10 @@ export async function POST(req: NextRequest) {
       input,
       responseFormat: "json",
       // Leave enough room for reasoning-capable models plus the short JSON.
-      maxTokens: 1024,
+      maxTokens: 640,
+      // This task is intentionally tiny. One attempt with a generous deadline
+      // is faster and more predictable than retrying a slow reasoning model.
+      timeoutMs: 75000,
     });
 
     // AI-level failure (disabled / quota / provider error) → clean soft status.

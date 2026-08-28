@@ -8,6 +8,7 @@ import ComboBox from "@/components/ComboBox";
 import TicketChat from "@/components/TicketChat";
 import AiIntakeHelper from "@/components/AiIntakeHelper";
 import CustomerQuickPick from "@/components/CustomerQuickPick";
+import MorningInsights from "@/components/MorningInsights";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
 import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Check, ChevronDown, CircuitBoard, Clock3, Cpu, CreditCard, GitBranch, Handshake, LockKeyhole, MessageCircle, Play, Plus, Printer, Search, ShieldCheck, Smartphone, UserRound, Wrench, X } from "lucide-react";
 
@@ -144,6 +145,8 @@ export default function TicketsPage() {
         <div className="dashboard-stat"><span className="is-amber"><Clock3 size={18} /></span><div><b>{waitingCount.toLocaleString("fa-IR")}</b><small>منتظر تأیید</small></div></div>
         <div className="dashboard-stat"><span className="is-green"><BadgeCheck size={18} /></span><div><b>{readyCount.toLocaleString("fa-IR")}</b><small>آماده تحویل</small></div></div>
       </div>
+
+      {myRole === "OWNER" && <MorningInsights />}
 
       {/* Search — filters every lane live by device, customer, number, or issue. */}
       <div className="dashboard-toolbar">
@@ -695,6 +698,7 @@ function NewTicketModal({ defaultLane, singleOperator, onClose, onCreated }: { d
           </div>
         </div>
       </div>
+
     );
   }
 
