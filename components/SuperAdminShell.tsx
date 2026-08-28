@@ -59,7 +59,7 @@ export default function SuperAdminShell({ children }: { children: ReactNode }) {
     </aside>
     <main className="super-main">
       <div className="super-mobile-brand"><a href="/superadmin"><Logo size={23} /></a><span>مرکز مدیریت پلتفرم</span><button onClick={() => signOut({ callbackUrl: "/superadmin/login" })}><LogOut size={16} /></button></div>
-      <div className="super-mobile-nav">{GROUPS.flatMap((g) => g.items).map((item) => <a key={item.href} href={item.href} className={isActive(item.href) ? "is-active" : ""}><item.Icon size={16} /><span>{item.label}</span></a>)}</div>
+      <div className="super-mobile-nav">{GROUPS.flatMap((g) => g.items).filter(item => canSee(item.href)).map((item) => <a key={item.href} href={item.href} className={isActive(item.href) ? "is-active" : ""}><item.Icon size={16} /><span>{item.label}</span></a>)}</div>
       <div className="super-page-frame">{children}</div>
     </main>
   </div>;

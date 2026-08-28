@@ -264,6 +264,31 @@ export const authOptions: NextAuthOptions = {
           console.error("[auth] customer revalidation failed, keeping existing token", e);
         }
       }
+
+      // Keep platform-admin role and permissions live on every request. This
+      // also upgrades JWTs created before granular admin roles were added.
+      if (token.isSuperAdmin && token.sub) {
+        try {
+          const admin = await db.platformAdmin.findUnique({
+            where: { id: token.sub as string },
+            select: { name: true, active: true, role: true, permissions: true },
+          });
+          if (!admin) {
+            token.disabled = true;
+          } else {
+            token.disabled = !admin.active;
+            const cleanName = /^[?\s]+$/.test(admin.name) ? "بهنام شفیعی" : admin.name;
+            if (cleanName !== admin.name) {
+              await db.platformAdmin.update({ where: { id: token.sub as string }, data: { name: cleanName } });
+            }
+            token.name = cleanName;
+            token.platformRole = admin.role;
+            token.platformPermissions = admin.permissions;
+          }
+        } catch (e) {
+          console.error("[auth] platform-admin refresh failed, keeping existing token", e);
+        }
+      }
       return token;
     },
     async session({ session, token }) {
@@ -305,24 +330,6 @@ export const authOptions: NextAuthOptions = {
         console.error("[auth] failed to mark login session as logged out", e);
       }
 
-      // Keep the platform owner's display name live as well. Early seed data
-      // on one deployment was stored as question marks after an encoding
-      // issue; repair that legacy value once and refresh the active JWT.
-      if (token.isSuperAdmin && token.sub) {
-        try {
-          const admin = await db.platformAdmin.findUnique({ where: { id: token.sub as string }, select: { name: true, active: true, role: true, permissions: true } });
-          if (admin) {
-            token.disabled = !admin.active;
-            const cleanName = /^[?\s]+$/.test(admin.name) ? "بهنام شفیعی" : admin.name;
-            if (cleanName !== admin.name) await db.platformAdmin.update({ where: { id: token.sub as string }, data: { name: cleanName } });
-            token.name = cleanName;
-            token.platformRole = admin.role;
-            token.platformPermissions = admin.permissions;
-          }
-        } catch (e) {
-          console.error("[auth] platform-admin name refresh failed", e);
-        }
-      }
     },
   },
 };
