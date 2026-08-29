@@ -99,12 +99,11 @@ export async function POST(req: NextRequest) {
       input,
       responseFormat: "json",
       // Leave enough room for reasoning-capable models plus the short JSON.
-      maxTokens: 320,
+      maxTokens: 512,
       // This task is intentionally tiny. One attempt with a generous deadline
       // is faster and more predictable than retrying a slow reasoning model.
-      // With a fallback configured, two provider slots still finish before
-      // the browser/server deadline (30s primary + 30s fallback at most).
-      timeoutMs: 30000,
+      // Hetzner may queue requests during experiment peaks. Do not override
+      // the provider-aware 75s deadline from lib/ai/config here.
       maxRetries: 0,
     });
 

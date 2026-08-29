@@ -203,9 +203,9 @@ export default function SuperAdminSettingsPage() {
       ...current,
       aiEnabled: true,
       aiFallbackProvider: "openai-compat",
-      aiFallbackBaseUrl: "https://inference.hetzner.com/v1",
+      aiFallbackBaseUrl: "https://inference.hetzner.com/api/v1",
       aiFallbackApiKey: "",
-      aiFallbackModel: "deepseek-ai/deepseek-v3",
+      aiFallbackModel: "Qwen3.8-27B",
       // One attempt per provider is enough; the fallback itself is the retry.
       aiMaxRetries: 0,
     }));
@@ -222,9 +222,9 @@ export default function SuperAdminSettingsPage() {
       return;
     }
     setAiModels(data.models);
-    const deepSeek = data.models.find((model: string) => model.toLowerCase().includes("deepseek"));
-    if (deepSeek) setForm((current) => ({ ...current, aiFallbackProvider: "openai-compat", aiFallbackBaseUrl: "https://inference.hetzner.com/v1", aiFallbackApiKey: "", aiFallbackModel: deepSeek, aiMaxRetries: 0 }));
-    setAiTest({ ok: true, text: deepSeek ? `مدل جایگزین هتزنر انتخاب شد: ${deepSeek}` : `${data.models.length.toLocaleString("fa-IR")} مدل دریافت شد؛ مدل جایگزین را از فهرست انتخاب کن.` });
+    const alternate = data.models.find((model: string) => model !== form.aiModel) ?? data.models[0];
+    if (alternate) setForm((current) => ({ ...current, aiFallbackProvider: "openai-compat", aiFallbackBaseUrl: "https://inference.hetzner.com/api/v1", aiFallbackApiKey: "", aiFallbackModel: alternate, aiMaxRetries: 0 }));
+    setAiTest({ ok: true, text: alternate ? `مدل جایگزین هتزنر انتخاب شد: ${alternate}` : "مدل فعالی در حساب هتزنر پیدا نشد." });
   }
 
   async function saveAppLinks() {

@@ -9,6 +9,7 @@ function setEnv(env: Record<string, string | undefined>) {
   for (const k of [
     "AI_ENABLED", "AI_PROVIDER", "AI_FALLBACK_PROVIDER", "AI_MODEL",
     "AI_BASE_URL", "AI_API_KEY", "AI_TIMEOUT_MS", "AI_MAX_RETRIES",
+    "AI_FALLBACK_MODEL", "AI_FALLBACK_BASE_URL", "AI_FALLBACK_API_KEY",
     "AI_MAX_TOKENS", "AI_TEMPERATURE", "AI_SHOP_DAILY_LIMIT",
   ]) {
     delete process.env[k];
@@ -57,6 +58,20 @@ test("Hetzner inference receives a production-safe minimum timeout", async () =>
   });
   const cfg = await loadAiConfig();
   assert.equal(cfg.timeoutMs, 75000);
+});
+
+test("legacy Hetzner endpoint and retired large models are repaired", async () => {
+  setEnv({
+    AI_ENABLED: "true", AI_PROVIDER: "openai-compat", AI_API_KEY: "hetzner-token",
+    AI_BASE_URL: "https://inference.hetzner.com/v1", AI_MODEL: "deepseek-ai/deepseek-v3",
+    AI_FALLBACK_PROVIDER: "openai-compat", AI_FALLBACK_BASE_URL: "https://inference.hetzner.com/v1",
+    AI_FALLBACK_MODEL: "GLM-5.2",
+  });
+  const cfg = await loadAiConfig();
+  assert.equal(cfg.baseUrl, "https://inference.hetzner.com/api/v1");
+  assert.equal(cfg.model, "Qwen/Qwen3.6-35B-A3B-FP8");
+  assert.equal(cfg.fallbackBaseUrl, "https://inference.hetzner.com/api/v1");
+  assert.equal(cfg.fallbackModel, "Qwen3.8-27B");
 });
 
 test("mock provider returns a marked, ok result without echoing raw input", async () => {

@@ -16,8 +16,8 @@ export async function GET() {
     const timer = setTimeout(() => controller.abort(), 20_000);
     try {
       const bases = [config.baseUrl.replace(/\/+$/, "")];
-      if (config.baseUrl.includes("inference.hetzner.com") && !bases.includes("https://inference.hetzner.com/v1")) {
-        bases.push("https://inference.hetzner.com/v1");
+      if (config.baseUrl.includes("inference.hetzner.com") && !bases.includes("https://inference.hetzner.com/api/v1")) {
+        bases.push("https://inference.hetzner.com/api/v1");
       }
       const models = new Set<string>();
       for (const base of bases) {

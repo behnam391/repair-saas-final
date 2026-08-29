@@ -38,6 +38,19 @@ function secret(v: unknown): string | undefined {
   return clean || undefined;
 }
 
+const HETZNER_BASE_URL = "https://inference.hetzner.com/api/v1";
+const HETZNER_PRIMARY_MODEL = "Qwen/Qwen3.6-35B-A3B-FP8";
+const HETZNER_FALLBACK_MODEL = "Qwen3.8-27B";
+
+function normalizeHetznerBaseUrl(value: string | undefined): string | undefined {
+  return value?.includes("inference.hetzner.com") ? HETZNER_BASE_URL : value;
+}
+
+function availableHetznerModel(value: string | undefined, fallback: string): string {
+  if (!value) return fallback;
+  return /deepseek|kimi|glm/i.test(value) ? fallback : value;
+}
+
 export async function loadAiConfig(): Promise<AiConfig> {
   let s: any = null;
   // Node's test runner marks worker processes with NODE_TEST_CONTEXT. Tests
@@ -53,7 +66,7 @@ export async function loadAiConfig(): Promise<AiConfig> {
 
   const apiKey = secret(s?.aiApiKey) ?? str(process.env.AI_API_KEY);
   const configuredModel = str(s?.aiModel) ?? str(process.env.AI_MODEL);
-  const configuredBaseUrl = str(s?.aiBaseUrl) ?? str(process.env.AI_BASE_URL);
+  const configuredBaseUrl = normalizeHetznerBaseUrl(str(s?.aiBaseUrl) ?? str(process.env.AI_BASE_URL));
   const selectedProvider = toProvider(s?.aiProvider) ?? toProvider(process.env.AI_PROVIDER) ?? "disabled";
   // Repair legacy panel state where the OpenAI preset stored its token/model
   // but the old `mock` provider selection survived. A real token together
@@ -75,9 +88,12 @@ export async function loadAiConfig(): Promise<AiConfig> {
   // saving the token is sufficient. A manually entered Base URL or model
   // always wins, preserving support for other compatible providers.
   const isTokenOnlyOpenAi = provider === "openai-compat" && !!apiKey;
-  const model = isTokenOnlyOpenAi && (!configuredModel || configuredModel === "mock-model")
+  const configuredProviderModel = configuredBaseUrl?.includes("inference.hetzner.com")
+    ? availableHetznerModel(configuredModel, HETZNER_PRIMARY_MODEL)
+    : configuredModel;
+  const model = isTokenOnlyOpenAi && (!configuredProviderModel || configuredProviderModel === "mock-model")
     ? "gpt-5-mini"
-    : configuredModel ?? "mock-model";
+    : configuredProviderModel ?? "mock-model";
   const configuredTimeout = num(s?.aiTimeoutMs) ?? num(process.env.AI_TIMEOUT_MS) ?? 20000;
   const isHetznerInference = configuredBaseUrl?.includes("inference.hetzner.com") ?? false;
 
@@ -88,8 +104,10 @@ export async function loadAiConfig(): Promise<AiConfig> {
     model,
     baseUrl: configuredBaseUrl ?? (isTokenOnlyOpenAi ? "https://api.openai.com/v1" : undefined),
     apiKey,
-    fallbackModel: str(s?.aiFallbackModel) ?? str(process.env.AI_FALLBACK_MODEL),
-    fallbackBaseUrl: str(s?.aiFallbackBaseUrl) ?? str(process.env.AI_FALLBACK_BASE_URL) ?? (fallbackProvider === provider ? configuredBaseUrl : undefined),
+    fallbackModel: configuredBaseUrl?.includes("inference.hetzner.com")
+      ? availableHetznerModel(str(s?.aiFallbackModel) ?? str(process.env.AI_FALLBACK_MODEL), HETZNER_FALLBACK_MODEL)
+      : str(s?.aiFallbackModel) ?? str(process.env.AI_FALLBACK_MODEL),
+    fallbackBaseUrl: normalizeHetznerBaseUrl(str(s?.aiFallbackBaseUrl) ?? str(process.env.AI_FALLBACK_BASE_URL) ?? (fallbackProvider === provider ? configuredBaseUrl : undefined)),
     fallbackApiKey: secret(s?.aiFallbackApiKey) ?? str(process.env.AI_FALLBACK_API_KEY) ?? (fallbackProvider === provider ? apiKey : undefined),
     timeoutMs: isHetznerInference ? Math.max(configuredTimeout, 75000) : configuredTimeout,
     maxRetries: num(s?.aiMaxRetries) ?? num(process.env.AI_MAX_RETRIES) ?? 2,
