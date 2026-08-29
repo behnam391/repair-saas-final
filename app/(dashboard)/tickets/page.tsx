@@ -8,6 +8,7 @@ import ComboBox from "@/components/ComboBox";
 import TicketChat from "@/components/TicketChat";
 import AiIntakeHelper from "@/components/AiIntakeHelper";
 import CustomerQuickPick from "@/components/CustomerQuickPick";
+import PartnerQuickPick from "@/components/PartnerQuickPick";
 import MorningInsights from "@/components/MorningInsights";
 import { useIsNativeApp } from "@/components/NativeAppContext";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
@@ -749,11 +750,7 @@ function NewTicketModal({ defaultLane, singleOperator, webPartnerIntake, onClose
         {form.intakeSource === "PARTNER" && (
           <div className="mb-4 rounded-xl border border-teal/30 bg-teal/5 p-3">
             <div className="mb-2 text-[11px] font-bold text-teal">مشخصات همکار تحویل‌دهنده</div>
-            <CustomerQuickPick allowCustomerBook={false} onSelect={(person) => setForm({ ...form, partnerName: person.name, partnerPhone: person.phone })} />
-            <div className="grid grid-cols-2 gap-2">
-              <input value={form.partnerName} onChange={(e) => setForm({ ...form, partnerName: e.target.value })} placeholder="نام همکار یا مغازه" className="min-w-0 rounded-lg border border-surface2 bg-surface px-3 py-2 text-xs" />
-              <input value={form.partnerPhone} onChange={(e) => setForm({ ...form, partnerPhone: toLatinDigits(e.target.value) })} placeholder="شماره همکار" inputMode="tel" dir="ltr" maxLength={11} className="min-w-0 rounded-lg border border-surface2 bg-surface px-3 py-2 text-xs mono" />
-            </div>
+            <PartnerQuickPick value={{ name: form.partnerName, phone: form.partnerPhone }} onChange={(partner) => setForm({ ...form, partnerName: partner.name, partnerPhone: partner.phone })} />
           </div>
         )}
         {(!webPartnerIntake || form.intakeSource === "CUSTOMER") && (<>
