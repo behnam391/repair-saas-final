@@ -319,7 +319,7 @@ export default function BillingPage() {
       {error && <p className="text-danger text-xs mb-3">{error}</p>}
       {storeMode === "native" && (
         <div className="bg-amber/10 text-amber border border-amber/30 text-xs rounded-xl p-3 mb-4 leading-6">
-          فروشگاه نصب‌کننده برنامه شناسایی نشد؛ خرید اشتراک تا نصب نسخه رسمی مایکت یا بازار غیرفعال است. هیچ درگاه بانکی جایگزینی در این نسخه نمایش داده نمی‌شود.
+          فروشگاه نصب‌کننده برنامه شناسایی نشد؛ خرید اشتراک تا نصب نسخه رسمی همان فروشگاه غیرفعال است. هیچ روش پرداخت جایگزینی در این نسخه نمایش داده نمی‌شود.
         </div>
       )}
       {myketNotice && (

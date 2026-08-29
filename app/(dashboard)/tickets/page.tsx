@@ -132,7 +132,7 @@ export default function TicketsPage() {
             </span>
             <span className="min-w-0">
               <b className="block text-sm">خرید و تمدید اشتراک</b>
-              <small className="mt-1 block text-[11px] text-muted">مشاهده پلن‌ها و پرداخت امن درون‌برنامه‌ای مایکت یا بازار</small>
+              <small className="mt-1 block text-[11px] text-muted">مشاهده پلن‌ها و پرداخت امن درون‌برنامه‌ای فروشگاه نصب‌کننده</small>
             </span>
           </span>
           <span className="shrink-0 rounded-lg bg-teal px-3 py-2 text-[11px] font-bold text-white">مشاهده پلن‌ها</span>

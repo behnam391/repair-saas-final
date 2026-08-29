@@ -76,7 +76,7 @@ export default function WalletPage() {
           <h1 className="display-heading text-lg mb-2">{storeMode === "native" ? "پرداخت فروشگاهی در دسترس نیست" : `پرداخت امن ${storeMode === "bazaar" ? "بازار" : "مایکت"}`}</h1>
           <p className="text-xs text-muted leading-6 mb-5">
             {storeMode === "native"
-              ? "فروشگاه نصب‌کننده شناسایی نشد. برنامه را از صفحه رسمی مایکت یا بازار نصب و دوباره اجرا کنید؛ هیچ درگاه جایگزینی در نسخه فروشگاهی نمایش داده نمی‌شود."
+              ? "فروشگاه نصب‌کننده شناسایی نشد. برنامه را از صفحه رسمی همان فروشگاه نصب و دوباره اجرا کنید؛ هیچ روش پرداخت جایگزینی در نسخه فروشگاهی نمایش داده نمی‌شود."
               : "در نسخه فروشگاهی، خرید و تمدید اشتراک فقط از طریق پرداخت درون‌برنامه‌ای همان فروشگاه انجام می‌شود و شارژ مستقیم کیف پول در دسترس نیست."}
           </p>
           {storeMode !== "native" && <a href="/admin/billing" className="inline-flex bg-teal text-white font-bold rounded-xl px-5 py-2.5 text-sm">

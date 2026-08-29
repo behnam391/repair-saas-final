@@ -4,7 +4,7 @@ export const LATEST_ANDROID_RELEASE = {
   downloadUrl: "/download",
   directApkUrl: "https://github.com/behnam391/repair-saas-final/releases/download/v1.2.0/peyvo-android-v1.2.apk",
   notes: [
-    "پرداخت درون‌برنامه‌ای اختصاصی بازار و مایکت",
+    "پرداخت درون‌برنامه‌ای اختصاصی فروشگاه نصب‌کننده",
     "پایداری نتایج جستجوی تعمیرگاه و مشتری",
     "به‌روزرسانی امن فقط از فروشگاه نصب‌کننده",
     "انتخاب مخاطب و موقعیت فعلی",
