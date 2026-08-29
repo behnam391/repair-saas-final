@@ -9,10 +9,10 @@ import { z } from "zod";
 export const dynamic = "force-dynamic";
 
 const CreateTicketSchema = z.object({
-  customerName: z.string().min(1),
+  customerName: z.string().optional().default(""),
   // Every repair-status SMS goes here. A number stored as ۰۹… is not a
   // number Kavenegar can deliver to. See lib/phone.ts.
-  customerPhone: z.preprocess(preprocessPhone, z.string().min(5)),
+  customerPhone: z.preprocess(preprocessPhone, z.string().optional().default("")),
   deviceModel: z.string().min(1),
   imei: z.string().optional(),
   issueInitial: z.string().min(1),
@@ -89,8 +89,12 @@ export async function POST(req: NextRequest) {
   try {
     const { shopId, userId } = await requireSession();
     const body = CreateTicketSchema.parse(await req.json());
+    const partnerWithoutCustomer = body.intakeSource === "PARTNER" && (!body.customerName.trim() || !body.customerPhone);
     if (body.intakeSource === "PARTNER" && !body.partnerName?.trim()) {
       return NextResponse.json({ message: "نام همکار تحویل‌دهنده را وارد کنید" }, { status: 400 });
+    }
+    if (body.intakeSource === "CUSTOMER" && (!body.customerName.trim() || !body.customerPhone)) {
+      return NextResponse.json({ message: "نام و شماره تماس مشتری را وارد کنید" }, { status: 400 });
     }
 
     // Enforce the shop's monthly intake quota (applies to every plan;
@@ -118,13 +122,20 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await db.$transaction(async (tx) => {
+      // A partner intake deliberately has no customer fields in the form.
+      // The delivering partner becomes the ticket's contact, preserving the
+      // existing required Customer relation without inventing fake people.
+      const contactName = partnerWithoutCustomer ? body.partnerName!.trim() : body.customerName.trim();
+      const contactPhone = partnerWithoutCustomer
+        ? (body.partnerPhone || `PARTNER-${body.partnerName!.trim()}`)
+        : body.customerPhone;
       // Find-or-create the customer by phone within this shop.
       let customer = await tx.customer.findFirst({
-        where: { shopId, phone: body.customerPhone },
+        where: { shopId, phone: contactPhone },
       });
       if (!customer) {
         customer = await tx.customer.create({
-          data: { shopId, name: body.customerName, phone: body.customerPhone },
+          data: { shopId, name: contactName, phone: contactPhone },
         });
       }
 
@@ -173,6 +184,9 @@ export async function POST(req: NextRequest) {
     // notifications so the customer is kept in the loop from the very
     // first moment. Never let an SMS hiccup fail the intake itself.
     try {
+      if (partnerWithoutCustomer) {
+        return NextResponse.json({ ticket: result }, { status: 201 });
+      }
       await sendIntakeSms(result.customer.phone, {
         shopName: shop.name,
         ticketNo: result.no,

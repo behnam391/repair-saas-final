@@ -9,6 +9,7 @@ import TicketChat from "@/components/TicketChat";
 import AiIntakeHelper from "@/components/AiIntakeHelper";
 import CustomerQuickPick from "@/components/CustomerQuickPick";
 import MorningInsights from "@/components/MorningInsights";
+import { useIsNativeApp } from "@/components/NativeAppContext";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
 import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Check, ChevronDown, CircuitBoard, Clock3, Cpu, CreditCard, GitBranch, Handshake, LockKeyhole, MessageCircle, Play, Plus, Printer, Search, ShieldCheck, Smartphone, UserRound, Wrench, X } from "lucide-react";
 
@@ -42,6 +43,7 @@ type Ticket = {
 };
 
 export default function TicketsPage() {
+  const isNativeApp = useIsNativeApp();
   const { data: session } = useSession();
   const myRole = (session?.user as any)?.role;
   const myId = (session?.user as any)?.id;
@@ -242,7 +244,7 @@ export default function TicketsPage() {
           onTransition={transition}
         />
       )}
-      {showNew && <NewTicketModal defaultLane={mySpecialty} singleOperator={singleOperator} onClose={() => setShowNew(false)} onCreated={load} />}
+      {showNew && <NewTicketModal defaultLane={mySpecialty} singleOperator={singleOperator} webPartnerIntake={!isNativeApp} onClose={() => setShowNew(false)} onCreated={load} />}
       {toast && (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-[#1B302D] border border-teal text-teal text-xs px-4 py-2.5 rounded-xl">
           {toast}
@@ -612,7 +614,7 @@ function TicketDetail({
   );
 }
 
-function NewTicketModal({ defaultLane, singleOperator, onClose, onCreated }: { defaultLane?: string | null; singleOperator: boolean; onClose: () => void; onCreated: () => void }) {
+function NewTicketModal({ defaultLane, singleOperator, webPartnerIntake, onClose, onCreated }: { defaultLane?: string | null; singleOperator: boolean; webPartnerIntake: boolean; onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
     customerName: "", customerPhone: "", deviceModel: "", imei: "", issueInitial: "", lane: ["HARDWARE", "SOFTWARE", "BOARD"].includes(defaultLane || "") ? defaultLane! : "HARDWARE",
     devicePasscode: "", devicePasscodeType: "PIN" as string, customerDamageNotes: "", receiptAck: "NO_SIGNATURE" as string,
@@ -628,7 +630,8 @@ function NewTicketModal({ defaultLane, singleOperator, onClose, onCreated }: { d
 
   function nextStep() {
     setError("");
-    if (step === 1 && (!form.customerName.trim() || !form.customerPhone.trim())) {
+    const partnerWithoutCustomer = webPartnerIntake && form.intakeSource === "PARTNER";
+    if (step === 1 && !partnerWithoutCustomer && (!form.customerName.trim() || !form.customerPhone.trim())) {
       setError("نام و شماره تماس مشتری را وارد کنید");
       return;
     }
@@ -637,8 +640,12 @@ function NewTicketModal({ defaultLane, singleOperator, onClose, onCreated }: { d
       return;
     }
     // Every repair-status SMS goes to this number. See lib/phone.ts.
-    if (step === 1 && !isValidMobile(form.customerPhone)) {
+    if (step === 1 && !partnerWithoutCustomer && !isValidMobile(form.customerPhone)) {
       setError("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد");
+      return;
+    }
+    if (step === 1 && form.intakeSource === "PARTNER" && form.partnerPhone && !isValidMobile(form.partnerPhone)) {
+      setError("شماره همکار باید با ۰۹ شروع شود و ۱۱ رقم باشد");
       return;
     }
     if (step === 2 && !form.deviceModel.trim()) {
@@ -667,7 +674,12 @@ function NewTicketModal({ defaultLane, singleOperator, onClose, onCreated }: { d
 
   async function submit() {
     setError("");
-    const payload = { ...form, devicePasscode: collectPasscode ? form.devicePasscode : "" };
+    const payload = {
+      ...form,
+      customerName: webPartnerIntake && form.intakeSource === "PARTNER" ? "" : form.customerName,
+      customerPhone: webPartnerIntake && form.intakeSource === "PARTNER" ? "" : form.customerPhone,
+      devicePasscode: collectPasscode ? form.devicePasscode : "",
+    };
     const res = await fetch("/api/tickets", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -729,7 +741,7 @@ function NewTicketModal({ defaultLane, singleOperator, onClose, onCreated }: { d
 
         <div className="intake-step-content">
         {step === 1 && (<>
-        <div className="intake-content-title"><UserRound size={18} /><div><b>اطلاعات مشتری</b><small>مشخصات صاحب دستگاه را وارد کنید</small></div></div>
+        <div className="intake-content-title"><UserRound size={18} /><div><b>{webPartnerIntake && form.intakeSource === "PARTNER" ? "منبع دریافت دستگاه" : "اطلاعات مشتری"}</b><small>{webPartnerIntake && form.intakeSource === "PARTNER" ? "مشخصات همکار تحویل‌دهنده را ثبت کنید" : "مشخصات صاحب دستگاه را وارد کنید"}</small></div></div>
         <div className="mb-3 grid grid-cols-2 gap-2">
           <button type="button" onClick={() => setForm({ ...form, intakeSource: "CUSTOMER", partnerName: "", partnerPhone: "" })} className={`rounded-xl border px-3 py-2.5 text-xs font-bold ${form.intakeSource === "CUSTOMER" ? "border-copper bg-copper text-[#1A1410]" : "border-surface2 bg-surface2 text-muted"}`}>مراجعه مستقیم مشتری</button>
           <button type="button" onClick={() => setForm({ ...form, intakeSource: "PARTNER" })} className={`rounded-xl border px-3 py-2.5 text-xs font-bold ${form.intakeSource === "PARTNER" ? "border-teal bg-teal text-[#0B1512]" : "border-surface2 bg-surface2 text-muted"}`}>دریافت از همکار</button>
@@ -744,24 +756,26 @@ function NewTicketModal({ defaultLane, singleOperator, onClose, onCreated }: { d
             </div>
           </div>
         )}
-        <CustomerQuickPick onSelect={(person) => setForm({ ...form, customerName: person.name, customerPhone: person.phone })} />
-        <div className="mb-3">
-          <label className="block text-xs text-muted mb-1">نام مشتری</label>
-          <input
-            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-            value={form.customerName}
-            onChange={(e) => setForm({ ...form, customerName: e.target.value })}
-          />
-        </div>
-        <div className="mb-3">
-          <label className="block text-xs text-muted mb-1">شماره تماس</label>
-          <input
-            inputMode="tel" dir="ltr" maxLength={11} placeholder="09xxxxxxxxx"
-            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
-            value={form.customerPhone}
-            onChange={(e) => setForm({ ...form, customerPhone: toLatinDigits(e.target.value) })}
-          />
-        </div>
+        {(!webPartnerIntake || form.intakeSource === "CUSTOMER") && (<>
+          <CustomerQuickPick onSelect={(person) => setForm({ ...form, customerName: person.name, customerPhone: person.phone })} />
+          <div className="mb-3">
+            <label className="block text-xs text-muted mb-1">نام مشتری</label>
+            <input
+              className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
+              value={form.customerName}
+              onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="block text-xs text-muted mb-1">شماره تماس</label>
+            <input
+              inputMode="tel" dir="ltr" maxLength={11} placeholder="09xxxxxxxxx"
+              className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
+              value={form.customerPhone}
+              onChange={(e) => setForm({ ...form, customerPhone: toLatinDigits(e.target.value) })}
+            />
+          </div>
+        </>)}
         </>)}
 
         {step === 2 && (<>
