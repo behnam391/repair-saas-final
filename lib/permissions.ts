@@ -27,6 +27,7 @@ const NAV_ACCESS: Record<string, Role[]> = {
   "/returns": DESK,
   "/pending-intakes": DESK,
   "/collaboration": DESK,
+  "/partners": DESK,
   "/customers": DESK,
   "/history": DESK,
   "/market": ALL,

@@ -9,7 +9,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BadgeHelp, BarChart3, Boxes, ChevronDown, CircleUserRound, Clock3, FileText,
   Handshake, Headphones, History, House, Info, Landmark, Menu, MessageCircle,
-  PackageSearch, QrCode, ReceiptText, RotateCcw, ShoppingBag, Store, UsersRound,
+  NotebookTabs, PackageSearch, QrCode, ReceiptText, RotateCcw, ShoppingBag, Store, UsersRound,
   WalletCards, Wrench,
 } from "lucide-react";
 
@@ -90,6 +90,7 @@ export default function DashboardNav({
         { href: "/chats", label: "چت‌ها", Icon: MessageCircle },
         { href: "/device-lookup", label: "پرونده گوشی", Icon: PackageSearch },
         { href: "/collaboration", label: "همکاری مغازه‌ها", Icon: Handshake },
+        { href: "/partners", label: "دفترچه همکاران", Icon: NotebookTabs },
       ],
     },
     {

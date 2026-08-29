@@ -80,6 +80,22 @@ model Shop {
   referralsReceived    ShopReferral[]    @relation("ReferralTo")
   expenses           Expense[]
   walletTransactions WalletTransaction[]
+  partnerContacts    PartnerContact[]
+}
+
+model PartnerContact {
+  id        String   @id @default(cuid())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String?
+  address   String?
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shopId, name])
+  @@index([shopId, phone])
 }
 
 // ── Shop wallet ledger (کیف پول) ──────────────────────────────
