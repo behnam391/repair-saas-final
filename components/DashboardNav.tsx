@@ -10,7 +10,7 @@ import {
   BadgeHelp, BarChart3, Boxes, ChevronDown, CircleUserRound, Clock3, FileText,
   Handshake, Headphones, History, House, Info, Landmark, Menu, MessageCircle,
   NotebookTabs, PackageSearch, QrCode, ReceiptText, RotateCcw, ShoppingBag, Store, UsersRound,
-  WalletCards, Wrench,
+  Settings, WalletCards, Wrench,
 } from "lucide-react";
 
 type NavItem = { href: string; label: string; Icon: LucideIcon; external?: boolean };
@@ -113,7 +113,8 @@ export default function DashboardNav({
       ? [{
           label: "مدیریت",
           items: [
-            { href: "/admin", label: "پنل مدیریت", Icon: BarChart3 },
+            { href: "/reports", label: "گزارش‌ها", Icon: BarChart3 },
+            { href: "/admin", label: "تنظیمات تعمیرگاه", Icon: Settings },
             { href: "/expenses", label: "دخل و خرج", Icon: Landmark },
             { href: "/admin/billing", label: "اشتراک و پرداخت", Icon: FileText },
             { href: "/admin/wallet", label: "کیف پول", Icon: WalletCards },

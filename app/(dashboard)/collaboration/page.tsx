@@ -76,7 +76,7 @@ export default function CollaborationPage() {
   }));
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="workspace-page p-4 max-w-5xl mx-auto">
       <h1 className="display-heading text-lg mb-1">همکاری بین مغازه‌ها</h1>
       <p className="text-xs text-muted mb-4">با مغازه‌های دیگر (در تخصص‌های مختلف) همکاری کنید، مشتری ارجاع بدهید و برایش پورسانت رد و بدل کنید.</p>
 

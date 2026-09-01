@@ -35,6 +35,7 @@ const NAV_ACCESS: Record<string, Role[]> = {
   "/device-lookup": ALL,
   // Management group is already OWNER-only in the nav component:
   "/admin": ["OWNER"],
+  "/reports": ["OWNER"],
   "/admin/billing": ["OWNER"],
   "/admin/wallet": ["OWNER"],
   "/expenses": ["OWNER"],

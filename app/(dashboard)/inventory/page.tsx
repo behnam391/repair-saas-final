@@ -87,7 +87,7 @@ export default function InventoryPage() {
   const lowCount = items.filter((i) => i.lowStock).length;
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
+    <div className="workspace-page p-4 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-1">
         <h1 className="display-heading text-lg">انبار مغازه</h1>
         <button onClick={() => setShowAdd(!showAdd)} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3 py-2">

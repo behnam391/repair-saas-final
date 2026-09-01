@@ -94,7 +94,7 @@ export default function CustomersPage() {
   const td = "px-3 py-2 border border-surface2/60 align-middle";
 
   return (
-    <div className="p-4 max-w-3xl mx-auto">
+    <div className="workspace-page p-4 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-3">
         <h1 className="display-heading text-lg">دفترچه مشتریان</h1>
         <button onClick={openAdd} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3 py-1.5">+ افزودن مشتری</button>

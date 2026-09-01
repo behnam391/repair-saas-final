@@ -93,7 +93,7 @@ export default function ChatsPage() {
   const active = conversations.find((c) => c.id === activeId);
 
   return (
-    <div className="flex h-[calc(100vh-64px)]">
+    <div className="workspace-chat flex h-[calc(100vh-64px)]">
       {/* Conversation list */}
       <div className={`w-full sm:w-72 border-l border-surface2 overflow-y-auto ${activeId ? "hidden sm:block" : ""}`}>
         <div className="p-3 font-bold text-sm border-b border-surface2">چت‌ها</div>

@@ -124,7 +124,7 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="workspace-page p-4 max-w-4xl mx-auto">
       <h1 className="display-heading text-lg mb-4">صدور و تاریخچه فاکتور</h1>
       {shareMsg && <div className="mb-3 rounded-lg bg-teal/15 p-2.5 text-center text-xs font-bold text-teal">{shareMsg}</div>}
 

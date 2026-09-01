@@ -67,7 +67,7 @@ export default function ExpensesPage() {
   const maxBar = Math.max(1, ...months.map((m) => Math.max(m.income, m.expense)));
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="workspace-page p-4 max-w-4xl mx-auto">
       <h1 className="display-heading text-lg mb-1">دخل و خرج</h1>
       <p className="text-xs text-muted mb-5">درآمد (از فاکتورها) در برابر هزینه‌ها — تا سود واقعی مغازه را ببینید، نه فقط فروش.</p>
 
