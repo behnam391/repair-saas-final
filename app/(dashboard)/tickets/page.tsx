@@ -83,6 +83,10 @@ export default function TicketsPage() {
 
   useEffect(() => {
     load();
+    if (new URLSearchParams(window.location.search).get("new") === "1") {
+      setShowNew(true);
+      window.history.replaceState({}, "", "/tickets");
+    }
   }, []);
 
   function flash(msg: string) {

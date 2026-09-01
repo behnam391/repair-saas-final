@@ -10,6 +10,7 @@ import { ShopBottomNav } from "@/components/BottomNav";
 import Logo from "@/components/Logo";
 import { db } from "@/lib/db";
 import OnboardingChecklist, { type OnboardingItem } from "@/components/OnboardingChecklist";
+import ShopSidebar from "@/components/ShopSidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   } catch {}
 
   return (
-    <div className="min-h-screen">
+    <div className="shop-shell min-h-screen">
+      <ShopSidebar role={user.role} shopType={shopType ?? undefined} shopName={user.shopName || "تعمیرگاه پیوو"} userName={user.name || "کاربر پیوو"} />
+      <div className="shop-shell-main">
       <header className="glass-header app-topbar sticky top-0 z-20 px-4">
         {/* Mobile: two tiers — identity + actions on the first line, nav on its
             own swipeable line below. Desktop (md+): everything on one row. */}
@@ -52,13 +55,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <div className="text-[10px] text-muted mt-1 flex items-center gap-1.5"><span className="app-online-dot" />{user.name} · {roleLabel(user.role)}</div>
             </div>
           </div>
-          <DashboardNav
-            role={user.role}
-            guideUrl={guideUrl}
-            shopType={shopType ?? undefined}
-            shopName={user.shopName}
-            userName={`${user.name} · ${roleLabel(user.role)}`}
-          />
+          <div className="shop-mobile-navigation"><DashboardNav
+              role={user.role}
+              guideUrl={guideUrl}
+              shopType={shopType ?? undefined}
+              shopName={user.shopName}
+              userName={`${user.name} · ${roleLabel(user.role)}`}
+            /></div>
           <div className="flex items-center gap-1.5 shrink-0">
             <ThemeToggle />
             <NotificationBell />
@@ -77,6 +80,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Bottom padding on mobile only — that's where the floating nav sits. */}
       <main className="page-enter pb-[96px] md:pb-0">{children}</main>
       <ShopBottomNav role={user.role} />
+      </div>
     </div>
   );
 }
