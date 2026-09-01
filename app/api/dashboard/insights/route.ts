@@ -36,7 +36,16 @@ export async function GET() {
       ready > 0 && { tone: "blue", icon: "star", title: `${ready.toLocaleString("fa-IR")} دستگاه آماده تحویل است`, detail: "اطلاع‌رسانی و تسویه را تکمیل کنید" },
     ].filter(Boolean);
 
-    return NextResponse.json({ insights });
+    return NextResponse.json({
+      insights,
+      metrics: {
+        todayRevenue: todayInvoices._sum.total ?? 0,
+        todayProfit,
+        weeklyProfitAverage: dailyAverage,
+        overdue,
+        ready,
+      },
+    });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     console.error("[dashboard/insights]", e);

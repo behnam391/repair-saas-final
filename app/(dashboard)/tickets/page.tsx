@@ -12,7 +12,7 @@ import PartnerQuickPick from "@/components/PartnerQuickPick";
 import MorningInsights from "@/components/MorningInsights";
 import { useIsNativeApp } from "@/components/NativeAppContext";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
-import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, Check, ChevronDown, CircuitBoard, Clock3, Cpu, CreditCard, GitBranch, Handshake, LockKeyhole, MessageCircle, Play, Plus, Printer, Search, ShieldCheck, Smartphone, UserRound, Wrench, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, BarChart3, Boxes, Check, ChevronDown, CircuitBoard, Clock3, Cpu, FileText, GitBranch, Handshake, LockKeyhole, MessageCircle, Play, Plus, Printer, Search, ShieldCheck, Smartphone, UserRound, UsersRound, Wrench, X } from "lucide-react";
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار", hint: "تعمیرات فیزیکی", Icon: Wrench, tone: "blue" },
@@ -38,6 +38,8 @@ type Ticket = {
   intakeSource?: string;
   partnerName?: string | null;
   partnerPhone?: string | null;
+  createdAt?: string;
+  assignedTo?: { name: string } | null;
   invoice?: { id: string; total: number; paid: boolean; paidAmount: number } | null;
   customer: { name: string; phone: string };
   history: { action: string; lane: string; note?: string; createdAt: string; tech?: { name: string } }[];
@@ -56,6 +58,8 @@ export default function TicketsPage() {
   const [toast, setToast] = useState("");
   const [query, setQuery] = useState("");
   const [singleOperator, setSingleOperator] = useState(false);
+  const [monthlyChart, setMonthlyChart] = useState<{ label: string; total: number }[]>([]);
+  const [dashboardMetrics, setDashboardMetrics] = useState<{ todayRevenue: number; todayProfit: number } | null>(null);
   // Mobile accordion: which lanes are collapsed. Starts empty (all open);
   // only affects narrow screens — desktop always shows every column.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -88,6 +92,14 @@ export default function TicketsPage() {
       window.history.replaceState({}, "", "/tickets");
     }
   }, []);
+
+  useEffect(() => {
+    if (myRole !== "OWNER") return;
+    Promise.all([fetch("/api/reports/monthly-revenue"), fetch("/api/dashboard/insights")]).then(async ([chartRes, insightRes]) => {
+      if (chartRes.ok) setMonthlyChart((await chartRes.json()).months ?? []);
+      if (insightRes.ok) setDashboardMetrics((await insightRes.json()).metrics ?? null);
+    }).catch(() => undefined);
+  }, [myRole]);
 
   function flash(msg: string) {
     setToast(msg);
@@ -127,33 +139,23 @@ export default function TicketsPage() {
         </button>
       </div>
 
-      {myRole === "OWNER" && (
-        <Link
-          href="/admin/billing"
-          className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-teal/40 bg-gradient-to-l from-teal/20 via-surface to-copper/10 p-4 shadow-sm transition hover:border-teal/70"
-          aria-label="خرید و تمدید اشتراک با پرداخت درون‌برنامه‌ای"
-        >
-          <span className="flex min-w-0 items-center gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal text-white shadow-lg shadow-teal/20">
-              <CreditCard size={22} />
-            </span>
-            <span className="min-w-0">
-              <b className="block text-sm">خرید و تمدید اشتراک</b>
-              <small className="mt-1 block text-[11px] text-muted">مشاهده پلن‌ها و پرداخت امن درون‌برنامه‌ای فروشگاه نصب‌کننده</small>
-            </span>
-          </span>
-          <span className="shrink-0 rounded-lg bg-teal px-3 py-2 text-[11px] font-bold text-white">مشاهده پلن‌ها</span>
-        </Link>
-      )}
-
       <div className="dashboard-stats">
-        <div className="dashboard-stat"><span className="is-blue"><Smartphone size={18} /></span><div><b>{tickets.length.toLocaleString("fa-IR")}</b><small>کل دستگاه‌ها</small></div></div>
+        <div className="dashboard-stat"><span className="is-blue">{myRole === "OWNER" ? <BarChart3 size={18} /> : <Smartphone size={18} />}</span><div><b>{myRole === "OWNER" ? `${(dashboardMetrics?.todayRevenue ?? 0).toLocaleString("fa-IR")}` : tickets.length.toLocaleString("fa-IR")}</b><small>{myRole === "OWNER" ? "درآمد امروز (تومان)" : "کل دستگاه‌ها"}</small></div></div>
         <div className="dashboard-stat"><span className="is-violet"><Wrench size={18} /></span><div><b>{activeCount.toLocaleString("fa-IR")}</b><small>در حال انجام</small></div></div>
         <div className="dashboard-stat"><span className="is-amber"><Clock3 size={18} /></span><div><b>{waitingCount.toLocaleString("fa-IR")}</b><small>منتظر تأیید</small></div></div>
         <div className="dashboard-stat"><span className="is-green"><BadgeCheck size={18} /></span><div><b>{readyCount.toLocaleString("fa-IR")}</b><small>آماده تحویل</small></div></div>
       </div>
 
-      {myRole === "OWNER" && <MorningInsights />}
+      {myRole === "OWNER" && <>
+        <div className="repair-command-grid">
+          <RepairAnalytics tickets={tickets} months={monthlyChart} />
+          <div className="repair-command-side">
+            <MorningInsights />
+            <RepairQuickActions onNew={() => setShowNew(true)} />
+          </div>
+        </div>
+        <ActiveRepairTable tickets={tickets.slice(0, 5)} onOpen={setOpenTicket} />
+      </>}
 
       {/* Search — filters every lane live by device, customer, number, or issue. */}
       <div className="dashboard-toolbar">
@@ -257,6 +259,47 @@ export default function TicketsPage() {
       )}
     </div>
   );
+}
+
+function RepairAnalytics({ tickets, months }: { tickets: Ticket[]; months: { label: string; total: number }[] }) {
+  const width = 680, height = 178;
+  const totals = months.map((m) => m.total);
+  const max = Math.max(...totals, 1);
+  const points = totals.map((value, index) => `${months.length <= 1 ? width / 2 : (index / (months.length - 1)) * width},${height - (value / max) * (height - 20)}`).join(" ");
+  const area = points ? `0,${height} ${points} ${width},${height}` : "";
+  const counts = LANES.map((lane) => ({ ...lane, count: tickets.filter((t) => t.lane === lane.key).length }));
+  const total = Math.max(tickets.length, 1);
+  let cursor = 0;
+  const colors = ["#168df0", "#25bd72", "#f2a51a", "#986cff"];
+  const gradient = counts.map((item, index) => { const start = cursor; cursor += (item.count / total) * 100; return `${colors[index]} ${start}% ${cursor}%`; }).join(",");
+  return <section className="repair-analytics-card">
+    <header><div><b>نمای عملکرد تعمیرگاه</b><small>درآمد ۱۲ ماه اخیر و وضعیت تعمیرهای جاری</small></div><span><BarChart3 size={17} /> داده‌های واقعی</span></header>
+    <div className="repair-analytics-body">
+      <div className="repair-line-chart">
+        {months.length ? <><svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none"><polygon points={area} /><polyline points={points} /></svg><div>{months.map((m) => <small key={m.label}>{m.label}</small>)}</div></> : <div className="repair-empty-chart"><BarChart3 size={24} /><span>پس از ثبت اولین فاکتور، نمودار درآمد اینجا نمایش داده می‌شود.</span></div>}
+      </div>
+      <div className="repair-status-chart">
+        <div className="repair-donut" style={{ background: tickets.length ? `conic-gradient(${gradient})` : "var(--color-surface2)" }}><i><b>{tickets.length.toLocaleString("fa-IR")}</b><small>تعمیر جاری</small></i></div>
+        <div>{counts.map((item, index) => <span key={item.key}><i style={{ background: colors[index] }} /><em>{item.label}</em><b>{item.count.toLocaleString("fa-IR")}</b></span>)}</div>
+      </div>
+    </div>
+  </section>;
+}
+
+function RepairQuickActions({ onNew }: { onNew: () => void }) {
+  return <section className="repair-quick-actions"><header><b>میانبرهای سریع</b><small>کارهای پرکاربرد روزانه</small></header><div>
+    <button onClick={onNew}><Plus size={18} /><span>پذیرش جدید</span></button>
+    <Link href="/invoices"><FileText size={18} /><span>فاکتور جدید</span></Link>
+    <Link href="/customers"><UsersRound size={18} /><span>مشتری جدید</span></Link>
+    <Link href="/inventory"><Boxes size={18} /><span>ورود قطعه</span></Link>
+  </div></section>;
+}
+
+function ActiveRepairTable({ tickets, onOpen }: { tickets: Ticket[]; onOpen: (ticket: Ticket) => void }) {
+  const laneLabel: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی", READY: "آماده تحویل" };
+  return <section className="repair-active-table"><header><div><b>تعمیرات فعال</b><small>آخرین پذیرش‌های در جریان</small></div><span>{tickets.length.toLocaleString("fa-IR")} مورد اخیر</span></header>
+    {tickets.length ? <div className="repair-table-scroll"><div className="repair-table-head"><span>پذیرش</span><span>دستگاه</span><span>مشتری</span><span>تعمیرکار</span><span>وضعیت</span><span>تاریخ پذیرش</span></div>{tickets.map((ticket) => <button key={ticket.id} onClick={() => onOpen(ticket)}><span className="mono">#{ticket.no}</span><span>{ticket.deviceModel}</span><span>{ticket.customer.name}</span><span>{ticket.assignedTo?.name || "تخصیص‌نیافته"}</span><span><i className={`lane-${ticket.lane.toLowerCase()}`} />{laneLabel[ticket.lane] || ticket.lane}</span><span>{ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString("fa-IR") : "—"}</span></button>)}</div> : <div className="repair-table-empty">هنوز تعمیر فعالی ثبت نشده است.</div>}
+  </section>;
 }
 
 function ReferralFlow({ history, currentLane }: { history: { lane: string }[]; currentLane: string }) {
