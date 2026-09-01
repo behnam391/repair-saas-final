@@ -3,6 +3,7 @@ import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import PatternLockInput from "@/components/PatternLockInput";
 import ComboBox from "@/components/ComboBox";
 import TicketChat from "@/components/TicketChat";
@@ -66,6 +67,7 @@ export default function TicketsPage() {
   const activeCount = tickets.filter((t) => t.lane !== "READY").length;
   const readyCount = tickets.filter((t) => t.lane === "READY").length;
   const waitingCount = tickets.filter((t) => t.status === "AWAITING_APPROVAL").length;
+  const displayName = (session?.user as any)?.name?.trim() || "مدیر تعمیرگاه";
 
   async function load() {
     setLoading(true);
@@ -125,26 +127,27 @@ export default function TicketsPage() {
 
   return (
     <div className="dashboard-page p-3 sm:p-5 max-w-[1600px] mx-auto">
-      <div className="dashboard-hero">
+      <div className="dashboard-hero dashboard-command-head">
         <div>
-          <div className="dashboard-kicker"><span /> میز کار امروز</div>
-          <h1>مدیریت تعمیرها</h1>
-          <p>پذیرش، پیگیری و تحویل دستگاه‌ها در یک جریان منظم</p>
+          <div className="dashboard-kicker"><span /> مرکز فرمان تعمیرگاه</div>
+          <h1>خوش آمدید، {displayName} <span aria-hidden="true">👋</span></h1>
+          <p>امروز تعمیرگاه را از یک نمای روشن، سریع و یکپارچه مدیریت کنید.</p>
         </div>
-        <button
-          onClick={() => setShowNew(true)}
-          className="dashboard-primary-action"
-        >
-          <Plus size={18} /> پذیرش دستگاه
-        </button>
+        <div className="dashboard-head-actions">
+          {myRole === "OWNER" && <Link href="/reports" className="dashboard-secondary-action"><BarChart3 size={18} /> گزارش‌ها</Link>}
+          <button onClick={() => setShowNew(true)} className="dashboard-primary-action"><Plus size={19} /> پذیرش دستگاه</button>
+        </div>
       </div>
 
-      <div className="dashboard-stats">
-        <div className="dashboard-stat"><span className="is-blue">{myRole === "OWNER" ? <BarChart3 size={18} /> : <Smartphone size={18} />}</span><div><b>{myRole === "OWNER" ? `${(dashboardMetrics?.todayRevenue ?? 0).toLocaleString("fa-IR")}` : tickets.length.toLocaleString("fa-IR")}</b><small>{myRole === "OWNER" ? "درآمد امروز (تومان)" : "کل دستگاه‌ها"}</small></div></div>
-        <div className="dashboard-stat"><span className="is-violet"><Wrench size={18} /></span><div><b>{activeCount.toLocaleString("fa-IR")}</b><small>در حال انجام</small></div></div>
-        <div className="dashboard-stat"><span className="is-amber"><Clock3 size={18} /></span><div><b>{waitingCount.toLocaleString("fa-IR")}</b><small>منتظر تأیید</small></div></div>
-        <div className="dashboard-stat"><span className="is-green"><BadgeCheck size={18} /></span><div><b>{readyCount.toLocaleString("fa-IR")}</b><small>آماده تحویل</small></div></div>
-      </div>
+      <section className="dashboard-overview-grid">
+        <div className="dashboard-stats">
+          <div className="dashboard-stat"><span className="is-blue">{myRole === "OWNER" ? <BarChart3 size={20} /> : <Smartphone size={20} />}</span><div><small>{myRole === "OWNER" ? "درآمد امروز" : "کل دستگاه‌ها"}</small><b>{myRole === "OWNER" ? `${(dashboardMetrics?.todayRevenue ?? 0).toLocaleString("fa-IR")}` : tickets.length.toLocaleString("fa-IR")}</b><p>{myRole === "OWNER" ? "تومان · بر اساس فاکتورها" : "پرونده ثبت‌شده"}</p></div></div>
+          <div className="dashboard-stat"><span className="is-green"><BadgeCheck size={20} /></span><div><small>آماده تحویل</small><b>{readyCount.toLocaleString("fa-IR")}</b><p>دستگاه تکمیل‌شده</p></div></div>
+          <div className="dashboard-stat"><span className="is-amber"><Clock3 size={20} /></span><div><small>در انتظار تأیید</small><b>{waitingCount.toLocaleString("fa-IR")}</b><p>نیازمند پیگیری</p></div></div>
+          <div className="dashboard-stat"><span className="is-violet"><Wrench size={20} /></span><div><small>تعمیرات فعال</small><b>{activeCount.toLocaleString("fa-IR")}</b><p>در جریان تعمیر</p></div></div>
+        </div>
+        <DashboardAssistant onNew={() => setShowNew(true)} />
+      </section>
 
       {myRole === "OWNER" && <>
         <div className="repair-command-grid">
@@ -259,6 +262,20 @@ export default function TicketsPage() {
       )}
     </div>
   );
+}
+
+function DashboardAssistant({ onNew }: { onNew: () => void }) {
+  return <aside className="dashboard-assistant-card">
+    <div className="dashboard-assistant-visual" aria-hidden="true">
+      <Image src="/images/peyvo-ai-assistant-v2.png" alt="" width={165} height={225} priority />
+    </div>
+    <div className="dashboard-assistant-copy">
+      <span><i /> دستیار هوشمند پیوو</span>
+      <h2>کارهای مهم امروز، جلوی چشم شماست.</h2>
+      <p>پذیرش‌ها، هشدارها و وضعیت تعمیرات را سریع‌تر دنبال کنید.</p>
+      <button onClick={onNew}><Plus size={17} /> پذیرش جدید</button>
+    </div>
+  </aside>;
 }
 
 function RepairAnalytics({ tickets, months }: { tickets: Ticket[]; months: { label: string; total: number }[] }) {
