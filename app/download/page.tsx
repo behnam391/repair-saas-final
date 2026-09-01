@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Logo from "@/components/Logo";
 import { db } from "@/lib/db";
 import { LATEST_ANDROID_RELEASE } from "@/lib/app-release";
+import PwaInstallButton from "@/components/PwaInstallButton";
 
 export const dynamic = "force-dynamic";
 
@@ -24,46 +25,50 @@ export default async function DownloadPage() {
   const apk = s?.androidApkUrl || LATEST_ANDROID_RELEASE.directApkUrl;
   const bazaar = /^https:\/\/(?:www\.)?cafebazaar\.ir\//i.test(s?.bazaarUrl || "") ? s.bazaarUrl : "";
   const myket = /^https:\/\/(?:www\.)?myket\.ir\//i.test(s?.myketUrl || "") ? s.myketUrl : "";
-  const anything = apk || bazaar || myket;
-
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-5 py-12">
-      <div className="w-full max-w-sm text-center">
+    <main className="home-v2 min-h-screen flex flex-col items-center justify-center px-5 py-12">
+      <div className="w-full max-w-2xl text-center">
         <div className="flex justify-center mb-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icons/icon-192.png" alt="Peyvo" width={88} height={88} className="rounded-2xl shadow-lg" />
         </div>
         <h1 className="display-heading text-2xl mb-1">اپلیکیشن پیوو</h1>
-        <p className="text-xs text-muted mb-8">پنل تعمیرگاه و مشتریان، همیشه در جیبت — روی اندروید.</p>
+        <p className="text-xs text-muted mb-8">پیوو را روی موبایل یا دسکتاپ، از مسیر دلخواه خود نصب کنید.</p>
         <div className="mb-4 inline-flex rounded-full border border-teal/30 bg-teal/10 px-3 py-1 text-[10px] font-bold text-teal">نسخه {LATEST_ANDROID_RELEASE.versionName}</div>
 
-        {!anything ? (
-          <div className="bg-surface border border-surface2 rounded-2xl p-6">
-            <div className="text-3xl mb-2">📱</div>
-            <p className="text-sm text-muted">اپلیکیشن اندروید به‌زودی روی کافه‌بازار، مایکت و همین‌جا برای دانلود در دسترس خواهد بود.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
+          <div className="home-install-panel home-download-grid">
+            <PwaInstallButton />
             {apk && (
-              <a href={apk}
-                className="flex items-center justify-center gap-2 bg-copper text-[#0A0F1E] font-extrabold rounded-xl py-3.5 text-sm">
-                ⬇️ دانلود مستقیم (فایل APK)
+              <a href={apk} className="home-store-choice is-direct">
+                <i><img src="/icons/icon-mark.png" alt="" /></i>
+                <span><small>فایل APK نسخه {LATEST_ANDROID_RELEASE.versionName}</small><strong>دانلود مستقیم</strong></span>
               </a>
             )}
             {bazaar && (
-              <a href={bazaar} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-surface2 border border-surface2 rounded-xl py-3 text-sm font-bold hover:border-copper/40 transition">
-                🛍️ دریافت از کافه‌بازار
+              <a href={bazaar} target="_blank" rel="noopener noreferrer" className="home-store-choice">
+                <i><img src="/images/trust/cafebazaar-official.png" alt="" /></i>
+                <span><small>انتشار رسمی</small><strong>دریافت از کافه‌بازار</strong></span>
               </a>
+            )}
+            {!bazaar && (
+              <div className="home-store-choice is-pending">
+                <i><img src="/images/trust/cafebazaar-official.png" alt="" /></i>
+                <span><small>در انتظار ثبت نشانی</small><strong>کافه‌بازار</strong></span>
+              </div>
             )}
             {myket && (
-              <a href={myket} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-surface2 border border-surface2 rounded-xl py-3 text-sm font-bold hover:border-copper/40 transition">
-                🟢 دریافت از مایکت
+              <a href={myket} target="_blank" rel="noopener noreferrer" className="home-store-choice">
+                <i><img src="/images/trust/myket-official.png" alt="" /></i>
+                <span><small>انتشار رسمی</small><strong>دریافت از مایکت</strong></span>
               </a>
             )}
+            {!myket && (
+              <div className="home-store-choice is-pending">
+                <i><img src="/images/trust/myket-official.png" alt="" /></i>
+                <span><small>در حال بررسی و انتشار</small><strong>مایکت</strong></span>
+              </div>
+            )}
           </div>
-        )}
 
         {apk && (
           <div className="bg-surface2/60 border border-surface2 rounded-xl p-3 mt-5 text-right">
@@ -76,6 +81,6 @@ export default async function DownloadPage() {
 
         <Link href="/" className="inline-block text-[11px] text-copper mt-8">← بازگشت به صفحه اصلی</Link>
       </div>
-    </div>
+    </main>
   );
 }

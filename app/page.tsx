@@ -2,10 +2,11 @@ import { getServerSession } from "next-auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
-  ArrowLeft, BarChart3, Check, ChevronLeft, CircleDollarSign, Clock3, Download,
+  ArrowLeft, BarChart3, Check, CircleDollarSign, Clock3, Download,
   Headphones, MessageSquareText, PackageCheck, QrCode, ShieldCheck,
-  ShoppingBag, Smartphone, Sparkles, UsersRound, Wrench,
+  Smartphone, Sparkles, UsersRound, Wrench,
 } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -14,7 +15,8 @@ import Logo from "@/components/Logo";
 import EnamadBadge from "@/components/EnamadBadge";
 import EnamadServerBadge from "@/components/EnamadServerBadge";
 import ZarinpalTrustBadge from "@/components/ZarinpalTrustBadge";
-import LandingShowcase from "@/components/LandingShowcase";
+import ThemeToggle from "@/components/ThemeToggle";
+import PwaInstallButton from "@/components/PwaInstallButton";
 
 export const dynamic = "force-dynamic";
 
@@ -49,8 +51,8 @@ async function getAppLinks(): Promise<AppLinks> {
   }
 }
 
-function StoreChoice({ href, store, label }: { href: string; store: string; label: string }) {
-  const body = <><i><ShoppingBag size={17} /></i><span><small>{href ? label : "در حال بررسی و انتشار"}</small><strong>{store}</strong></span></>;
+function StoreChoice({ href, store, label, logo }: { href: string; store: string; label: string; logo: string }) {
+  const body = <><i><img src={logo} alt="" /></i><span><small>{href ? label : "در حال بررسی و انتشار"}</small><strong>{store}</strong></span></>;
   return href
     ? <a href={href} target="_blank" rel="noopener noreferrer" className="home-store-choice">{body}</a>
     : <div className="home-store-choice is-pending" aria-label={`${store}؛ در حال بررسی`}>{body}</div>;
@@ -108,6 +110,7 @@ export default async function Home() {
             <a href="#trust">اعتماد و مجوزها</a>
           </nav>
           <div className="home-nav-actions">
+            <ThemeToggle className="home-theme-toggle" />
             <Link href="/login" className="home-nav-login">ورود به پنل</Link>
             <Link href="/download" className="home-nav-download"><Download size={15} /> دانلود برنامه</Link>
           </div>
@@ -117,8 +120,8 @@ export default async function Home() {
       <section className="home-hero" id="product">
         <div className="home-hero-copy">
           <div className="home-eyebrow"><span><i /> سامانه فعال و آنلاین</span><b>ساخته‌شده برای تعمیرگاه‌های ایران</b></div>
-          <h1>تعمیرگاه، این‌بار<br /><em>واقعاً هوشمند.</em></h1>
-          <p>پیوو مرکز فرماندهی یکپارچه تعمیرگاه شماست؛ پذیرش، تعمیرات، مشتریان، انبار و امور مالی را دقیق، سریع و حرفه‌ای مدیریت کنید.</p>
+          <h1><em>پیوو؛</em> مدیریت هوشمند تعمیرگاه</h1>
+          <p>از پذیرش دستگاه تا تعمیر، اطلاع‌رسانی، تحویل و تسویه؛ همه‌چیز را ساده، یکپارچه و مطمئن مدیریت کنید.</p>
           <div className="home-hero-actions">
             <Link href="/signup" className="home-primary-action">شروع رایگان <ArrowLeft size={18} /></Link>
             <Link href="/customer/login" className="home-secondary-action"><Smartphone size={17} /> ورود مشتریان</Link>
@@ -130,57 +133,37 @@ export default async function Home() {
           </div>
 
           <div className="home-install-panel" aria-label="روش‌های دریافت اپلیکیشن پیوو">
+            <PwaInstallButton />
             <a href={appLinks.apk || "/download"} className="home-store-choice is-direct">
-              <i><Download size={18} /></i><span><small>نسخه {LATEST_ANDROID_RELEASE.versionName}</small><strong>دانلود مستقیم</strong></span>
+              <i><img src="/icons/icon-mark.png" alt="" /></i><span><small>نسخه {LATEST_ANDROID_RELEASE.versionName}</small><strong>دانلود مستقیم</strong></span>
             </a>
-            <StoreChoice href={appLinks.bazaar} store="کافه‌بازار" label="دریافت از" />
-            <StoreChoice href={appLinks.myket} store="مایکت" label="دریافت از" />
+            <StoreChoice href={appLinks.bazaar} store="کافه‌بازار" label="دریافت از" logo="/images/trust/cafebazaar-official.png" />
+            <StoreChoice href={appLinks.myket} store="مایکت" label="دریافت از" logo="/images/trust/myket-official.png" />
           </div>
         </div>
 
-        <div className="home-product-stage" aria-label="نمایی از مرکز عملیات پیوو">
-          <div className="home-stage-orbit" aria-hidden><i /><i /></div>
-          <div className="home-live-chip"><i /> همگام‌سازی زنده</div>
-          <div className="home-score-chip"><span>وضعیت سامانه</span><strong>پایدار</strong><b><ShieldCheck size={18} /></b></div>
-
-          <div className="home-product-window">
-            <div className="home-window-top">
-              <div><i /><i /><i /></div>
-              <span><ShieldCheck size={12} /> app.peyvo.ir</span>
-              <b>مرکز عملیات</b>
+        <div className="home-ai-visual" aria-label="دستیار هوشمند پیوو و نمای گردش کار تعمیرگاه">
+          <div className="home-ai-board" aria-hidden="true">
+            <div className="home-ai-board-head"><span><i /> وضعیت زنده تعمیرگاه</span><b>امروز</b></div>
+            <div className="home-ai-board-flow">
+              <span><i /> پذیرش</span><span><i /> در حال تعمیر</span><span><i /> آماده تحویل</span>
             </div>
-            <div className="home-window-body">
-              <aside className="home-window-side">
-                <Logo size={21} />
-                {["نمای کلی", "تعمیرات", "مشتریان", "انبار", "گزارش‌ها"].map((item, index) => <div key={item} className={index === 1 ? "active" : ""}><i /> <span>{item}</span></div>)}
-                <small><i /> سیستم آنلاین</small>
-              </aside>
-              <div className="home-window-main">
-                <header><div><small>امروز در تعمیرگاه</small><strong>مرکز عملیات تعمیرگاه</strong></div><span><i /> زنده</span></header>
-                <div className="home-kpis">
-                  <article><span><Wrench size={14} /> در حال تعمیر</span><strong>۱۲</strong><small>۳ مورد جدید</small></article>
-                  <article><span><PackageCheck size={14} /> آماده تحویل</span><strong>۸</strong><small>۲ مورد امروز</small></article>
-                  <article><span><CircleDollarSign size={14} /> فروش امروز</span><strong>۶.۴م</strong><small>۱۸٪ رشد</small></article>
-                </div>
-                <div className="home-flow-title"><strong>جریان تعمیرات</strong><span>مشاهده همه <ChevronLeft size={11} /></span></div>
-                <div className="home-flow-board">
-                  <div><header><span><i className="blue" /> پذیرش شده</span><b>۳</b></header><article><strong>iPhone 13</strong><small>تعویض ال‌سی‌دی</small><em>امیر رضایی</em></article><article><strong>Galaxy A54</strong><small>مشکل شارژ</small><em>سارا احمدی</em></article></div>
-                  <div><header><span><i className="violet" /> در حال تعمیر</span><b>۲</b></header><article><strong>iPhone 14 Pro</strong><small>تعمیر برد</small><em>محمد کریمی</em></article></div>
-                  <div><header><span><i className="green" /> آماده تحویل</span><b>۴</b></header><article><strong>Redmi Note 12</strong><small>تعویض باتری</small><em>علی مرادی</em></article></div>
-                </div>
-                <div className="home-window-insight"><Sparkles size={13} /><span><small>پیشنهاد هوشمند</small><strong>سه دستگاه نیازمند پیگیری امروز هستند.</strong></span><ChevronLeft size={14} /></div>
-              </div>
-            </div>
+            <div className="home-ai-board-line"><i /><i /><i /><i /><i /></div>
+            <div className="home-ai-board-note"><Sparkles size={15} /><span><b>دستیار هوشمند پیوو</b><small>کارهای مهم امروز را یک‌جا ببینید</small></span></div>
           </div>
+          <div className="home-mascot-halo" aria-hidden="true" />
+          <Image className="home-ai-mascot" src="/images/peyvo-ai-assistant-v2.png" alt="کاراکتر دستیار هوشمند پیوو" width={520} height={740} priority sizes="(max-width: 760px) 250px, 410px" />
+          <span className="home-ai-caption"><Sparkles size={14} /> دستیار هوشمند، همراه کارهای روزانه</span>
         </div>
+
       </section>
 
       <section className="home-proof" aria-label="مزیت‌های پیوو">
-        <div><strong>یک پنل؛ تمام تعمیرگاه</strong><small>از پذیرش تا تسویه و تحویل</small></div>
-        <span><Clock3 /> پیگیری لحظه‌ای</span>
-        <span><ShieldCheck /> زیرساخت امن</span>
-        <span><Headphones /> پشتیبانی واقعی</span>
-        <span><CircleDollarSign /> گزارش مالی دقیق</span>
+        <div><strong>نسخه عملیاتی {LATEST_ANDROID_RELEASE.versionName}</strong><small>سامانه آماده استفاده و در حال توسعه مستمر</small></div>
+        <span><ShieldCheck /> هویت و پرداخت قابل استعلام</span>
+        <span><Smartphone /> دسترسی وب و اندروید</span>
+        <span><Clock3 /> چرخه کامل پذیرش تا تحویل</span>
+        <span><Headphones /> پشتیبانی فارسی</span>
       </section>
 
       <section id="features" className="home-section home-capabilities">
@@ -200,23 +183,12 @@ export default async function Home() {
         </div>
       </section>
 
-      <div className="home-showcase-shell"><LandingShowcase /></div>
-
       <section className="home-section home-intelligence">
         <div className="home-intelligence-copy">
           <span><Sparkles size={14} /> هوشمندی کاربردی، نه نمایشی</span>
           <h2>اطلاعات را ثبت نکنید؛<br /><em>از آن تصمیم بسازید.</em></h2>
           <p>پیوو جریان روزانه تعمیرگاه را به نشانه‌های ساده و قابل اقدام تبدیل می‌کند؛ بدانید چه چیزی عقب افتاده، کدام قطعه رو به اتمام است و امروز کجا باید تمرکز کنید.</p>
           <div><span><Check size={13} /> تشخیص گلوگاه</span><span><Check size={13} /> هشدار موجودی</span><span><Check size={13} /> دید مالی</span></div>
-        </div>
-        <div className="home-command-card">
-          <header><span><i /> تحلیل امروز</span><b>LIVE</b></header>
-          <div className="home-command-message"><Sparkles size={18} /><span><small>اولویت پیشنهادی</small><strong>تعمیرات بخش برد بیشتر از میانگین زمان منتظر مانده‌اند.</strong></span></div>
-          <div className="home-command-metrics">
-            <article><span><small>سلامت جریان</small><strong>عالی</strong></span><i><b style={{ width: "91%" }} /></i></article>
-            <article><span><small>ظرفیت امروز</small><strong>۷۲٪</strong></span><i><b style={{ width: "72%" }} /></i></article>
-          </div>
-          <div className="home-command-footer"><span>آخرین تحلیل: همین حالا</span><strong>پیشنهاد خودکار پیوو</strong></div>
         </div>
       </section>
 
@@ -245,7 +217,7 @@ export default async function Home() {
       <section className="home-final">
         <div className="home-final-glow" aria-hidden />
         <span>آماده یک شروع حرفه‌ای هستید؟</span>
-        <h2>مرکز فرماندهی تعمیرگاه شما،<br />همین حالا آماده است.</h2>
+        <h2>سامانه مدیریت تعمیرگاه شما،<br />همین حالا آماده است.</h2>
         <p>رایگان شروع کنید و پیوو را با جریان واقعی تعمیرگاه خودتان بسنجید.</p>
         <div><Link href="/signup" className="home-primary-action">ساخت حساب رایگان <ArrowLeft size={18} /></Link><Link href="/download" className="home-final-download"><Download size={16} /> دانلود برنامه</Link></div>
       </section>
