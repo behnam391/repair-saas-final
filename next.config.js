@@ -1,11 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    // Don't bundle @vercel/blob into the server build — it's loaded lazily
-    // inside /api/upload only when BLOB_READ_WRITE_TOKEN is set. Keeping it
-    // external means the app still compiles and runs even before
-    // `npm install` has pulled the package (a clear runtime message is
-    // shown instead of a cryptic "Module not found" build error).
+    // Keep the Blob SDK server-only. /api/upload loads it only when a store
+    // is connected through either the current Vercel OIDC credentials or a
+    // legacy BLOB_READ_WRITE_TOKEN.
     serverComponentsExternalPackages: ["@vercel/blob"],
   },
   async headers() {

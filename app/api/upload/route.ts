@@ -30,9 +30,9 @@ function hasValidImageSignature(type: string, bytes: Uint8Array): boolean {
 // role-guarded endpoints, so no privilege is gained here beyond hosting.
 //
 // Storage backend:
-//  • If BLOB_READ_WRITE_TOKEN is set (Vercel → Storage → Blob), files go to
-//    Vercel Blob and get a permanent public CDN URL. This is what you want
-//    in production — serverless filesystems are wiped on every deploy.
+//  • Vercel Blob supports either the legacy BLOB_READ_WRITE_TOKEN or the
+//    current OIDC pair (VERCEL_OIDC_TOKEN + BLOB_STORE_ID). Files receive a
+//    permanent public CDN URL. Serverless filesystems are wiped on deploy.
 //  • Otherwise (local dev) files land in ./public/uploads and are served
 //    from /uploads/... by Next itself.
 export async function POST(req: NextRequest) {
@@ -68,10 +68,14 @@ export async function POST(req: NextRequest) {
   const filename = `${Date.now()}-${randomBytes(6).toString("hex")}.${ext}`;
 
   // ── Backend 1: Vercel Blob (production) ────────────────────────────
-  if (process.env.BLOB_READ_WRITE_TOKEN) {
+  // New stores connected in Vercel use short-lived OIDC credentials by
+  // default. Older stores still expose BLOB_READ_WRITE_TOKEN. The SDK picks
+  // the right credential automatically; this guard only verifies that a
+  // store is actually connected to the deployment.
+  const hasLegacyBlobToken = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+  const hasBlobOidc = Boolean(process.env.VERCEL_OIDC_TOKEN && process.env.BLOB_STORE_ID);
+  if (hasLegacyBlobToken || hasBlobOidc) {
     try {
-      // Lazy import (and marked external in next.config.js) so the app
-      // still builds/runs before `npm install` has pulled the package.
       const { put } = await import("@vercel/blob");
       const blob = await put(`uploads/${filename}`, file, {
         access: "public",
@@ -80,28 +84,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url: blob.url });
     } catch (e: any) {
       console.error("[upload] Vercel Blob failed", e);
-      const missingPkg = e?.code === "MODULE_NOT_FOUND" || /Cannot find module/i.test(String(e?.message));
       return NextResponse.json(
         {
           error: "blob_failed",
-          message: missingPkg
-            ? "پکیج @vercel/blob نصب نیست — یک‌بار «npm install» را در پوشه پروژه اجرا کنید."
-            : `آپلود به Vercel Blob ناموفق بود: ${e?.message ?? "خطای ناشناخته"} — توکن BLOB_READ_WRITE_TOKEN را بررسی کنید.`,
+          message: "ذخیره تصویر موقتاً انجام نشد. اتصال Blob پروژه را در پنل Vercel بررسی کرده و دوباره تلاش کنید.",
         },
-        { status: 500 }
+        { status: 502 }
       );
     }
   }
 
-  // ── No token + running on Vercel: filesystem is read-only, so writing
-  // to public/uploads is impossible. Tell the user exactly what to do
-  // instead of a generic failure.
+  // ── No connected store + Vercel: filesystem is ephemeral, so writing to
+  // public/uploads would appear to work and then vanish on the next deploy.
   if (process.env.VERCEL) {
     return NextResponse.json(
       {
-        error: "blob_token_missing",
+        error: "blob_store_not_connected",
         message:
-          "روی Vercel بدون Blob Storage نمی‌توان فایل ذخیره کرد. در پنل Vercel → Storage → Blob یک استور بسازید (متغیر BLOB_READ_WRITE_TOKEN خودکار اضافه می‌شود) و دوباره دیپلوی کنید. فعلاً می‌توانید لینک مستقیم تصویر را بچسبانید.",
+          "فضای ذخیره‌سازی تصاویر هنوز به پروژه متصل نیست. مدیر سامانه باید در Vercel → Storage یک Blob عمومی بسازد، آن را به محیط Production متصل کند و دوباره Deploy بگیرد.",
       },
       { status: 503 }
     );
