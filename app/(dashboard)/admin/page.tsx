@@ -8,7 +8,7 @@ import JalaliDatePicker from "@/components/JalaliDatePicker";
 import { AnimatedNumber, Reveal } from "@/components/Motion";
 import { motion } from "framer-motion";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
-import { BarChart3, ChevronDown, CircleDollarSign, LayoutDashboard, Settings2, Store, UsersRound, Wrench } from "lucide-react";
+import { BarChart3, ChevronDown, CircleDollarSign, LayoutDashboard, Printer, Settings2, Store, UsersRound, Wrench } from "lucide-react";
 
 const PUBLIC_APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL || "https://peyvo.ir").replace(/\/+$/, "");
 
@@ -382,6 +382,9 @@ export default function AdminPage() {
             className="mx-auto rounded-lg bg-white p-2"
           />
           <p className="text-[10px] text-muted mt-2 mono break-all">{PUBLIC_APP_ORIGIN}/kiosk/{shopInfo.id}</p>
+          <a href="/admin/qr-poster" target="_blank" className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-copper px-4 text-xs font-extrabold text-white shadow-lg shadow-copper/15">
+            <Printer size={16} /> پوستر چاپی و خروجی PDF
+          </a>
           </div>
         </Section>
       )}

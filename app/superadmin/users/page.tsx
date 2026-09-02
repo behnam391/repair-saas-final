@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
-import { ChevronLeft, ChevronRight, Search, UsersRound } from "lucide-react";
+import { ChevronLeft, ChevronRight, Search, Trash2, UsersRound } from "lucide-react";
 
 type U = { id: string; name: string; phone: string; email: string | null; role: string; active: boolean; shop: { id: string; name: string; supportAccessEnabled: boolean } };
 const ROLE_LABEL: Record<string,string> = { OWNER:"مالک", FRONTDESK:"پذیرش", HARDWARE:"سخت‌افزار", SOFTWARE:"نرم‌افزار", BOARD:"تعمیر برد" };
@@ -15,7 +15,7 @@ export default function SuperAdminUsersPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [shopFilter, setShopFilter] = useState("");
-  const [activeFilter, setActiveFilter] = useState("");
+  const [activeFilter, setActiveFilter] = useState("true");
   const [shops, setShops] = useState<{id:string;name:string}[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -28,6 +28,9 @@ export default function SuperAdminUsersPage() {
   const [editTarget, setEditTarget] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ name: "", phone: "" });
   const [editErr, setEditErr] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteErr, setDeleteErr] = useState("");
 
   function startEdit(u: U) {
     setEditTarget(editTarget === u.id ? null : u.id);
@@ -87,6 +90,18 @@ export default function SuperAdminUsersPage() {
     window.open(data.url, "_blank");
   }
 
+  async function removeUser(id: string) {
+    setDeleteBusy(true);
+    setDeleteErr("");
+    const res = await fetch(`/api/superadmin/users/${id}`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    setDeleteBusy(false);
+    if (!res.ok) { setDeleteErr(data.message || "حذف کاربر انجام نشد"); return; }
+    setDeleteTarget(null);
+    setMsg(data.deactivated ? "دسترسی همکار قطع شد و سوابق کاری او محفوظ ماند." : "همکار با موفقیت حذف شد.");
+    load(page);
+  }
+
   return (
     <div className="min-h-screen p-4 max-w-4xl mx-auto">
       <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
@@ -120,6 +135,9 @@ export default function SuperAdminUsersPage() {
                 >
                   ورود به‌جای کاربر
                 </button>
+                {u.role !== "OWNER" && <button onClick={() => { setDeleteTarget(u.id); setDeleteErr(""); }} className="flex items-center justify-center gap-1 text-[10px] bg-danger/15 text-danger rounded-lg px-2 py-1">
+                  <Trash2 size={12} /> حذف همکار
+                </button>}
               </div>
             </div>
             {editTarget === u.id && (
@@ -140,6 +158,17 @@ export default function SuperAdminUsersPage() {
                 <input type="password" className="flex-1 bg-surface rounded-lg px-2 py-1.5 text-xs" placeholder="رمز جدید"
                   value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
                 <button onClick={() => doReset(u.id)} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3">ثبت</button>
+              </div>
+            )}
+            {deleteTarget === u.id && (
+              <div className="mt-2 rounded-xl border border-danger/25 bg-danger/10 p-3">
+                <b className="text-danger">حذف «{u.name}» از تیم {u.shop.name}؟</b>
+                <p className="mt-1 text-[10px] leading-5 text-muted">اگر سابقه کاری داشته باشد، حساب غیرفعال و ورودهایش قطع می‌شود تا سوابق تعمیرات محفوظ بماند.</p>
+                {deleteErr && <p className="mt-1 text-[10px] text-danger">{deleteErr}</p>}
+                <div className="mt-2 flex gap-2">
+                  <button disabled={deleteBusy} onClick={() => removeUser(u.id)} className="flex-1 rounded-lg bg-danger px-3 py-2 text-[11px] font-bold text-white disabled:opacity-50">{deleteBusy ? "در حال حذف..." : "تأیید حذف"}</button>
+                  <button disabled={deleteBusy} onClick={() => setDeleteTarget(null)} className="flex-1 rounded-lg bg-surface px-3 py-2 text-[11px]">انصراف</button>
+                </div>
               </div>
             )}
           </div>

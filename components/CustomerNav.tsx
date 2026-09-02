@@ -5,13 +5,14 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import ThemeToggle from "./ThemeToggle";
 import { LogoMark } from "./Logo";
+import { LogOut, Menu, Star, Store, UserRound, Wrench, type LucideIcon } from "lucide-react";
 
 const LINKS = [
-  { href: "/customer", label: "مغازه‌ها", icon: "🔍" },
-  { href: "/customer/repairs", label: "تعمیرهای من", icon: "🔧" },
-  { href: "/customer/ratings", label: "امتیازهای من", icon: "⭐" },
-  { href: "/customer/profile", label: "پروفایل", icon: "👤" },
-];
+  { href: "/customer", label: "مغازه‌ها", Icon: Store },
+  { href: "/customer/repairs", label: "تعمیرهای من", Icon: Wrench },
+  { href: "/customer/ratings", label: "امتیازهای من", Icon: Star },
+  { href: "/customer/profile", label: "پروفایل", Icon: UserRound },
+] satisfies { href: string; label: string; Icon: LucideIcon }[];
 
 export default function CustomerNav({ userName }: { userName?: string }) {
   const pathname = usePathname();
@@ -31,9 +32,9 @@ export default function CustomerNav({ userName }: { userName?: string }) {
       <div className="flex md:hidden items-center gap-2 order-last w-full pt-1">
         <button
           onClick={() => setOpen(true)}
-          className="bg-surface2 border border-border text-ink font-bold rounded-full px-3.5 py-1.5 text-xs"
+          className="flex items-center gap-1.5 bg-surface2 border border-border text-ink font-bold rounded-full px-3.5 py-1.5 text-xs"
         >
-          ☰ منو
+          <Menu size={16} /> منو
         </button>
         <div className="ms-auto"><ThemeToggle /></div>
       </div>
@@ -61,7 +62,7 @@ export default function CustomerNav({ userName }: { userName?: string }) {
                   onClick={() => setOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 text-[13px] active:bg-surface2 ${isActive(l.href) ? "font-bold text-copper" : ""}`}
                 >
-                  <span className="w-8 h-8 rounded-xl bg-surface2 flex items-center justify-center text-[15px] shrink-0">{l.icon}</span>
+                  <span className="w-8 h-8 rounded-xl bg-surface2 flex items-center justify-center text-[15px] shrink-0"><l.Icon size={17} /></span>
                   <span className="flex-1">{l.label}</span>
                 </a>
               ))}
@@ -70,7 +71,7 @@ export default function CustomerNav({ userName }: { userName?: string }) {
                 onClick={() => signOut({ callbackUrl: "/customer/login" })}
                 className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-danger"
               >
-                <span className="w-8 h-8 rounded-xl bg-danger/15 flex items-center justify-center text-[15px] shrink-0">↩</span>
+                <span className="w-8 h-8 rounded-xl bg-danger/15 flex items-center justify-center text-[15px] shrink-0"><LogOut size={17} /></span>
                 <span className="flex-1 text-right">خروج از حساب</span>
               </button>
             </nav>
@@ -85,20 +86,20 @@ export default function CustomerNav({ userName }: { userName?: string }) {
           <a
             key={l.href}
             href={l.href}
-            className={`whitespace-nowrap text-xs rounded-lg px-3 py-1.5 transition-colors ${
+            className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs rounded-lg px-3 py-1.5 transition-colors ${
               isActive(l.href) ? "bg-copper text-white font-bold" : "text-muted hover:text-ink"
             }`}
           >
-            {l.icon} {l.label}
+            <l.Icon size={15} /> {l.label}
           </a>
         ))}
         <ThemeToggle />
         <button
           onClick={() => signOut({ callbackUrl: "/customer/login" })}
-          className="whitespace-nowrap text-xs text-danger rounded-lg px-2 py-1.5"
+          className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-danger rounded-lg px-2 py-1.5"
           title="خروج"
         >
-          خروج ↩
+          <LogOut size={15} /> خروج
         </button>
       </div>
     </>

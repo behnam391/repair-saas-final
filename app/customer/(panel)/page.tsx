@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IRAN_PROVINCES, PROVINCE_NAMES } from "@/lib/iran-locations";
 import ShopsMap from "@/components/ShopsMap";
+import { BadgeCheck, Building2, List, LocateFixed, Map, MapPin, Navigation, Phone, Search, ShieldCheck, Star } from "lucide-react";
 
 type ShopItem = {
   id: string; name: string; address: string | null; phone: string | null;
@@ -51,20 +52,6 @@ export default function CustomerShopsPage() {
     fetch("/api/platform-info").then(async (r) => {
       if (r.ok) setNeshanKey((await r.json()).neshanApiKey ?? null);
     });
-  }, []);
-
-  // default the filter to the customer's own province once, on first load
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/customer/profile");
-        if (res.ok) {
-          const { customer } = await res.json();
-          if (customer?.province) setProvince(customer.province);
-          else setProvince("");
-        }
-      } catch { /* The unfiltered effect below still loads the list. */ }
-    })();
   }, []);
 
   const load = useCallback(async (p: string, c: string, query: string) => {
@@ -129,14 +116,15 @@ export default function CustomerShopsPage() {
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="display-heading text-lg mb-1">تعمیرگاه‌های اطراف شما</h1>
-      <p className="text-xs text-muted mb-4">مغازه‌ها را بر اساس شهر، امتیاز مشتریان یا فاصله مقایسه کنید و مطمئن انتخاب کنید.</p>
-      <div className="mb-4 rounded-xl border border-teal/30 bg-teal/10 px-3 py-2.5 text-[11px] leading-5 text-teal">
-        پوشش اولیه پیوو فعلاً در شهر اردبیل فعال است؛ شهرهای دیگر هم‌زمان با پیوستن تعمیرگاه‌های همان منطقه اضافه می‌شوند.
-      </div>
+    <div className="customer-directory-page">
+      <section className="customer-directory-hero">
+        <div><span className="customer-directory-eyebrow"><ShieldCheck size={16} /> شبکه تعمیرگاه‌های پیوو</span><h1>تعمیرگاه مناسب را با اطمینان پیدا کنید</h1><p>همه تعمیرگاه‌های فعال را ببینید، بر اساس شهر یا فاصله جستجو کنید و تجربه مشتریان را مقایسه کنید.</p></div>
+        <div className="customer-directory-summary"><span><Building2 size={19} /><b>{loading ? "…" : shops.length.toLocaleString("fa-IR")}</b><small>مرکز قابل مشاهده</small></span><span><MapPin size={19} /><b>اردبیل</b><small>پوشش اولیه</small></span></div>
+      </section>
 
-      <div className="grid grid-cols-2 gap-2 mb-2">
+      <section className="customer-directory-filters">
+      <div className="customer-filter-title"><div><Search size={19} /><span><b>جستجوی تعمیرگاه</b><small>بدون انتخاب فیلتر، همه مراکز فعال نمایش داده می‌شوند</small></span></div>{province || city || appliedQuery ? <button onClick={() => { setProvince(""); setCity(""); setQ(""); setAppliedQuery(""); }}>پاک کردن فیلترها</button> : null}</div>
+      <div className="customer-location-fields">
         <select className="bg-surface2 border border-surface2 rounded-lg px-2 py-2 text-sm"
           value={province} onChange={(e) => { setProvince(e.target.value); setCity(""); }}>
           <option value="">🇮🇷 همه استان‌ها</option>
@@ -149,25 +137,26 @@ export default function CustomerShopsPage() {
         </select>
       </div>
 
-      <div className="flex gap-2 mb-2">
+      <div className="customer-search-row">
         <input className="flex-1 min-w-0 bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
           placeholder="جستجوی نام مغازه..." value={q} onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && applySearch()} />
-        <button onClick={applySearch} className="bg-surface2 border border-border rounded-lg px-4 py-2 text-sm shrink-0">جستجو</button>
+        <button onClick={applySearch}><Search size={17} /> جستجو</button>
       </div>
       <button onClick={locateMe}
-        className={`w-full rounded-lg px-3 py-2.5 text-sm font-bold mb-3 border transition ${sortByDistance ? "bg-teal text-white border-teal" : "bg-surface2 border-border"}`}>
-        📍 نزدیک‌ترین تعمیرگاه‌ها به من
+        className={`customer-nearby-button ${sortByDistance ? "is-active" : ""}`}>
+        <LocateFixed size={18} /> نزدیک‌ترین تعمیرگاه‌ها به من
       </button>
+      </section>
 
-      <div className="flex bg-surface2 rounded-lg p-1 mb-3">
+      <div className="customer-view-tabs">
         <button onClick={() => setView("list")}
-          className={`flex-1 text-xs font-bold rounded-md py-1.5 transition ${view === "list" ? "bg-teal text-[#0B1512]" : "text-muted"}`}>
-          📋 فهرست
+          className={view === "list" ? "is-active" : ""}>
+          <List size={17} /> فهرست
         </button>
         <button onClick={() => setView("map")}
-          className={`flex-1 text-xs font-bold rounded-md py-1.5 transition ${view === "map" ? "bg-teal text-[#0B1512]" : "text-muted"}`}>
-          🗺 نقشه
+          className={view === "map" ? "is-active" : ""}>
+          <Map size={17} /> نقشه
         </button>
       </div>
 
@@ -213,17 +202,17 @@ export default function CustomerShopsPage() {
           </div>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="customer-shop-grid">
           {display.map((s) => (
-            <div key={s.id} className="bg-surface border border-surface2 rounded-xl p-3 text-xs card-hover">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <div className="font-bold text-sm flex items-center gap-1.5 flex-wrap">
+            <article key={s.id} className="customer-shop-card">
+              <div className="customer-shop-card-head">
+                <div className="customer-shop-identity"><i><Building2 size={21} /></i><div>
+                  <div className="customer-shop-name">
                     {s.name}
-                    {s.verificationLevel >= 3 && <span className="text-[10px] bg-teal/15 text-teal rounded px-1.5 py-0.5">✔ تأییدشده</span>}
+                    {s.verificationLevel >= 3 && <span><BadgeCheck size={13} /> تأییدشده</span>}
                     {s.verificationLevel === 2 && <span className="text-[10px] bg-amber/15 text-amber rounded px-1.5 py-0.5">پروفایل کامل</span>}
                   </div>
-                  <div className="text-muted mt-1">
+                  <div className="customer-shop-location"><MapPin size={13} />
                     {s.province}{s.address ? ` · ${s.address}` : ""}
                     {s.distanceKm != null && <span className="text-teal font-bold"> · {s.distanceKm} کیلومتر</span>}
                   </div>
@@ -235,12 +224,11 @@ export default function CustomerShopsPage() {
                         </span>
                       ))}
                     </div>
-                  )}
-                </div>
-                <div className="text-left shrink-0">
+                  )}</div></div>
+                <div className="customer-shop-rating">
                   {s.ratingCount > 0 ? (
                     <>
-                      <div className="text-amber font-bold text-sm">★ {s.avgRating.toFixed(1)}</div>
+                      <div><Star size={15} fill="currentColor" /> {s.avgRating.toFixed(1)}</div>
                       <div className="text-muted text-[10px]">{s.ratingCount} نظر</div>
                     </>
                   ) : (
@@ -249,19 +237,19 @@ export default function CustomerShopsPage() {
                 </div>
               </div>
 
-              <div className="flex gap-2 mt-2 pt-2 border-t border-surface2">
-                <a href={`/shop/${s.id}`} className="text-teal">صفحه مغازه ↗</a>
-                {s.phone && <a href={`tel:${s.phone}`} className="text-copper">📞 تماس</a>}
+              <div className="customer-shop-actions">
+                <a href={`/shop/${s.id}`}><Building2 size={15} /> صفحه مغازه</a>
+                {s.phone && <a href={`tel:${s.phone}`}><Phone size={15} /> تماس</a>}
                 {s.latitude && s.longitude && (
-                  <a target="_blank" rel="noreferrer" className="text-muted"
-                    href={`https://www.google.com/maps?q=${s.latitude},${s.longitude}`}>🗺 مسیریابی</a>
+                  <a target="_blank" rel="noreferrer"
+                    href={`https://www.google.com/maps?q=${s.latitude},${s.longitude}`}><Navigation size={15} /> مسیریابی</a>
                 )}
                 <button onClick={() => { setRatingShop(s); setStars(s.myRating ?? 5); }}
-                  className="mr-auto text-amber">
-                  {s.myRating ? `★ امتیاز شما: ${s.myRating} (ویرایش)` : "⭐ ثبت امتیاز"}
+                  className="customer-rating-action"><Star size={15} />
+                  {s.myRating ? `امتیاز شما: ${s.myRating}` : "ثبت امتیاز"}
                 </button>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       ))}

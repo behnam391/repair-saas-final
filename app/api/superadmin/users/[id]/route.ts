@@ -56,3 +56,44 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
 }
+
+// DELETE /api/superadmin/users/:id — remove a team member platform-wide.
+// Accounts with historical relations are deactivated instead of breaking
+// repair, invoice or audit history. Shop owners must be managed through the
+// shop lifecycle, so an accidental click can never orphan a business.
+export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const { adminId } = await requireSuperAdmin("shops");
+    const target = await db.user.findUnique({
+      where: { id: params.id },
+      select: { id: true, role: true, active: true },
+    });
+    if (!target) return NextResponse.json({ error: "not_found", message: "کاربر پیدا نشد" }, { status: 404 });
+    if (target.role === "OWNER") {
+      return NextResponse.json({ message: "حذف مالک از این بخش مجاز نیست؛ ابتدا وضعیت خودِ فروشگاه را بررسی کنید" }, { status: 400 });
+    }
+
+    let deactivated = false;
+    try {
+      await db.user.delete({ where: { id: target.id } });
+    } catch (deleteError) {
+      try {
+        await db.user.update({ where: { id: target.id }, data: { active: false } });
+        deactivated = true;
+      } catch (deactivateError) {
+        console.error("[superadmin user delete] both operations failed", deleteError, deactivateError);
+        return NextResponse.json({ message: "حذف کاربر انجام نشد؛ دوباره تلاش کنید" }, { status: 500 });
+      }
+    }
+
+    await revokeSessionsForSubject(LoginSubjectKind.SHOP_USER, target.id, {
+      adminId,
+      reason: deactivated ? "STAFF_DEACTIVATED" : "STAFF_DELETED",
+    });
+    return NextResponse.json({ ok: true, deactivated });
+  } catch (e) {
+    if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    console.error(e);
+    return NextResponse.json({ error: "internal_error" }, { status: 500 });
+  }
+}
