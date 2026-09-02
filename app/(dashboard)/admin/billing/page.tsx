@@ -309,7 +309,7 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="workspace-page p-4 max-w-4xl mx-auto">
       <h1 className="display-heading text-lg mb-1">اشتراک و پرداخت</h1>
       <p className="text-xs text-muted mb-5">پلن و مدت مناسب کسب‌وکار خود را انتخاب کنید</p>
 

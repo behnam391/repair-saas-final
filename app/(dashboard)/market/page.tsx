@@ -76,7 +76,7 @@ export default function MarketPage() {
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="workspace-page p-4 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-1">
         <h1 className="display-heading text-lg">بازار سراسری تعمیرکاران</h1>
         <button onClick={() => setShowNew(true)} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3 py-2">

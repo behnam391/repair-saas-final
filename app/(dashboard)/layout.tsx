@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
 import ThemeToggle from "@/components/ThemeToggle";
 import NotificationBell from "@/components/NotificationBell";
-import AdBanner from "@/components/AdBanner";
 import DashboardNav from "@/components/DashboardNav";
 import { ShopBottomNav } from "@/components/BottomNav";
 import Logo from "@/components/Logo";
@@ -75,7 +74,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
           ⚠️ این نشست توسط پشتیبانی پلتفرم باز شده است — همه اقدامات ثبت می‌شود.
         </div>
       )}
-      <div className="no-print"><AdBanner /></div>
       {onboardingItems.length > 0 && <OnboardingChecklist items={onboardingItems} />}
       {/* Bottom padding on mobile only — that's where the floating nav sits. */}
       <main className="page-enter pb-[96px] md:pb-0">{children}</main>

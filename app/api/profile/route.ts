@@ -7,6 +7,7 @@ import { z } from "zod";
 export const dynamic = "force-dynamic";
 
 const Schema = z.object({
+  name: z.string().trim().min(2).max(80).optional(),
   avatarUrl: z.string().optional(),
   phone: z.preprocess(preprocessPhone, z.string().min(5).optional()),
   email: z.string().optional(),
@@ -32,6 +33,7 @@ export async function GET() {
     return NextResponse.json({ user });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    console.error("[profile/GET]", e);
     return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
 }
@@ -48,13 +50,14 @@ export async function PATCH(req: NextRequest) {
 
     const user = await db.user.update({
       where: { id: userId },
-      data: { ...rest, ...(phone ? { phone } : {}), ...(birthDate ? { birthDate: new Date(birthDate) } : {}) } as any,
+      data: { ...rest, ...(phone ? { phone } : {}), ...(birthDate !== undefined ? { birthDate: birthDate ? new Date(birthDate) : null } : {}) } as any,
       select: { id: true, name: true },
     });
     return NextResponse.json({ user });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input" }, { status: 400 });
+    if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input", message: "اطلاعات واردشده معتبر نیست" }, { status: 400 });
+    console.error("[profile/PATCH]", e);
     return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
 }

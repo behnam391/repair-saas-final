@@ -78,7 +78,7 @@ export default function DealerPage() {
 
   if (notDealer) {
     return (
-      <div className="p-4 max-w-xl mx-auto text-center py-16">
+      <div className="workspace-page p-4 max-w-4xl mx-auto text-center py-16">
         <p className="text-sm text-muted mb-3">این بخش فقط برای مغازه‌های با نوع «فروشنده» یا «هردو» فعال است.</p>
         <a href="/admin" className="text-copper text-xs font-semibold">رفتن به تنظیمات مغازه ←</a>
       </div>
@@ -91,7 +91,7 @@ export default function DealerPage() {
     .reduce((sum, i) => sum + ((i.soldPrice ?? 0) - i.purchasePrice), 0);
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="workspace-page p-4 max-w-5xl mx-auto">
       <h1 className="display-heading text-lg mb-1">داشبورد فروشنده</h1>
       <p className="text-[11px] text-muted mb-4">مدیریت خرید و فروش گوشی، جدا از تیکت‌های تعمیر</p>
 

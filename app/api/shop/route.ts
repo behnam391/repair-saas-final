@@ -52,8 +52,8 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ shop });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input" }, { status: 400 });
-    console.error(e);
+    if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input", message: "یکی از اطلاعات فروشگاه معتبر نیست" }, { status: 400 });
+    console.error("[shop/PATCH]", e);
     return NextResponse.json({ error: "internal_error" }, { status: 500 });
   }
 }

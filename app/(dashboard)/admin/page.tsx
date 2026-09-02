@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { PROVINCE_NAMES } from "@/lib/iran-locations";
 import LocationPicker from "@/components/LocationPicker";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
@@ -31,6 +32,7 @@ const BUSINESS_SIZE_OPTIONS = [
 type Template = { id: string; lane: string; label: string };
 
 export default function AdminPage() {
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [report, setReport] = useState<ReportRow[]>([]);
@@ -43,6 +45,7 @@ export default function AdminPage() {
   const [shopInfo, setShopInfo] = useState<ShopInfo>({ name: "", address: "", phone: "", plan: "free", bankCardNumber: "", bankAccountNumber: "" });
   const [shopSaved, setShopSaved] = useState(false);
   const [shopSaveError, setShopSaveError] = useState("");
+  const [shopSaving, setShopSaving] = useState(false);
   const [verificationLevel, setVerificationLevel] = useState(1);
   const [verificationRequestedAt, setVerificationRequestedAt] = useState<string | null>(null);
   const [verifSubmitted, setVerifSubmitted] = useState(false);
@@ -114,21 +117,26 @@ export default function AdminPage() {
   async function saveShopInfo() {
     setShopSaved(false);
     setShopSaveError("");
-    const res = await fetch("/api/shop", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: shopInfo.name, type: shopInfo.type, businessSize: shopInfo.businessSize, address: shopInfo.address, phone: shopInfo.phone,
-        bankCardNumber: shopInfo.bankCardNumber, bankAccountNumber: shopInfo.bankAccountNumber,
-        latitude: shopInfo.latitude ?? undefined, longitude: shopInfo.longitude ?? undefined, province: shopInfo.province || undefined,
-        taxPercent: shopInfo.taxPercent ?? undefined,
-      }),
-    });
-    if (res.ok) { setShopSaved(true); setTimeout(() => setShopSaved(false), 2500); }
-    else {
-      const err = await res.json().catch(() => ({}));
-      setShopSaveError(err.message || `ذخیره ناموفق بود (کد ${res.status})`);
-    }
+    if (shopInfo.name.trim().length < 2) { setShopSaveError("نام مغازه باید حداقل دو حرف باشد"); return; }
+    setShopSaving(true);
+    try {
+      const res = await fetch("/api/shop", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: shopInfo.name.trim(), type: shopInfo.type, businessSize: shopInfo.businessSize,
+          address: shopInfo.address ?? "", phone: shopInfo.phone ?? "",
+          bankCardNumber: shopInfo.bankCardNumber ?? "", bankAccountNumber: shopInfo.bankAccountNumber ?? "",
+          latitude: shopInfo.latitude ?? undefined, longitude: shopInfo.longitude ?? undefined, province: shopInfo.province || undefined,
+          taxPercent: shopInfo.taxPercent ?? undefined,
+        }),
+      });
+      if (res.ok) { setShopSaved(true); router.refresh(); setTimeout(() => setShopSaved(false), 2500); }
+      else {
+        const err = await res.json().catch(() => ({}));
+        setShopSaveError(err.message || err.error || `ذخیره ناموفق بود (کد ${res.status})`);
+      }
+    } finally { setShopSaving(false); }
   }
 
   async function requestVerification() {
@@ -358,8 +366,8 @@ export default function AdminPage() {
         </p>
 
         {shopSaveError && <p className="text-danger text-xs mb-2">{shopSaveError}</p>}
-        <button onClick={saveShopInfo} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm">
-          {shopSaved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
+        <button onClick={saveShopInfo} disabled={shopSaving} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm disabled:opacity-60">
+          {shopSaving ? "در حال ذخیره..." : shopSaved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
         </button>
       </Section>
 

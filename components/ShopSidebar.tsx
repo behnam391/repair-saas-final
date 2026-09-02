@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3, Boxes, CircleDollarSign, FileText, Handshake, Headphones,
-  House, MessageSquareText, PackagePlus, Settings, Store, UsersRound, Wrench,
+  House, MessageSquareText, PackagePlus, Settings, Store, UserRound, UsersRound, Wrench,
   type LucideIcon,
 } from "lucide-react";
 import Logo from "./Logo";
@@ -29,6 +29,7 @@ const groups: { label: string; items: Item[] }[] = [
     { href: "/collaboration", label: "همکاری تعمیرگاه‌ها", Icon: Handshake },
     { href: "/chats", label: "پیام‌ها", Icon: MessageSquareText },
     { href: "/support", label: "پشتیبانی", Icon: Headphones },
+    { href: "/profile", label: "پروفایل و حساب من", Icon: UserRound },
     { href: "/reports", label: "گزارش‌ها", Icon: BarChart3, owner: true },
     { href: "/admin", label: "تنظیمات تعمیرگاه", Icon: Settings, owner: true },
   ] },

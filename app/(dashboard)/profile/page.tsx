@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/ImageUploader";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
@@ -7,6 +8,7 @@ import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 const SPECIALTY_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی (برد/سی‌پی‌یو)" };
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [form, setForm] = useState({
     avatarUrl: "", phone: "", email: "", gmailId: "", nationalId: "", birthDate: "",
     notifyEmail: false, specialty: "",
@@ -15,14 +17,20 @@ export default function ProfilePage() {
   const [roleLabel, setRoleLabel] = useState("");
   const [saved, setSaved] = useState(false);
   const [saveErr, setSaveErr] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "" });
   const [pwMsg, setPwMsg] = useState("");
   const [pwError, setPwError] = useState("");
 
   async function load() {
-    const res = await fetch("/api/profile");
-    if (res.ok) {
+    try {
+      const res = await fetch("/api/profile", { cache: "no-store" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setSaveErr(data.message || "دریافت اطلاعات پروفایل انجام نشد. دوباره تلاش کنید.");
+        return;
+      }
       const data = await res.json();
       setName(data.user.name);
       const ROLE_FA: Record<string, string> = { OWNER: "مدیر", FRONTDESK: "پذیرش", HARDWARE: "سخت‌افزار", SOFTWARE: "نرم‌افزار", BOARD: "تخصصی" };
@@ -34,21 +42,26 @@ export default function ProfilePage() {
         notifyEmail: data.user.notifyEmail,
         specialty: data.user.specialty ?? "",
       });
-    }
+    } catch { setSaveErr("ارتباط با سرور برقرار نشد. اتصال اینترنت را بررسی کنید."); }
   }
   useEffect(() => { load(); }, []);
 
   async function save() {
     setSaved(false); setSaveErr("");
+    if (name.trim().length < 2) { setSaveErr("نام باید حداقل دو حرف باشد"); return; }
     // Changing this changes how I log in from now on. See lib/phone.ts.
     if (form.phone && !isValidMobile(form.phone)) { setSaveErr("شماره موبایل باید ۱۱ رقمی و با ۰۹ باشد"); return; }
-    const res = await fetch("/api/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, phone: normalizePhone(form.phone), specialty: form.specialty || null }),
-    });
-    if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
-    else { const d = await res.json().catch(() => ({})); setSaveErr(d.message || "ذخیره ناموفق بود"); }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, name: name.trim(), phone: normalizePhone(form.phone), specialty: form.specialty || null }),
+      });
+      if (res.ok) { setSaved(true); router.refresh(); setTimeout(() => setSaved(false), 2500); }
+      else { const d = await res.json().catch(() => ({})); setSaveErr(d.message || d.error || `ذخیره ناموفق بود (کد ${res.status})`); }
+    } catch { setSaveErr("ارتباط با سرور برقرار نشد؛ تغییرات ذخیره نشد."); }
+    finally { setSaving(false); }
   }
 
   async function changePassword() {
@@ -65,21 +78,27 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="p-4 max-w-md mx-auto">
-      <h1 className="display-heading text-lg mb-4">پروفایل من</h1>
+    <div className="workspace-page profile-workspace p-4 max-w-4xl mx-auto">
+      <div className="workspace-page-head"><div><span>حساب کاربری</span><h1 className="display-heading">پروفایل و تنظیمات من</h1><p>اطلاعات شخصی، تخصص و امنیت حساب خود را مدیریت کنید.</p></div></div>
 
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-16 h-16 rounded-full bg-surface2 border border-surface2 overflow-hidden flex items-center justify-center text-lg font-bold">
+      <div className="profile-hero">
+        <div className="profile-avatar">
           {form.avatarUrl ? <img src={form.avatarUrl} alt="" className="w-full h-full object-cover" /> : name.slice(0, 2)}
         </div>
-        <div className="text-sm font-bold">{name}</div>
+        <div><b>{name || "کاربر پیوو"}</b><span>{roleLabel || "عضو تعمیرگاه"}</span></div>
       </div>
 
+      <section className="profile-card">
+      <div className="profile-card-title"><b>اطلاعات فردی و کاری</b><span>مشخصاتی که برای حساب شما ثبت می‌شود</span></div>
       <ImageUploader
         label="عکس پروفایل"
         value={form.avatarUrl}
         onChange={(url) => setForm({ ...form, avatarUrl: url })}
       />
+
+      <label className="block text-xs text-muted mb-1">نام و نام خانوادگی</label>
+      <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
+        value={name} onChange={(e) => setName(e.target.value)} />
 
       <div className="grid grid-cols-2 gap-2 mb-3">
         <div>
@@ -121,12 +140,13 @@ export default function ProfilePage() {
       </label>
 
       {saveErr && <p className="text-danger text-xs mb-2">{saveErr}</p>}
-      <button onClick={save} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
-        {saved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
+      <button onClick={save} disabled={saving} className="profile-save-button">
+        {saving ? "در حال ذخیره..." : saved ? "✓ تغییرات ذخیره شد" : "ذخیره تغییرات پروفایل"}
       </button>
+      </section>
 
-      <div className="border-t border-surface2 my-6 pt-5">
-        <div className="text-sm font-bold mb-3">تغییر رمز عبور</div>
+      <section className="profile-card">
+        <div className="profile-card-title"><b>امنیت حساب</b><span>برای حفظ امنیت، رمز عبور قدرتمند انتخاب کنید</span></div>
         <label className="block text-xs text-muted mb-1">رمز فعلی</label>
         <input type="password" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
           value={pwForm.currentPassword} onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })} />
@@ -143,7 +163,7 @@ export default function ProfilePage() {
           <a href="/forgot-password" className="text-copper font-semibold">بازیابی با کد پیامکی/ایمیل</a>
           {" "}(اول از سیستم خارج شوید، بعد کد دریافت کنید)
         </p>
-      </div>
+      </section>
     </div>
   );
 }

@@ -11,6 +11,7 @@ import AiIntakeHelper from "@/components/AiIntakeHelper";
 import CustomerQuickPick from "@/components/CustomerQuickPick";
 import PartnerQuickPick from "@/components/PartnerQuickPick";
 import MorningInsights from "@/components/MorningInsights";
+import AdBanner from "@/components/AdBanner";
 import { useIsNativeApp } from "@/components/NativeAppContext";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
 import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, BarChart3, Boxes, Check, ChevronDown, CircuitBoard, Clock3, Cpu, FileText, GitBranch, Handshake, LockKeyhole, MessageCircle, Play, Plus, Printer, Search, ShieldCheck, Smartphone, UserRound, UsersRound, Wrench, X } from "lucide-react";
@@ -158,6 +159,7 @@ export default function TicketsPage() {
           </div>
         </div>
         <ActiveRepairTable tickets={tickets.slice(0, 5)} onOpen={setOpenTicket} />
+        <AdBanner />
       </>}
 
       {/* Search — filters every lane live by device, customer, number, or issue. */}

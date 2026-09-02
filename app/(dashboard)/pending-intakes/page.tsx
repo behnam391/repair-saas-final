@@ -19,7 +19,7 @@ export default function PendingIntakesPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="workspace-page p-4 max-w-4xl mx-auto">
       <h1 className="display-heading text-lg mb-1">پذیرش‌های در انتظار تأیید (QR)</h1>
       <p className="text-[11px] text-muted mb-4">درخواست‌هایی که مشتریان با اسکن کد QR مغازه خودشان ثبت کرده‌اند.</p>
 

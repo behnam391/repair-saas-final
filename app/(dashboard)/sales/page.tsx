@@ -80,7 +80,7 @@ export default function SalesPage() {
   }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
+    <div className="workspace-page p-4 max-w-5xl mx-auto">
       <h1 className="display-heading text-lg mb-1">فروش مستقیم</h1>
       <p className="text-[11px] text-muted mb-4">
         فروش لوازم جانبی، قطعه یا هر کالای انبار بدون نیاز به تیکت تعمیر — موجودی خودکار کم می‌شود و فاکتور رسمی صادر می‌شود.

@@ -70,7 +70,7 @@ export default function WalletPage() {
 
   if (storeMode === "myket" || storeMode === "bazaar" || storeMode === "native") {
     return (
-      <div className="p-4 max-w-xl mx-auto">
+      <div className="workspace-page p-4 max-w-4xl mx-auto">
         <div className="bg-gradient-to-br from-teal/15 to-surface border border-teal/40 rounded-2xl p-6 text-center mt-6">
           <div className="text-3xl mb-3">🟢</div>
           <h1 className="display-heading text-lg mb-2">{storeMode === "native" ? "پرداخت فروشگاهی در دسترس نیست" : `پرداخت امن ${storeMode === "bazaar" ? "بازار" : "مایکت"}`}</h1>
@@ -88,7 +88,7 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="workspace-page p-4 max-w-4xl mx-auto">
       <h1 className="display-heading text-lg mb-1">کیف پول</h1>
       <p className="text-xs text-muted mb-5">اعتبار کیف پول را شارژ کنید و هزینه‌ی اشتراک را بدون مراجعه‌ی دوباره به درگاه، از همین موجودی بپردازید.</p>
 

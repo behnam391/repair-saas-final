@@ -36,7 +36,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
+    <div className="workspace-page p-4 max-w-5xl mx-auto">
       <h1 className="display-heading text-lg mb-4">سابقه و جستجو</h1>
 
       <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6 space-y-2">
