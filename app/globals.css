@@ -945,6 +945,10 @@ select option {
   .ticket-lane-head{min-height:64px!important}.ticket-card{min-height:96px}
 }
 
+/* Saved profile photo inside the repair-shop identity card. */
+.shop-sidebar-user>i{overflow:hidden}
+.shop-sidebar-user>i img{width:100%;height:100%;display:block;object-fit:cover}
+
 /* ── Calm mobile navigation, embedded ads and shared workspaces ─────────────
    The former liquid navigation and global image banner were visually heavy.
    These primitives deliberately avoid animation and keep commercial content

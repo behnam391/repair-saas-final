@@ -21,15 +21,18 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   let guideUrl: string | null = null;
   let shopType: string | null = null;
+  let avatarUrl: string | null = null;
   let onboardingItems: OnboardingItem[] = [];
   try {
     const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } });
     guideUrl = settings?.guideUrl ?? null;
-    const [shop, staffCount, customerCount, ticketCount] = await Promise.all([
+    const [shop, staffCount, customerCount, ticketCount, profile] = await Promise.all([
       db.shop.findUnique({ where: { id: user.shopId }, select: { type: true, address: true, bankCardNumber: true } }),
       db.user.count({ where: { shopId: user.shopId } }), db.customer.count({ where: { shopId: user.shopId } }), db.ticket.count({ where: { shopId: user.shopId } }),
+      db.user.findUnique({ where: { id: user.id }, select: { avatarUrl: true } }),
     ]);
     shopType = shop?.type ?? null;
+    avatarUrl = profile?.avatarUrl ?? null;
     if (user.role === "OWNER") onboardingItems = [
       { label: "تکمیل مشخصات تعمیرگاه", href: "/admin", done: !!shop?.address },
       { label: "افزودن اولین همکار", href: "/admin", done: staffCount > 1 },
@@ -41,7 +44,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="shop-shell min-h-screen">
-      <ShopSidebar role={user.role} shopType={shopType ?? undefined} shopName={user.shopName || "تعمیرگاه پیوو"} userName={user.name || "کاربر پیوو"} />
+      <ShopSidebar role={user.role} shopType={shopType ?? undefined} shopName={user.shopName || "تعمیرگاه پیوو"} userName={user.name || "کاربر پیوو"} avatarUrl={avatarUrl} />
       <div className="shop-shell-main">
       <header className="glass-header app-topbar sticky top-0 z-20 px-4">
         {/* Mobile: two tiers — identity + actions on the first line, nav on its

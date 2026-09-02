@@ -35,7 +35,7 @@ const groups: { label: string; items: Item[] }[] = [
   ] },
 ];
 
-export default function ShopSidebar({ role, shopType, shopName, userName }: { role: string; shopType?: string; shopName: string; userName: string }) {
+export default function ShopSidebar({ role, shopType, shopName, userName, avatarUrl }: { role: string; shopType?: string; shopName: string; userName: string; avatarUrl?: string | null }) {
   const pathname = usePathname();
   const dealer = shopType === "DEALER" || shopType === "BOTH";
   return (
@@ -54,7 +54,10 @@ export default function ShopSidebar({ role, shopType, shopName, userName }: { ro
           })}</section>;
         })}
       </nav>
-      <div className="shop-sidebar-user"><i>{userName.slice(0, 1)}</i><span><b>{userName}</b><small><em /> {shopName}</small></span></div>
+      <div className="shop-sidebar-user">
+        <i>{avatarUrl ? <img src={avatarUrl} alt={`تصویر ${userName}`} /> : userName.slice(0, 1)}</i>
+        <span><b>{userName}</b><small><em /> {shopName}</small></span>
+      </div>
     </aside>
   );
 }
