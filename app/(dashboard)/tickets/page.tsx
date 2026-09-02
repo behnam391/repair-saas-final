@@ -62,6 +62,8 @@ export default function TicketsPage() {
   const [singleOperator, setSingleOperator] = useState(false);
   const [monthlyChart, setMonthlyChart] = useState<{ label: string; total: number }[]>([]);
   const [dashboardMetrics, setDashboardMetrics] = useState<{ todayRevenue: number; todayProfit: number } | null>(null);
+  const [performanceOpen, setPerformanceOpen] = useState(true);
+  const [sideDashboardOpen, setSideDashboardOpen] = useState(true);
   // Mobile accordion: which lanes are collapsed. Starts empty (all open);
   // only affects narrow screens — desktop always shows every column.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -90,11 +92,30 @@ export default function TicketsPage() {
 
   useEffect(() => {
     load();
+    const compact = window.matchMedia("(max-width: 760px)").matches;
+    const savedPerformance = window.localStorage.getItem("peyvo.dashboard.performanceOpen");
+    const savedSide = window.localStorage.getItem("peyvo.dashboard.sideOpen");
+    setPerformanceOpen(savedPerformance === null ? !compact : savedPerformance === "1");
+    setSideDashboardOpen(savedSide === null ? !compact : savedSide === "1");
     if (new URLSearchParams(window.location.search).get("new") === "1") {
       setShowNew(true);
       window.history.replaceState({}, "", "/tickets");
     }
   }, []);
+
+  function togglePerformance() {
+    setPerformanceOpen((current) => {
+      window.localStorage.setItem("peyvo.dashboard.performanceOpen", current ? "0" : "1");
+      return !current;
+    });
+  }
+
+  function toggleSideDashboard() {
+    setSideDashboardOpen((current) => {
+      window.localStorage.setItem("peyvo.dashboard.sideOpen", current ? "0" : "1");
+      return !current;
+    });
+  }
 
   useEffect(() => {
     if (myRole !== "OWNER") return;
@@ -151,12 +172,18 @@ export default function TicketsPage() {
       </section>
 
       {myRole === "OWNER" && <>
-        <div className="repair-command-grid">
-          <RepairAnalytics tickets={tickets} months={monthlyChart} />
-          <div className="repair-command-side">
-            <MorningInsights />
-            <RepairQuickActions onNew={() => setShowNew(true)} />
-          </div>
+        <div className={`repair-command-grid ${sideDashboardOpen ? "" : "is-side-collapsed"}`}>
+          <RepairAnalytics tickets={tickets} months={monthlyChart} open={performanceOpen} onToggle={togglePerformance} />
+          <section className={`repair-side-panel ${sideDashboardOpen ? "is-open" : "is-collapsed"}`}>
+            <button type="button" className="repair-side-panel-head" onClick={toggleSideDashboard} aria-expanded={sideDashboardOpen}>
+              <span><b>داشبورد روزانه</b><small>هشدارها و میانبرهای کاربردی</small></span>
+              <ChevronDown size={18} />
+            </button>
+            {sideDashboardOpen && <div className="repair-command-side">
+              <MorningInsights />
+              <RepairQuickActions onNew={() => setShowNew(true)} />
+            </div>}
+          </section>
         </div>
         <ActiveRepairTable tickets={tickets.slice(0, 5)} onOpen={setOpenTicket} />
         <AdBanner />
@@ -280,7 +307,7 @@ function DashboardAssistant({ onNew }: { onNew: () => void }) {
   </aside>;
 }
 
-function RepairAnalytics({ tickets, months }: { tickets: Ticket[]; months: { label: string; total: number }[] }) {
+function RepairAnalytics({ tickets, months, open, onToggle }: { tickets: Ticket[]; months: { label: string; total: number }[]; open: boolean; onToggle: () => void }) {
   const width = 680, height = 178;
   const totals = months.map((m) => m.total);
   const max = Math.max(...totals, 1);
@@ -291,9 +318,9 @@ function RepairAnalytics({ tickets, months }: { tickets: Ticket[]; months: { lab
   let cursor = 0;
   const colors = ["#168df0", "#25bd72", "#f2a51a", "#986cff"];
   const gradient = counts.map((item, index) => { const start = cursor; cursor += (item.count / total) * 100; return `${colors[index]} ${start}% ${cursor}%`; }).join(",");
-  return <section className="repair-analytics-card">
-    <header><div><b>نمای عملکرد تعمیرگاه</b><small>درآمد ۱۲ ماه اخیر و وضعیت تعمیرهای جاری</small></div><span><BarChart3 size={17} /> داده‌های واقعی</span></header>
-    <div className="repair-analytics-body">
+  return <section className={`repair-analytics-card ${open ? "is-open" : "is-collapsed"}`}>
+    <header><div><b>نمای عملکرد تعمیرگاه</b><small>درآمد ۱۲ ماه اخیر و وضعیت تعمیرهای جاری</small></div><button type="button" onClick={onToggle} aria-expanded={open}><BarChart3 size={17} /><span>{open ? "جمع کردن" : "نمایش عملکرد"}</span><ChevronDown size={17} /></button></header>
+    {open && <div className="repair-analytics-body">
       <div className="repair-line-chart">
         {months.length ? <><svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none"><polygon points={area} /><polyline points={points} /></svg><div>{months.map((m) => <small key={m.label}>{m.label}</small>)}</div></> : <div className="repair-empty-chart"><BarChart3 size={24} /><span>پس از ثبت اولین فاکتور، نمودار درآمد اینجا نمایش داده می‌شود.</span></div>}
       </div>
@@ -301,7 +328,7 @@ function RepairAnalytics({ tickets, months }: { tickets: Ticket[]; months: { lab
         <div className="repair-donut" style={{ background: tickets.length ? `conic-gradient(${gradient})` : "var(--color-surface2)" }}><i><b>{tickets.length.toLocaleString("fa-IR")}</b><small>تعمیر جاری</small></i></div>
         <div>{counts.map((item, index) => <span key={item.key}><i style={{ background: colors[index] }} /><em>{item.label}</em><b>{item.count.toLocaleString("fa-IR")}</b></span>)}</div>
       </div>
-    </div>
+    </div>}
   </section>;
 }
 

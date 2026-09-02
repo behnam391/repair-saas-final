@@ -11,7 +11,7 @@ export default function ImageUploader({
   value,
   onChange,
   label = "تصویر",
-  showUrlInput = true,
+  showUrlInput = false,
 }: {
   value: string;
   onChange: (url: string) => void;

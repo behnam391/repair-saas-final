@@ -57,6 +57,7 @@ export default function SuperAdminAdsPage() {
           label="تصویر بنر"
           value={form.imageUrl}
           onChange={(url) => setForm({ ...form, imageUrl: url })}
+          showUrlInput
         />
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-2" placeholder="لینک مقصد (اختیاری)"
           value={form.linkUrl} onChange={(e) => setForm({ ...form, linkUrl: e.target.value })} />
