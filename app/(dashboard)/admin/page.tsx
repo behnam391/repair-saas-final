@@ -8,7 +8,7 @@ import JalaliDatePicker from "@/components/JalaliDatePicker";
 import { AnimatedNumber, Reveal } from "@/components/Motion";
 import { motion } from "framer-motion";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
-import { BarChart3, ChevronDown, CircleDollarSign, LayoutDashboard, Printer, Settings2, Store, UsersRound, Wrench } from "lucide-react";
+import { BarChart3, ChevronDown, CircleDollarSign, LayoutDashboard, Printer, Settings2, Store, Trash2, UsersRound, Wrench } from "lucide-react";
 
 const PUBLIC_APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL || "https://peyvo.ir").replace(/\/+$/, "");
 
@@ -683,15 +683,37 @@ function StaffRow({ staff, onSaved }: { staff: Staff; onSaved: () => void }) {
 function RemovedStaff({ staff, onRestored }: { staff: Staff[]; onRestored: () => void }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [error, setError] = useState("");
 
   async function restore(id: string) {
     setBusy(id);
-    await fetch(`/api/staff/${id}`, {
+    setError("");
+    const res = await fetch(`/api/staff/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ active: true }),
     });
     setBusy(null);
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setError(data.message || "بازگردانی کارمند انجام نشد");
+      return;
+    }
+    onRestored();
+  }
+
+  async function permanentlyDelete(id: string) {
+    setBusy(id);
+    setError("");
+    const res = await fetch(`/api/staff/${id}?permanent=true`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    setBusy(null);
+    if (!res.ok) {
+      setError(data.message || "حذف کامل کارمند انجام نشد");
+      return;
+    }
+    setDeleteTarget(null);
     onRestored();
   }
 
@@ -704,13 +726,28 @@ function RemovedStaff({ staff, onRestored }: { staff: Staff[]; onRestored: () =>
       {open && (
         <div className="space-y-1.5 mt-2">
           {staff.map((s) => (
-            <div key={s.id} className="flex justify-between items-center bg-surface2/60 border border-surface2 rounded-lg px-3 py-2 text-xs">
-              <span className="text-muted">{s.name} · {s.phone}</span>
-              <button onClick={() => restore(s.id)} disabled={busy === s.id} className="text-teal text-[10px] font-bold disabled:opacity-50">
-                {busy === s.id ? "..." : "بازگردانی"}
-              </button>
+            <div key={s.id} className="bg-surface2/60 border border-surface2 rounded-lg px-3 py-2 text-xs">
+              <div className="flex flex-wrap justify-between items-center gap-2">
+                <span className="text-muted">{s.name} · {s.phone}</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => restore(s.id)} disabled={busy === s.id} className="text-teal text-[10px] font-bold disabled:opacity-50">
+                    {busy === s.id ? "..." : "بازگردانی"}
+                  </button>
+                  <button onClick={() => { setDeleteTarget(s.id); setError(""); }} disabled={busy === s.id} className="inline-flex items-center gap-1 text-danger text-[10px] font-bold disabled:opacity-50">
+                    <Trash2 size={12} /> حذف کامل
+                  </button>
+                </div>
+              </div>
+              {deleteTarget === s.id && <div className="mt-2 rounded-lg border border-danger/25 bg-danger/10 p-2.5">
+                <p className="text-[10px] leading-5 text-danger">حساب «{s.name}» برای همیشه حذف و شماره ورود او آزاد می‌شود. این کار قابل بازگردانی نیست؛ سوابق ضروری تعمیرگاه به مدیر منتقل می‌شوند.</p>
+                <div className="mt-2 flex gap-2">
+                  <button onClick={() => permanentlyDelete(s.id)} disabled={busy === s.id} className="flex-1 rounded-lg bg-danger px-3 py-2 text-[10px] font-extrabold text-white disabled:opacity-50">{busy === s.id ? "در حال حذف..." : "بله، حذف کامل"}</button>
+                  <button onClick={() => setDeleteTarget(null)} disabled={busy === s.id} className="flex-1 rounded-lg bg-surface px-3 py-2 text-[10px] font-bold disabled:opacity-50">انصراف</button>
+                </div>
+              </div>}
             </div>
           ))}
+          {error && <p className="rounded-lg bg-danger/10 px-3 py-2 text-[10px] text-danger">{error}</p>}
         </div>
       )}
     </div>

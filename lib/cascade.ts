@@ -135,3 +135,63 @@ export async function deletePlatformCustomerCascade(customerId: string, adminId?
     await tx.platformCustomer.delete({ where: { id: customerId } });
   });
 }
+
+// Permanently remove one non-owner staff account without destroying the
+// shop's repair, finance or audit history. Optional technician references are
+// cleared; records that require an author/actor are transferred to the owner
+// who confirmed the deletion. This also frees the staff phone number for a
+// future account.
+export async function deleteStaffCascade(shopId: string, staffId: string, replacementOwnerId: string) {
+  await db.$transaction(
+    async (tx) => {
+      const [staff, replacement] = await Promise.all([
+        tx.user.findFirst({ where: { id: staffId, shopId }, select: { id: true, role: true } }),
+        tx.user.findFirst({ where: { id: replacementOwnerId, shopId, role: "OWNER", active: true }, select: { id: true } }),
+      ]);
+      if (!staff) throw new Error("staff_not_found");
+      if (staff.role === "OWNER") throw new Error("owner_cannot_be_permanently_deleted");
+      if (!replacement) throw new Error("replacement_owner_not_found");
+
+      // Keep repair and rating records, but detach the deleted technician.
+      await tx.ticket.updateMany({ where: { shopId, assignedToId: staffId }, data: { assignedToId: null } });
+      await tx.ticketHistory.updateMany({ where: { techId: staffId, ticket: { shopId } }, data: { techId: null } });
+      await tx.rating.updateMany({ where: { shopId, technicianId: staffId }, data: { technicianId: null } });
+
+      // Conversations have a unique (listing, starter) key. Merge a staff
+      // conversation into the owner's existing one when necessary; otherwise
+      // simply transfer its ownership.
+      const conversations = await tx.conversation.findMany({
+        where: { starterId: staffId },
+        select: { id: true, listingId: true },
+      });
+      for (const conversation of conversations) {
+        const ownerConversation = await tx.conversation.findUnique({
+          where: { listingId_starterId: { listingId: conversation.listingId, starterId: replacementOwnerId } },
+          select: { id: true },
+        });
+        if (ownerConversation) {
+          await tx.message.updateMany({ where: { conversationId: conversation.id }, data: { conversationId: ownerConversation.id } });
+          await tx.conversation.delete({ where: { id: conversation.id } });
+        } else {
+          await tx.conversation.update({ where: { id: conversation.id }, data: { starterId: replacementOwnerId } });
+        }
+      }
+
+      // Preserve authored operational records by attributing them to the
+      // owner who performed the irreversible deletion.
+      await tx.message.updateMany({ where: { senderId: staffId }, data: { senderId: replacementOwnerId } });
+      await tx.marketListing.updateMany({ where: { shopId, authorId: staffId }, data: { authorId: replacementOwnerId } });
+      await tx.marketReply.updateMany({ where: { shopId, authorId: staffId }, data: { authorId: replacementOwnerId } });
+      await tx.deviceFlag.updateMany({ where: { shopId, reporterId: staffId }, data: { reporterId: replacementOwnerId } });
+      await tx.deviceTransaction.updateMany({ where: { shopId, loggedById: staffId }, data: { loggedById: replacementOwnerId } });
+      await tx.supportTicket.updateMany({ where: { shopId, userId: staffId }, data: { userId: replacementOwnerId } });
+      await tx.partRequest.updateMany({ where: { shopId, requestedById: staffId }, data: { requestedById: replacementOwnerId } });
+
+      await tx.notification.deleteMany({ where: { userId: staffId } });
+      await tx.passwordResetToken.deleteMany({ where: { userId: staffId } });
+      await tx.impersonationToken.deleteMany({ where: { userId: staffId } });
+      await tx.user.delete({ where: { id: staffId } });
+    },
+    { timeout: 30000 }
+  );
+}

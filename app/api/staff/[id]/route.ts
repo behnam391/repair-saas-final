@@ -5,6 +5,7 @@ import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
 import { LoginSubjectKind } from "@prisma/client";
 import { revokeSessionsForSubject } from "@/lib/login-sessions";
+import { deleteStaffCascade } from "@/lib/cascade";
 
 export const dynamic = "force-dynamic";
 
@@ -64,7 +65,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 // technician reference — we try the real delete first and let Postgres's
 // own foreign-key check tell us which case we're in, rather than manually
 // enumerating every relation that points at User.
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { shopId, userId, role } = await requireSession();
     requireRole(role, ["OWNER"]);
@@ -75,6 +76,20 @@ export async function DELETE(_req: NextRequest, { params }: { params: { id: stri
     if (target.id === userId) {
       return NextResponse.json({ message: "نمی‌توانید حساب خودتان را حذف کنید" }, { status: 400 });
     }
+
+    const permanent = req.nextUrl.searchParams.get("permanent") === "true";
+    if (permanent) {
+      if (target.role === "OWNER") {
+        return NextResponse.json({ message: "حذف کامل مدیر فروشگاه از بخش کارکنان مجاز نیست" }, { status: 400 });
+      }
+      if (target.active) {
+        return NextResponse.json({ message: "ابتدا دسترسی کارمند را قطع کنید، سپس از بخش کارکنان حذف‌شده حذف کامل را بزنید" }, { status: 400 });
+      }
+      await revokeSessionsForSubject(LoginSubjectKind.SHOP_USER, target.id, { reason: "STAFF_PERMANENTLY_DELETED" });
+      await deleteStaffCascade(shopId, target.id, userId);
+      return NextResponse.json({ ok: true, permanent: true });
+    }
+
     if (target.role === "OWNER") {
       const otherOwners = await db.user.count({ where: { shopId, role: "OWNER", id: { not: target.id } } });
       if (otherOwners === 0) {
