@@ -4,6 +4,7 @@ import { DEVICE_BRANDS } from "@/lib/device-catalog";
 import { rateLimit, clientIp, tooMany } from "@/lib/ratelimit";
 import { preprocessPhone } from "@/lib/phone";
 import { encryptSecretOrPassthrough } from "@/lib/crypto";
+import { parseServiceCategories } from "@/lib/device-category";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ const Schema = z.object({
   // keyboard. It is the number the shop calls back and texts. See lib/phone.ts.
   customerPhone: z.preprocess(preprocessPhone, z.string().min(5)),
   deviceModel: z.string().min(1),
+  deviceCategory: z.enum(["MOBILE", "COMPUTER"]).default("MOBILE"),
   imei: z.string().optional(),
   issueDescription: z.string().min(1),
   devicePasscode: z.string().optional(),
@@ -25,7 +27,7 @@ const Schema = z.object({
 // With ?intake=<id>, also returns that intake's status (scoped to this shop)
 // so the customer's phone can live-track approval after submitting.
 export async function GET(req: NextRequest, { params }: { params: { shopId: string } }) {
-  const shop = await db.shop.findUnique({ where: { id: params.shopId }, select: { name: true, active: true } });
+  const shop = await db.shop.findUnique({ where: { id: params.shopId }, select: { name: true, active: true, serviceCategories: true } });
   if (!shop || !shop.active) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
   const intakeId = req.nextUrl.searchParams.get("intake");
@@ -49,7 +51,7 @@ export async function GET(req: NextRequest, { params }: { params: { shopId: stri
     }
   } catch {}
 
-  return NextResponse.json({ shopName: shop.name, catalog });
+  return NextResponse.json({ shopName: shop.name, catalog, serviceCategories: parseServiceCategories(shop.serviceCategories) });
 }
 
 // POST /api/kiosk/:shopId — public, no auth. Creates a PendingIntake that
@@ -67,6 +69,9 @@ export async function POST(req: NextRequest, { params }: { params: { shopId: str
     if (!shop || !shop.active) return NextResponse.json({ error: "not_found" }, { status: 404 });
 
     const body = Schema.parse(await req.json());
+    if (!parseServiceCategories(shop.serviceCategories).includes(body.deviceCategory)) {
+      return NextResponse.json({ message: "این نوع دستگاه در این تعمیرگاه پذیرش نمی‌شود" }, { status: 400 });
+    }
     // Encrypt the customer-supplied passcode at rest (same as staff intake).
     const { devicePasscode, ...rest } = body;
     const intake = await db.pendingIntake.create({

@@ -41,11 +41,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       const t = await tx.ticket.create({
         data: {
           shopId, no: nextNo, customerId: customer.id, deviceModel: intake.deviceModel, imei: intake.imei,
+          deviceCategory: intake.deviceCategory,
           issueInitial: intake.issueDescription, lane, status: "PENDING",
           devicePasscode: intake.devicePasscode, devicePasscodeType: intake.devicePasscodeType,
           history: {
             create: [
-              { lane, action: "پذیرش خودکار (اسکن QR توسط مشتری)", techId: userId, note: intake.issueDescription },
+              { lane, action: `پذیرش ${intake.deviceCategory === "COMPUTER" ? "کامپیوتر" : "موبایل"} (اسکن QR توسط مشتری)`, techId: userId, note: intake.issueDescription },
               { lane, action: "بررسی و تأیید توسط کارمند", techId: userId },
             ],
           },

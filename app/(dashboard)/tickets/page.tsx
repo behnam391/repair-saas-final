@@ -14,7 +14,7 @@ import MorningInsights from "@/components/MorningInsights";
 import AdBanner from "@/components/AdBanner";
 import { useIsNativeApp } from "@/components/NativeAppContext";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
-import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, BarChart3, Boxes, Check, ChevronDown, CircuitBoard, Clock3, Cpu, FileText, GitBranch, Handshake, LockKeyhole, MessageCircle, Play, Plus, Printer, Search, ShieldCheck, Smartphone, UserRound, UsersRound, Wrench, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, BarChart3, Boxes, Check, ChevronDown, CircuitBoard, Clock3, Cpu, FileText, GitBranch, Handshake, LockKeyhole, MessageCircle, MonitorSmartphone, Play, Plus, Printer, Search, ShieldCheck, Smartphone, UserRound, UsersRound, Wrench, X } from "lucide-react";
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار", hint: "تعمیرات فیزیکی", Icon: Wrench, tone: "blue" },
@@ -23,10 +23,13 @@ const LANES = [
   { key: "READY", label: "آماده تحویل", hint: "تکمیل‌شده", Icon: BadgeCheck, tone: "green" },
 ] as const;
 
+const COMPUTER_BRANDS = ["Apple", "ASUS", "Acer", "Dell", "HP", "Lenovo", "MSI", "Microsoft", "Samsung", "Huawei", "Gigabyte", "سایر"];
+
 type Ticket = {
   id: string;
   no: number;
   deviceModel: string;
+  deviceCategory?: string;
   issueInitial: string;
   lane: string;
   status: string;
@@ -57,6 +60,8 @@ export default function TicketsPage() {
   const [loading, setLoading] = useState(true);
   const [openTicket, setOpenTicket] = useState<Ticket | null>(null);
   const [showNew, setShowNew] = useState(false);
+  const [serviceCategories, setServiceCategories] = useState<string[]>(["MOBILE"]);
+  const [newTicketCategory, setNewTicketCategory] = useState("MOBILE");
   const [toast, setToast] = useState("");
   const [query, setQuery] = useState("");
   const [singleOperator, setSingleOperator] = useState(false);
@@ -83,6 +88,8 @@ export default function TicketsPage() {
     setTickets(data.tickets ?? []);
     if (shopRes.ok && staffRes.ok) {
       const shop = (await shopRes.json()).shop;
+      const categories = (shop?.serviceCategories || "MOBILE").split(",").filter((item: string) => item === "MOBILE" || item === "COMPUTER");
+      setServiceCategories(categories.length ? categories : ["MOBILE"]);
       const staff = (await staffRes.json()).staff ?? [];
       const activeStaffCount = staff.filter((member: any) => member.active).length;
       setSingleOperator(shop?.businessSize === "SOLO" || activeStaffCount <= 1);
@@ -97,7 +104,10 @@ export default function TicketsPage() {
     const savedSide = window.localStorage.getItem("peyvo.dashboard.sideOpen");
     setPerformanceOpen(savedPerformance === null ? !compact : savedPerformance === "1");
     setSideDashboardOpen(savedSide === null ? !compact : savedSide === "1");
-    if (new URLSearchParams(window.location.search).get("new") === "1") {
+    const pageParams = new URLSearchParams(window.location.search);
+    if (pageParams.get("new") === "1") {
+      const requestedCategory = pageParams.get("device");
+      if (requestedCategory === "MOBILE" || requestedCategory === "COMPUTER") setNewTicketCategory(requestedCategory);
       setShowNew(true);
       window.history.replaceState({}, "", "/tickets");
     }
@@ -157,7 +167,7 @@ export default function TicketsPage() {
         </div>
         <div className="dashboard-head-actions">
           {myRole === "OWNER" && <Link href="/reports" className="dashboard-secondary-action"><BarChart3 size={18} /> گزارش‌ها</Link>}
-          <button onClick={() => setShowNew(true)} className="dashboard-primary-action"><Plus size={19} /> پذیرش دستگاه</button>
+          <button onClick={() => { setNewTicketCategory(serviceCategories[0] || "MOBILE"); setShowNew(true); }} className="dashboard-primary-action"><Plus size={19} /> پذیرش دستگاه</button>
         </div>
       </div>
 
@@ -283,7 +293,7 @@ export default function TicketsPage() {
           onTransition={transition}
         />
       )}
-      {showNew && <NewTicketModal defaultLane={mySpecialty} singleOperator={singleOperator} webPartnerIntake={!isNativeApp} onClose={() => setShowNew(false)} onCreated={load} />}
+      {showNew && <NewTicketModal defaultLane={mySpecialty} defaultDeviceCategory={newTicketCategory} serviceCategories={serviceCategories} singleOperator={singleOperator} webPartnerIntake={!isNativeApp} onClose={() => setShowNew(false)} onCreated={load} />}
       {toast && (
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 bg-[#1B302D] border border-teal text-teal text-xs px-4 py-2.5 rounded-xl">
           {toast}
@@ -462,7 +472,7 @@ function TicketDetail({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="ticket-modal-head">
-          <div className="ticket-modal-device"><span><Smartphone size={20} /></span><div><h2>{ticket.deviceModel}</h2><p><UserRound size={12} />{ticket.customer.name} · {ticket.customer.phone}</p></div></div>
+          <div className="ticket-modal-device"><span>{ticket.deviceCategory === "COMPUTER" ? <MonitorSmartphone size={20} /> : <Smartphone size={20} />}</span><div><h2>{ticket.deviceModel}</h2><p><UserRound size={12} />{ticket.customer.name} · {ticket.customer.phone}</p></div></div>
           <div className="flex items-center gap-2"><span className="ticket-number">#{ticket.no}</span><button onClick={onClose} className="ticket-modal-close"><X size={18} /></button></div>
         </div>
 
@@ -653,10 +663,15 @@ function TicketDetail({
                 {ticket.invoice ? (
                   <>
                     <div className="flex justify-between text-[11px] text-muted"><span>مبلغ فاکتور</span><b>{ticket.invoice.total.toLocaleString("fa-IR")} تومان</b></div>
-                    <label className="block text-[11px] text-muted">مجموع مبلغی که مشتری/همکار پرداخت کرده</label>
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <button type="button" onClick={() => setDeliveryPaidAmount(0)} className={`rounded-lg border px-2 py-2 text-[10px] font-bold ${deliveryPaidAmount === 0 ? "border-amber bg-amber/10 text-amber" : "border-surface2 bg-surface text-muted"}`}>نسیه</button>
+                      <button type="button" onClick={() => setDeliveryPaidAmount(Math.min(ticket.invoice!.total, Math.max(1, deliveryPaidAmount)))} className={`rounded-lg border px-2 py-2 text-[10px] font-bold ${deliveryPaidAmount > 0 && deliveryPaidAmount < ticket.invoice.total ? "border-copper bg-copper/10 text-copper" : "border-surface2 bg-surface text-muted"}`}>پرداخت بخشی</button>
+                      <button type="button" onClick={() => setDeliveryPaidAmount(ticket.invoice!.total)} className={`rounded-lg border px-2 py-2 text-[10px] font-bold ${deliveryPaidAmount >= ticket.invoice.total ? "border-teal bg-teal/10 text-teal" : "border-surface2 bg-surface text-muted"}`}>تسویه کامل</button>
+                    </div>
+                    <label className="block text-[11px] text-muted">مجموع مبلغ پرداخت‌شده تا این لحظه</label>
                     <input type="text" inputMode="numeric" dir="ltr" value={deliveryPaidAmount || ""} onChange={(e) => setDeliveryPaidAmount(Math.min(ticket.invoice!.total, num(e.target.value)))} className="w-full rounded-lg border border-surface2 bg-surface px-3 py-2 text-sm" />
                     <div className="flex justify-between rounded-lg bg-surface2 px-3 py-2 text-xs"><span>مانده حساب</span><b className={ticket.invoice.total - deliveryPaidAmount > 0 ? "text-amber" : "text-teal"}>{Math.max(0, ticket.invoice.total - deliveryPaidAmount).toLocaleString("fa-IR")} تومان</b></div>
-                    <button type="button" onClick={() => setDeliveryPaidAmount(ticket.invoice!.total)} className="text-[10px] font-bold text-teal">✓ تسویه کامل شد</button>
+                    {deliveryPaidAmount < ticket.invoice.total && <p className="text-[10px] leading-5 text-muted">دستگاه تحویل می‌شود و مبلغ باقی‌مانده به‌عنوان طلب تعمیرگاه در فاکتورها باقی می‌ماند.</p>}
                   </>
                 ) : (
                   <p className="rounded-lg bg-amber/10 p-2 text-[10px] text-amber">برای این تعمیر فاکتور صادر نشده است. تحویل ثبت می‌شود اما مانده حسابی ثبت نخواهد شد.</p>
@@ -708,9 +723,9 @@ function TicketDetail({
   );
 }
 
-function NewTicketModal({ defaultLane, singleOperator, webPartnerIntake, onClose, onCreated }: { defaultLane?: string | null; singleOperator: boolean; webPartnerIntake: boolean; onClose: () => void; onCreated: () => void }) {
+function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories, singleOperator, webPartnerIntake, onClose, onCreated }: { defaultLane?: string | null; defaultDeviceCategory: string; serviceCategories: string[]; singleOperator: boolean; webPartnerIntake: boolean; onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
-    customerName: "", customerPhone: "", deviceModel: "", imei: "", issueInitial: "", lane: ["HARDWARE", "SOFTWARE", "BOARD"].includes(defaultLane || "") ? defaultLane! : "HARDWARE",
+    customerName: "", customerPhone: "", deviceModel: "", deviceCategory: defaultDeviceCategory === "COMPUTER" ? "COMPUTER" : "MOBILE", imei: "", issueInitial: "", lane: ["HARDWARE", "SOFTWARE", "BOARD"].includes(defaultLane || "") ? defaultLane! : "HARDWARE",
     devicePasscode: "", devicePasscodeType: "PIN" as string, customerDamageNotes: "", receiptAck: "NO_SIGNATURE" as string,
     intakeSource: "CUSTOMER", partnerName: "", partnerPhone: "",
   });
@@ -795,7 +810,7 @@ function NewTicketModal({ defaultLane, singleOperator, webPartnerIntake, onClose
         <div className="intake-modal" onClick={(e) => e.stopPropagation()}>
           <div className="p-6 text-center sm:p-8">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-teal/15 text-teal"><Check size={28} /></div>
-            <h2 className="display-heading text-lg">پذیرش با موفقیت ثبت شد</h2>
+            <h2 className="display-heading text-lg">پذیرش {form.deviceCategory === "COMPUTER" ? "کامپیوتر" : "موبایل"} با موفقیت ثبت شد</h2>
             <p className="mt-1 text-xs text-muted">کد پیگیری #{createdTicket.no}</p>
             <a href={`/tickets/${createdTicket.id}/receipt`} target="_blank" className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-copper py-3 text-sm font-bold text-[#1A1410]">
               <Printer size={17} /> چاپ رسید پذیرش
@@ -812,7 +827,7 @@ function NewTicketModal({ defaultLane, singleOperator, webPartnerIntake, onClose
     <div className="ticket-modal-backdrop" onClick={onClose}>
       <div className="intake-modal" onClick={(e) => e.stopPropagation()}>
         <div className="ticket-modal-head">
-          <div className="ticket-modal-device"><span><Plus size={20} /></span><div><h2>پذیرش دستگاه جدید</h2><p>اطلاعات را مرحله‌به‌مرحله ثبت کنید</p></div></div>
+          <div className="ticket-modal-device"><span>{form.deviceCategory === "COMPUTER" ? <MonitorSmartphone size={20} /> : <Smartphone size={20} />}</span><div><h2>پذیرش {form.deviceCategory === "COMPUTER" ? "کامپیوتر" : "موبایل"}</h2><p>اطلاعات را مرحله‌به‌مرحله ثبت کنید</p></div></div>
           <button onClick={onClose} className="ticket-modal-close"><X size={18} /></button>
         </div>
 
@@ -869,14 +884,18 @@ function NewTicketModal({ defaultLane, singleOperator, webPartnerIntake, onClose
         </>)}
 
         {step === 2 && (<>
-        <div className="intake-content-title"><Smartphone size={18} /><div><b>مشخصات دستگاه</b><small>برند، مدل و شناسه دستگاه</small></div></div>
-        <label className="block text-xs text-muted mb-1">برند گوشی</label>
+        <div className="intake-content-title">{form.deviceCategory === "COMPUTER" ? <MonitorSmartphone size={18} /> : <Smartphone size={18} />}<div><b>مشخصات {form.deviceCategory === "COMPUTER" ? "کامپیوتر" : "موبایل"}</b><small>برند، مدل و شناسه دستگاه</small></div></div>
+        {serviceCategories.length > 1 && <div className="mb-4 grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => { setBrand(""); setForm({ ...form, deviceCategory: "MOBILE", deviceModel: "", imei: "" }); }} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "MOBILE" ? "border-copper bg-copper text-[#1A1410]" : "border-surface2 bg-surface2 text-muted"}`}><Smartphone size={16} /> موبایل</button>
+          <button type="button" onClick={() => { setBrand(""); setForm({ ...form, deviceCategory: "COMPUTER", deviceModel: "", imei: "" }); }} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "COMPUTER" ? "border-teal bg-teal text-[#0B1512]" : "border-surface2 bg-surface2 text-muted"}`}><MonitorSmartphone size={16} /> کامپیوتر</button>
+        </div>}
+        <label className="block text-xs text-muted mb-1">برند {form.deviceCategory === "COMPUTER" ? "دستگاه" : "گوشی"}</label>
         <div className="mb-3">
           <ComboBox
             value={brand}
             onChange={(v) => { setBrand(v); setForm({ ...form, deviceModel: "" }); }}
-            options={brandList}
-            starred={favoriteBrands}
+            options={form.deviceCategory === "COMPUTER" ? COMPUTER_BRANDS : brandList}
+            starred={form.deviceCategory === "COMPUTER" ? [] : favoriteBrands}
             placeholder="انتخاب یا تایپ برند..."
           />
         </div>
@@ -891,14 +910,14 @@ function NewTicketModal({ defaultLane, singleOperator, webPartnerIntake, onClose
                   : form.deviceModel
               }
               onChange={(m) => setForm({ ...form, deviceModel: m ? `${brand} ${m}` : "" })}
-              options={modelsForBrand}
-              placeholder="انتخاب یا تایپ مدل..."
+              options={form.deviceCategory === "COMPUTER" ? [] : modelsForBrand}
+              placeholder={form.deviceCategory === "COMPUTER" ? "مدل یا مشخصات دستگاه را تایپ کنید..." : "انتخاب یا تایپ مدل..."}
             />
           </div>
         )}
 
         <div className="mb-1">
-          <label className="block text-xs text-muted mb-1">IMEI (اختیاری)</label>
+          <label className="block text-xs text-muted mb-1">{form.deviceCategory === "COMPUTER" ? "شماره سریال (اختیاری)" : "IMEI (اختیاری)"}</label>
           <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
             value={form.imei} onChange={(e) => setForm({ ...form, imei: e.target.value })} />
         </div>
@@ -961,7 +980,7 @@ function NewTicketModal({ defaultLane, singleOperator, webPartnerIntake, onClose
         <div className="intake-content-title"><ShieldCheck size={18} /><div><b>تأیید نهایی</b><small>امنیت دستگاه و نحوه پذیرش</small></div></div>
         <label className="flex items-center gap-2 text-xs text-muted mb-2">
           <input type="checkbox" checked={collectPasscode} onChange={(e) => setCollectPasscode(e.target.checked)} />
-          دریافت رمز عبور صفحه گوشی از مشتری (برای تست بعد از تعمیر)
+          دریافت رمز ورود دستگاه از مشتری (برای تست بعد از تعمیر)
         </label>
         {collectPasscode && (
           <div className="mb-4">

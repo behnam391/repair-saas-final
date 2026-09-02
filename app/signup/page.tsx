@@ -26,8 +26,13 @@ const SPECIALTY_OPTIONS = [
 const ACTIVITY_OPTIONS = [
   { key: "REPAIR", label: "خدمات تعمیرات", desc: "پذیرش دستگاه، گردش تعمیر و تحویل", icon: Wrench },
   { key: "DEALER", label: "خرید و فروش", desc: "مدیریت معاملات و موجودی دستگاه", icon: ShoppingBag },
-  { key: "BOTH", label: "مرکز کامل موبایل", desc: "تعمیرات و خریدوفروش در کنار هم", icon: Store },
+  { key: "BOTH", label: "مرکز کامل خدمات", desc: "تعمیرات و خریدوفروش در کنار هم", icon: Store },
 ];
+
+const SERVICE_CATEGORY_OPTIONS = [
+  { key: "MOBILE", label: "موبایل و تبلت", desc: "پذیرش و تعمیر گوشی و تبلت", icon: Smartphone },
+  { key: "COMPUTER", label: "کامپیوتر و لپ‌تاپ", desc: "تعمیر، ارتقا و خدمات نرم‌افزاری رایانه", icon: MonitorSmartphone },
+] as const;
 
 // Step wizard: 1=کسب‌وکار، 2=مغازه، 3=مدیر، 4=موبایل و رمز — same visual
 // pattern as the device-intake wizard, so signup doesn't read as one long,
@@ -37,7 +42,7 @@ const STEPS = ["کسب‌وکار", "مغازه", "مدیر", "ورود"];
 export default function SignupPage() {
   const router = useRouter();
   const [form, setForm] = useState({
-    shopName: "", address: "", landlinePhone: "", businessSize: "SOLO" as string, specialties: [] as string[], shopType: "REPAIR" as string,
+    shopName: "", address: "", landlinePhone: "", businessSize: "SOLO" as string, specialties: [] as string[], serviceCategories: ["MOBILE"] as string[], shopType: "REPAIR" as string,
     ownerName: "", nationalId: "", birthDate: "", phone: "", password: "",
   });
   const [error, setError] = useState("");
@@ -54,8 +59,21 @@ export default function SignupPage() {
     }));
   }
 
+  function toggleServiceCategory(key: string) {
+    setForm((current) => {
+      const selected = current.serviceCategories.includes(key)
+        ? current.serviceCategories.filter((item) => item !== key)
+        : [...current.serviceCategories, key];
+      return selected.length ? { ...current, serviceCategories: selected } : current;
+    });
+  }
+
   function nextStep() {
     setError("");
+    if (step === 1 && form.shopType !== "DEALER" && form.serviceCategories.length === 0) {
+      setError("حداقل یک نوع دستگاه را انتخاب کنید");
+      return;
+    }
     if (step === 2 && !form.shopName.trim()) {
       setError("نام مغازه را وارد کنید");
       return;
@@ -169,10 +187,12 @@ export default function SignupPage() {
                   {ACTIVITY_OPTIONS.map((option) => { const Icon = option.icon; const active = form.shopType === option.key; return <button key={option.key} type="button" onClick={() => setForm({ ...form, shopType: option.key })} className={active ? "active" : ""}><i><Icon size={18} /></i><span><strong>{option.label}</strong><small>{option.desc}</small></span>{active && <Check size={15} />}</button>; })}
                 </div>
 
+                {form.shopType !== "DEALER" && <div className="signup-specialties"><div className="signup-subsection"><div><strong>دستگاه‌های تحت پوشش</strong><small>برای هر دو نوع، دو مسیر پذیرش جدا ساخته می‌شود</small></div></div><div className="signup-specialty-grid">{SERVICE_CATEGORY_OPTIONS.map((option) => { const Icon = option.icon; const active = form.serviceCategories.includes(option.key); return <button key={option.key} type="button" onClick={() => toggleServiceCategory(option.key)} className={active ? "active" : ""}><Icon size={17} /><span><strong>{option.label}</strong><small>{option.desc}</small></span>{active && <Check size={14} />}</button>; })}</div></div>}
+
                 {form.shopType !== "DEALER" && <motion.div className="signup-specialties" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}><div className="signup-subsection"><div><strong>تخصص‌های فعال</strong><small>یک یا چند مورد را انتخاب کنید</small></div></div><div className="signup-specialty-grid">{SPECIALTY_OPTIONS.map((option) => { const Icon = option.icon; const active = form.specialties.includes(option.key); return <button key={option.key} type="button" onClick={() => toggleSpecialty(option.key)} className={active ? "active" : ""}><Icon size={17} /><span><strong>{option.label}</strong><small>{option.desc}</small></span>{active && <Check size={14} />}</button>; })}</div></motion.div>}
               </>}
 
-              {step === 2 && <><div className="signup-heading"><span><Store size={14} /> هویت کسب‌وکار</span><h1>فضای کاری‌تان را معرفی کنید</h1><p>این اطلاعات در پنل و ارتباط با مشتریان نمایش داده می‌شود.</p></div><div className="signup-fields"><label><span>نام فروشگاه یا تعمیرگاه</span><div><Store size={18} /><input autoFocus value={form.shopName} onChange={(e) => setForm({ ...form, shopName: e.target.value })} placeholder="مثلاً موبایل مرکزی" /></div></label><label><span>آدرس <small>اختیاری</small></span><div><MonitorSmartphone size={18} /><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="شهر، خیابان و پلاک" /></div></label><label><span>تلفن ثابت <small>اختیاری</small></span><div><Smartphone size={18} /><input dir="ltr" value={form.landlinePhone} onChange={(e) => setForm({ ...form, landlinePhone: toLatinDigits(e.target.value) })} placeholder="021xxxxxxxx" /></div></label></div><div className="signup-summary"><Crown size={17} /><span><small>فضای انتخاب‌شده</small><strong>{selectedModel.label} · {ACTIVITY_OPTIONS.find((x) => x.key === form.shopType)?.label}</strong></span></div></>}
+              {step === 2 && <><div className="signup-heading"><span><Store size={14} /> هویت کسب‌وکار</span><h1>فضای کاری‌تان را معرفی کنید</h1><p>این اطلاعات در پنل و ارتباط با مشتریان نمایش داده می‌شود.</p></div><div className="signup-fields"><label><span>نام فروشگاه یا تعمیرگاه</span><div><Store size={18} /><input autoFocus value={form.shopName} onChange={(e) => setForm({ ...form, shopName: e.target.value })} placeholder="مثلاً مرکز خدمات فناوری" /></div></label><label><span>آدرس <small>اختیاری</small></span><div><MonitorSmartphone size={18} /><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="شهر، خیابان و پلاک" /></div></label><label><span>تلفن ثابت <small>اختیاری</small></span><div><Smartphone size={18} /><input dir="ltr" value={form.landlinePhone} onChange={(e) => setForm({ ...form, landlinePhone: toLatinDigits(e.target.value) })} placeholder="021xxxxxxxx" /></div></label></div><div className="signup-summary"><Crown size={17} /><span><small>فضای انتخاب‌شده</small><strong>{selectedModel.label} · {ACTIVITY_OPTIONS.find((x) => x.key === form.shopType)?.label}{form.shopType !== "DEALER" ? ` · ${form.serviceCategories.map((key) => SERVICE_CATEGORY_OPTIONS.find((item) => item.key === key)?.label).filter(Boolean).join(" و ")}` : ""}</strong></span></div></>}
 
               {step === 3 && <><div className="signup-heading"><span><UserRound size={14} /> مدیر فضای کاری</span><h1>حساب مدیر را بسازید</h1><p>این حساب دسترسی مالک و مدیریت کامل فضای کاری را خواهد داشت.</p></div><div className="signup-fields"><label><span>نام و نام خانوادگی مدیر</span><div><UserRound size={18} /><input autoFocus value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} placeholder="نام کامل شما" /></div></label><div className="signup-field-row"><label><span>کد ملی</span><div><ShieldCheck size={18} /><input dir="ltr" inputMode="numeric" value={form.nationalId} onChange={(e) => setForm({ ...form, nationalId: toLatinDigits(e.target.value) })} placeholder="۱۰ رقم" /></div></label><label><span>تاریخ تولد</span><JalaliDatePicker className="signup-date-input" value={form.birthDate} onChange={(value) => setForm({ ...form, birthDate: value })} /></label></div></div></>}
 

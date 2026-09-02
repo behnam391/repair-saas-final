@@ -13,6 +13,7 @@ const InvoiceSchema = z.object({
   laborCost: z.number().int().min(0),
   parts: z.array(PartLine).default([]),
   applyTax: z.boolean().default(true),
+  paidAmount: z.number().int().min(0).default(0),
 });
 
 // GET /api/invoices — list invoices for the signed-in shop, newest first.
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
       const taxPercent = body.applyTax ? shop.taxPercent : 0;
       const taxAmount = Math.round((subtotal * taxPercent) / 100);
       const total = subtotal + taxAmount;
+      const paidAmount = Math.min(total, body.paidAmount);
 
       const inv = await tx.invoice.create({
         data: {
@@ -83,6 +85,9 @@ export async function POST(req: NextRequest) {
           taxPercent,
           taxAmount,
           total,
+          paidAmount,
+          paid: paidAmount >= total,
+          lastPaymentAt: paidAmount > 0 ? new Date() : null,
         },
       });
 

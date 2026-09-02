@@ -8,7 +8,7 @@ import JalaliDatePicker from "@/components/JalaliDatePicker";
 import { AnimatedNumber, Reveal } from "@/components/Motion";
 import { motion } from "framer-motion";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
-import { BarChart3, ChevronDown, CircleDollarSign, LayoutDashboard, Printer, Settings2, Store, Trash2, UsersRound, Wrench } from "lucide-react";
+import { BarChart3, ChevronDown, CircleDollarSign, LayoutDashboard, MonitorSmartphone, Printer, Settings2, Smartphone, Store, Trash2, UsersRound, Wrench } from "lucide-react";
 
 const PUBLIC_APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL || "https://peyvo.ir").replace(/\/+$/, "");
 
@@ -22,7 +22,7 @@ const SPECIALTY_LABEL: Record<string, string> = { HARDWARE: "سخت‌افزار
 
 type Staff = { id: string; name: string; phone: string; role: string; specialty?: string | null; active: boolean };
 type ReportRow = { techId: string; name: string; role: string; closedCount: number; revenue: number };
-type ShopInfo = { id?: string; name: string; type?: string; businessSize?: string; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null; taxPercent?: number };
+type ShopInfo = { id?: string; name: string; type?: string; businessSize?: string; serviceCategories?: string[]; address: string | null; phone: string | null; plan: string; bankCardNumber?: string | null; bankAccountNumber?: string | null; latitude?: number | null; longitude?: number | null; province?: string | null; taxPercent?: number };
 
 const BUSINESS_SIZE_OPTIONS = [
   { key: "SOLO", label: "تک‌نفره" },
@@ -42,7 +42,7 @@ export default function AdminPage() {
   const [form, setForm] = useState({ name: "", phone: "", password: "", role: "HARDWARE", specialty: "" });
   const [error, setError] = useState("");
 
-  const [shopInfo, setShopInfo] = useState<ShopInfo>({ name: "", address: "", phone: "", plan: "free", bankCardNumber: "", bankAccountNumber: "" });
+  const [shopInfo, setShopInfo] = useState<ShopInfo>({ name: "", address: "", phone: "", plan: "free", serviceCategories: ["MOBILE"], bankCardNumber: "", bankAccountNumber: "" });
   const [shopSaved, setShopSaved] = useState(false);
   const [shopSaveError, setShopSaveError] = useState("");
   const [shopSaving, setShopSaving] = useState(false);
@@ -74,7 +74,7 @@ export default function AdminPage() {
     if (shopRes.ok) {
       const data = await shopRes.json();
       setShopInfo({
-        id: data.shop.id, name: data.shop.name, type: data.shop.type ?? "REPAIR", businessSize: data.shop.businessSize ?? "SOLO", address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
+        id: data.shop.id, name: data.shop.name, type: data.shop.type ?? "REPAIR", businessSize: data.shop.businessSize ?? "SOLO", serviceCategories: (data.shop.serviceCategories || "MOBILE").split(","), address: data.shop.address ?? "", phone: data.shop.phone ?? "", plan: data.shop.plan,
         bankCardNumber: data.shop.bankCardNumber ?? "", bankAccountNumber: data.shop.bankAccountNumber ?? "",
         latitude: data.shop.latitude ?? null, longitude: data.shop.longitude ?? null, province: data.shop.province ?? "",
         taxPercent: data.shop.taxPercent ?? 10,
@@ -124,7 +124,7 @@ export default function AdminPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: shopInfo.name.trim(), type: shopInfo.type, businessSize: shopInfo.businessSize,
+          name: shopInfo.name.trim(), type: shopInfo.type, businessSize: shopInfo.businessSize, serviceCategories: shopInfo.serviceCategories?.length ? shopInfo.serviceCategories : ["MOBILE"],
           address: shopInfo.address ?? "", phone: shopInfo.phone ?? "",
           bankCardNumber: shopInfo.bankCardNumber ?? "", bankAccountNumber: shopInfo.bankAccountNumber ?? "",
           latitude: shopInfo.latitude ?? undefined, longitude: shopInfo.longitude ?? undefined, province: shopInfo.province || undefined,
@@ -311,6 +311,22 @@ export default function AdminPage() {
           ))}
         </div>
         <p className="text-[10px] text-muted mb-3 -mt-2">همان انتخابی که موقع ثبت‌نام کردید — هر وقت خواستید از تک‌نفره به تیمی (یا برعکس) تغییرش دهید.</p>
+
+        <label className="block text-xs text-muted mb-2">دستگاه‌های قابل پذیرش</label>
+        <div className="grid grid-cols-2 gap-2 mb-4">
+          {([
+            { value: "MOBILE", label: "موبایل و تبلت", Icon: Smartphone },
+            { value: "COMPUTER", label: "کامپیوتر و لپ‌تاپ", Icon: MonitorSmartphone },
+          ] as const).map(({ value, label, Icon }) => {
+            const active = shopInfo.serviceCategories?.includes(value);
+            return <button key={value} type="button" onClick={() => setShopInfo((current) => {
+              const existing = current.serviceCategories ?? ["MOBILE"];
+              const next = active ? existing.filter((item) => item !== value) : [...existing, value];
+              return next.length ? { ...current, serviceCategories: next } : current;
+            })} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-[11px] font-bold transition ${active ? "border-teal bg-teal/10 text-teal" : "border-surface2 bg-surface2 text-muted"}`}><Icon size={17} />{label}</button>;
+          })}
+        </div>
+        {shopInfo.serviceCategories?.length === 2 && <p className="text-[10px] text-teal mb-4 -mt-2">دو مسیر جداگانه «پذیرش موبایل» و «پذیرش کامپیوتر» در منو فعال می‌شود.</p>}
 
         <label className="block text-xs text-muted mb-1">نام مغازه</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"

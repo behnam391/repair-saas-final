@@ -9,7 +9,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BadgeHelp, BarChart3, Boxes, ChevronDown, CircleUserRound, Clock3, FileText,
   Handshake, Headphones, History, House, Info, Landmark, Menu, MessageCircle,
-  NotebookTabs, PackageSearch, QrCode, ReceiptText, RotateCcw, ShoppingBag, Store, UsersRound,
+  MonitorSmartphone, NotebookTabs, PackageSearch, QrCode, ReceiptText, RotateCcw, ShoppingBag, Smartphone, Store, UsersRound,
   Settings, WalletCards, Wrench,
 } from "lucide-react";
 
@@ -20,12 +20,14 @@ export default function DashboardNav({
   role,
   guideUrl,
   shopType,
+  serviceCategories = "MOBILE",
   shopName,
   userName,
 }: {
   role: string;
   guideUrl: string | null;
   shopType?: string;
+  serviceCategories?: string;
   shopName?: string;
   userName?: string;
 }) {
@@ -72,10 +74,21 @@ export default function DashboardNav({
     setOpenGroup(label);
   }
 
+  const services = serviceCategories.split(",").filter((value) => value === "MOBILE" || value === "COMPUTER");
+  const intakeItems: NavItem[] = services.length > 1
+    ? [
+        { href: "/tickets?new=1&device=MOBILE", label: "پذیرش موبایل", Icon: Smartphone },
+        { href: "/tickets?new=1&device=COMPUTER", label: "پذیرش کامپیوتر", Icon: MonitorSmartphone },
+      ]
+    : services[0] === "COMPUTER"
+      ? [{ href: "/tickets?new=1&device=COMPUTER", label: "پذیرش کامپیوتر", Icon: MonitorSmartphone }]
+      : [{ href: "/tickets?new=1&device=MOBILE", label: "پذیرش موبایل", Icon: Smartphone }];
+
   const groups: NavGroup[] = [
     {
       label: "عملیات",
       items: [
+        ...intakeItems,
         { href: "/inventory", label: "انبار قطعات", Icon: Boxes },
         { href: "/sales", label: "فروش مستقیم", Icon: ShoppingBag },
         { href: "/invoices", label: "فاکتورها", Icon: ReceiptText },
@@ -129,7 +142,7 @@ export default function DashboardNav({
     .map((g) => ({
       ...g,
       items: g.items.filter((item) =>
-        canSeeNav(role, item.href) && (item.href !== "/admin/wallet" || billingContext === "web")
+        canSeeNav(role, item.href.split("?")[0]) && (item.href !== "/admin/wallet" || billingContext === "web")
       ),
     }))
     .filter((g) => g.items.length > 0);

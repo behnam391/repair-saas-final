@@ -25,6 +25,8 @@ export default function InvoicesPage() {
   const [laborCost, setLaborCost] = useState(0);
   const [parts, setParts] = useState<{ itemId: string; quantity: number }[]>([]);
   const [applyTax, setApplyTax] = useState(true);
+  const [settlementMode, setSettlementMode] = useState<"CREDIT" | "PARTIAL" | "PAID">("CREDIT");
+  const [initialPaidAmount, setInitialPaidAmount] = useState(0);
   const [taxPercent, setTaxPercent] = useState(10);
   const [error, setError] = useState("");
   const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null);
@@ -71,6 +73,10 @@ export default function InvoicesPage() {
     const item = items.find((i) => i.id === p.itemId);
     return sum + (item ? item.sellPrice * p.quantity : 0);
   }, 0);
+  const invoiceTotalPreview = partsCostPreview + laborCost + (applyTax ? Math.round(((partsCostPreview + laborCost) * taxPercent) / 100) : 0);
+  const outstandingInvoices = invoices.filter((invoice) => !invoice.paid);
+  const totalReceivable = outstandingInvoices.reduce((sum, invoice) => sum + Math.max(0, invoice.total - (invoice.paidAmount || 0)), 0);
+  const partialCount = outstandingInvoices.filter((invoice) => invoice.paidAmount > 0).length;
 
   async function submit() {
     setError("");
@@ -78,14 +84,20 @@ export default function InvoicesPage() {
     const res = await fetch("/api/invoices", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ticketId: selectedTicket, laborCost, parts, applyTax }),
+      body: JSON.stringify({
+        ticketId: selectedTicket,
+        laborCost,
+        parts,
+        applyTax,
+        paidAmount: settlementMode === "PAID" ? invoiceTotalPreview : settlementMode === "PARTIAL" ? Math.min(initialPaidAmount, invoiceTotalPreview) : 0,
+      }),
     });
     if (!res.ok) {
       const err = await res.json();
       setError(err.message || "صدور فاکتور ناموفق بود");
       return;
     }
-    setSelectedTicket(""); setLaborCost(0); setParts([]);
+    setSelectedTicket(""); setLaborCost(0); setParts([]); setSettlementMode("CREDIT"); setInitialPaidAmount(0);
     load();
   }
 
@@ -113,7 +125,8 @@ export default function InvoicesPage() {
   async function shareInvoice(inv: Invoice) {
     const url = `${PUBLIC_APP_ORIGIN}/pay/${inv.id}`;
     const customer = inv.ticket?.customer.name ?? inv.customerName ?? "مشتری";
-    const text = `${customer} عزیز، فاکتور شما به مبلغ ${inv.total.toLocaleString("fa-IR")} تومان آماده است. مشاهده و پرداخت: ${url}`;
+    const remaining = Math.max(0, inv.total - (inv.paidAmount || 0));
+    const text = `${customer} عزیز، فاکتور شما به مبلغ ${inv.total.toLocaleString("fa-IR")} تومان آماده است.${remaining > 0 ? ` مانده قابل پرداخت: ${remaining.toLocaleString("fa-IR")} تومان.` : " فاکتور تسویه شده است."} مشاهده فاکتور: ${url}`;
     try {
       const usedShare = typeof navigator.share === "function";
       if (usedShare) await navigator.share({ title: "فاکتور پیوو", text, url });
@@ -132,6 +145,11 @@ export default function InvoicesPage() {
         <p className="text-muted text-sm">در حال بارگذاری...</p>
       ) : (
         <>
+          <section className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="rounded-xl border border-danger/20 bg-danger/10 p-3"><small className="text-[10px] text-muted">کل مطالبات باقی‌مانده</small><b className="mt-1 block text-base text-danger">{totalReceivable.toLocaleString("fa-IR")} تومان</b></div>
+            <div className="rounded-xl border border-amber/20 bg-amber/10 p-3"><small className="text-[10px] text-muted">پرداخت ناقص</small><b className="mt-1 block text-base text-amber">{partialCount.toLocaleString("fa-IR")} فاکتور</b></div>
+            <div className="rounded-xl border border-surface2 bg-surface p-3"><small className="text-[10px] text-muted">نسیه و تسویه‌نشده</small><b className="mt-1 block text-base">{outstandingInvoices.length.toLocaleString("fa-IR")} فاکتور</b></div>
+          </section>
           <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
             <div className="text-sm font-bold mb-3">صدور فاکتور جدید</div>
 
@@ -193,7 +211,19 @@ export default function InvoicesPage() {
               {" "}جمع فرعی: <span className="mono">{(partsCostPreview + laborCost).toLocaleString("fa-IR")}</span> تومان
               {applyTax && <> · مالیات: <span className="mono">{Math.round(((partsCostPreview + laborCost) * taxPercent) / 100).toLocaleString("fa-IR")}</span> تومان</>}
               <br />
-              <span className="font-bold text-ink">جمع کل: {(partsCostPreview + laborCost + (applyTax ? Math.round(((partsCostPreview + laborCost) * taxPercent) / 100) : 0)).toLocaleString("fa-IR")} تومان</span>
+              <span className="font-bold text-ink">جمع کل: {invoiceTotalPreview.toLocaleString("fa-IR")} تومان</span>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-surface2 bg-surface2/60 p-3">
+              <label className="mb-2 block text-xs font-bold">وضعیت تسویه هنگام تحویل</label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {([
+                  ["CREDIT", "نسیه"],
+                  ["PARTIAL", "پرداخت بخشی"],
+                  ["PAID", "تسویه کامل"],
+                ] as const).map(([value, label]) => <button type="button" key={value} onClick={() => { setSettlementMode(value); if (value !== "PARTIAL") setInitialPaidAmount(0); }} className={`rounded-lg border px-2 py-2 text-[10px] font-bold ${settlementMode === value ? value === "PAID" ? "border-teal bg-teal/15 text-teal" : value === "PARTIAL" ? "border-amber bg-amber/15 text-amber" : "border-danger bg-danger/10 text-danger" : "border-border bg-surface text-muted"}`}>{label}</button>)}
+              </div>
+              {settlementMode === "PARTIAL" && <div className="mt-3"><label className="mb-1 block text-[10px] text-muted">مبلغی که الآن دریافت شد (تومان)</label><input type="text" inputMode="numeric" dir="ltr" className="w-full rounded-lg bg-surface px-3 py-2 text-sm" value={initialPaidAmount || ""} onChange={(event) => setInitialPaidAmount(Math.min(invoiceTotalPreview, num(event.target.value)))} /><p className="mt-1 text-[10px] text-amber">مانده نسیه: {Math.max(0, invoiceTotalPreview - initialPaidAmount).toLocaleString("fa-IR")} تومان</p></div>}
             </div>
 
             {error && <p className="text-danger text-xs mt-2">{error}</p>}
@@ -220,6 +250,10 @@ export default function InvoicesPage() {
                   <input type="text" inputMode="numeric" dir="ltr" className="w-full bg-surface rounded-lg px-2 py-1.5"
                     value={editInvoiceForm.paidAmount || ""} onChange={(e) => setEditInvoiceForm({ ...editInvoiceForm, paidAmount: Math.min(inv.total, num(e.target.value)) })} />
                   <div className="text-[10px] text-amber">مانده: {Math.max(0, inv.total - editInvoiceForm.paidAmount).toLocaleString("fa-IR")} تومان</div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button type="button" onClick={() => setEditInvoiceForm({ ...editInvoiceForm, paidAmount: 0 })} className="rounded-lg border border-danger/25 bg-danger/10 py-2 text-[10px] font-bold text-danger">ثبت به‌عنوان نسیه</button>
+                    <button type="button" onClick={() => setEditInvoiceForm({ ...editInvoiceForm, paidAmount: inv.total })} className="rounded-lg border border-teal/25 bg-teal/10 py-2 text-[10px] font-bold text-teal">تسویه کامل</button>
+                  </div>
                   <div className="flex gap-2">
                     <button onClick={() => saveInvoiceEdit(inv.id)} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">ذخیره</button>
                     <button onClick={() => setEditingInvoiceId(null)} className="flex-1 bg-surface rounded-lg py-1.5">انصراف</button>
@@ -237,7 +271,7 @@ export default function InvoicesPage() {
                   </div>
                   <div className="text-muted mt-1">
                     {inv.ticket?.customer.name ?? inv.customerName ?? "مشتری متفرقه"} · {formatJalaliDate(inv.createdAt)}
-                    {" "}· <span className={inv.paid ? "text-teal" : inv.paidAmount > 0 ? "text-amber" : "text-danger"}>{inv.paid ? "تسویه کامل" : inv.paidAmount > 0 ? "تسویه ناقص" : "پرداخت‌نشده"}</span>
+                    {" "}· <span className={inv.paid ? "text-teal" : inv.paidAmount > 0 ? "text-amber" : "text-danger"}>{inv.paid ? "تسویه کامل" : inv.paidAmount > 0 ? "پرداخت بخشی" : "نسیه"}</span>
                   </div>
                   {!inv.paid && <div className="mt-1 text-[10px] text-muted">پرداخت‌شده: {(inv.paidAmount || 0).toLocaleString("fa-IR")} · مانده: {Math.max(0, inv.total - (inv.paidAmount || 0)).toLocaleString("fa-IR")} تومان</div>}
                   {inv.taxAmount > 0 && <div className="text-muted mt-0.5">شامل {inv.taxPercent}٪ مالیات ({inv.taxAmount.toLocaleString("fa-IR")} تومان)</div>}

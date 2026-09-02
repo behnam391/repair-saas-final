@@ -4,6 +4,7 @@ import { requireSession, UnauthorizedError } from "@/lib/tenant";
 import { sendSms, sendIntakeSms, intakeReceivedMessage } from "@/lib/sms";
 import { preprocessPhone } from "@/lib/phone";
 import { encryptSecretOrPassthrough } from "@/lib/crypto";
+import { parseServiceCategories } from "@/lib/device-category";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ const CreateTicketSchema = z.object({
   // number Kavenegar can deliver to. See lib/phone.ts.
   customerPhone: z.preprocess(preprocessPhone, z.string().optional().default("")),
   deviceModel: z.string().min(1),
+  deviceCategory: z.enum(["MOBILE", "COMPUTER"]).default("MOBILE"),
   imei: z.string().optional(),
   issueInitial: z.string().min(1),
   lane: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]),
@@ -39,6 +41,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const lane = searchParams.get("lane");
     const status = searchParams.get("status");
+    const deviceCategory = searchParams.get("deviceCategory");
 
     const isSpecialist = ["HARDWARE", "SOFTWARE", "BOARD"].includes(role);
 
@@ -46,6 +49,7 @@ export async function GET(req: NextRequest) {
       where: {
         shopId,
         ...(lane ? { lane: lane as any } : {}),
+        ...(deviceCategory === "MOBILE" || deviceCategory === "COMPUTER" ? { deviceCategory } : {}),
         // The active board (this endpoint's main use, from tickets/page.tsx)
         // only ever asks for lane/no status filter — so by default, hide
         // tickets that already left the workflow (delivered or cancelled).
@@ -106,6 +110,10 @@ export async function POST(req: NextRequest) {
         { status: 403 }
       );
     }
+    const enabledCategories = parseServiceCategories(shop.serviceCategories);
+    if (!enabledCategories.includes(body.deviceCategory)) {
+      return NextResponse.json({ message: "این نوع دستگاه در تنظیمات تعمیرگاه فعال نیست" }, { status: 400 });
+    }
     {
       const startOfMonth = new Date();
       startOfMonth.setDate(1);
@@ -153,6 +161,7 @@ export async function POST(req: NextRequest) {
           no: nextNo,
           customerId: customer.id,
           deviceModel: body.deviceModel,
+          deviceCategory: body.deviceCategory,
           imei: body.imei,
           issueInitial: body.issueInitial,
           lane: body.lane,
@@ -169,7 +178,7 @@ export async function POST(req: NextRequest) {
           partnerPhone: body.partnerPhone || undefined,
           history: {
             create: [
-              { lane: body.lane, action: "پذیرش دستگاه", techId: userId, note: body.issueInitial },
+              { lane: body.lane, action: body.deviceCategory === "COMPUTER" ? "پذیرش کامپیوتر" : "پذیرش موبایل", techId: userId, note: body.issueInitial },
               { lane: body.lane, action: `ارجاع به ${laneLabel(body.lane)}`, techId: userId },
             ],
           },

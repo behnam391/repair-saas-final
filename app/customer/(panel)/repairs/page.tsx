@@ -4,7 +4,7 @@ import { formatJalaliDate } from "@/lib/jalali";
 import TicketChat from "@/components/TicketChat";
 
 type Repair = {
-  id: string; no: number; deviceModel: string; status: string; lane: string;
+  id: string; no: number; deviceModel: string; deviceCategory?: string; status: string; lane: string;
   estimatedCost: number | null; finalCost: number | null;
   createdAt: string; deliveredAt: string | null; rated: boolean;
   shop: { id: string; name: string; phone: string | null; province: string | null; address: string | null };
@@ -57,7 +57,7 @@ export default function CustomerRepairsPage() {
               <div key={r.id} className={`repair-tag card-hover ${tagCls} bg-surface border border-surface2 rounded-xl p-3 text-xs`}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-bold text-sm">{r.deviceModel}</div>
+                    <div className="font-bold text-sm">{r.deviceCategory === "COMPUTER" ? "💻" : "📱"} {r.deviceModel}</div>
                     <div className="text-muted mt-0.5">
                       {r.shop.name}{r.shop.province ? ` · ${r.shop.province}` : ""} · کد پیگیری #{r.no}
                     </div>
@@ -71,7 +71,7 @@ export default function CustomerRepairsPage() {
                   {r.invoice ? (
                     <span>
                       فاکتور: {r.invoice.total.toLocaleString("fa-IR")} تومان
-                      {r.invoice.paid ? " (پرداخت‌شده)" : " (پرداخت‌نشده)"}
+                      {r.invoice.paid ? " (تسویه‌شده)" : r.invoice.paidAmount > 0 ? " (پرداخت بخشی)" : " (نسیه/پرداخت‌نشده)"}
                       {!r.invoice.paid && r.invoice.paidAmount > 0 && ` — پرداخت‌شده ${r.invoice.paidAmount.toLocaleString("fa-IR")}, مانده ${(r.invoice.total - r.invoice.paidAmount).toLocaleString("fa-IR")} تومان`}
                     </span>
                   ) : r.finalCost ? (

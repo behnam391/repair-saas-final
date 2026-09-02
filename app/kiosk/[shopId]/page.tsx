@@ -5,16 +5,19 @@ import PatternLockInput from "@/components/PatternLockInput";
 import ComboBox from "@/components/ComboBox";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
 
+const COMPUTER_BRANDS = ["Apple", "ASUS", "Acer", "Dell", "HP", "Lenovo", "MSI", "Microsoft", "Samsung", "Huawei", "Gigabyte", "سایر"];
+
 export default function KioskPage() {
   const params = useParams();
   const shopId = params.shopId as string;
   const [shopName, setShopName] = useState("");
   const [notFound, setNotFound] = useState(false);
   const [form, setForm] = useState({
-    customerName: "", customerPhone: "", deviceModel: "", imei: "", issueDescription: "",
+    customerName: "", customerPhone: "", deviceModel: "", deviceCategory: "MOBILE", imei: "", issueDescription: "",
     devicePasscode: "", devicePasscodeType: "PIN" as string,
   });
   const [catalog, setCatalog] = useState<Record<string, string[]>>({});
+  const [serviceCategories, setServiceCategories] = useState<string[]>(["MOBILE"]);
   const [brand, setBrand] = useState("");
   const [collectPasscode, setCollectPasscode] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -29,7 +32,11 @@ export default function KioskPage() {
     fetch(`/api/kiosk/${shopId}`).then((r) => {
       if (!r.ok) { setNotFound(true); return null; }
       return r.json();
-    }).then((d) => { if (d) { setShopName(d.shopName); setCatalog(d.catalog ?? {}); } });
+    }).then((d) => { if (d) {
+      const categories = (d.serviceCategories ?? ["MOBILE"]).filter((item: string) => item === "MOBILE" || item === "COMPUTER");
+      setShopName(d.shopName); setCatalog(d.catalog ?? {}); setServiceCategories(categories.length ? categories : ["MOBILE"]);
+      if (categories.length === 1 && categories[0] === "COMPUTER") setForm((current) => ({ ...current, deviceCategory: "COMPUTER" }));
+    } });
   }, [shopId]);
 
   // After submitting, poll the intake status every 5s so the customer sees
@@ -69,7 +76,7 @@ export default function KioskPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) { setError("ثبت ناموفق بود، لطفاً دوباره تلاش کنید"); return; }
+    if (!res.ok) { const data = await res.json().catch(() => ({})); setError(data.message || "ثبت ناموفق بود، لطفاً دوباره تلاش کنید"); return; }
     const data = await res.json().catch(() => null);
     if (data?.intake?.id) setIntakeId(data.intake.id);
     setSubmitted(true);
@@ -124,6 +131,11 @@ export default function KioskPage() {
         <h1 className="display-heading text-lg mb-1">{shopName || "..."}</h1>
         <p className="text-xs text-muted mb-5">اطلاعات دستگاه خود را برای پذیرش وارد کنید</p>
 
+        {serviceCategories.length > 1 && <div className="mb-4 grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => { setBrand(""); setForm({ ...form, deviceCategory: "MOBILE", deviceModel: "", imei: "" }); }} className={`rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "MOBILE" ? "border-copper bg-copper text-[#1A1410]" : "border-surface2 bg-surface2 text-muted"}`}>📱 پذیرش موبایل</button>
+          <button type="button" onClick={() => { setBrand(""); setForm({ ...form, deviceCategory: "COMPUTER", deviceModel: "", imei: "" }); }} className={`rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "COMPUTER" ? "border-teal bg-teal text-[#0B1512]" : "border-surface2 bg-surface2 text-muted"}`}>💻 پذیرش کامپیوتر</button>
+        </div>}
+
         <div className="mb-3">
           <label className="block text-xs text-muted mb-1">نام و نام خانوادگی</label>
           <input
@@ -141,11 +153,11 @@ export default function KioskPage() {
         </div>
 
         <div className="mb-3">
-          <label className="block text-xs text-muted mb-1">برند گوشی</label>
+          <label className="block text-xs text-muted mb-1">برند {form.deviceCategory === "COMPUTER" ? "کامپیوتر" : "گوشی"}</label>
           <ComboBox
             value={brand}
             onChange={(v) => { setBrand(v); setForm({ ...form, deviceModel: "" }); }}
-            options={brandList}
+            options={form.deviceCategory === "COMPUTER" ? COMPUTER_BRANDS : brandList}
             placeholder="انتخاب یا تایپ برند..."
           />
         </div>
@@ -156,14 +168,14 @@ export default function KioskPage() {
             <ComboBox
               value={form.deviceModel.startsWith(`${brand} `) ? form.deviceModel.slice(brand.length + 1) : form.deviceModel}
               onChange={(m) => setForm({ ...form, deviceModel: m ? `${brand} ${m}` : "" })}
-              options={modelsForBrand}
-              placeholder="انتخاب یا تایپ مدل..."
+              options={form.deviceCategory === "COMPUTER" ? [] : modelsForBrand}
+              placeholder={form.deviceCategory === "COMPUTER" ? "مدل یا مشخصات دستگاه را تایپ کنید..." : "انتخاب یا تایپ مدل..."}
             />
           </div>
         )}
 
         <div className="mb-3">
-          <label className="block text-xs text-muted mb-1">IMEI (اختیاری)</label>
+          <label className="block text-xs text-muted mb-1">{form.deviceCategory === "COMPUTER" ? "شماره سریال (اختیاری)" : "IMEI (اختیاری)"}</label>
           <input
             className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
             inputMode="tel" dir="ltr"
@@ -178,7 +190,7 @@ export default function KioskPage() {
 
         <label className="flex items-center gap-2 text-xs text-muted mb-2">
           <input type="checkbox" checked={collectPasscode} onChange={(e) => setCollectPasscode(e.target.checked)} />
-          می‌خواهم رمز گوشی را برای تست بعد از تعمیر ثبت کنم (اختیاری)
+          می‌خواهم رمز دستگاه را برای تست بعد از تعمیر ثبت کنم (اختیاری)
         </label>
         {collectPasscode && (
           <div className="mb-4">

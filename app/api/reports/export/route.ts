@@ -44,9 +44,9 @@ export async function GET(req: NextRequest) {
         take: 5000,
       });
       const rows: (string | number | null | undefined)[][] = [
-        ["شماره", "مشتری", "تلفن مشتری", "دستگاه", "IMEI", "شرح مشکل", "بخش", "وضعیت", "تعمیرکار", "هزینه نهایی", "تاریخ پذیرش", "تاریخ تحویل"],
+        ["شماره", "مشتری", "تلفن مشتری", "دسته دستگاه", "دستگاه", "IMEI/سریال", "شرح مشکل", "بخش", "وضعیت", "تعمیرکار", "هزینه نهایی", "تاریخ پذیرش", "تاریخ تحویل"],
         ...tickets.map((t) => [
-          t.no, t.customer.name, t.customer.phone, t.deviceModel, t.imei, t.issueInitial,
+          t.no, t.customer.name, t.customer.phone, t.deviceCategory === "COMPUTER" ? "کامپیوتر/لپ‌تاپ" : "موبایل/تبلت", t.deviceModel, t.imei, t.issueInitial,
           t.lane, STATUS_FA[t.status] ?? t.status, t.assignedTo?.name, t.finalCost,
           fa(t.createdAt), t.deliveredAt ? fa(t.deliveredAt) : "",
         ]),
@@ -74,14 +74,14 @@ export async function GET(req: NextRequest) {
       take: 5000,
     });
     const rows: (string | number | null | undefined)[][] = [
-      ["شناسه", "نوع", "مشتری", "دستگاه/کالا", "اجرت", "قطعات/کالا", "مالیات", "جمع کل", "پرداخت", "کد رهگیری آنلاین", "تاریخ"],
+      ["شناسه", "نوع", "مشتری", "دستگاه/کالا", "اجرت", "قطعات/کالا", "مالیات", "جمع کل", "پرداخت‌شده", "مانده", "وضعیت پرداخت", "کد رهگیری آنلاین", "تاریخ"],
       ...invoices.map((inv) => [
         inv.id.slice(0, 8),
         inv.type === "SALE" ? "فروش مستقیم" : "تعمیر",
         inv.ticket?.customer.name ?? inv.customerName,
         inv.ticket ? `${inv.ticket.deviceModel} #${inv.ticket.no}` : "فروش کالا",
-        inv.laborCost, inv.partsCost, inv.taxAmount, inv.total,
-        inv.paid ? "پرداخت‌شده" : "پرداخت‌نشده", inv.paymentRefId,
+        inv.laborCost, inv.partsCost, inv.taxAmount, inv.total, inv.paidAmount, Math.max(0, inv.total - inv.paidAmount),
+        inv.paid ? "تسویه‌شده" : inv.paidAmount > 0 ? "پرداخت بخشی" : "نسیه/پرداخت‌نشده", inv.paymentRefId,
         fa(inv.createdAt),
       ]),
     ];

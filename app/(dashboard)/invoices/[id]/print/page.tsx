@@ -8,7 +8,7 @@ type InvoiceDetail = {
   customerName: string | null; customerPhone: string | null;
   shop: { name: string; address: string | null; phone: string | null; bankCardNumber: string | null; bankAccountNumber: string | null };
   ticket: {
-    no: number; deviceModel: string; imei: string | null; issueInitial: string;
+    no: number; deviceModel: string; deviceCategory?: string; imei: string | null; issueInitial: string;
     customer: { name: string; phone: string };
     partsUsed: { quantity: number; priceCharged: number; item: { name: string } }[];
   } | null;
@@ -50,7 +50,7 @@ export default function PrintInvoicePage() {
             <>
               <div>مشتری: {invoice.ticket.customer.name} ({invoice.ticket.customer.phone})</div>
               <div>دستگاه: {invoice.ticket.deviceModel} — کد پیگیری #{invoice.ticket.no}</div>
-              {invoice.ticket.imei && <div>IMEI: {invoice.ticket.imei}</div>}
+              {invoice.ticket.imei && <div>{invoice.ticket.deviceCategory === "COMPUTER" ? "شماره سریال" : "IMEI"}: {invoice.ticket.imei}</div>}
               <div>شرح: {invoice.ticket.issueInitial}</div>
             </>
           ) : (
@@ -105,7 +105,7 @@ export default function PrintInvoicePage() {
         <div className="mt-2 grid grid-cols-2 gap-1 text-xs text-gray-600">
           <span>پرداخت‌شده: {(invoice.paidAmount || 0).toLocaleString("fa-IR")} تومان</span>
           <span className="text-left">مانده: {Math.max(0, invoice.total - (invoice.paidAmount || 0)).toLocaleString("fa-IR")} تومان</span>
-          <span className="col-span-2">وضعیت: {invoice.paid ? "تسویه کامل" : invoice.paidAmount > 0 ? "تسویه ناقص" : "پرداخت‌نشده"}</span>
+          <span className="col-span-2">وضعیت: {invoice.paid ? "تسویه کامل" : invoice.paidAmount > 0 ? "پرداخت بخشی" : "نسیه/پرداخت‌نشده"}</span>
         </div>
 
         {(invoice.shop.bankCardNumber || invoice.shop.bankAccountNumber) && (

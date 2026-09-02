@@ -28,6 +28,9 @@ model Shop {
   // "TEAM" (owner + a few staff with chosen specialties), "ENTERPRISE" (many staff)
   businessSize  String   @default("SOLO")
   specialties   String?  // comma-separated: e.g. "HARDWARE,SOFTWARE" — which repair types this shop offers
+  // Device families this shop accepts: "MOBILE", "COMPUTER", or both.
+  // Stored comma-separated to keep backward-compatible configuration simple.
+  serviceCategories String @default("MOBILE")
   landlinePhone String?  // shop's fixed/landline number, separate from the mobile `phone` above
   latitude      Float?
   longitude     Float?
@@ -298,6 +301,7 @@ model Ticket {
   customer      Customer     @relation(fields: [customerId], references: [id])
 
   deviceModel   String
+  deviceCategory String @default("MOBILE") // MOBILE | COMPUTER
   imei          String?
   issueInitial  String       // the problem as described at intake
   devicePasscode String?     // customer's screen lock/passcode, only if they opted to give it (for post-repair testing)
@@ -964,6 +968,7 @@ model PendingIntake {
   customerName  String
   customerPhone String
   deviceModel   String
+  deviceCategory String @default("MOBILE") // MOBILE | COMPUTER
   imei          String?
   issueDescription String
   devicePasscode String?

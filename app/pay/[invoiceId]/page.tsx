@@ -100,7 +100,7 @@ export default function PayInvoicePage() {
         </div>
 
         <div className="flex justify-between font-extrabold text-sm border-t border-surface2 pt-3 mb-4">
-          <span>مبلغ قابل پرداخت</span>
+          <span>مبلغ کل فاکتور</span>
           <span className="mono">{invoice.total.toLocaleString("fa-IR")} تومان</span>
         </div>
 

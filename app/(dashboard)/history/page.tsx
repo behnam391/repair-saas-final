@@ -9,7 +9,7 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 type Result = {
-  id: string; no: number; deviceModel: string; imei: string | null; issueInitial: string; status: string; createdAt: string;
+  id: string; no: number; deviceModel: string; deviceCategory?: string; imei: string | null; issueInitial: string; status: string; createdAt: string;
   customer: { name: string; phone: string }; assignedTo: { name: string } | null;
 };
 
@@ -42,7 +42,7 @@ export default function HistoryPage() {
       <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6 space-y-2">
         <input
           className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm"
-          placeholder="جستجو: نام/شماره مشتری، مدل دستگاه، یا IMEI"
+          placeholder="جستجو: نام/شماره مشتری، مدل دستگاه، IMEI یا سریال"
           value={q} onChange={(e) => setQ(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && search()}
         />
@@ -75,11 +75,11 @@ export default function HistoryPage() {
             {results.map((r) => (
               <div key={r.id} className="bg-surface2 border border-surface2 rounded-lg p-3 text-xs">
                 <div className="flex justify-between">
-                  <span className="font-bold">{r.deviceModel} #{r.no}</span>
+                  <span className="font-bold">{r.deviceCategory === "COMPUTER" ? "💻" : "📱"} {r.deviceModel} #{r.no}</span>
                   <span className="text-muted">{STATUS_LABEL[r.status] ?? r.status}</span>
                 </div>
                 <div className="text-muted mt-1">{r.customer.name} · {r.customer.phone}</div>
-                {r.imei && <div className="mono text-muted mt-0.5">IMEI: {r.imei}</div>}
+                {r.imei && <div className="mono text-muted mt-0.5">{r.deviceCategory === "COMPUTER" ? "Serial" : "IMEI"}: {r.imei}</div>}
                 <div className="text-[#C7CAD1] mt-1">{r.issueInitial}</div>
                 <div className="text-[10px] text-muted mt-1">
                   {r.assignedTo?.name && `تعمیرکار: ${r.assignedTo.name} · `}{formatJalaliDate(r.createdAt)}

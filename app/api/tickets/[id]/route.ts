@@ -26,7 +26,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     const ticket = await db.ticket.findFirst({
       where: { id: params.id, shopId },
       select: {
-        id: true, no: true, deviceModel: true, imei: true, issueInitial: true,
+        id: true, no: true, deviceModel: true, deviceCategory: true, imei: true, issueInitial: true,
         customerDamageNotes: true, receiptAck: true, intakeSource: true,
         partnerName: true, partnerPhone: true, createdAt: true,
         customer: { select: { name: true, phone: true } },

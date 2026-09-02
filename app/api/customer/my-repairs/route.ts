@@ -19,7 +19,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
       take: 100,
       select: {
-        id: true, no: true, deviceModel: true, status: true, lane: true,
+        id: true, no: true, deviceModel: true, deviceCategory: true, status: true, lane: true,
         estimatedCost: true, finalCost: true,
         createdAt: true, deliveredAt: true,
         shop: { select: { id: true, name: true, phone: true, province: true, address: true } },

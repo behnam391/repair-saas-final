@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import { formatJalaliDate } from "@/lib/jalali";
 
 type IntakeReceipt = {
-  id: string; no: number; deviceModel: string; imei: string | null; issueInitial: string;
+  id: string; no: number; deviceModel: string; deviceCategory?: string; imei: string | null; issueInitial: string;
   customerDamageNotes: string | null; receiptAck: string | null; intakeSource: string;
   partnerName: string | null; partnerPhone: string | null; createdAt: string;
   customer: { name: string; phone: string };
@@ -51,9 +51,10 @@ export default function IntakeReceiptPage() {
         <section className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
           <div><span className="text-gray-500">مشتری:</span> {ticket.customer.name}</div>
           <div><span className="text-gray-500">شماره تماس:</span> <span dir="ltr">{ticket.customer.phone}</span></div>
+          <div><span className="text-gray-500">نوع پذیرش:</span> {ticket.deviceCategory === "COMPUTER" ? "کامپیوتر/لپ‌تاپ" : "موبایل/تبلت"}</div>
           <div><span className="text-gray-500">دستگاه:</span> {ticket.deviceModel}</div>
           <div><span className="text-gray-500">تاریخ پذیرش:</span> {formatJalaliDate(ticket.createdAt)}</div>
-          {ticket.imei && <div className="col-span-2"><span className="text-gray-500">IMEI:</span> <span dir="ltr">{ticket.imei}</span></div>}
+          {ticket.imei && <div className="col-span-2"><span className="text-gray-500">{ticket.deviceCategory === "COMPUTER" ? "شماره سریال:" : "IMEI:"}</span> <span dir="ltr">{ticket.imei}</span></div>}
           {ticket.intakeSource === "PARTNER" && (
             <div className="col-span-2 rounded-lg bg-gray-100 p-2"><span className="text-gray-500">تحویل از همکار:</span> {ticket.partnerName}{ticket.partnerPhone ? ` · ${ticket.partnerPhone}` : ""}</div>
           )}

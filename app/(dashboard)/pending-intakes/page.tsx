@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-type Intake = { id: string; customerName: string; customerPhone: string; deviceModel: string; imei: string | null; issueDescription: string; createdAt: string; isNewCustomer: boolean; devicePasscode?: string | null; devicePasscodeType?: string | null };
+type Intake = { id: string; customerName: string; customerPhone: string; deviceModel: string; deviceCategory?: string; imei: string | null; issueDescription: string; createdAt: string; isNewCustomer: boolean; devicePasscode?: string | null; devicePasscodeType?: string | null };
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار" },
@@ -52,10 +52,10 @@ function IntakeCard({ intake, onDone }: { intake: Intake; onDone: () => void }) 
   return (
     <div className="bg-surface border border-surface2 rounded-xl p-4 text-xs card-hover">
       <div className="flex justify-between items-start gap-2">
-        <div className="font-bold text-sm">{intake.deviceModel}</div>
+        <div className="font-bold text-sm">{intake.deviceCategory === "COMPUTER" ? "💻" : "📱"} {intake.deviceModel}</div>
         <div className="text-muted mono shrink-0">{intake.customerPhone}</div>
       </div>
-      {intake.imei && <div className="mono text-muted mt-0.5">IMEI: {intake.imei}</div>}
+      {intake.imei && <div className="mono text-muted mt-0.5">{intake.deviceCategory === "COMPUTER" ? "سریال" : "IMEI"}: {intake.imei}</div>}
 
       {intake.devicePasscode && (
         <div className="text-xs mt-1.5 bg-surface2 rounded-lg px-2 py-1">
