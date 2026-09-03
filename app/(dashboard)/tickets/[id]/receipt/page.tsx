@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { formatJalaliDate } from "@/lib/jalali";
+import { computerAccessoryLabels, computerDeviceTypeLabel } from "@/lib/computer-intake";
 
 type IntakeReceipt = {
-  id: string; no: number; deviceModel: string; deviceCategory?: string; imei: string | null; issueInitial: string;
+  id: string; no: number; deviceModel: string; deviceCategory?: string; deviceType?: string | null; deviceBrand?: string | null;
+  operatingSystem?: string | null; accessories?: string | null; imei: string | null; issueInitial: string;
   customerDamageNotes: string | null; receiptAck: string | null; intakeSource: string;
   partnerName: string | null; partnerPhone: string | null; createdAt: string;
   customer: { name: string; phone: string };
@@ -55,6 +57,11 @@ export default function IntakeReceiptPage() {
           <div><span className="text-gray-500">دستگاه:</span> {ticket.deviceModel}</div>
           <div><span className="text-gray-500">تاریخ پذیرش:</span> {formatJalaliDate(ticket.createdAt)}</div>
           {ticket.imei && <div className="col-span-2"><span className="text-gray-500">{ticket.deviceCategory === "COMPUTER" ? "شماره سریال:" : "IMEI:"}</span> <span dir="ltr">{ticket.imei}</span></div>}
+          {ticket.deviceCategory === "COMPUTER" && <>
+            <div><span className="text-gray-500">نوع سیستم:</span> {computerDeviceTypeLabel(ticket.deviceType)}</div>
+            <div><span className="text-gray-500">سیستم‌عامل:</span> {ticket.operatingSystem || "نامشخص"}</div>
+            <div className="col-span-2"><span className="text-gray-500">لوازم همراه:</span> {computerAccessoryLabels(ticket.accessories).join("، ") || "بدون لوازم"}</div>
+          </>}
           {ticket.intakeSource === "PARTNER" && (
             <div className="col-span-2 rounded-lg bg-gray-100 p-2"><span className="text-gray-500">تحویل از همکار:</span> {ticket.partnerName}{ticket.partnerPhone ? ` · ${ticket.partnerPhone}` : ""}</div>
           )}

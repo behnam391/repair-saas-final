@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
+import { COMPUTER_LANE_LABELS, computerAccessoryLabels, computerDeviceTypeLabel } from "@/lib/computer-intake";
 
-type Intake = { id: string; customerName: string; customerPhone: string; deviceModel: string; deviceCategory?: string; imei: string | null; issueDescription: string; createdAt: string; isNewCustomer: boolean; devicePasscode?: string | null; devicePasscodeType?: string | null };
+type Intake = { id: string; customerName: string; customerPhone: string; deviceModel: string; deviceCategory?: string; deviceType?: string | null; deviceBrand?: string | null; operatingSystem?: string | null; accessories?: string | null; imei: string | null; issueDescription: string; createdAt: string; isNewCustomer: boolean; devicePasscode?: string | null; devicePasscodeType?: string | null };
 
 const LANES = [
   { key: "HARDWARE", label: "سخت‌افزار" },
@@ -56,10 +57,11 @@ function IntakeCard({ intake, onDone }: { intake: Intake; onDone: () => void }) 
         <div className="text-muted mono shrink-0">{intake.customerPhone}</div>
       </div>
       {intake.imei && <div className="mono text-muted mt-0.5">{intake.deviceCategory === "COMPUTER" ? "سریال" : "IMEI"}: {intake.imei}</div>}
+      {intake.deviceCategory === "COMPUTER" && <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl border border-teal/20 bg-teal/5 p-2 text-[10px] text-muted"><span>نوع: <b className="text-ink">{computerDeviceTypeLabel(intake.deviceType)}</b></span><span>سیستم‌عامل: <b className="text-ink">{intake.operatingSystem || "نامشخص"}</b></span><span className="col-span-2">لوازم همراه: <b className="text-ink">{computerAccessoryLabels(intake.accessories).join("، ") || "بدون لوازم"}</b></span></div>}
 
       {intake.devicePasscode && (
         <div className="text-xs mt-1.5 bg-surface2 rounded-lg px-2 py-1">
-          <span className="text-muted">رمز گوشی ({intake.devicePasscodeType === "PATTERN" ? "الگو" : intake.devicePasscodeType === "PASSWORD" ? "پسورد" : "پین"}): </span>
+          <span className="text-muted">رمز {intake.deviceCategory === "COMPUTER" ? "سیستم" : "گوشی"} ({intake.devicePasscodeType === "PATTERN" ? "الگو" : intake.devicePasscodeType === "PASSWORD" ? "پسورد" : "پین"}): </span>
           <span className="mono font-bold">{intake.devicePasscode}</span>
         </div>
       )}
@@ -86,7 +88,7 @@ function IntakeCard({ intake, onDone }: { intake: Intake; onDone: () => void }) 
       {/* Lane picker as buttons (no tiny dropdown). */}
       <div className="mt-3">
         <div className="text-[11px] text-muted mb-1.5">ارجاع به بخش:</div>
-        <div className="flex gap-1.5">
+        <div className={intake.deviceCategory === "COMPUTER" ? "grid grid-cols-1 gap-1.5 sm:grid-cols-3" : "flex gap-1.5"}>
           {LANES.map((l) => (
             <button
               key={l.key}
@@ -95,7 +97,7 @@ function IntakeCard({ intake, onDone }: { intake: Intake; onDone: () => void }) 
                 lane === l.key ? "bg-copper text-white border-copper" : "bg-surface2 border-border text-muted"
               }`}
             >
-              {l.label}
+              {intake.deviceCategory === "COMPUTER" ? COMPUTER_LANE_LABELS[l.key] : l.label}
             </button>
           ))}
         </div>

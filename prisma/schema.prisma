@@ -302,6 +302,10 @@ model Ticket {
 
   deviceModel   String
   deviceCategory String @default("MOBILE") // MOBILE | COMPUTER
+  deviceType    String? // LAPTOP | DESKTOP | ALL_IN_ONE | MINI_PC | OTHER
+  deviceBrand   String?
+  operatingSystem String?
+  accessories   String? // comma-separated accessory codes received with the device
   imei          String?
   issueInitial  String       // the problem as described at intake
   devicePasscode String?     // customer's screen lock/passcode, only if they opted to give it (for post-repair testing)
@@ -969,6 +973,10 @@ model PendingIntake {
   customerPhone String
   deviceModel   String
   deviceCategory String @default("MOBILE") // MOBILE | COMPUTER
+  deviceType    String?
+  deviceBrand   String?
+  operatingSystem String?
+  accessories   String?
   imei          String?
   issueDescription String
   devicePasscode String?

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, requireRole, UnauthorizedError } from "@/lib/tenant";
+import { computerAccessoryLabels, computerDeviceTypeLabel } from "@/lib/computer-intake";
 
 export const dynamic = "force-dynamic";
 
@@ -44,9 +45,9 @@ export async function GET(req: NextRequest) {
         take: 5000,
       });
       const rows: (string | number | null | undefined)[][] = [
-        ["شماره", "مشتری", "تلفن مشتری", "دسته دستگاه", "دستگاه", "IMEI/سریال", "شرح مشکل", "بخش", "وضعیت", "تعمیرکار", "هزینه نهایی", "تاریخ پذیرش", "تاریخ تحویل"],
+        ["شماره", "مشتری", "تلفن مشتری", "دسته دستگاه", "نوع دستگاه", "برند", "دستگاه", "سیستم‌عامل", "لوازم همراه", "IMEI/سریال", "شرح مشکل", "بخش", "وضعیت", "تعمیرکار", "هزینه نهایی", "تاریخ پذیرش", "تاریخ تحویل"],
         ...tickets.map((t) => [
-          t.no, t.customer.name, t.customer.phone, t.deviceCategory === "COMPUTER" ? "کامپیوتر/لپ‌تاپ" : "موبایل/تبلت", t.deviceModel, t.imei, t.issueInitial,
+          t.no, t.customer.name, t.customer.phone, t.deviceCategory === "COMPUTER" ? "کامپیوتر/لپ‌تاپ" : "موبایل/تبلت", t.deviceCategory === "COMPUTER" ? computerDeviceTypeLabel(t.deviceType) : "", t.deviceBrand, t.deviceModel, t.operatingSystem, t.deviceCategory === "COMPUTER" ? computerAccessoryLabels(t.accessories).join("، ") : "", t.imei, t.issueInitial,
           t.lane, STATUS_FA[t.status] ?? t.status, t.assignedTo?.name, t.finalCost,
           fa(t.createdAt), t.deliveredAt ? fa(t.deliveredAt) : "",
         ]),

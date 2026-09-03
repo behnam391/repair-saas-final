@@ -4,8 +4,7 @@ import { useParams } from "next/navigation";
 import PatternLockInput from "@/components/PatternLockInput";
 import ComboBox from "@/components/ComboBox";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
-
-const COMPUTER_BRANDS = ["Apple", "ASUS", "Acer", "Dell", "HP", "Lenovo", "MSI", "Microsoft", "Samsung", "Huawei", "Gigabyte", "سایر"];
+import { COMPUTER_ACCESSORIES, COMPUTER_BRANDS, COMPUTER_DEVICE_TYPES, COMPUTER_OS_OPTIONS } from "@/lib/computer-intake";
 
 export default function KioskPage() {
   const params = useParams();
@@ -14,6 +13,7 @@ export default function KioskPage() {
   const [notFound, setNotFound] = useState(false);
   const [form, setForm] = useState({
     customerName: "", customerPhone: "", deviceModel: "", deviceCategory: "MOBILE", imei: "", issueDescription: "",
+    deviceType: "", deviceBrand: "", operatingSystem: "", accessories: "",
     devicePasscode: "", devicePasscodeType: "PIN" as string,
   });
   const [catalog, setCatalog] = useState<Record<string, string[]>>({});
@@ -35,7 +35,7 @@ export default function KioskPage() {
     }).then((d) => { if (d) {
       const categories = (d.serviceCategories ?? ["MOBILE"]).filter((item: string) => item === "MOBILE" || item === "COMPUTER");
       setShopName(d.shopName); setCatalog(d.catalog ?? {}); setServiceCategories(categories.length ? categories : ["MOBILE"]);
-      if (categories.length === 1 && categories[0] === "COMPUTER") setForm((current) => ({ ...current, deviceCategory: "COMPUTER" }));
+      if (categories.length === 1 && categories[0] === "COMPUTER") setForm((current) => ({ ...current, deviceCategory: "COMPUTER", deviceType: "LAPTOP" }));
     } });
   }, [shopId]);
 
@@ -61,6 +61,10 @@ export default function KioskPage() {
       setError("لطفاً همه فیلدهای ضروری را پر کنید");
       return;
     }
+    if (form.deviceCategory === "COMPUTER" && (!form.deviceType || !form.deviceBrand)) {
+      setError("نوع دستگاه و برند کامپیوتر را مشخص کنید");
+      return;
+    }
     if (!isValidMobile(form.customerPhone)) {
       setError("شماره موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد");
       return;
@@ -80,6 +84,20 @@ export default function KioskPage() {
     const data = await res.json().catch(() => null);
     if (data?.intake?.id) setIntakeId(data.intake.id);
     setSubmitted(true);
+  }
+
+  function switchDeviceCategory(category: "MOBILE" | "COMPUTER") {
+    setBrand("");
+    setCollectPasscode(false);
+    setForm((current) => ({ ...current, deviceCategory: category, deviceType: category === "COMPUTER" ? "LAPTOP" : "", deviceBrand: "", operatingSystem: "", accessories: "", deviceModel: "", imei: "", devicePasscode: "", devicePasscodeType: "PIN" }));
+  }
+
+  function toggleAccessory(key: string) {
+    setForm((current) => {
+      const selected = current.accessories.split(",").filter(Boolean);
+      const next = selected.includes(key) ? selected.filter((item) => item !== key) : [...selected, key];
+      return { ...current, accessories: next.join(",") };
+    });
   }
 
   if (notFound) {
@@ -127,13 +145,13 @@ export default function KioskPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-sm bg-surface border-t-2 border-t-copper border-x border-b border-surface2 rounded-2xl p-6">
+      <div className={`kiosk-intake-card w-full bg-surface rounded-2xl p-6 ${form.deviceCategory === "COMPUTER" ? "is-computer" : "is-mobile"}`}>
         <h1 className="display-heading text-lg mb-1">{shopName || "..."}</h1>
-        <p className="text-xs text-muted mb-5">اطلاعات دستگاه خود را برای پذیرش وارد کنید</p>
+        <p className="text-xs text-muted mb-5">{form.deviceCategory === "COMPUTER" ? "پذیرش تخصصی کامپیوتر و تجهیزات رایانه‌ای" : "اطلاعات موبایل خود را برای پذیرش وارد کنید"}</p>
 
         {serviceCategories.length > 1 && <div className="mb-4 grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => { setBrand(""); setForm({ ...form, deviceCategory: "MOBILE", deviceModel: "", imei: "" }); }} className={`rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "MOBILE" ? "border-copper bg-copper text-[#1A1410]" : "border-surface2 bg-surface2 text-muted"}`}>📱 پذیرش موبایل</button>
-          <button type="button" onClick={() => { setBrand(""); setForm({ ...form, deviceCategory: "COMPUTER", deviceModel: "", imei: "" }); }} className={`rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "COMPUTER" ? "border-teal bg-teal text-[#0B1512]" : "border-surface2 bg-surface2 text-muted"}`}>💻 پذیرش کامپیوتر</button>
+          <button type="button" onClick={() => switchDeviceCategory("MOBILE")} className={`rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "MOBILE" ? "border-copper bg-copper text-[#1A1410]" : "border-surface2 bg-surface2 text-muted"}`}>📱 پذیرش موبایل</button>
+          <button type="button" onClick={() => switchDeviceCategory("COMPUTER")} className={`rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "COMPUTER" ? "border-teal bg-teal text-[#0B1512]" : "border-surface2 bg-surface2 text-muted"}`}>💻 پذیرش کامپیوتر</button>
         </div>}
 
         <div className="mb-3">
@@ -152,50 +170,34 @@ export default function KioskPage() {
             onChange={(e) => setForm({ ...form, customerPhone: toLatinDigits(e.target.value) })} />
         </div>
 
-        <div className="mb-3">
-          <label className="block text-xs text-muted mb-1">برند {form.deviceCategory === "COMPUTER" ? "کامپیوتر" : "گوشی"}</label>
-          <ComboBox
-            value={brand}
-            onChange={(v) => { setBrand(v); setForm({ ...form, deviceModel: "" }); }}
-            options={form.deviceCategory === "COMPUTER" ? COMPUTER_BRANDS : brandList}
-            placeholder="انتخاب یا تایپ برند..."
-          />
-        </div>
-
-        {brand && (
-          <div className="mb-3">
-            <label className="block text-xs text-muted mb-1">مدل</label>
-            <ComboBox
-              value={form.deviceModel.startsWith(`${brand} `) ? form.deviceModel.slice(brand.length + 1) : form.deviceModel}
-              onChange={(m) => setForm({ ...form, deviceModel: m ? `${brand} ${m}` : "" })}
-              options={form.deviceCategory === "COMPUTER" ? [] : modelsForBrand}
-              placeholder={form.deviceCategory === "COMPUTER" ? "مدل یا مشخصات دستگاه را تایپ کنید..." : "انتخاب یا تایپ مدل..."}
-            />
-          </div>
-        )}
-
-        <div className="mb-3">
-          <label className="block text-xs text-muted mb-1">{form.deviceCategory === "COMPUTER" ? "شماره سریال (اختیاری)" : "IMEI (اختیاری)"}</label>
-          <input
-            className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
-            inputMode="tel" dir="ltr"
-            value={form.imei} onChange={(e) => setForm({ ...form, imei: e.target.value })} />
-        </div>
+        {form.deviceCategory === "COMPUTER" ? <div className="computer-kiosk-fields">
+          <div className="computer-intake-note"><span aria-hidden="true">💻</span><span><b>مشخصات فنی رایانه</b><small>نوع سیستم و تمام متعلقات تحویلی را دقیق ثبت کنید.</small></span></div>
+          <label className="block text-xs text-muted mb-2">نوع دستگاه</label>
+          <div className="computer-type-grid mb-4">{COMPUTER_DEVICE_TYPES.map((item) => <button key={item.key} type="button" onClick={() => setForm({ ...form, deviceType: item.key })} className={form.deviceType === item.key ? "is-active" : ""}><b>{item.label}</b><small>{item.hint}</small></button>)}</div>
+          <div className="mb-3"><label className="block text-xs text-muted mb-1">برند یا سازنده</label><ComboBox value={brand} onChange={(value) => { setBrand(value); setForm({ ...form, deviceBrand: value, deviceModel: "" }); }} options={COMPUTER_BRANDS} placeholder="مثلاً Lenovo یا اسمبل" /></div>
+          <div className="mb-3"><label className="block text-xs text-muted mb-1">مدل یا مشخصات روی بدنه</label><input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" value={form.deviceModel.startsWith(`${brand} `) ? form.deviceModel.slice(brand.length + 1) : form.deviceModel} onChange={(event) => { const model = event.target.value; setForm({ ...form, deviceModel: model ? `${brand ? `${brand} ` : ""}${model}` : "" }); }} placeholder="مثلاً ThinkPad T480 یا Ryzen 5" /></div>
+          <div className="grid grid-cols-2 gap-2 mb-3"><div><label className="block text-xs text-muted mb-1">سیستم‌عامل</label><select className="w-full bg-surface2 border border-surface2 rounded-lg px-2 py-2 text-xs" value={form.operatingSystem} onChange={(event) => setForm({ ...form, operatingSystem: event.target.value })}><option value="">نامشخص</option>{COMPUTER_OS_OPTIONS.map((item) => <option key={item} value={item}>{item}</option>)}</select></div><div><label className="block text-xs text-muted mb-1">شماره سریال</label><input dir="ltr" className="mono w-full bg-surface2 border border-surface2 rounded-lg px-2 py-2 text-xs" value={form.imei} onChange={(event) => setForm({ ...form, imei: event.target.value })} placeholder="Serial" /></div></div>
+          <label className="block text-xs text-muted mb-2">لوازم همراه</label><div className="computer-accessory-grid mb-4">{COMPUTER_ACCESSORIES.map((item) => { const active = form.accessories.split(",").includes(item.key); return <button key={item.key} type="button" onClick={() => toggleAccessory(item.key)} className={active ? "is-active" : ""}>{active ? "✓ " : "+ "}{item.label}</button>; })}</div>
+        </div> : <>
+          <div className="mb-3"><label className="block text-xs text-muted mb-1">برند گوشی</label><ComboBox value={brand} onChange={(value) => { setBrand(value); setForm({ ...form, deviceBrand: value, deviceModel: "" }); }} options={brandList} placeholder="انتخاب یا تایپ برند..." /></div>
+          {brand && <div className="mb-3"><label className="block text-xs text-muted mb-1">مدل</label><ComboBox value={form.deviceModel.startsWith(`${brand} `) ? form.deviceModel.slice(brand.length + 1) : form.deviceModel} onChange={(model) => setForm({ ...form, deviceModel: model ? `${brand} ${model}` : "" })} options={modelsForBrand} placeholder="انتخاب یا تایپ مدل..." /></div>}
+          <div className="mb-3"><label className="block text-xs text-muted mb-1">IMEI (اختیاری)</label><input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono" inputMode="tel" dir="ltr" value={form.imei} onChange={(event) => setForm({ ...form, imei: event.target.value })} /></div>
+        </>}
 
         <div className="mb-4">
-          <label className="block text-xs text-muted mb-1">شرح ایراد</label>
+          <label className="block text-xs text-muted mb-1">{form.deviceCategory === "COMPUTER" ? "شرح ایراد، پیام خطا یا خدمت درخواستی" : "شرح ایراد"}</label>
           <textarea className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
             value={form.issueDescription} onChange={(e) => setForm({ ...form, issueDescription: e.target.value })} />
         </div>
 
         <label className="flex items-center gap-2 text-xs text-muted mb-2">
           <input type="checkbox" checked={collectPasscode} onChange={(e) => setCollectPasscode(e.target.checked)} />
-          می‌خواهم رمز دستگاه را برای تست بعد از تعمیر ثبت کنم (اختیاری)
+          می‌خواهم {form.deviceCategory === "COMPUTER" ? "رمز حساب کاربری سیستم" : "رمز دستگاه"} را برای تست بعد از تعمیر ثبت کنم (اختیاری)
         </label>
         {collectPasscode && (
           <div className="mb-4">
             <div className="flex gap-2 mb-2">
-              {[["PIN", "پین عددی"], ["PASSWORD", "رمز/پسورد"], ["PATTERN", "الگو"]].map(([val, label]) => (
+              {(form.deviceCategory === "COMPUTER" ? [["PIN", "Windows PIN"], ["PASSWORD", "رمز حساب"]] : [["PIN", "پین عددی"], ["PASSWORD", "رمز/پسورد"], ["PATTERN", "الگو"]]).map(([val, label]) => (
                 <button key={val} type="button"
                   onClick={() => setForm({ ...form, devicePasscodeType: val, devicePasscode: "" })}
                   className={`flex-1 text-[11px] rounded-lg py-1.5 border transition ${
@@ -222,7 +224,7 @@ export default function KioskPage() {
 
         {error && <p className="text-danger text-xs mb-3">{error}</p>}
 
-        <button onClick={submit} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
+        <button onClick={submit} className={`w-full font-bold rounded-lg py-2.5 text-sm ${form.deviceCategory === "COMPUTER" ? "bg-teal text-[#0B1512]" : "bg-copper text-[#1A1410]"}`}>
           ثبت و ارسال به مغازه
         </button>
 

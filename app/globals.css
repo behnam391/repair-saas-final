@@ -643,6 +643,50 @@ select option {
 .intake-button.is-back { flex: 1; color: var(--color-muted); background: var(--color-surface2); border: 1px solid var(--color-border); }
 .intake-button.is-next { flex: 2; color: white; background: linear-gradient(135deg,rgb(var(--rgb-copper)),rgb(var(--rgb-copper-deep))); box-shadow: 0 8px 20px rgb(var(--rgb-copper) / .2); }
 
+/* Computer intake deliberately has its own visual and information hierarchy.
+   It must read as a technical workstation form, not a renamed phone form. */
+.intake-modal.is-computer { border-color: rgb(var(--rgb-teal) / .38); box-shadow: 0 30px 100px rgba(0,0,0,.5), 0 0 0 1px rgb(var(--rgb-teal) / .08), inset 0 1px var(--glass-highlight); }
+.intake-modal.is-computer .ticket-modal-head { background: linear-gradient(120deg,rgb(var(--rgb-teal) / .14),rgb(var(--rgb-copper) / .05) 58%,transparent); }
+.intake-modal.is-computer .ticket-modal-device > span { color: var(--color-teal); background: rgb(var(--rgb-teal) / .12); border-color: rgb(var(--rgb-teal) / .22); }
+.intake-modal.is-computer .intake-content-title { color: var(--color-teal); }
+.intake-modal.is-computer .intake-step.is-active { color: var(--color-teal); }
+.intake-modal.is-computer .intake-step.is-active > div { background: var(--color-teal); box-shadow: 0 0 0 5px rgb(var(--rgb-teal) / .10); }
+.intake-modal.is-computer .intake-button.is-next { color: #071713; background: linear-gradient(135deg,rgb(var(--rgb-teal)),#60d6b1); box-shadow: 0 8px 20px rgb(var(--rgb-teal) / .2); }
+.computer-intake-note { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding: 11px 12px; border-radius: 14px; color: var(--color-teal); background: rgb(var(--rgb-teal) / .08); border: 1px solid rgb(var(--rgb-teal) / .18); }
+.computer-intake-note > span:last-child { min-width: 0; }
+.computer-intake-note b,.computer-intake-note small { display: block; }
+.computer-intake-note b { color: var(--color-ink); font-size: 11px; }
+.computer-intake-note small { color: var(--color-muted); font-size: 9px; line-height: 1.7; margin-top: 2px; }
+.computer-type-grid { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6px; }
+.computer-type-grid button { min-height: 58px; padding: 7px 5px; border-radius: 12px; color: var(--color-muted); background: var(--color-surface2); border: 1px solid var(--color-border); text-align: center; }
+.computer-type-grid button b,.computer-type-grid button small { display: block; }
+.computer-type-grid button b { color: var(--color-ink); font-size: 9.5px; }
+.computer-type-grid button small { font-size: 7.5px; line-height: 1.5; margin-top: 3px; }
+.computer-type-grid button.is-active { color: var(--color-teal); background: rgb(var(--rgb-teal) / .10); border-color: rgb(var(--rgb-teal) / .45); box-shadow: inset 0 0 0 1px rgb(var(--rgb-teal) / .08); }
+.computer-type-grid button.is-active b { color: var(--color-teal); }
+.computer-accessory-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+.computer-accessory-grid button { display: flex; align-items: center; justify-content: center; gap: 4px; min-height: 34px; padding: 5px 10px; border-radius: 10px; color: var(--color-muted); background: var(--color-surface2); border: 1px solid var(--color-border); font-size: 9px; font-weight: 800; }
+.computer-accessory-grid button.is-active { color: var(--color-teal); background: rgb(var(--rgb-teal) / .10); border-color: rgb(var(--rgb-teal) / .38); }
+.computer-issue-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; }
+.computer-issue-grid button { min-height: 36px; padding: 5px 7px; border-radius: 10px; color: var(--color-muted); background: var(--color-surface2); border: 1px solid var(--color-border); font-size: 9px; font-weight: 750; }
+.computer-issue-grid button:hover { color: var(--color-teal); border-color: rgb(var(--rgb-teal) / .38); background: rgb(var(--rgb-teal) / .08); }
+.computer-ticket-summary { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 7px; margin-bottom: 14px; padding: 9px; border-radius: 14px; background: rgb(var(--rgb-teal) / .06); border: 1px solid rgb(var(--rgb-teal) / .16); }
+.computer-ticket-summary span { min-width: 0; padding: 5px 7px; border-left: 1px solid var(--color-border); }
+.computer-ticket-summary span:last-child { border-left: 0; }
+.computer-ticket-summary small,.computer-ticket-summary b { display: block; overflow: hidden; text-overflow: ellipsis; }
+.computer-ticket-summary small { color: var(--color-muted); font-size: 8px; }
+.computer-ticket-summary b { margin-top: 3px; color: var(--color-ink); font-size: 9.5px; white-space: nowrap; }
+.kiosk-intake-card { max-width: 390px; border: 1px solid var(--color-border); border-top: 2px solid var(--color-copper); box-shadow: 0 18px 60px rgba(1,8,20,.16); }
+.kiosk-intake-card.is-computer { max-width: 500px; border-color: rgb(var(--rgb-teal) / .25); border-top: 2px solid var(--color-teal); background: linear-gradient(155deg,rgb(var(--rgb-teal) / .045),var(--color-surface) 30%); }
+
+@media (max-width: 640px) {
+  .computer-type-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .computer-type-grid button:last-child { grid-column: 1 / -1; }
+  .computer-issue-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .computer-ticket-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .computer-ticket-summary span:nth-child(2) { border-left: 0; }
+}
+
 /* Management control center */
 .admin-workspace-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 14px 2px 20px; }
 .admin-workspace-head h1 { font-size: clamp(22px,3vw,31px); font-weight: 900; letter-spacing: -.035em; margin-top: 5px; }

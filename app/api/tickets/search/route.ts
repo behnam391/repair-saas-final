@@ -26,6 +26,8 @@ export async function GET(req: NextRequest) {
           ? {
               OR: [
                 { deviceModel: { contains: q, mode: "insensitive" } },
+                { deviceBrand: { contains: q, mode: "insensitive" } },
+                { operatingSystem: { contains: q, mode: "insensitive" } },
                 { imei: { contains: q, mode: "insensitive" } },
                 { customer: { name: { contains: q, mode: "insensitive" } } },
                 { customer: { phone: { contains: q } } },

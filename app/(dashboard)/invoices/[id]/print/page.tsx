@@ -2,13 +2,14 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { formatJalaliDate } from "@/lib/jalali";
+import { computerAccessoryLabels, computerDeviceTypeLabel } from "@/lib/computer-intake";
 
 type InvoiceDetail = {
   id: string; type: string; laborCost: number; partsCost: number; taxPercent: number; taxAmount: number; total: number; paid: boolean; paidAmount: number; createdAt: string;
   customerName: string | null; customerPhone: string | null;
   shop: { name: string; address: string | null; phone: string | null; bankCardNumber: string | null; bankAccountNumber: string | null };
   ticket: {
-    no: number; deviceModel: string; deviceCategory?: string; imei: string | null; issueInitial: string;
+    no: number; deviceModel: string; deviceCategory?: string; deviceType?: string | null; operatingSystem?: string | null; accessories?: string | null; imei: string | null; issueInitial: string;
     customer: { name: string; phone: string };
     partsUsed: { quantity: number; priceCharged: number; item: { name: string } }[];
   } | null;
@@ -51,6 +52,7 @@ export default function PrintInvoicePage() {
               <div>مشتری: {invoice.ticket.customer.name} ({invoice.ticket.customer.phone})</div>
               <div>دستگاه: {invoice.ticket.deviceModel} — کد پیگیری #{invoice.ticket.no}</div>
               {invoice.ticket.imei && <div>{invoice.ticket.deviceCategory === "COMPUTER" ? "شماره سریال" : "IMEI"}: {invoice.ticket.imei}</div>}
+              {invoice.ticket.deviceCategory === "COMPUTER" && <div>نوع: {computerDeviceTypeLabel(invoice.ticket.deviceType)} · سیستم‌عامل: {invoice.ticket.operatingSystem || "نامشخص"} · لوازم همراه: {computerAccessoryLabels(invoice.ticket.accessories).join("، ") || "بدون لوازم"}</div>}
               <div>شرح: {invoice.ticket.issueInitial}</div>
             </>
           ) : (

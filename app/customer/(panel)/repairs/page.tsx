@@ -2,9 +2,10 @@
 import { useEffect, useState } from "react";
 import { formatJalaliDate } from "@/lib/jalali";
 import TicketChat from "@/components/TicketChat";
+import { computerDeviceTypeLabel } from "@/lib/computer-intake";
 
 type Repair = {
-  id: string; no: number; deviceModel: string; deviceCategory?: string; status: string; lane: string;
+  id: string; no: number; deviceModel: string; deviceCategory?: string; deviceType?: string | null; status: string; lane: string;
   estimatedCost: number | null; finalCost: number | null;
   createdAt: string; deliveredAt: string | null; rated: boolean;
   shop: { id: string; name: string; phone: string | null; province: string | null; address: string | null };
@@ -58,6 +59,7 @@ export default function CustomerRepairsPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="font-bold text-sm">{r.deviceCategory === "COMPUTER" ? "💻" : "📱"} {r.deviceModel}</div>
+                    {r.deviceCategory === "COMPUTER" && <div className="mt-0.5 text-[10px] text-teal">{computerDeviceTypeLabel(r.deviceType)}</div>}
                     <div className="text-muted mt-0.5">
                       {r.shop.name}{r.shop.province ? ` · ${r.shop.province}` : ""} · کد پیگیری #{r.no}
                     </div>

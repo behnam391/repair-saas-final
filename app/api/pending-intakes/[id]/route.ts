@@ -42,6 +42,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         data: {
           shopId, no: nextNo, customerId: customer.id, deviceModel: intake.deviceModel, imei: intake.imei,
           deviceCategory: intake.deviceCategory,
+          deviceType: intake.deviceType,
+          deviceBrand: intake.deviceBrand,
+          operatingSystem: intake.operatingSystem,
+          accessories: intake.accessories,
           issueInitial: intake.issueDescription, lane, status: "PENDING",
           devicePasscode: intake.devicePasscode, devicePasscodeType: intake.devicePasscodeType,
           history: {

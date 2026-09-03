@@ -14,6 +14,7 @@ import MorningInsights from "@/components/MorningInsights";
 import AdBanner from "@/components/AdBanner";
 import { useIsNativeApp } from "@/components/NativeAppContext";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
+import { COMPUTER_ACCESSORIES, COMPUTER_BRANDS, COMPUTER_DEVICE_TYPES, COMPUTER_LANE_LABELS, COMPUTER_OS_OPTIONS, COMPUTER_QUICK_ISSUES, computerAccessoryLabels, computerDeviceTypeLabel } from "@/lib/computer-intake";
 import { ArrowLeft, ArrowRight, BadgeCheck, Banknote, BarChart3, Boxes, Check, ChevronDown, CircuitBoard, Clock3, Cpu, FileText, GitBranch, Handshake, LockKeyhole, MessageCircle, MonitorSmartphone, Play, Plus, Printer, Search, ShieldCheck, Smartphone, UserRound, UsersRound, Wrench, X } from "lucide-react";
 
 const LANES = [
@@ -23,13 +24,15 @@ const LANES = [
   { key: "READY", label: "آماده تحویل", hint: "تکمیل‌شده", Icon: BadgeCheck, tone: "green" },
 ] as const;
 
-const COMPUTER_BRANDS = ["Apple", "ASUS", "Acer", "Dell", "HP", "Lenovo", "MSI", "Microsoft", "Samsung", "Huawei", "Gigabyte", "سایر"];
-
 type Ticket = {
   id: string;
   no: number;
   deviceModel: string;
   deviceCategory?: string;
+  deviceType?: string | null;
+  deviceBrand?: string | null;
+  operatingSystem?: string | null;
+  accessories?: string | null;
   issueInitial: string;
   lane: string;
   status: string;
@@ -478,11 +481,20 @@ function TicketDetail({
 
         <div className="ticket-modal-body">
 
+        {ticket.deviceCategory === "COMPUTER" && (
+          <div className="computer-ticket-summary">
+            <span><small>نوع سیستم</small><b>{computerDeviceTypeLabel(ticket.deviceType)}</b></span>
+            <span><small>برند</small><b>{ticket.deviceBrand || "—"}</b></span>
+            <span><small>سیستم‌عامل</small><b>{ticket.operatingSystem || "نامشخص"}</b></span>
+            <span><small>لوازم همراه</small><b>{computerAccessoryLabels(ticket.accessories).join("، ") || "بدون لوازم"}</b></span>
+          </div>
+        )}
+
         {(ticket.hasPasscode || ticket.customerDamageNotes) && (
           <div className="ticket-private-note">
             {ticket.hasPasscode && (
               <div className="text-xs flex items-center gap-2">
-                <span className="text-muted">رمز گوشی ({passcodeTypeLabel}): </span>
+                <span className="text-muted">رمز {ticket.deviceCategory === "COMPUTER" ? "سیستم" : "گوشی"} ({passcodeTypeLabel}): </span>
                 {passcode === null ? (
                   <button
                     type="button"
@@ -726,6 +738,7 @@ function TicketDetail({
 function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories, singleOperator, webPartnerIntake, onClose, onCreated }: { defaultLane?: string | null; defaultDeviceCategory: string; serviceCategories: string[]; singleOperator: boolean; webPartnerIntake: boolean; onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
     customerName: "", customerPhone: "", deviceModel: "", deviceCategory: defaultDeviceCategory === "COMPUTER" ? "COMPUTER" : "MOBILE", imei: "", issueInitial: "", lane: ["HARDWARE", "SOFTWARE", "BOARD"].includes(defaultLane || "") ? defaultLane! : "HARDWARE",
+    deviceType: defaultDeviceCategory === "COMPUTER" ? "LAPTOP" : "", deviceBrand: "", operatingSystem: "", accessories: "",
     devicePasscode: "", devicePasscodeType: "PIN" as string, customerDamageNotes: "", receiptAck: "NO_SIGNATURE" as string,
     intakeSource: "CUSTOMER", partnerName: "", partnerPhone: "",
   });
@@ -735,7 +748,7 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
   // form short and phone-friendly instead of one long scroll.
   const [step, setStep] = useState(1);
   const [createdTicket, setCreatedTicket] = useState<{ id: string; no: number } | null>(null);
-  const STEPS = ["مشتری", "دستگاه", "ایراد", "تأیید"];
+  const STEPS = ["مشتری", form.deviceCategory === "COMPUTER" ? "رایانه" : "دستگاه", "ایراد", "تأیید"];
 
   function nextStep() {
     setError("");
@@ -757,7 +770,11 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
       setError("شماره همکار باید با ۰۹ شروع شود و ۱۱ رقم باشد");
       return;
     }
-    if (step === 2 && !form.deviceModel.trim()) {
+    if (step === 2 && form.deviceCategory === "COMPUTER" && (!form.deviceType || !form.deviceBrand.trim() || !form.deviceModel.trim())) {
+      setError("نوع دستگاه، برند و مدل یا مشخصات کامپیوتر را کامل کنید");
+      return;
+    }
+    if (step === 2 && form.deviceCategory !== "COMPUTER" && !form.deviceModel.trim()) {
       setError("برند و مدل دستگاه را انتخاب کنید");
       return;
     }
@@ -780,6 +797,31 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
   const brandList = [...favoriteBrands, ...Object.keys(catalog).filter((b) => !favoriteBrands.includes(b))];
   const modelsForBrand = brand ? catalog[brand] ?? [] : [];
   const laneTemplates = templates.filter((t) => t.lane === form.lane);
+
+  function switchDeviceCategory(category: "MOBILE" | "COMPUTER") {
+    setBrand("");
+    setCollectPasscode(false);
+    setForm((current) => ({
+      ...current,
+      deviceCategory: category,
+      deviceType: category === "COMPUTER" ? "LAPTOP" : "",
+      deviceBrand: "",
+      operatingSystem: "",
+      accessories: "",
+      deviceModel: "",
+      imei: "",
+      devicePasscode: "",
+      devicePasscodeType: "PIN",
+    }));
+  }
+
+  function toggleComputerAccessory(key: string) {
+    setForm((current) => {
+      const selected = current.accessories.split(",").filter(Boolean);
+      const next = selected.includes(key) ? selected.filter((item) => item !== key) : [...selected, key];
+      return { ...current, accessories: next.join(",") };
+    });
+  }
 
   async function submit() {
     setError("");
@@ -807,7 +849,7 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
   if (createdTicket) {
     return (
       <div className="ticket-modal-backdrop" onClick={onClose}>
-        <div className="intake-modal" onClick={(e) => e.stopPropagation()}>
+        <div className={`intake-modal ${form.deviceCategory === "COMPUTER" ? "is-computer" : ""}`} onClick={(e) => e.stopPropagation()}>
           <div className="p-6 text-center sm:p-8">
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-teal/15 text-teal"><Check size={28} /></div>
             <h2 className="display-heading text-lg">پذیرش {form.deviceCategory === "COMPUTER" ? "کامپیوتر" : "موبایل"} با موفقیت ثبت شد</h2>
@@ -825,9 +867,9 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
 
   return (
     <div className="ticket-modal-backdrop" onClick={onClose}>
-      <div className="intake-modal" onClick={(e) => e.stopPropagation()}>
+      <div className={`intake-modal ${form.deviceCategory === "COMPUTER" ? "is-computer" : ""}`} onClick={(e) => e.stopPropagation()}>
         <div className="ticket-modal-head">
-          <div className="ticket-modal-device"><span>{form.deviceCategory === "COMPUTER" ? <MonitorSmartphone size={20} /> : <Smartphone size={20} />}</span><div><h2>پذیرش {form.deviceCategory === "COMPUTER" ? "کامپیوتر" : "موبایل"}</h2><p>اطلاعات را مرحله‌به‌مرحله ثبت کنید</p></div></div>
+          <div className="ticket-modal-device"><span>{form.deviceCategory === "COMPUTER" ? <MonitorSmartphone size={20} /> : <Smartphone size={20} />}</span><div><h2>پذیرش {form.deviceCategory === "COMPUTER" ? "کامپیوتر" : "موبایل"}</h2><p>{form.deviceCategory === "COMPUTER" ? "فرم تخصصی تجهیزات رایانه‌ای" : "اطلاعات را مرحله‌به‌مرحله ثبت کنید"}</p></div></div>
           <button onClick={onClose} className="ticket-modal-close"><X size={18} /></button>
         </div>
 
@@ -884,52 +926,60 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
         </>)}
 
         {step === 2 && (<>
-        <div className="intake-content-title">{form.deviceCategory === "COMPUTER" ? <MonitorSmartphone size={18} /> : <Smartphone size={18} />}<div><b>مشخصات {form.deviceCategory === "COMPUTER" ? "کامپیوتر" : "موبایل"}</b><small>برند، مدل و شناسه دستگاه</small></div></div>
+        <div className="intake-content-title">{form.deviceCategory === "COMPUTER" ? <MonitorSmartphone size={18} /> : <Smartphone size={18} />}<div><b>{form.deviceCategory === "COMPUTER" ? "پرونده فنی کامپیوتر" : "مشخصات موبایل"}</b><small>{form.deviceCategory === "COMPUTER" ? "نوع سیستم، سازنده، سیستم‌عامل و متعلقات" : "برند، مدل و شناسه دستگاه"}</small></div></div>
         {serviceCategories.length > 1 && <div className="mb-4 grid grid-cols-2 gap-2">
-          <button type="button" onClick={() => { setBrand(""); setForm({ ...form, deviceCategory: "MOBILE", deviceModel: "", imei: "" }); }} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "MOBILE" ? "border-copper bg-copper text-[#1A1410]" : "border-surface2 bg-surface2 text-muted"}`}><Smartphone size={16} /> موبایل</button>
-          <button type="button" onClick={() => { setBrand(""); setForm({ ...form, deviceCategory: "COMPUTER", deviceModel: "", imei: "" }); }} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "COMPUTER" ? "border-teal bg-teal text-[#0B1512]" : "border-surface2 bg-surface2 text-muted"}`}><MonitorSmartphone size={16} /> کامپیوتر</button>
+          <button type="button" onClick={() => switchDeviceCategory("MOBILE")} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "MOBILE" ? "border-copper bg-copper text-[#1A1410]" : "border-surface2 bg-surface2 text-muted"}`}><Smartphone size={16} /> موبایل</button>
+          <button type="button" onClick={() => switchDeviceCategory("COMPUTER")} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-xs font-bold ${form.deviceCategory === "COMPUTER" ? "border-teal bg-teal text-[#0B1512]" : "border-surface2 bg-surface2 text-muted"}`}><MonitorSmartphone size={16} /> کامپیوتر</button>
         </div>}
-        <label className="block text-xs text-muted mb-1">برند {form.deviceCategory === "COMPUTER" ? "دستگاه" : "گوشی"}</label>
-        <div className="mb-3">
-          <ComboBox
-            value={brand}
-            onChange={(v) => { setBrand(v); setForm({ ...form, deviceModel: "" }); }}
-            options={form.deviceCategory === "COMPUTER" ? COMPUTER_BRANDS : brandList}
-            starred={form.deviceCategory === "COMPUTER" ? [] : favoriteBrands}
-            placeholder="انتخاب یا تایپ برند..."
-          />
-        </div>
 
-        {brand && (
-          <div className="mb-3">
-            <label className="block text-xs text-muted mb-1">مدل</label>
-            <ComboBox
-              value={
-                form.deviceModel.startsWith(`${brand} `)
-                  ? form.deviceModel.slice(brand.length + 1)
-                  : form.deviceModel
-              }
-              onChange={(m) => setForm({ ...form, deviceModel: m ? `${brand} ${m}` : "" })}
-              options={form.deviceCategory === "COMPUTER" ? [] : modelsForBrand}
-              placeholder={form.deviceCategory === "COMPUTER" ? "مدل یا مشخصات دستگاه را تایپ کنید..." : "انتخاب یا تایپ مدل..."}
-            />
+        {form.deviceCategory === "COMPUTER" ? (
+          <div className="computer-intake-fields">
+            <div className="computer-intake-note"><MonitorSmartphone size={20} /><span><b>پذیرش تخصصی رایانه</b><small>اطلاعات فنی و لوازمی که همراه دستگاه تحویل می‌گیرید ثبت می‌شود.</small></span></div>
+
+            <label className="block text-xs text-muted mb-2">نوع دستگاه</label>
+            <div className="computer-type-grid mb-4">
+              {COMPUTER_DEVICE_TYPES.map((item) => <button key={item.key} type="button" onClick={() => setForm({ ...form, deviceType: item.key })} className={form.deviceType === item.key ? "is-active" : ""}><b>{item.label}</b><small>{item.hint}</small></button>)}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="block text-xs text-muted mb-1">سازنده یا برند</label>
+                <ComboBox value={brand} onChange={(value) => { setBrand(value); setForm({ ...form, deviceBrand: value, deviceModel: "" }); }} options={COMPUTER_BRANDS} placeholder="مثلاً Lenovo یا اسمبل" />
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">مدل یا مشخصات روی بدنه</label>
+                <input value={form.deviceModel.startsWith(`${brand} `) ? form.deviceModel.slice(brand.length + 1) : form.deviceModel} onChange={(event) => { const model = event.target.value; setForm({ ...form, deviceModel: model ? `${brand ? `${brand} ` : ""}${model}` : "" }); }} placeholder="مثلاً ThinkPad T480 یا Ryzen 5" />
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">سیستم‌عامل فعلی</label>
+                <select value={form.operatingSystem} onChange={(event) => setForm({ ...form, operatingSystem: event.target.value })}><option value="">انتخاب کنید (اختیاری)</option>{COMPUTER_OS_OPTIONS.map((item) => <option key={item} value={item}>{item}</option>)}</select>
+              </div>
+              <div>
+                <label className="block text-xs text-muted mb-1">شماره سریال یا Service Tag</label>
+                <input dir="ltr" className="mono" value={form.imei} onChange={(event) => setForm({ ...form, imei: event.target.value })} placeholder="Serial / Service Tag" />
+              </div>
+            </div>
+
+            <label className="mt-4 block text-xs text-muted mb-2">لوازم همراه دستگاه</label>
+            <div className="computer-accessory-grid">
+              {COMPUTER_ACCESSORIES.map((item) => { const active = form.accessories.split(",").includes(item.key); return <button key={item.key} type="button" onClick={() => toggleComputerAccessory(item.key)} className={active ? "is-active" : ""}><Check size={13} />{item.label}</button>; })}
+            </div>
           </div>
-        )}
-
-        <div className="mb-1">
-          <label className="block text-xs text-muted mb-1">{form.deviceCategory === "COMPUTER" ? "شماره سریال (اختیاری)" : "IMEI (اختیاری)"}</label>
-          <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3"
-            value={form.imei} onChange={(e) => setForm({ ...form, imei: e.target.value })} />
-        </div>
+        ) : (<>
+          <label className="block text-xs text-muted mb-1">برند گوشی</label>
+          <div className="mb-3"><ComboBox value={brand} onChange={(value) => { setBrand(value); setForm({ ...form, deviceBrand: value, deviceModel: "" }); }} options={brandList} starred={favoriteBrands} placeholder="انتخاب یا تایپ برند..." /></div>
+          {brand && <div className="mb-3"><label className="block text-xs text-muted mb-1">مدل</label><ComboBox value={form.deviceModel.startsWith(`${brand} `) ? form.deviceModel.slice(brand.length + 1) : form.deviceModel} onChange={(model) => setForm({ ...form, deviceModel: model ? `${brand} ${model}` : "" })} options={modelsForBrand} placeholder="انتخاب یا تایپ مدل..." /></div>}
+          <div className="mb-1"><label className="block text-xs text-muted mb-1">IMEI (اختیاری)</label><input inputMode="numeric" dir="ltr" className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3 mono" value={form.imei} onChange={(event) => setForm({ ...form, imei: event.target.value })} /></div>
+        </>)}
         </>)}
 
         {step === 3 && (<>
-        <div className="intake-content-title"><Wrench size={18} /><div><b>شرح ایراد</b><small>دستگاه به بخش مناسب ارجاع می‌شود</small></div></div>
+        <div className="intake-content-title"><Wrench size={18} /><div><b>{form.deviceCategory === "COMPUTER" ? "عیب و نوع خدمت رایانه" : "شرح ایراد"}</b><small>دستگاه به بخش مناسب ارجاع می‌شود</small></div></div>
         <div className="mb-2">
           <label className="block text-xs text-muted mb-1">مسیر اولیه تعمیر</label>
           {singleOperator && defaultLane ? (
             <div className="w-full rounded-lg border border-teal/30 bg-teal/10 px-3 py-2 text-sm font-bold text-teal">
-              {LANES.find((lane) => lane.key === form.lane)?.label ?? "تخصص ثبت‌شده مغازه"}
+              {form.deviceCategory === "COMPUTER" ? COMPUTER_LANE_LABELS[form.lane] : LANES.find((lane) => lane.key === form.lane)?.label ?? "تخصص ثبت‌شده مغازه"}
             </div>
           ) : (
             <select
@@ -938,13 +988,17 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
               onChange={(e) => setForm({ ...form, lane: e.target.value })}
             >
               {LANES.filter((l) => l.key !== "READY").map((l) => (
-                <option key={l.key} value={l.key}>{l.label}</option>
+                <option key={l.key} value={l.key}>{form.deviceCategory === "COMPUTER" ? COMPUTER_LANE_LABELS[l.key] : l.label}</option>
               ))}
             </select>
           )}
         </div>
 
-        {laneTemplates.length > 0 && (
+        {form.deviceCategory === "COMPUTER" ? (
+          <div className="computer-issue-grid mb-3">
+            {COMPUTER_QUICK_ISSUES.map((issue) => <button key={issue.label} type="button" onClick={() => setForm({ ...form, lane: issue.lane, issueInitial: form.issueInitial ? `${form.issueInitial}، ${issue.label}` : issue.label })}>{issue.label}</button>)}
+          </div>
+        ) : laneTemplates.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mb-2">
             {laneTemplates.map((t) => (
               <button key={t.id} type="button"
@@ -957,7 +1011,7 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
         )}
 
         <div className="mb-4">
-          <label className="block text-xs text-muted mb-1">شرح عیب</label>
+          <label className="block text-xs text-muted mb-1">{form.deviceCategory === "COMPUTER" ? "شرح دقیق ایراد، صدای غیرعادی یا پیام خطا" : "شرح عیب"}</label>
           <textarea
             className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
             value={form.issueInitial}
@@ -969,7 +1023,7 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
           <label className="block text-xs text-muted mb-1">توضیحات مشتری درباره آسیب‌دیدگی یا تعمیر قبلی (اختیاری)</label>
           <textarea
             className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm"
-            placeholder="مثلاً: قبلاً یک‌بار صفحه تعویض شده، یا خط روی بدنه از قبل بوده"
+            placeholder={form.deviceCategory === "COMPUTER" ? "مثلاً: دستگاه قبلاً باز شده، لولا شکستگی دارد یا اطلاعات مهم روی درایو است" : "مثلاً: قبلاً یک‌بار صفحه تعویض شده، یا خط روی بدنه از قبل بوده"}
             value={form.customerDamageNotes}
             onChange={(e) => setForm({ ...form, customerDamageNotes: e.target.value })}
           />
@@ -980,16 +1034,19 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
         <div className="intake-content-title"><ShieldCheck size={18} /><div><b>تأیید نهایی</b><small>امنیت دستگاه و نحوه پذیرش</small></div></div>
         <label className="flex items-center gap-2 text-xs text-muted mb-2">
           <input type="checkbox" checked={collectPasscode} onChange={(e) => setCollectPasscode(e.target.checked)} />
-          دریافت رمز ورود دستگاه از مشتری (برای تست بعد از تعمیر)
+          دریافت {form.deviceCategory === "COMPUTER" ? "رمز حساب کاربری سیستم" : "رمز ورود دستگاه"} از مشتری (برای تست بعد از تعمیر)
         </label>
         {collectPasscode && (
           <div className="mb-4">
             <div className="flex gap-2 mb-2">
-              {[
+              {(form.deviceCategory === "COMPUTER" ? [
+                ["PIN", "Windows PIN"],
+                ["PASSWORD", "رمز حساب"],
+              ] : [
                 ["PIN", "پین عددی"],
                 ["PASSWORD", "رمز/پسورد"],
                 ["PATTERN", "الگو"],
-              ].map(([val, label]) => (
+              ]).map(([val, label]) => (
                 <button key={val} type="button"
                   onClick={() => setForm({ ...form, devicePasscodeType: val, devicePasscode: "" })}
                   className={`flex-1 text-[11px] rounded-lg py-1.5 border transition ${
