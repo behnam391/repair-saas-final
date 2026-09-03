@@ -845,9 +845,10 @@ select option {
 
 /* Repair-shop workspace — professional desktop shell */
 .shop-shell{min-height:100vh;background:radial-gradient(circle at 45% -10%,rgb(var(--rgb-copper)/.075),transparent 32%),var(--color-bg)}
-.shop-shell-main{min-width:0;margin-right:240px;transition:margin-right .2s ease}
-.shop-sidebar{position:fixed;z-index:45;inset:0 0 0 auto;width:240px;display:flex;flex-direction:column;padding:18px 13px 14px;border-left:1px solid var(--color-border);background:linear-gradient(180deg,color-mix(in srgb,var(--glass-menu) 96%,#061226),color-mix(in srgb,var(--glass-menu) 91%,#08182b));box-shadow:-18px 0 45px rgba(1,7,18,.08)}
+.shop-shell-main{min-width:0;margin-right:240px;transition:margin-right .24s ease}
+.shop-sidebar{position:fixed;z-index:45;inset:0 0 0 auto;width:240px;display:flex;flex-direction:column;padding:18px 13px 14px;border-left:1px solid var(--color-border);background:linear-gradient(180deg,color-mix(in srgb,var(--glass-menu) 96%,#061226),color-mix(in srgb,var(--glass-menu) 91%,#08182b));box-shadow:-18px 0 45px rgba(1,7,18,.08);transition:width .24s ease,padding .24s ease}
 .shop-sidebar-brand{min-height:58px;display:flex;align-items:flex-start;padding:2px 11px 15px;border-bottom:1px solid var(--color-border)}
+.shop-sidebar-collapse{position:absolute;z-index:3;top:28px;left:-16px;width:32px;height:32px;display:grid;place-items:center;border:1px solid var(--color-border);border-radius:11px;color:var(--color-copper);background:var(--color-surface2);box-shadow:0 8px 20px rgba(2,8,19,.16);transition:transform .18s ease,background .18s ease}.shop-sidebar-collapse:hover{transform:scale(1.06);background:var(--color-surface)}
 .shop-sidebar nav{overflow-y:auto;scrollbar-width:none;padding:13px 0}.shop-sidebar nav::-webkit-scrollbar{display:none}.shop-sidebar nav section{margin-bottom:14px}.shop-sidebar nav section>small{display:block;padding:0 11px 6px;color:var(--color-muted);font-size:8px;font-weight:850}.shop-sidebar nav a{min-height:42px;display:flex;align-items:center;gap:11px;margin:3px 0;padding:0 12px;border:1px solid transparent;border-radius:11px;color:var(--color-muted);font-size:11px;font-weight:750;transition:.18s ease}.shop-sidebar nav a:hover{color:var(--color-ink);background:var(--color-surface)}.shop-sidebar nav a.is-active{border-color:rgb(var(--rgb-copper)/.18);color:#8bcfff;background:linear-gradient(90deg,rgb(var(--rgb-copper)/.18),rgb(var(--rgb-teal)/.055));box-shadow:inset 3px 0 0 rgb(var(--rgb-copper))}.shop-sidebar nav a svg{flex:none}.shop-sidebar-user{display:flex;align-items:center;gap:9px;margin-top:auto;padding:10px;border:1px solid var(--color-border);border-radius:13px;background:var(--color-surface)}.shop-sidebar-user>i{width:37px;height:37px;display:grid;place-items:center;flex:none;border-radius:11px;color:#071523;background:linear-gradient(135deg,#5fc4ff,#70d34d);font-size:11px;font-style:normal;font-weight:950}.shop-sidebar-user>span{min-width:0;display:grid}.shop-sidebar-user b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}.shop-sidebar-user small{display:flex;align-items:center;gap:5px;margin-top:3px;color:var(--color-muted);font-size:7px}.shop-sidebar-user small em{width:6px;height:6px;border-radius:50%;background:var(--color-teal)}
 .shop-shell .app-topbar{box-shadow:0 12px 32px rgba(2,8,19,.09);background:color-mix(in srgb,var(--glass-header) 94%,transparent)!important}.shop-shell .app-topbar>div{max-width:1600px}.shop-mobile-navigation{display:none}.shop-shell .app-brand-mark{border-color:rgb(var(--rgb-copper)/.16);background:rgb(var(--rgb-copper)/.07)}
 .shop-shell .dashboard-page,.shop-shell .admin-workspace{padding-inline:clamp(18px,2.3vw,34px)!important}.shop-shell .dashboard-hero,.shop-shell .admin-workspace-head{padding-top:22px;padding-bottom:20px}.shop-shell .dashboard-hero h1,.shop-shell .admin-workspace-head h1{font-size:clamp(23px,2.5vw,30px);letter-spacing:-.035em}.shop-shell .dashboard-primary-action{min-height:46px;border-radius:13px;box-shadow:0 11px 26px rgb(var(--rgb-copper)/.19)}
@@ -907,6 +908,15 @@ select option {
 @media(min-width:981px){
   .shop-sidebar{width:268px;padding:20px 15px 16px}
   .shop-shell-main{margin-right:268px}
+  .shop-shell.is-sidebar-collapsed .shop-sidebar{width:84px;padding-inline:10px}
+  .shop-shell.is-sidebar-collapsed .shop-shell-main{margin-right:84px}
+  .shop-shell.is-sidebar-collapsed .shop-sidebar-brand{align-items:center;justify-content:center;padding-inline:0}
+  .shop-shell.is-sidebar-collapsed .shop-sidebar nav section{margin-bottom:7px}
+  .shop-shell.is-sidebar-collapsed .shop-sidebar nav section>small,
+  .shop-shell.is-sidebar-collapsed .shop-sidebar nav a span,
+  .shop-shell.is-sidebar-collapsed .shop-sidebar-user>span{display:none}
+  .shop-shell.is-sidebar-collapsed .shop-sidebar nav a{justify-content:center;gap:0;padding-inline:0}
+  .shop-shell.is-sidebar-collapsed .shop-sidebar-user{justify-content:center;padding:8px}
 }
 .shop-sidebar nav section>small{padding:0 12px 8px;font-size:11px;letter-spacing:.01em}
 .shop-sidebar nav a{min-height:46px;gap:12px;padding:0 13px;border-radius:13px;font-size:13px;font-weight:750}

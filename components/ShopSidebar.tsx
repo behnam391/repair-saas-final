@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   BarChart3, Boxes, CircleDollarSign, FileText, Handshake, Headphones,
-  House, MessageSquareText, MonitorSmartphone, PackagePlus, Settings, Smartphone, Store, UserRound, UsersRound, Wrench,
+  House, Menu, MessageSquareText, MonitorSmartphone, PackagePlus, PanelRightClose, Settings, Smartphone, Store, UserRound, UsersRound, Wrench,
   type LucideIcon,
 } from "lucide-react";
 import Logo from "./Logo";
@@ -37,6 +38,8 @@ const groups: { label: string; items: Item[] }[] = [
 export default function ShopSidebar({ role, shopType, serviceCategories = "MOBILE", shopName, userName, avatarUrl }: { role: string; shopType?: string; serviceCategories?: string; shopName: string; userName: string; avatarUrl?: string | null }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const sidebarRef = useRef<HTMLElement>(null);
+  const [collapsed, setCollapsed] = useState(false);
   const dealer = shopType === "DEALER" || shopType === "BOTH";
   const services = serviceCategories.split(",").filter((value) => value === "MOBILE" || value === "COMPUTER");
   const intakeItems: Item[] = services.length > 1
@@ -50,10 +53,49 @@ export default function ShopSidebar({ role, shopType, serviceCategories = "MOBIL
   const menuGroups = groups.map((group) => group.label === "کار روزانه"
     ? { ...group, items: [group.items[0], ...intakeItems, ...group.items.slice(1)] }
     : group);
+
+  useEffect(() => {
+    try {
+      const cookiePreference = document.cookie.match(/(?:^|; )peyvo_shop_sidebar=(0|1)(?:;|$)/)?.[1];
+      const savedPreference = cookiePreference ?? window.localStorage.getItem("peyvo-shop-sidebar-collapsed");
+      setCollapsed(savedPreference === "1");
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    const shell = sidebarRef.current?.closest(".shop-shell");
+    shell?.classList.toggle("is-sidebar-collapsed", collapsed);
+    return () => shell?.classList.remove("is-sidebar-collapsed");
+  }, [collapsed]);
+
+  const toggleCollapsed = () => {
+    setCollapsed((current) => {
+      const next = !current;
+      try {
+        window.localStorage.setItem("peyvo-shop-sidebar-collapsed", next ? "1" : "0");
+        document.cookie = `peyvo_shop_sidebar=${next ? "1" : "0"}; max-age=31536000; path=/; samesite=lax`;
+      } catch {}
+      return next;
+    });
+  };
+
   return (
-    <aside className="shop-sidebar no-print">
-      <Link href="/tickets" className="shop-sidebar-brand"><Logo size={34} /></Link>
-      <nav>
+    <aside ref={sidebarRef} className={`shop-sidebar no-print ${collapsed ? "is-collapsed" : ""}`}>
+      <Link href="/tickets" className="shop-sidebar-brand" title={collapsed ? "داشبورد پیوو" : undefined}>
+        <Logo size={34} withText={!collapsed} />
+      </Link>
+      <button
+        type="button"
+        className="shop-sidebar-collapse"
+        onClick={toggleCollapsed}
+        title={collapsed ? "باز کردن منو" : "جمع کردن منو"}
+        aria-label={collapsed ? "باز کردن منوی داشبورد" : "جمع کردن منوی داشبورد"}
+        aria-expanded={!collapsed}
+        aria-controls="shop-sidebar-nav"
+      >
+        {collapsed ? <Menu size={18} /> : <PanelRightClose size={18} />}
+      </button>
+      <nav id="shop-sidebar-nav">
         {menuGroups.map((group) => {
           const items = group.items.filter((item) =>
             (!item.owner || role === "OWNER") && (!item.dealer || dealer) && canSeeNav(role, item.href.split("?")[0])
@@ -68,7 +110,7 @@ export default function ShopSidebar({ role, shopType, serviceCategories = "MOBIL
               : clean === "/tickets"
                 ? pathname === clean && searchParams.get("new") !== "1"
                 : pathname.startsWith(clean);
-            return <Link href={href} key={`${label}-${href}`} className={active ? "is-active" : ""}><Icon size={18} /><span>{label}</span></Link>;
+            return <Link href={href} key={`${label}-${href}`} title={collapsed ? label : undefined} className={active ? "is-active" : ""}><Icon size={18} /><span>{label}</span></Link>;
           })}</section>;
         })}
       </nav>
