@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { normalizeOptionalPhone } from "@/lib/phone";
+import { normalizeOptionalPhone, normalizePhone } from "@/lib/phone";
 import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { z } from "zod";
 
@@ -17,8 +17,18 @@ export async function GET(req: NextRequest) {
       db.shopPartnership.findMany({
         where: { status: "ACCEPTED", OR: [{ requestedByShopId: shopId }, { targetShopId: shopId }] },
         include: {
-          requestedByShop: { select: { id: true, name: true, phone: true, address: true, province: true } },
-          targetShop: { select: { id: true, name: true, phone: true, address: true, province: true } },
+          requestedByShop: {
+            select: {
+              id: true, name: true, phone: true, address: true, province: true,
+              users: { where: { active: true }, select: { phone: true, role: true } },
+            },
+          },
+          targetShop: {
+            select: {
+              id: true, name: true, phone: true, address: true, province: true,
+              users: { where: { active: true }, select: { phone: true, role: true } },
+            },
+          },
         },
       }),
       db.ticket.findMany({ where: { shopId, partnerName: { not: null } }, select: { partnerName: true, partnerPhone: true }, orderBy: { updatedAt: "desc" }, take: 200 }),
@@ -26,10 +36,15 @@ export async function GET(req: NextRequest) {
     const rows: ContactRow[] = [];
     for (const link of links) {
       const other = link.requestedByShopId === shopId ? link.targetShop : link.requestedByShop;
-      rows.push({ id: `linked:${other.id}`, linkedShopId: other.id, name: other.name, phone: other.phone ?? "", address: other.address ?? other.province ?? "", note: "همکاری فعال در پیوو", source: "LINKED" });
+      // A linked shop may not have completed its public profile yet. Its owner
+      // still has a verified login mobile, so use that as the contact fallback
+      // instead of showing the colleague with an empty phone number.
+      const ownerPhone = other.users.find((user) => user.role === "OWNER")?.phone;
+      const phone = normalizePhone(other.phone || ownerPhone || other.users[0]?.phone || "");
+      rows.push({ id: `linked:${other.id}`, linkedShopId: other.id, name: other.name, phone, address: other.address ?? other.province ?? "", note: "همکاری فعال در پیوو", source: "LINKED" });
     }
-    for (const item of manual) rows.push({ id: item.id, name: item.name, phone: item.phone ?? "", address: item.address ?? "", note: item.note ?? "", source: "MANUAL" });
-    for (const item of history) if (item.partnerName?.trim()) rows.push({ id: `history:${item.partnerName}:${item.partnerPhone ?? ""}`, name: item.partnerName.trim(), phone: item.partnerPhone ?? "", address: "", note: "ثبت‌شده از پذیرش قبلی", source: "HISTORY" });
+    for (const item of manual) rows.push({ id: item.id, name: item.name, phone: normalizePhone(item.phone), address: item.address ?? "", note: item.note ?? "", source: "MANUAL" });
+    for (const item of history) if (item.partnerName?.trim()) rows.push({ id: `history:${item.partnerName}:${item.partnerPhone ?? ""}`, name: item.partnerName.trim(), phone: normalizePhone(item.partnerPhone), address: "", note: "ثبت‌شده از پذیرش قبلی", source: "HISTORY" });
     const seen = new Set<string>();
     const partners = rows.filter((item) => {
       const key = item.phone || item.name.toLocaleLowerCase("fa");

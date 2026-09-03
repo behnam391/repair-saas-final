@@ -748,6 +748,7 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
   // form short and phone-friendly instead of one long scroll.
   const [step, setStep] = useState(1);
   const [createdTicket, setCreatedTicket] = useState<{ id: string; no: number } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   const STEPS = ["مشتری", form.deviceCategory === "COMPUTER" ? "رایانه" : "دستگاه", "ایراد", "تأیید"];
 
   function nextStep() {
@@ -776,6 +777,10 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
     }
     if (step === 2 && form.deviceCategory !== "COMPUTER" && !form.deviceModel.trim()) {
       setError("برند و مدل دستگاه را انتخاب کنید");
+      return;
+    }
+    if (step === 3 && !form.issueInitial.trim()) {
+      setError("شرح ایراد دستگاه را وارد کنید");
       return;
     }
     setStep(step + 1);
@@ -825,25 +830,36 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
 
   async function submit() {
     setError("");
+    setSubmitting(true);
     const payload = {
       ...form,
       customerName: webPartnerIntake && form.intakeSource === "PARTNER" ? "" : form.customerName,
       customerPhone: webPartnerIntake && form.intakeSource === "PARTNER" ? "" : form.customerPhone,
+      partnerPhone: form.partnerPhone || undefined,
+      deviceType: form.deviceCategory === "COMPUTER" ? form.deviceType || undefined : undefined,
+      operatingSystem: form.deviceCategory === "COMPUTER" ? form.operatingSystem || undefined : undefined,
+      accessories: form.deviceCategory === "COMPUTER" ? form.accessories || undefined : undefined,
       devicePasscode: collectPasscode ? form.devicePasscode : "",
     };
-    const res = await fetch("/api/tickets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      setError(err.message || "ثبت تیکت ناموفق بود");
-      return;
+    try {
+      const res = await fetch("/api/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detailMessage = Array.isArray(data.details) ? data.details[0]?.message : "";
+        setError(data.message || detailMessage || `ثبت پذیرش ناموفق بود (خطای ${res.status.toLocaleString("fa-IR")})`);
+        return;
+      }
+      setCreatedTicket({ id: data.ticket.id, no: data.ticket.no });
+      onCreated();
+    } catch {
+      setError("ارتباط با سرور برقرار نشد؛ اینترنت را بررسی کرده و دوباره تلاش کنید");
+    } finally {
+      setSubmitting(false);
     }
-    const data = await res.json();
-    setCreatedTicket({ id: data.ticket.id, no: data.ticket.no });
-    onCreated();
   }
 
   if (createdTicket) {
@@ -1109,8 +1125,8 @@ function NewTicketModal({ defaultLane, defaultDeviceCategory, serviceCategories,
               بعدی <ArrowLeft size={16} />
             </button>
           ) : (
-            <button onClick={submit} className="intake-button is-next">
-              <Check size={16} /> ثبت پذیرش
+            <button onClick={submit} disabled={submitting} className="intake-button is-next disabled:cursor-wait disabled:opacity-60">
+              <Check size={16} /> {submitting ? "در حال ثبت..." : "ثبت پذیرش"}
             </button>
           )}
         </div>

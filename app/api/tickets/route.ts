@@ -2,36 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
 import { sendSms, sendIntakeSms, intakeReceivedMessage } from "@/lib/sms";
-import { preprocessPhone } from "@/lib/phone";
 import { encryptSecretOrPassthrough } from "@/lib/crypto";
 import { parseServiceCategories } from "@/lib/device-category";
+import { logCaught } from "@/lib/logError";
+import { CreateTicketSchema } from "@/lib/ticket-intake-schema";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
-
-const CreateTicketSchema = z.object({
-  customerName: z.string().optional().default(""),
-  // Every repair-status SMS goes here. A number stored as ۰۹… is not a
-  // number Kavenegar can deliver to. See lib/phone.ts.
-  customerPhone: z.preprocess(preprocessPhone, z.string().optional().default("")),
-  deviceModel: z.string().min(1),
-  deviceCategory: z.enum(["MOBILE", "COMPUTER"]).default("MOBILE"),
-  deviceType: z.enum(["LAPTOP", "DESKTOP", "ALL_IN_ONE", "MINI_PC", "OTHER"]).optional(),
-  deviceBrand: z.string().max(80).optional(),
-  operatingSystem: z.string().max(80).optional(),
-  accessories: z.string().max(300).optional(),
-  imei: z.string().optional(),
-  issueInitial: z.string().min(1),
-  lane: z.enum(["HARDWARE", "SOFTWARE", "BOARD"]),
-  estimatedCost: z.number().int().optional(),
-  devicePasscode: z.string().optional(),
-  devicePasscodeType: z.enum(["PIN", "PASSWORD", "PATTERN"]).optional(),
-  customerDamageNotes: z.string().optional(),
-  receiptAck: z.enum(["SHOP_PRINTED_SIGNED", "SITE_PRINTED_SIGNED", "NO_SIGNATURE"]).optional(),
-  intakeSource: z.enum(["CUSTOMER", "PARTNER"]).default("CUSTOMER"),
-  partnerName: z.string().max(120).optional(),
-  partnerPhone: z.preprocess(preprocessPhone, z.string().optional()),
-});
 
 // GET /api/tickets?lane=HARDWARE&status=PENDING
 // Always scoped to the signed-in user's shop. Specialist technicians
@@ -94,8 +71,10 @@ export async function GET(req: NextRequest) {
 
 // POST /api/tickets — device intake.
 export async function POST(req: NextRequest) {
+  let actor: { shopId?: string; userId?: string } = {};
   try {
     const { shopId, userId } = await requireSession();
+    actor = { shopId, userId };
     const body = CreateTicketSchema.parse(await req.json());
     const partnerWithoutCustomer = body.intakeSource === "PARTNER" && (!body.customerName.trim() || !body.customerPhone);
     if (body.intakeSource === "PARTNER" && !body.partnerName?.trim()) {
@@ -220,9 +199,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ticket: result }, { status: 201 });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-    if (e instanceof z.ZodError) return NextResponse.json({ error: "invalid_input", details: e.errors }, { status: 400 });
+    if (e instanceof z.ZodError) {
+      const firstIssue = e.errors[0];
+      return NextResponse.json({
+        error: "invalid_input",
+        field: firstIssue?.path.join(".") || undefined,
+        message: firstIssue?.message || "یکی از اطلاعات پذیرش معتبر نیست",
+        details: e.errors,
+      }, { status: 400 });
+    }
     console.error(e);
-    return NextResponse.json({ error: "internal_error" }, { status: 500 });
+    await logCaught(e, {
+      source: "server",
+      path: "/api/tickets",
+      method: "POST",
+      shopId: actor.shopId,
+      userId: actor.userId,
+      context: { operation: "create_ticket" },
+    });
+    return NextResponse.json({
+      error: "internal_error",
+      message: "ثبت پذیرش به‌دلیل خطای موقت سرور انجام نشد؛ علت برای مدیریت ثبت شد. لطفاً دوباره تلاش کنید.",
+    }, { status: 500 });
   }
 }
 
