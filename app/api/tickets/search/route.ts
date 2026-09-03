@@ -35,7 +35,11 @@ export async function GET(req: NextRequest) {
             }
           : {}),
       },
-      include: { customer: true, assignedTo: { select: { name: true } } },
+      include: {
+        customer: true,
+        assignedTo: { select: { name: true } },
+        invoice: { select: { id: true, total: true, paidAmount: true, paid: true } },
+      },
       orderBy: { createdAt: "desc" },
       take: 200,
     });

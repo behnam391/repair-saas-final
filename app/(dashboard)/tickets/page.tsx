@@ -37,6 +37,8 @@ type Ticket = {
   lane: string;
   status: string;
   assignedToId?: string | null;
+  estimatedCost?: number | null;
+  finalCost?: number | null;
   technicianReportedCost?: number | null;
   technicianNote?: string | null;
   devicePasscode?: string | null;
@@ -411,7 +413,10 @@ function TicketDetail({
   const [estimatedCost, setEstimatedCost] = useState(0);
   const [includeCard, setIncludeCard] = useState(false);
   const [deliverOpen, setDeliverOpen] = useState(false);
+  const [deliveryInvoice, setDeliveryInvoice] = useState(ticket.invoice ?? null);
+  const [deliveryCost, setDeliveryCost] = useState(ticket.invoice?.total ?? ticket.finalCost ?? ticket.estimatedCost ?? 0);
   const [deliveryPaidAmount, setDeliveryPaidAmount] = useState(ticket.invoice?.paidAmount ?? (ticket.invoice?.paid ? ticket.invoice.total : 0));
+  const [deliveryError, setDeliveryError] = useState("");
   const [delivering, setDelivering] = useState(false);
 
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -455,17 +460,34 @@ function TicketDetail({
   }
 
   async function confirmDelivery() {
+    setDeliveryError("");
     setDelivering(true);
-    if (ticket.invoice) {
-      const res = await fetch(`/api/invoices/${ticket.invoice.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paidAmount: Math.min(ticket.invoice.total, Math.max(0, deliveryPaidAmount)) }),
-      });
-      if (!res.ok) { setDelivering(false); return; }
+    try {
+      const total = deliveryInvoice?.total ?? Math.max(0, deliveryCost);
+      const paidAmount = Math.min(total, Math.max(0, deliveryPaidAmount));
+      const invoiceResponse = deliveryInvoice
+        ? await fetch(`/api/invoices/${deliveryInvoice.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paidAmount }),
+          })
+        : await fetch("/api/invoices", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ticketId: ticket.id, laborCost: total, parts: [], applyTax: false, paidAmount }),
+          });
+      const invoiceData = await invoiceResponse.json().catch(() => ({}));
+      if (!invoiceResponse.ok) {
+        setDeliveryError(invoiceData.message || "ثبت اطلاعات مالی انجام نشد؛ دوباره تلاش کنید");
+        return;
+      }
+      if (!deliveryInvoice && invoiceData.invoice) setDeliveryInvoice(invoiceData.invoice);
+      await onTransition(ticket.id, "deliver");
+    } catch {
+      setDeliveryError("ارتباط با سرور برقرار نشد؛ دوباره تلاش کنید");
+    } finally {
+      setDelivering(false);
     }
-    await onTransition(ticket.id, "deliver");
-    setDelivering(false);
   }
 
   return (
@@ -671,23 +693,29 @@ function TicketDetail({
               </button>
             ) : (
               <div className="rounded-xl border border-copper/40 bg-copper/5 p-3 space-y-2">
-                <div className="text-xs font-bold">وضعیت مالی هنگام تحویل</div>
-                {ticket.invoice ? (
+                <div className="text-xs font-bold">هزینه و تسویه هنگام تحویل {ticket.intakeSource === "PARTNER" ? `به ${ticket.partnerName || "همکار"}` : "به مشتری"}</div>
+                {deliveryInvoice ? (
                   <>
-                    <div className="flex justify-between text-[11px] text-muted"><span>مبلغ فاکتور</span><b>{ticket.invoice.total.toLocaleString("fa-IR")} تومان</b></div>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      <button type="button" onClick={() => setDeliveryPaidAmount(0)} className={`rounded-lg border px-2 py-2 text-[10px] font-bold ${deliveryPaidAmount === 0 ? "border-amber bg-amber/10 text-amber" : "border-surface2 bg-surface text-muted"}`}>نسیه</button>
-                      <button type="button" onClick={() => setDeliveryPaidAmount(Math.min(ticket.invoice!.total, Math.max(1, deliveryPaidAmount)))} className={`rounded-lg border px-2 py-2 text-[10px] font-bold ${deliveryPaidAmount > 0 && deliveryPaidAmount < ticket.invoice.total ? "border-copper bg-copper/10 text-copper" : "border-surface2 bg-surface text-muted"}`}>پرداخت بخشی</button>
-                      <button type="button" onClick={() => setDeliveryPaidAmount(ticket.invoice!.total)} className={`rounded-lg border px-2 py-2 text-[10px] font-bold ${deliveryPaidAmount >= ticket.invoice.total ? "border-teal bg-teal/10 text-teal" : "border-surface2 bg-surface text-muted"}`}>تسویه کامل</button>
-                    </div>
-                    <label className="block text-[11px] text-muted">مجموع مبلغ پرداخت‌شده تا این لحظه</label>
-                    <input type="text" inputMode="numeric" dir="ltr" value={deliveryPaidAmount || ""} onChange={(e) => setDeliveryPaidAmount(Math.min(ticket.invoice!.total, num(e.target.value)))} className="w-full rounded-lg border border-surface2 bg-surface px-3 py-2 text-sm" />
-                    <div className="flex justify-between rounded-lg bg-surface2 px-3 py-2 text-xs"><span>مانده حساب</span><b className={ticket.invoice.total - deliveryPaidAmount > 0 ? "text-amber" : "text-teal"}>{Math.max(0, ticket.invoice.total - deliveryPaidAmount).toLocaleString("fa-IR")} تومان</b></div>
-                    {deliveryPaidAmount < ticket.invoice.total && <p className="text-[10px] leading-5 text-muted">دستگاه تحویل می‌شود و مبلغ باقی‌مانده به‌عنوان طلب تعمیرگاه در فاکتورها باقی می‌ماند.</p>}
+                    <div className="flex justify-between rounded-lg bg-surface2 px-3 py-2 text-xs"><span>هزینه نهایی ثبت‌شده</span><b>{deliveryInvoice.total.toLocaleString("fa-IR")} تومان</b></div>
+                    <p className="text-[10px] leading-5 text-muted">این مبلغ از فاکتور خوانده شده است؛ جزئیات هزینه و قطعات از بخش فاکتورها قابل ویرایش است.</p>
                   </>
                 ) : (
-                  <p className="rounded-lg bg-amber/10 p-2 text-[10px] text-amber">برای این تعمیر فاکتور صادر نشده است. تحویل ثبت می‌شود اما مانده حسابی ثبت نخواهد شد.</p>
+                  <>
+                    <label className="block text-[11px] text-muted">هزینه نهایی تعمیر (تومان)</label>
+                    <input type="text" inputMode="numeric" dir="ltr" value={deliveryCost || ""} onChange={(event) => { const value = num(event.target.value); setDeliveryCost(value); setDeliveryPaidAmount((current) => Math.min(current, value)); }} className="w-full rounded-lg border border-surface2 bg-surface px-3 py-2 text-sm" placeholder="مثلاً ۴۹۰۰۰۰" />
+                    <p className="rounded-lg bg-teal/10 p-2 text-[10px] text-teal">با تأیید تحویل، فاکتور این تعمیر به‌صورت خودکار ساخته می‌شود.</p>
+                  </>
                 )}
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button type="button" onClick={() => setDeliveryPaidAmount(0)} className={`rounded-lg border px-2 py-2 text-[10px] font-bold ${deliveryPaidAmount === 0 ? "border-amber bg-amber/10 text-amber" : "border-surface2 bg-surface text-muted"}`}>نسیه</button>
+                  <button type="button" onClick={() => setDeliveryPaidAmount(Math.min(deliveryInvoice?.total ?? deliveryCost, Math.max(1, deliveryPaidAmount)))} className={`rounded-lg border px-2 py-2 text-[10px] font-bold ${deliveryPaidAmount > 0 && deliveryPaidAmount < (deliveryInvoice?.total ?? deliveryCost) ? "border-copper bg-copper/10 text-copper" : "border-surface2 bg-surface text-muted"}`}>پرداخت بخشی</button>
+                  <button type="button" onClick={() => setDeliveryPaidAmount(deliveryInvoice?.total ?? deliveryCost)} className={`rounded-lg border px-2 py-2 text-[10px] font-bold ${deliveryPaidAmount >= (deliveryInvoice?.total ?? deliveryCost) ? "border-teal bg-teal/10 text-teal" : "border-surface2 bg-surface text-muted"}`}>تسویه کامل</button>
+                </div>
+                <label className="block text-[11px] text-muted">مبلغ پرداخت‌شده تا این لحظه (تومان)</label>
+                <input type="text" inputMode="numeric" dir="ltr" value={deliveryPaidAmount || ""} onChange={(event) => setDeliveryPaidAmount(Math.min(deliveryInvoice?.total ?? deliveryCost, num(event.target.value)))} className="w-full rounded-lg border border-surface2 bg-surface px-3 py-2 text-sm" />
+                <div className="flex justify-between rounded-lg bg-surface2 px-3 py-2 text-xs"><span>مانده حساب</span><b className={(deliveryInvoice?.total ?? deliveryCost) - deliveryPaidAmount > 0 ? "text-amber" : "text-teal"}>{Math.max(0, (deliveryInvoice?.total ?? deliveryCost) - deliveryPaidAmount).toLocaleString("fa-IR")} تومان</b></div>
+                {deliveryPaidAmount < (deliveryInvoice?.total ?? deliveryCost) && <p className="text-[10px] leading-5 text-muted">دستگاه تحویل می‌شود و مبلغ باقی‌مانده به‌عنوان طلب تعمیرگاه در فاکتورها باقی می‌ماند.</p>}
+                {deliveryError && <p className="rounded-lg bg-danger/10 p-2 text-[10px] text-danger">{deliveryError}</p>}
                 <div className="flex gap-2">
                   <button onClick={confirmDelivery} disabled={delivering} className="flex-1 rounded-lg bg-copper py-2 text-xs font-bold text-[#1A1410] disabled:opacity-60">{delivering ? "در حال ثبت..." : "تأیید تحویل"}</button>
                   <button onClick={() => setDeliverOpen(false)} className="flex-1 rounded-lg bg-surface2 py-2 text-xs">انصراف</button>
