@@ -3,8 +3,9 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import {
-  ArrowLeft, BarChart3, Check, CircleDollarSign, Clock3, Download,
+  ArrowLeft, ArrowRight, BarChart3, Check, Clock3, Download, Globe2,
   Headphones, MessageSquareText, PackageCheck, QrCode, ShieldCheck,
   Smartphone, Sparkles, UsersRound, Wrench,
 } from "lucide-react";
@@ -17,23 +18,47 @@ import EnamadServerBadge from "@/components/EnamadServerBadge";
 import ZarinpalTrustBadge from "@/components/ZarinpalTrustBadge";
 import ThemeToggle from "@/components/ThemeToggle";
 import PwaInstallButton from "@/components/PwaInstallButton";
+import { HOME_COPY, getPublicLocale, publicPath, PUBLIC_LANGUAGE_LABELS, type PublicLocale } from "@/lib/public-locales";
 
 export const dynamic = "force-dynamic";
 
-const features = [
-  { icon: Wrench, index: "01", title: "گردش‌کار تعمیرات", text: "از پذیرش و عیب‌یابی تا تخصیص، ثبت قطعه و تحویل؛ یک مسیر روشن و بدون دوباره‌کاری.", tone: "blue", wide: true },
-  { icon: MessageSquareText, index: "02", title: "ارتباط هوشمند", text: "اطلاع‌رسانی وضعیت و پیگیری مشتری بدون تماس‌های تکراری.", tone: "green" },
-  { icon: BarChart3, index: "03", title: "دید مالی واقعی", text: "درآمد، هزینه، دستمزد و سود هر تعمیر در یک نگاه.", tone: "violet" },
-  { icon: PackageCheck, index: "04", title: "انبار دقیق", text: "کنترل موجودی، مصرف قطعه و هشدار کمبود پیش از توقف کار.", tone: "amber" },
-  { icon: QrCode, index: "05", title: "پذیرش با QR", text: "ورود سریع اطلاعات دستگاه و تجربه حرفه‌ای از همان لحظه اول.", tone: "cyan" },
-  { icon: UsersRound, index: "06", title: "همکاری بین تعمیرگاه‌ها", text: "ارجاع تخصصی، ثبت مسیر ارسال و تسویه شفاف با همکاران مورد اعتماد.", tone: "green", wide: true },
+const featureVisuals = [
+  { icon: Wrench, index: "01", tone: "blue", wide: true },
+  { icon: MessageSquareText, index: "02", tone: "green" },
+  { icon: BarChart3, index: "03", tone: "violet" },
+  { icon: PackageCheck, index: "04", tone: "amber" },
+  { icon: QrCode, index: "05", tone: "cyan" },
+  { icon: UsersRound, index: "06", tone: "green", wide: true },
 ];
 
-const workflow = [
-  { n: "۰۱", title: "راه‌اندازی", text: "تعمیرگاه، خدمات و تیم را تعریف کنید." },
-  { n: "۰۲", title: "اجرای روزانه", text: "پذیرش، تعمیر و ارتباط با مشتری را یکپارچه کنید." },
-  { n: "۰۳", title: "رشد آگاهانه", text: "با گزارش‌های روشن، تصمیم دقیق‌تری بگیرید." },
-];
+const BASE_URL = "https://peyvo.ir";
+
+export function generateMetadata({ searchParams }: { searchParams?: { lang?: string | string[] } }): Metadata {
+  const locale = getPublicLocale(searchParams?.lang);
+  const copy = HOME_COPY[locale];
+  const canonicalPath = publicPath(locale);
+  return {
+    title: copy.seo.title,
+    description: copy.seo.description,
+    alternates: {
+      canonical: `${BASE_URL}${canonicalPath === "/" ? "" : canonicalPath}`,
+      languages: {
+        "fa-IR": `${BASE_URL}/`,
+        en: `${BASE_URL}/en`,
+        ar: `${BASE_URL}/ar`,
+        "x-default": `${BASE_URL}/`,
+      },
+    },
+    openGraph: {
+      title: copy.seo.title,
+      description: copy.seo.description,
+      url: `${BASE_URL}${canonicalPath === "/" ? "" : canonicalPath}`,
+      siteName: "Peyvo",
+      locale: locale === "fa" ? "fa_IR" : locale === "ar" ? "ar_AR" : "en_US",
+      type: "website",
+    },
+  };
+}
 
 type AppLinks = { apk: string; bazaar: string; myket: string };
 
@@ -51,39 +76,45 @@ async function getAppLinks(): Promise<AppLinks> {
   }
 }
 
-function StoreChoice({ href, store, label, logo }: { href: string; store: string; label: string; logo: string }) {
-  const body = <><i><img src={logo} alt="" /></i><span><small>{href ? label : "در حال بررسی و انتشار"}</small><strong>{store}</strong></span></>;
+function StoreChoice({ href, store, label, logo, pending, pendingAria }: { href: string; store: string; label: string; logo: string; pending: string; pendingAria: string }) {
+  const body = <><i><img src={logo} alt="" /></i><span><small>{href ? label : pending}</small><strong>{store}</strong></span></>;
   return href
     ? <a href={href} target="_blank" rel="noopener noreferrer" className="home-store-choice">{body}</a>
-    : <div className="home-store-choice is-pending" aria-label={`${store}؛ در حال بررسی`}>{body}</div>;
+    : <div className="home-store-choice is-pending" aria-label={`${store}; ${pendingAria}`}>{body}</div>;
 }
 
 function StoreTrustBadge({
-  href, store, logo, publishedLabel,
+  href, store, logo, publishedLabel, pendingLabel, officialPage, officialLogo,
 }: {
   href: string;
   store: string;
   logo: string;
   publishedLabel: string;
+  pendingLabel: string;
+  officialPage: string;
+  officialLogo: string;
 }) {
   const logoNode = (
     <span className="home-store-seal-logo">
-      <img src={logo} alt={`لوگوی رسمی ${store}`} />
+      <img src={logo} alt={`${officialLogo} ${store}`} />
     </span>
   );
 
   return (
     <article className={`home-store-seal ${href ? "is-published" : "is-pending"}`}>
       {href
-        ? <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`مشاهده صفحه رسمی پیوو در ${store}`}>{logoNode}</a>
+        ? <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`${officialPage}: ${store}`}>{logoNode}</a>
         : logoNode}
       <strong>{href ? publishedLabel : store}</strong>
-      <small>{href ? "مشاهده صفحه رسمی پیوو" : "در حال بررسی و انتشار"}</small>
+      <small>{href ? officialPage : pendingLabel}</small>
     </article>
   );
 }
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams?: { lang?: string | string[] } }) {
+  const locale = getPublicLocale(searchParams?.lang);
+  const copy = HOME_COPY[locale];
+  const DirectionArrow = locale === "en" ? ArrowRight : ArrowLeft;
   const session = await getServerSession(authOptions);
   const user = session?.user;
   if (user?.isSuperAdmin) redirect("/superadmin");
@@ -97,140 +128,148 @@ export default async function Home() {
   const appLinks = await getAppLinks();
 
   return (
-    <main className="landing-root home-v2">
+    <main className="landing-root home-v2" lang={copy.locale} dir={copy.dir}>
       <div className="home-atmosphere" aria-hidden><i /><i /><i /></div>
 
       <header className="home-header">
         <div className="home-nav">
-          <Link href="/" aria-label="صفحه اصلی پیوو" className="home-brand"><Logo size={32} textClassName="text-xl" /></Link>
-          <nav className="home-nav-links" aria-label="ناوبری اصلی">
-            <a href="#product">محصول</a>
-            <a href="#features">امکانات</a>
-            <a href="#workflow">نحوه کار</a>
-            <a href="#trust">اعتماد و مجوزها</a>
+          <Link href={publicPath(locale)} aria-label={copy.nav.home} className="home-brand"><Logo size={32} textClassName="text-xl" /></Link>
+          <nav className="home-nav-links" aria-label={copy.nav.aria}>
+            <a href="#product">{copy.nav.product}</a>
+            <a href="#features">{copy.nav.features}</a>
+            <a href="#workflow">{copy.nav.workflow}</a>
+            <a href="#trust">{copy.nav.trust}</a>
           </nav>
           <div className="home-nav-actions">
-            <ThemeToggle className="home-theme-toggle" />
-            <Link href="/login" className="home-nav-login">ورود به پنل</Link>
-            <Link href="/download" className="home-nav-download"><Download size={15} /> دانلود برنامه</Link>
+            <div className="home-language" aria-label={copy.nav.language} title={copy.nav.language}>
+              <Globe2 size={15} />
+              {(["fa", "en", "ar"] as PublicLocale[]).map((item) => (
+                <Link key={item} href={publicPath(item)} className={item === locale ? "active" : ""} aria-current={item === locale ? "page" : undefined}>{PUBLIC_LANGUAGE_LABELS[item]}</Link>
+              ))}
+            </div>
+            <ThemeToggle className="home-theme-toggle" label={locale === "en" ? "Switch colour theme" : locale === "ar" ? "تبديل السمة" : "تغییر حالت شب و روز"} />
+            <Link href="/login" className="home-nav-login">{copy.nav.login}</Link>
+            <Link href={publicPath(locale, "/download")} className="home-nav-download"><Download size={15} /> {copy.nav.download}</Link>
           </div>
         </div>
       </header>
 
       <section className="home-hero" id="product">
         <div className="home-hero-copy">
-          <div className="home-eyebrow"><span><i /> سامانه فعال و آنلاین</span><b>ساخته‌شده برای تعمیرگاه‌های ایران</b></div>
-          <h1><em>پیوو؛</em> مدیریت هوشمند تعمیرگاه</h1>
-          <p>از پذیرش دستگاه تا تعمیر، اطلاع‌رسانی، تحویل و تسویه؛ همه‌چیز را ساده، یکپارچه و مطمئن مدیریت کنید.</p>
+          <div className="home-eyebrow"><span><i /> {copy.hero.online}</span><b>{copy.hero.audience}</b></div>
+          <h1><em>{copy.hero.brand}</em> {copy.hero.title}</h1>
+          <p>{copy.hero.description}</p>
           <div className="home-hero-actions">
-            <Link href="/signup" className="home-primary-action">شروع رایگان <ArrowLeft size={18} /></Link>
-            <Link href="/customer/login" className="home-secondary-action"><Smartphone size={17} /> ورود مشتریان</Link>
+            <Link href="/signup" className="home-primary-action">{copy.hero.start} <DirectionArrow size={18} /></Link>
+            <Link href="/customer/login" className="home-secondary-action"><Smartphone size={17} /> {copy.hero.customerLogin}</Link>
           </div>
           <div className="home-reassurance">
-            <span><Check size={13} /> شروع بدون هزینه</span>
-            <span><Check size={13} /> راه‌اندازی سریع</span>
-            <span><Check size={13} /> پشتیبانی فارسی</span>
+            <span><Check size={13} /> {copy.hero.free}</span>
+            <span><Check size={13} /> {copy.hero.fast}</span>
+            <span><Check size={13} /> {copy.hero.support}</span>
           </div>
 
-          <div className="home-install-panel" aria-label="روش‌های دریافت اپلیکیشن پیوو">
-            <PwaInstallButton />
+          <div className="home-install-panel" aria-label={copy.hero.installAria}>
+            <PwaInstallButton locale={locale} />
             <a href={appLinks.apk || "/download"} className="home-store-choice is-direct">
-              <i><img src="/icons/icon-mark.png" alt="" /></i><span><small>نسخه {LATEST_ANDROID_RELEASE.versionName}</small><strong>دانلود مستقیم</strong></span>
+              <i><img src="/icons/icon-mark.png" alt="" /></i><span><small>{copy.hero.version} {LATEST_ANDROID_RELEASE.versionName}</small><strong>{copy.hero.direct}</strong></span>
             </a>
-            <StoreChoice href={appLinks.bazaar} store="کافه‌بازار" label="دریافت از" logo="/images/trust/cafebazaar-official.png" />
-            <StoreChoice href={appLinks.myket} store="مایکت" label="دریافت از" logo="/images/trust/myket-official.png" />
+            <StoreChoice href={appLinks.bazaar} store={locale === "fa" ? "کافه‌بازار" : "Cafe Bazaar"} label={copy.store.getFrom} logo="/images/trust/cafebazaar-official.png" pending={copy.store.pending} pendingAria={copy.store.underReviewAria} />
+            <StoreChoice href={appLinks.myket} store={locale === "fa" ? "مایکت" : "Myket"} label={copy.store.getFrom} logo="/images/trust/myket-official.png" pending={copy.store.pending} pendingAria={copy.store.underReviewAria} />
           </div>
         </div>
 
-        <div className="home-ai-visual" aria-label="دستیار هوشمند پیوو و نمای گردش کار تعمیرگاه">
+        <div className="home-ai-visual" aria-label={copy.ai.visualAria}>
           <div className="home-ai-board" aria-hidden="true">
-            <div className="home-ai-board-head"><span><i /> وضعیت زنده تعمیرگاه</span><b>امروز</b></div>
+            <div className="home-ai-board-head"><span><i /> {copy.ai.liveStatus}</span><b>{copy.ai.today}</b></div>
             <div className="home-ai-board-flow">
-              <span><i /> پذیرش</span><span><i /> در حال تعمیر</span><span><i /> آماده تحویل</span>
+              <span><i /> {copy.ai.reception}</span><span><i /> {copy.ai.repairing}</span><span><i /> {copy.ai.ready}</span>
             </div>
             <div className="home-ai-board-line"><i /><i /><i /><i /><i /></div>
-            <div className="home-ai-board-note"><Sparkles size={15} /><span><b>دستیار هوشمند پیوو</b><small>کارهای مهم امروز را یک‌جا ببینید</small></span></div>
+            <div className="home-ai-board-note"><Sparkles size={15} /><span><b>{copy.ai.assistant}</b><small>{copy.ai.importantToday}</small></span></div>
           </div>
           <div className="home-mascot-halo" aria-hidden="true" />
-          <Image className="home-ai-mascot" src="/images/peyvo-ai-assistant-v2.png" alt="کاراکتر دستیار هوشمند پیوو" width={520} height={740} priority sizes="(max-width: 760px) 250px, 410px" />
-          <span className="home-ai-caption"><Sparkles size={14} /> دستیار هوشمند، همراه کارهای روزانه</span>
+          <Image className="home-ai-mascot" src="/images/peyvo-ai-assistant-v2.png" alt={copy.ai.mascotAlt} width={520} height={740} priority sizes="(max-width: 760px) 250px, 410px" />
+          <span className="home-ai-caption"><Sparkles size={14} /> {copy.ai.caption}</span>
         </div>
 
       </section>
 
-      <section className="home-proof" aria-label="مزیت‌های پیوو">
-        <div><strong>نسخه عملیاتی {LATEST_ANDROID_RELEASE.versionName}</strong><small>سامانه آماده استفاده و در حال توسعه مستمر</small></div>
-        <span><ShieldCheck /> هویت و پرداخت قابل استعلام</span>
-        <span><Smartphone /> دسترسی وب و اندروید</span>
-        <span><Clock3 /> چرخه کامل پذیرش تا تحویل</span>
-        <span><Headphones /> پشتیبانی فارسی</span>
+      <section className="home-proof" aria-label={copy.proof.aria}>
+        <div><strong>{copy.proof.version} {LATEST_ANDROID_RELEASE.versionName}</strong><small>{copy.proof.operational}</small></div>
+        <span><ShieldCheck /> {copy.proof.verified}</span>
+        <span><Smartphone /> {copy.proof.platforms}</span>
+        <span><Clock3 /> {copy.proof.completeCycle}</span>
+        <span><Headphones /> {copy.proof.support}</span>
       </section>
 
       <section id="features" className="home-section home-capabilities">
         <div className="home-section-head">
-          <span><Sparkles size={14} /> همه‌چیز در یک جریان</span>
-          <h2>نظم حرفه‌ای، بدون پیچیدگی.</h2>
-          <p>هر ابزاری که برای اداره یک تعمیرگاه مدرن لازم دارید؛ دقیقاً جایی که باید باشد.</p>
+          <span><Sparkles size={14} /> {copy.capabilities.kicker}</span>
+          <h2>{copy.capabilities.title}</h2>
+          <p>{copy.capabilities.description}</p>
         </div>
         <div className="home-bento">
-          {features.map(({ icon: Icon, index, title, text, tone, wide }) => (
-            <article key={title} className={`home-feature tone-${tone} ${wide ? "is-wide" : ""}`}>
+          {featureVisuals.map(({ icon: Icon, index, tone, wide }, featureIndex) => {
+            const feature = copy.capabilities.features[featureIndex];
+            return (
+            <article key={feature.title} className={`home-feature tone-${tone} ${wide ? "is-wide" : ""}`}>
               <div className="home-feature-top"><i><Icon size={21} /></i><span>{index}</span></div>
-              <h3>{title}</h3><p>{text}</p>
+              <h3>{feature.title}</h3><p>{feature.text}</p>
               {wide && <div className="home-feature-signal" aria-hidden><i /><i /><i /><i /><span /></div>}
             </article>
-          ))}
+          )})}
         </div>
       </section>
 
       <section className="home-section home-intelligence">
         <div className="home-intelligence-copy">
-          <span><Sparkles size={14} /> هوشمندی کاربردی، نه نمایشی</span>
-          <h2>اطلاعات را ثبت نکنید؛<br /><em>از آن تصمیم بسازید.</em></h2>
-          <p>پیوو جریان روزانه تعمیرگاه را به نشانه‌های ساده و قابل اقدام تبدیل می‌کند؛ بدانید چه چیزی عقب افتاده، کدام قطعه رو به اتمام است و امروز کجا باید تمرکز کنید.</p>
-          <div><span><Check size={13} /> تشخیص گلوگاه</span><span><Check size={13} /> هشدار موجودی</span><span><Check size={13} /> دید مالی</span></div>
+          <span><Sparkles size={14} /> {copy.intelligence.kicker}</span>
+          <h2>{copy.intelligence.title}<br /><em>{copy.intelligence.accent}</em></h2>
+          <p>{copy.intelligence.description}</p>
+          <div><span><Check size={13} /> {copy.intelligence.bottleneck}</span><span><Check size={13} /> {copy.intelligence.inventory}</span><span><Check size={13} /> {copy.intelligence.finance}</span></div>
         </div>
       </section>
 
       <section id="workflow" className="home-section home-workflow">
-        <div className="home-section-head compact"><span>شروع ساده</span><h2>سه قدم تا یک تعمیرگاه منظم</h2></div>
+        <div className="home-section-head compact"><span>{copy.workflow.kicker}</span><h2>{copy.workflow.title}</h2></div>
         <div className="home-workflow-grid">
-          {workflow.map((step, index) => <article key={step.n}><div><span>{step.n}</span>{index < workflow.length - 1 && <i />}</div><h3>{step.title}</h3><p>{step.text}</p></article>)}
+          {copy.workflow.steps.map((step, index) => <article key={step.n}><div><span>{step.n}</span>{index < copy.workflow.steps.length - 1 && <i />}</div><h3>{step.title}</h3><p>{step.text}</p></article>)}
         </div>
       </section>
 
       <section id="trust" className="home-section home-trust">
         <div className="home-trust-copy">
-          <span><ShieldCheck size={15} /> هویت، پرداخت و انتشار رسمی</span>
-          <h2>اعتمادی که قابل استعلام است.</h2>
-          <p>هویت و دامنه پیوو در سامانه رسمی اینماد بررسی شده، پرداخت‌های وب از مسیر امن زرین‌پال انجام می‌شود و نسخه اندروید از کانال‌های معتبر فروشگاهی در دسترس قرار می‌گیرد.</p>
-          <div><span><Check size={12} /> دامنه ثبت‌شده</span><span><Check size={12} /> هویت تأییدشده</span><span><Check size={12} /> انتشار رسمی اپلیکیشن</span></div>
+          <span><ShieldCheck size={15} /> {copy.trust.kicker}</span>
+          <h2>{copy.trust.title}</h2>
+          <p>{copy.trust.description}</p>
+          <div><span><Check size={12} /> {copy.trust.domain}</span><span><Check size={12} /> {copy.trust.identity}</span><span><Check size={12} /> {copy.trust.app}</span></div>
         </div>
         <div className="home-seals">
-          <article><EnamadServerBadge /><strong>نماد اعتماد الکترونیکی</strong><small>استعلام از سامانه رسمی</small></article>
-          <article><ZarinpalTrustBadge /><strong>درگاه پرداخت زرین‌پال</strong><small>پرداخت امن برای همین دامنه</small></article>
-          <StoreTrustBadge href={appLinks.bazaar} store="کافه‌بازار" logo="/images/trust/cafebazaar-official.png" publishedLabel="انتشار رسمی کافه‌بازار" />
-          <StoreTrustBadge href={appLinks.myket} store="مایکت" logo="/images/trust/myket-official.png" publishedLabel="انتشار رسمی مایکت" />
+          <article><EnamadServerBadge /><strong>{copy.trust.enamad}</strong><small>{copy.trust.enamadSub}</small></article>
+          <article><ZarinpalTrustBadge /><strong>{copy.trust.zarinpal}</strong><small>{copy.trust.zarinpalSub}</small></article>
+          <StoreTrustBadge href={appLinks.bazaar} store={locale === "fa" ? "کافه‌بازار" : "Cafe Bazaar"} logo="/images/trust/cafebazaar-official.png" publishedLabel={copy.trust.bazaarPublished} pendingLabel={copy.store.pending} officialPage={copy.store.officialPage} officialLogo={copy.store.officialLogo} />
+          <StoreTrustBadge href={appLinks.myket} store={locale === "fa" ? "مایکت" : "Myket"} logo="/images/trust/myket-official.png" publishedLabel={copy.trust.myketPublished} pendingLabel={copy.store.pending} officialPage={copy.store.officialPage} officialLogo={copy.store.officialLogo} />
         </div>
       </section>
 
       <section className="home-final">
         <div className="home-final-glow" aria-hidden />
-        <span>آماده یک شروع حرفه‌ای هستید؟</span>
-        <h2>سامانه مدیریت تعمیرگاه شما،<br />همین حالا آماده است.</h2>
-        <p>رایگان شروع کنید و پیوو را با جریان واقعی تعمیرگاه خودتان بسنجید.</p>
-        <div><Link href="/signup" className="home-primary-action">ساخت حساب رایگان <ArrowLeft size={18} /></Link><Link href="/download" className="home-final-download"><Download size={16} /> دانلود برنامه</Link></div>
+        <span>{copy.final.kicker}</span>
+        <h2>{copy.final.titleLine1}<br />{copy.final.titleLine2}</h2>
+        <p>{copy.final.description}</p>
+        <div><Link href="/signup" className="home-primary-action">{copy.final.account} <DirectionArrow size={18} /></Link><Link href={publicPath(locale, "/download")} className="home-final-download"><Download size={16} /> {copy.final.download}</Link></div>
       </section>
 
       <footer className="home-footer">
         <div className="home-footer-main">
-          <div className="home-footer-brand"><Logo size={34} /><p>زیرساخت یکپارچه مدیریت تعمیرگاه؛ دقیق، سریع و قابل اعتماد.</p><div><i /> سامانه فعال</div></div>
-          <div><strong>محصول</strong><a href="#features">امکانات</a><a href="#workflow">نحوه کار</a><Link href="/download">دانلود برنامه</Link></div>
-          <div><strong>دسترسی</strong><Link href="/login">ورود تعمیرگاه</Link><Link href="/customer/login">ورود مشتری</Link><Link href="/signup">ثبت‌نام رایگان</Link></div>
-          <div><strong>پشتیبانی و قوانین</strong><Link href="/support">پشتیبانی</Link><Link href="/terms">شرایط استفاده</Link><Link href="/privacy">حریم خصوصی</Link></div>
-          <div className="home-footer-seal"><EnamadBadge /><small>هویت کسب‌وکار تأیید شده</small></div>
+          <div className="home-footer-brand"><Logo size={34} /><p>{copy.footer.tagline}</p><div><i /> {copy.footer.online}</div></div>
+          <div><strong>{copy.footer.product}</strong><a href="#features">{copy.footer.features}</a><a href="#workflow">{copy.footer.workflow}</a><Link href={publicPath(locale, "/download")}>{copy.footer.download}</Link></div>
+          <div><strong>{copy.footer.access}</strong><Link href="/login">{copy.footer.shopLogin}</Link><Link href="/customer/login">{copy.footer.customerLogin}</Link><Link href="/signup">{copy.footer.signup}</Link></div>
+          <div><strong>{copy.footer.supportAndLegal}</strong><a href="mailto:support@peyvo.ir">{copy.footer.support}</a><Link href={publicPath(locale, "/terms")}>{copy.footer.terms}</Link><Link href={publicPath(locale, "/privacy")}>{copy.footer.privacy}</Link></div>
+          <div className="home-footer-seal"><EnamadBadge /><small>{copy.footer.verified}</small></div>
         </div>
-        <div className="home-footer-bottom"><span>© ۱۴۰۵ پیوو؛ تمامی حقوق محفوظ است.</span><span>ساخته‌شده برای تعمیرکاران ایران</span></div>
+        <div className="home-footer-bottom"><span>{copy.footer.copyright}</span><span>{copy.footer.madeFor}</span></div>
       </footer>
     </main>
   );

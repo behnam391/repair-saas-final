@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
 
-export default function ThemeToggle({ className = "" }: { className?: string }) {
+export default function ThemeToggle({ className = "", label = "تغییر حالت شب و روز" }: { className?: string; label?: string }) {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   useEffect(() => {
@@ -26,8 +26,8 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
   return (
     <button
       onClick={toggle}
-      aria-label="تغییر حالت شب و روز"
-      title={theme === "dark" ? "حالت روز" : "حالت شب"}
+      aria-label={label}
+      title={label}
       className={`app-icon-button ${className}`.trim()}
     >
       {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}

@@ -57,15 +57,18 @@ async function getAppearance(): Promise<{ fontKey: string; theme: string }> {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { fontKey, theme } = await getAppearance();
   const font = getFont(fontKey);
-  const isNativeApp = /\bPeyvoNativeApp\b/i.test(headers().get("user-agent") || "");
+  const requestHeaders = headers();
+  const isNativeApp = /\bPeyvoNativeApp\b/i.test(requestHeaders.get("user-agent") || "");
+  const locale = requestHeaders.get("x-peyvo-locale");
+  const documentLocale = locale === "en" || locale === "ar" ? locale : "fa";
 
   return (
     // --app-font is set as an inline CSS variable right on <html> (read by
     // globals.css `body`). Doing it here — rather than via a separate <style>
     // element — keeps the markup valid and avoids a hydration mismatch.
     <html
-      lang="fa"
-      dir="rtl"
+      lang={documentLocale}
+      dir={documentLocale === "en" ? "ltr" : "rtl"}
       data-theme={theme}
       style={{ ["--app-font" as any]: font.family }}
     >

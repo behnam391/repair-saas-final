@@ -6,6 +6,14 @@ const nextConfig = {
     // legacy BLOB_READ_WRITE_TOKEN.
     serverComponentsExternalPackages: ["@vercel/blob"],
   },
+  async rewrites() {
+    return [
+      { source: "/en", destination: "/?lang=en" },
+      { source: "/ar", destination: "/?lang=ar" },
+      { source: "/en/:path*", destination: "/:path*?lang=en" },
+      { source: "/ar/:path*", destination: "/:path*?lang=ar" },
+    ];
+  },
   async headers() {
     return [{
       source: "/:path*",
