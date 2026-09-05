@@ -977,14 +977,20 @@ select option {
 .repair-analytics-body{min-height:230px;grid-template-columns:minmax(0,1fr) 235px;padding:16px}
 .repair-line-chart svg{height:158px}
 .repair-donut{width:108px;height:108px}.repair-donut::before{width:72px;height:72px}
-.repair-side-panel.is-open{display:grid;height:300px;max-height:300px;gap:8px;overflow:hidden}
-.repair-command-side{gap:10px}
-.repair-command-side .morning-insights-head{min-height:54px!important;padding:9px 11px!important}
-.repair-command-side .morning-insights-grid{gap:6px;padding:0 8px 8px}
-.repair-command-side .morning-insight{min-height:52px;padding:8px!important}
-.repair-quick-actions>header{min-height:50px!important;padding-inline:11px!important}
-.repair-quick-actions>div{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:7px}
-.repair-quick-actions button,.repair-quick-actions a{min-height:48px;gap:3px;border-radius:9px;font-size:11px}
+.repair-side-panel.is-open{display:grid;height:300px;max-height:300px;gap:6px;overflow:hidden}
+.repair-side-panel-head{min-height:46px;padding-inline:11px}
+.repair-side-panel-head b{font-size:13px}.repair-side-panel-head small{font-size:10px}
+.repair-command-side{gap:6px}
+.repair-command-side .morning-insights-head{min-height:42px!important;padding:6px 9px!important}
+.repair-command-side .morning-insights-head b{font-size:13px!important}.repair-command-side .morning-insights-head small{font-size:10px!important}
+.repair-command-side .morning-insights-grid{gap:4px;padding:0 6px 6px}
+.repair-command-side .morning-insight{min-height:42px;padding:6px!important}
+.repair-command-side .morning-insight b{font-size:11px!important}.repair-command-side .morning-insight small{font-size:9.5px!important}
+.repair-command-side .repair-quick-actions>header{min-height:40px!important;padding-inline:9px!important}
+.repair-command-side .repair-quick-actions header b{font-size:13px}.repair-command-side .repair-quick-actions header small{font-size:10px}
+.repair-command-side .repair-quick-actions>div{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:5px}
+.repair-command-side .repair-quick-actions button,.repair-command-side .repair-quick-actions a{min-height:38px;gap:2px;border-radius:8px;font-size:10px}
+.repair-command-side .repair-quick-actions svg{width:14px;height:14px}
 .repair-active-table>header{min-height:60px;padding-inline:16px}
 .repair-active-table.is-empty>header{min-height:54px;border-bottom:0}
 .repair-active-table.is-empty>header small{display:inline;margin:0 7px 0 0}
