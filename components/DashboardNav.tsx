@@ -12,6 +12,7 @@ import {
   MonitorSmartphone, NotebookTabs, PackageSearch, QrCode, ReceiptText, RotateCcw, ShoppingBag, Smartphone, Store, UsersRound,
   Settings, WalletCards, Wrench,
 } from "lucide-react";
+import { usePanelI18n } from "@/lib/panel-i18n";
 
 type NavItem = { href: string; label: string; Icon: LucideIcon; external?: boolean };
 type NavGroup = { label: string; items: NavItem[] };
@@ -31,6 +32,7 @@ export default function DashboardNav({
   shopName?: string;
   userName?: string;
 }) {
+  const { t } = usePanelI18n();
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -159,15 +161,15 @@ export default function DashboardNav({
           onClick={() => setMobileOpen(true)}
           className="app-nav-trigger"
         >
-          <Menu size={15} /> منو
+          <Menu size={15} /> {t("منو")}
         </button>
         <div className="flex items-center gap-1.5 ms-auto">
           <Link href="/tickets" className="app-nav-quick is-primary">
-            <House size={14} /> صفحه اصلی
+            <House size={14} /> {t("صفحه اصلی")}
           </Link>
           {showDealer && (
             <Link href="/dealer" className="app-nav-quick">
-              <ShoppingBag size={14} /> خرید و فروش
+              <ShoppingBag size={14} /> {t("خرید و فروش")}
             </Link>
           )}
         </div>
@@ -191,21 +193,21 @@ export default function DashboardNav({
 
             {/* Quick actions */}
             <nav className="py-1.5">
-              <DrawerRow href="/tickets" Icon={House} label="صفحه اصلی" onGo={() => setMobileOpen(false)} bold />
+              <DrawerRow href="/tickets" Icon={House} label={t("صفحه اصلی")} onGo={() => setMobileOpen(false)} bold />
               {showDealer && (
-                <DrawerRow href="/dealer" Icon={ShoppingBag} label="خرید و فروش" onGo={() => setMobileOpen(false)} bold />
+                <DrawerRow href="/dealer" Icon={ShoppingBag} label={t("خرید و فروش")} onGo={() => setMobileOpen(false)} bold />
               )}
 
               {visibleGroups.map((g) => (
                 <div key={g.label}>
                   <div className="h-px bg-border mx-4 my-1.5" />
-                  <div className="px-4 pt-1.5 pb-1 text-[10px] font-bold text-muted">{g.label}</div>
+                  <div className="px-4 pt-1.5 pb-1 text-[10px] font-bold text-muted">{t(g.label)}</div>
                   {g.items.map((item) => (
                     <DrawerRow
                       key={item.href}
                       href={item.href}
                       Icon={item.Icon}
-                      label={item.label}
+                      label={t(item.label)}
                       external={item.external}
                       onGo={() => setMobileOpen(false)}
                     />
@@ -221,11 +223,11 @@ export default function DashboardNav({
       {/* ── Desktop (md+): unchanged — centered pills with dropdown groups. */}
       <div ref={containerRef} className="hidden md:flex items-center gap-1 flex-1 justify-center flex-wrap">
         <Link href="/tickets" className="app-nav-quick is-primary">
-          <House size={14} /> صفحه اصلی
+          <House size={14} /> {t("صفحه اصلی")}
         </Link>
         {showDealer && (
           <Link href="/dealer" className="app-nav-quick">
-            <ShoppingBag size={14} /> خرید و فروش
+            <ShoppingBag size={14} /> {t("خرید و فروش")}
           </Link>
         )}
 
@@ -238,7 +240,7 @@ export default function DashboardNav({
               openGroup === g.label ? "is-open" : ""
             }`}
           >
-            {g.label} <ChevronDown size={13} className={`transition-transform ${openGroup === g.label ? "rotate-180" : ""}`} />
+            {t(g.label)} <ChevronDown size={13} className={`transition-transform ${openGroup === g.label ? "rotate-180" : ""}`} />
           </button>
         ))}
       </div>
@@ -256,12 +258,12 @@ export default function DashboardNav({
               <a key={item.href} href={item.href} target="_blank" rel="noopener noreferrer"
                 onClick={() => setOpenGroup(null)}
                 className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
-                <item.Icon size={16} /> {item.label} ↗
+                <item.Icon size={16} /> {t(item.label)} ↗
               </a>
             ) : (
               <Link key={item.href} href={item.href} onClick={() => setOpenGroup(null)}
                 className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-muted hover:bg-surface2 hover:text-ink whitespace-nowrap">
-                <item.Icon size={16} /> {item.label}
+                <item.Icon size={16} /> {t(item.label)}
               </Link>
             )
           )}

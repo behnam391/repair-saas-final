@@ -8,6 +8,7 @@ import {
   Search, Star, Store, User, Users, Wrench, type LucideIcon,
 } from "lucide-react";
 import { isTechnician } from "@/lib/permissions";
+import { usePanelI18n } from "@/lib/panel-i18n";
 
 type Item = { href: string; label: string; Icon: LucideIcon };
 
@@ -54,6 +55,7 @@ export function LiquidBottomNav({ items }: { items: Item[] }) {
 }
 
 function SimpleBottomNav({ items }: { items: Item[] }) {
+  const { t } = usePanelI18n();
   const pathname = usePathname() || "";
   const activeHref = items
     .filter((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
@@ -61,13 +63,13 @@ function SimpleBottomNav({ items }: { items: Item[] }) {
 
   return (
     <div className="simple-bnav-wrap no-print md:hidden">
-      <nav className="simple-bnav" aria-label="ناوبری اصلی">
+      <nav className="simple-bnav" aria-label={t("ناوبری اصلی")}>
         {items.map((item) => {
           const active = item.href === activeHref;
           return (
             <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined} className={active ? "is-active" : ""}>
               <span><item.Icon size={21} strokeWidth={active ? 2.35 : 1.9} /></span>
-              <small>{item.label}</small>
+              <small>{t(item.label)}</small>
             </Link>
           );
         })}

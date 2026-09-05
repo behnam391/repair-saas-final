@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import Logo from "./Logo";
 import { canSeeNav } from "@/lib/permissions";
+import { usePanelI18n } from "@/lib/panel-i18n";
 
 type Item = { href: string; label: string; Icon: LucideIcon; owner?: boolean; dealer?: boolean };
 
@@ -36,6 +37,7 @@ const groups: { label: string; items: Item[] }[] = [
 ];
 
 export default function ShopSidebar({ role, shopType, serviceCategories = "MOBILE", shopName, userName, avatarUrl }: { role: string; shopType?: string; serviceCategories?: string; shopName: string; userName: string; avatarUrl?: string | null }) {
+  const { t } = usePanelI18n();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const sidebarRef = useRef<HTMLElement>(null);
@@ -81,15 +83,15 @@ export default function ShopSidebar({ role, shopType, serviceCategories = "MOBIL
 
   return (
     <aside ref={sidebarRef} className={`shop-sidebar no-print ${collapsed ? "is-collapsed" : ""}`}>
-      <Link href="/tickets" className="shop-sidebar-brand" title={collapsed ? "داشبورد پیوو" : undefined}>
+      <Link href="/tickets" className="shop-sidebar-brand" title={collapsed ? t("داشبورد پیوو") : undefined}>
         <Logo size={34} withText={!collapsed} />
       </Link>
       <button
         type="button"
         className="shop-sidebar-collapse"
         onClick={toggleCollapsed}
-        title={collapsed ? "باز کردن منو" : "جمع کردن منو"}
-        aria-label={collapsed ? "باز کردن منوی داشبورد" : "جمع کردن منوی داشبورد"}
+        title={collapsed ? t("باز کردن منو") : t("جمع کردن منو")}
+        aria-label={collapsed ? t("باز کردن منوی داشبورد") : t("جمع کردن منوی داشبورد")}
         aria-expanded={!collapsed}
         aria-controls="shop-sidebar-nav"
       >
@@ -101,7 +103,7 @@ export default function ShopSidebar({ role, shopType, serviceCategories = "MOBIL
             (!item.owner || role === "OWNER") && (!item.dealer || dealer) && canSeeNav(role, item.href.split("?")[0])
           );
           if (!items.length) return null;
-          return <section key={group.label}><small>{group.label}</small>{items.map(({ href, label, Icon }) => {
+          return <section key={group.label}><small>{t(group.label)}</small>{items.map(({ href, label, Icon }) => {
             const clean = href.split("?")[0];
             const hrefParams = new URLSearchParams(href.split("?")[1] ?? "");
             const isIntake = hrefParams.get("new") === "1";
@@ -110,11 +112,11 @@ export default function ShopSidebar({ role, shopType, serviceCategories = "MOBIL
               : clean === "/tickets"
                 ? pathname === clean && searchParams.get("new") !== "1"
                 : pathname.startsWith(clean);
-            return <Link href={href} key={`${label}-${href}`} title={collapsed ? label : undefined} className={active ? "is-active" : ""}><Icon size={18} /><span>{label}</span></Link>;
+            return <Link href={href} key={`${label}-${href}`} title={collapsed ? t(label) : undefined} className={active ? "is-active" : ""}><Icon size={18} /><span>{t(label)}</span></Link>;
           })}</section>;
         })}
       </nav>
-      <Link href="/profile" className="shop-sidebar-user" title="پروفایل و حساب من">
+      <Link href="/profile" className="shop-sidebar-user" title={t("پروفایل و حساب من")}>
         <i>{avatarUrl ? <img src={avatarUrl} alt={`تصویر ${userName}`} /> : userName.slice(0, 1)}</i>
         <span><b>{userName}</b><small><em /> {shopName}</small></span>
       </Link>

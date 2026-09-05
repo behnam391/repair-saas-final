@@ -6,6 +6,7 @@ import { signOut } from "next-auth/react";
 import ThemeToggle from "./ThemeToggle";
 import { LogoMark } from "./Logo";
 import { LogOut, Menu, Star, Store, UserRound, Wrench, type LucideIcon } from "lucide-react";
+import { usePanelI18n } from "@/lib/panel-i18n";
 
 const LINKS = [
   { href: "/customer", label: "مغازه‌ها", Icon: Store },
@@ -15,6 +16,7 @@ const LINKS = [
 ] satisfies { href: string; label: string; Icon: LucideIcon }[];
 
 export default function CustomerNav({ userName }: { userName?: string }) {
+  const { t } = usePanelI18n();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -34,7 +36,7 @@ export default function CustomerNav({ userName }: { userName?: string }) {
           onClick={() => setOpen(true)}
           className="flex items-center gap-1.5 bg-surface2 border border-border text-ink font-bold rounded-full px-3.5 py-1.5 text-xs"
         >
-          <Menu size={16} /> منو
+          <Menu size={16} /> {t("منو")}
         </button>
         <div className="ms-auto"><ThemeToggle /></div>
       </div>
@@ -50,7 +52,7 @@ export default function CustomerNav({ userName }: { userName?: string }) {
               <div className="bg-white/95 rounded-2xl w-12 h-12 flex items-center justify-center shadow-lg">
                 <LogoMark size={30} />
               </div>
-              <div className="mt-3 font-extrabold text-white text-sm">پنل مشتری Peyvo</div>
+              <div className="mt-3 font-extrabold text-white text-sm">{t("پنل مشتری")} Peyvo</div>
               <div className="text-white/85 text-[11px] mt-0.5">{userName ?? ""}</div>
             </div>
 
@@ -63,7 +65,7 @@ export default function CustomerNav({ userName }: { userName?: string }) {
                   className={`flex items-center gap-3 px-4 py-3 text-[13px] active:bg-surface2 ${isActive(l.href) ? "font-bold text-copper" : ""}`}
                 >
                   <span className="w-8 h-8 rounded-xl bg-surface2 flex items-center justify-center text-[15px] shrink-0"><l.Icon size={17} /></span>
-                  <span className="flex-1">{l.label}</span>
+                  <span className="flex-1">{t(l.label)}</span>
                 </a>
               ))}
               <div className="h-px bg-border mx-4 my-2" />
@@ -72,7 +74,7 @@ export default function CustomerNav({ userName }: { userName?: string }) {
                 className="w-full flex items-center gap-3 px-4 py-3 text-[13px] text-danger"
               >
                 <span className="w-8 h-8 rounded-xl bg-danger/15 flex items-center justify-center text-[15px] shrink-0"><LogOut size={17} /></span>
-                <span className="flex-1 text-right">خروج از حساب</span>
+                <span className="flex-1 text-start">{t("خروج از حساب")}</span>
               </button>
             </nav>
           </aside>
@@ -90,16 +92,16 @@ export default function CustomerNav({ userName }: { userName?: string }) {
               isActive(l.href) ? "bg-copper text-white font-bold" : "text-muted hover:text-ink"
             }`}
           >
-            <l.Icon size={15} /> {l.label}
+            <l.Icon size={15} /> {t(l.label)}
           </a>
         ))}
         <ThemeToggle />
         <button
           onClick={() => signOut({ callbackUrl: "/customer/login" })}
           className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-danger rounded-lg px-2 py-1.5"
-          title="خروج"
+          title={t("خروج")}
         >
-          <LogOut size={15} /> خروج
+          <LogOut size={15} /> {t("خروج")}
         </button>
       </div>
     </>

@@ -9,6 +9,9 @@ import { ShopBottomNav } from "@/components/BottomNav";
 import Logo from "@/components/Logo";
 import { db } from "@/lib/db";
 import ShopSidebar from "@/components/ShopSidebar";
+import PanelLanguageSwitcher from "@/components/PanelLanguageSwitcher";
+import { PanelI18nProvider, type PanelLocale } from "@/lib/panel-i18n";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +19,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await getServerSession(authOptions);
   if (!session?.user || session.user.disabled) redirect("/login");
   const user = session.user;
+  const headerLocale = headers().get("x-peyvo-locale");
+  const initialLocale: PanelLocale = headerLocale === "en" || headerLocale === "ar" ? headerLocale : "fa";
   if (!user.shopId || !user.role) redirect("/login");
 
   let guideUrl: string | null = null;
@@ -34,7 +39,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     avatarUrl = profile?.avatarUrl ?? null;
   } catch {}
 
-  return (
+  return <PanelI18nProvider initialLocale={initialLocale}>
     <div className="shop-shell min-h-screen">
       <ShopSidebar role={user.role} shopType={shopType ?? undefined} serviceCategories={serviceCategories} shopName={user.shopName || "تعمیرگاه پیوو"} userName={user.name || "کاربر پیوو"} avatarUrl={avatarUrl} />
       <div className="shop-shell-main">
@@ -58,6 +63,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               userName={`${user.name} · ${roleLabel(user.role)}`}
             /></div>
           <div className="flex items-center gap-1.5 shrink-0">
+            <PanelLanguageSwitcher />
             <ThemeToggle />
             <NotificationBell />
             <LogoutButton />
@@ -74,7 +80,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <ShopBottomNav role={user.role} />
       </div>
     </div>
-  );
+  </PanelI18nProvider>;
 }
 
 function roleLabel(role: string) {

@@ -8,7 +8,9 @@ export function middleware(request: NextRequest) {
       ? "ar"
       : null;
   const queryLocale = request.nextUrl.searchParams.get("lang");
-  const locale = pathLocale || (queryLocale === "en" || queryLocale === "ar" ? queryLocale : "fa");
+  const savedPanelLocale = request.cookies.get("peyvo_panel_locale")?.value;
+  const isPanel = pathname.startsWith("/customer") || ["/tickets", "/history", "/customers", "/inventory", "/invoices", "/expenses", "/dealer", "/collaboration", "/chats", "/support", "/profile", "/reports", "/admin", "/market", "/device-lookup", "/partners", "/sales", "/returns", "/pending-intakes"].some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  const locale = pathLocale || (queryLocale === "en" || queryLocale === "ar" ? queryLocale : isPanel && (savedPanelLocale === "en" || savedPanelLocale === "ar") ? savedPanelLocale : "fa");
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-peyvo-locale", locale);
