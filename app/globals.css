@@ -969,11 +969,11 @@ select option {
    together while the smart daily panel owns the right-hand column. */
 .repair-command-grid{
   grid-template-columns:minmax(0,1fr) 320px;
-  grid-template-areas:"analytics side" "table side";
+  grid-template-areas:"side analytics" "side table";
   align-items:start;
 }
 .repair-command-grid>.repair-analytics-card{grid-area:analytics}
-.repair-command-grid>.repair-side-panel{grid-area:side;grid-column:2}
+.repair-command-grid>.repair-side-panel{grid-area:side;grid-column:1}
 .repair-command-grid>.repair-active-table{grid-area:table;margin-bottom:0}
 .dashboard-overview-grid>.dashboard-stats{width:100%;grid-template-columns:repeat(4,minmax(0,1fr))}
 .repair-command-grid.is-side-collapsed{grid-template-columns:minmax(0,1fr) 210px}
