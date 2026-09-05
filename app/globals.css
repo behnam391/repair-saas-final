@@ -968,7 +968,7 @@ select option {
 /* Compact command-center composition: analytics and the live repair list stay
    together while the smart daily panel owns the right-hand column. */
 .repair-command-grid{
-  grid-template-columns:320px minmax(0,1fr);
+  grid-template-columns:280px minmax(0,1fr);
   grid-template-areas:"side analytics" "side table";
   align-items:start;
 }
@@ -976,23 +976,27 @@ select option {
 .repair-command-grid>.repair-side-panel{grid-area:side;grid-column:1}
 .repair-command-grid>.repair-active-table{grid-area:table;margin-bottom:0}
 .dashboard-overview-grid>.dashboard-stats{width:100%;grid-template-columns:repeat(4,minmax(0,1fr))}
-.repair-command-grid.is-side-collapsed{grid-template-columns:210px minmax(0,1fr)}
-.dashboard-overview-grid .dashboard-stat{min-height:108px;padding:13px 14px!important;gap:5px}
-.dashboard-overview-grid .dashboard-stat>span{width:38px!important;height:38px!important;border-radius:12px!important}
-.dashboard-overview-grid .dashboard-stat small{margin-top:1px!important;font-size:12px!important}
-.dashboard-overview-grid .dashboard-stat b{margin-top:2px;font-size:20px!important}
-.dashboard-overview-grid .dashboard-stat p{margin-top:2px;font-size:11px}
+.repair-command-grid.is-side-collapsed{grid-template-columns:190px minmax(0,1fr)}
+.shop-shell .dashboard-overview-grid .dashboard-stat{min-height:88px!important;padding:10px 12px!important;gap:3px}
+.dashboard-overview-grid .dashboard-stat>span{width:34px!important;height:34px!important;border-radius:10px!important}
+.dashboard-overview-grid .dashboard-stat>span svg{width:17px;height:17px}
+.dashboard-overview-grid .dashboard-stat small{margin-top:0!important;font-size:11.5px!important}
+.dashboard-overview-grid .dashboard-stat b{margin-top:0;font-size:18px!important}
+.dashboard-overview-grid .dashboard-stat p{margin-top:0;font-size:10.5px}
 .repair-analytics-body{min-height:230px;grid-template-columns:minmax(0,1fr) 235px;padding:16px}
 .repair-line-chart svg{height:158px}
 .repair-donut{width:108px;height:108px}.repair-donut::before{width:72px;height:72px}
 .repair-side-panel.is-open{display:grid;gap:11px}
 .repair-command-side{gap:10px}
-.repair-command-side .morning-insights-grid{gap:7px;padding:0 10px 10px}
-.repair-command-side .morning-insight{min-height:60px;padding:9px!important}
-.repair-quick-actions>header{min-height:58px!important;padding-inline:14px!important}
-.repair-quick-actions>div{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:9px}
-.repair-quick-actions button,.repair-quick-actions a{min-height:56px;gap:4px;border-radius:11px;font-size:12px}
+.repair-command-side .morning-insights-head{min-height:54px!important;padding:9px 11px!important}
+.repair-command-side .morning-insights-grid{gap:6px;padding:0 8px 8px}
+.repair-command-side .morning-insight{min-height:52px;padding:8px!important}
+.repair-quick-actions>header{min-height:50px!important;padding-inline:11px!important}
+.repair-quick-actions>div{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:7px}
+.repair-quick-actions button,.repair-quick-actions a{min-height:48px;gap:3px;border-radius:9px;font-size:11px}
 .repair-active-table>header{min-height:60px;padding-inline:16px}
+.repair-active-table.is-empty>header{min-height:54px;border-bottom:0}
+.repair-active-table.is-empty>header small{display:inline;margin:0 7px 0 0}
 .repair-table-head{min-height:38px}.repair-table-scroll>button{min-height:46px}
 
 @media(max-width:1260px){
