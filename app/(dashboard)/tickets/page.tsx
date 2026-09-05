@@ -3,7 +3,6 @@ import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import Image from "next/image";
 import PatternLockInput from "@/components/PatternLockInput";
 import ComboBox from "@/components/ComboBox";
 import TicketChat from "@/components/TicketChat";
@@ -182,7 +181,6 @@ export default function TicketsPage() {
           <div className="dashboard-stat"><span className="is-amber"><Clock3 size={20} /></span><div><small>در انتظار تأیید</small><b>{waitingCount.toLocaleString("fa-IR")}</b><p>نیازمند پیگیری</p></div></div>
           <div className="dashboard-stat"><span className="is-violet"><Wrench size={20} /></span><div><small>تعمیرات فعال</small><b>{activeCount.toLocaleString("fa-IR")}</b><p>در جریان تعمیر</p></div></div>
         </div>
-        <DashboardAssistant onNew={() => setShowNew(true)} />
       </section>
 
       {myRole === "OWNER" && <>
@@ -304,20 +302,6 @@ export default function TicketsPage() {
       )}
     </div>
   );
-}
-
-function DashboardAssistant({ onNew }: { onNew: () => void }) {
-  return <aside className="dashboard-assistant-card">
-    <div className="dashboard-assistant-visual" aria-hidden="true">
-      <Image src="/images/peyvo-ai-assistant-v2.png" alt="" width={165} height={225} priority />
-    </div>
-    <div className="dashboard-assistant-copy">
-      <span><i /> دستیار هوشمند پیوو</span>
-      <h2>کارهای مهم امروز، جلوی چشم شماست.</h2>
-      <p>پذیرش‌ها، هشدارها و وضعیت تعمیرات را سریع‌تر دنبال کنید.</p>
-      <button onClick={onNew}><Plus size={17} /> پذیرش جدید</button>
-    </div>
-  </aside>;
 }
 
 function RepairAnalytics({ tickets, months, open, onToggle }: { tickets: Ticket[]; months: { label: string; total: number }[]; open: boolean; onToggle: () => void }) {
