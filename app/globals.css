@@ -968,7 +968,7 @@ select option {
 /* Compact command-center composition: analytics and the live repair list stay
    together while the smart daily panel owns the right-hand column. */
 .repair-command-grid{
-  grid-template-columns:minmax(0,1fr) 320px;
+  grid-template-columns:320px minmax(0,1fr);
   grid-template-areas:"side analytics" "side table";
   align-items:start;
 }
@@ -976,7 +976,12 @@ select option {
 .repair-command-grid>.repair-side-panel{grid-area:side;grid-column:1}
 .repair-command-grid>.repair-active-table{grid-area:table;margin-bottom:0}
 .dashboard-overview-grid>.dashboard-stats{width:100%;grid-template-columns:repeat(4,minmax(0,1fr))}
-.repair-command-grid.is-side-collapsed{grid-template-columns:minmax(0,1fr) 210px}
+.repair-command-grid.is-side-collapsed{grid-template-columns:210px minmax(0,1fr)}
+.dashboard-overview-grid .dashboard-stat{min-height:108px;padding:13px 14px!important;gap:5px}
+.dashboard-overview-grid .dashboard-stat>span{width:38px!important;height:38px!important;border-radius:12px!important}
+.dashboard-overview-grid .dashboard-stat small{margin-top:1px!important;font-size:12px!important}
+.dashboard-overview-grid .dashboard-stat b{margin-top:2px;font-size:20px!important}
+.dashboard-overview-grid .dashboard-stat p{margin-top:2px;font-size:11px}
 .repair-analytics-body{min-height:230px;grid-template-columns:minmax(0,1fr) 235px;padding:16px}
 .repair-line-chart svg{height:158px}
 .repair-donut{width:108px;height:108px}.repair-donut::before{width:72px;height:72px}
