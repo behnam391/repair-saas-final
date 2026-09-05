@@ -114,10 +114,10 @@ export default function ShopSidebar({ role, shopType, serviceCategories = "MOBIL
           })}</section>;
         })}
       </nav>
-      <div className="shop-sidebar-user">
+      <Link href="/profile" className="shop-sidebar-user" title="پروفایل و حساب من">
         <i>{avatarUrl ? <img src={avatarUrl} alt={`تصویر ${userName}`} /> : userName.slice(0, 1)}</i>
         <span><b>{userName}</b><small><em /> {shopName}</small></span>
-      </div>
+      </Link>
     </aside>
   );
 }

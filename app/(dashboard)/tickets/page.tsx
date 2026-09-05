@@ -161,6 +161,9 @@ export default function TicketsPage() {
 
   return (
     <div className="dashboard-page p-3 sm:p-5 max-w-[1600px] mx-auto">
+      <div className="dashboard-compact-actions">
+        <button onClick={() => { setNewTicketCategory(serviceCategories[0] || "MOBILE"); setShowNew(true); }} className="dashboard-primary-action"><Plus size={18} /> پذیرش دستگاه</button>
+      </div>
       <section className="dashboard-overview-grid">
         <div className="dashboard-stats">
           <div className="dashboard-stat"><span className="is-blue">{myRole === "OWNER" ? <BarChart3 size={20} /> : <Smartphone size={20} />}</span><div><small>{myRole === "OWNER" ? "درآمد امروز" : "کل دستگاه‌ها"}</small><b>{myRole === "OWNER" ? `${(dashboardMetrics?.todayRevenue ?? 0).toLocaleString("fa-IR")}` : tickets.length.toLocaleString("fa-IR")}</b><p>{myRole === "OWNER" ? "تومان · بر اساس فاکتورها" : "پرونده ثبت‌شده"}</p></div></div>
