@@ -969,13 +969,13 @@ select option {
    together while the smart daily panel owns the right-hand column. */
 .repair-command-grid{
   grid-template-columns:280px minmax(0,1fr);
-  grid-template-areas:"side analytics" "side table";
+  grid-template-areas:"side analytics" "table table";
   align-items:start;
 }
 .repair-command-grid>.repair-analytics-card{grid-area:analytics}
 .repair-command-grid>.repair-side-panel{grid-area:side;grid-column:1}
 .repair-command-grid>.repair-active-table{grid-area:table;margin-bottom:0}
-.dashboard-overview-grid>.dashboard-stats{width:100%;grid-template-columns:repeat(4,minmax(0,1fr))}
+.dashboard-overview-grid>.dashboard-stats{width:100%;grid-template-columns:280px repeat(3,minmax(0,1fr))}
 .repair-command-grid.is-side-collapsed{grid-template-columns:190px minmax(0,1fr)}
 .shop-shell .dashboard-overview-grid .dashboard-stat{min-height:88px!important;padding:10px 12px!important;gap:3px}
 .dashboard-overview-grid .dashboard-stat>span{width:34px!important;height:34px!important;border-radius:10px!important}
@@ -986,7 +986,7 @@ select option {
 .repair-analytics-body{min-height:230px;grid-template-columns:minmax(0,1fr) 235px;padding:16px}
 .repair-line-chart svg{height:158px}
 .repair-donut{width:108px;height:108px}.repair-donut::before{width:72px;height:72px}
-.repair-side-panel.is-open{display:grid;gap:11px}
+.repair-side-panel.is-open{display:grid;height:300px;max-height:300px;gap:8px;overflow:hidden}
 .repair-command-side{gap:10px}
 .repair-command-side .morning-insights-head{min-height:54px!important;padding:9px 11px!important}
 .repair-command-side .morning-insights-grid{gap:6px;padding:0 8px 8px}
@@ -1007,7 +1007,7 @@ select option {
   .dashboard-page{padding-top:15px!important}
   .dashboard-overview-grid>.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .dashboard-overview-grid .dashboard-stat{min-height:132px}
-  .repair-command-grid,.repair-command-grid.is-side-collapsed{grid-template-columns:1fr;grid-template-areas:"side" "analytics" "table"}.repair-command-grid>.repair-side-panel{grid-column:1}.repair-command-side{grid-template-columns:1fr 1fr}
+  .repair-command-grid,.repair-command-grid.is-side-collapsed{grid-template-columns:1fr;grid-template-areas:"side" "analytics" "table"}.repair-command-grid>.repair-side-panel{grid-column:1}.repair-side-panel.is-open{height:auto;max-height:none;overflow:visible}.repair-command-side{grid-template-columns:1fr 1fr}
 }
 @media(max-width:700px){
   .repair-command-side{grid-template-columns:1fr}
