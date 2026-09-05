@@ -78,7 +78,6 @@ export default function TicketsPage() {
   const activeCount = tickets.filter((t) => t.lane !== "READY").length;
   const readyCount = tickets.filter((t) => t.lane === "READY").length;
   const waitingCount = tickets.filter((t) => t.status === "AWAITING_APPROVAL").length;
-  const displayName = (session?.user as any)?.name?.trim() || "مدیر تعمیرگاه";
 
   async function load() {
     setLoading(true);
@@ -162,18 +161,6 @@ export default function TicketsPage() {
 
   return (
     <div className="dashboard-page p-3 sm:p-5 max-w-[1600px] mx-auto">
-      <div className="dashboard-hero dashboard-command-head">
-        <div>
-          <div className="dashboard-kicker"><span /> مرکز فرمان تعمیرگاه</div>
-          <h1>خوش آمدید، {displayName} <span aria-hidden="true">👋</span></h1>
-          <p>امروز تعمیرگاه را از یک نمای روشن، سریع و یکپارچه مدیریت کنید.</p>
-        </div>
-        <div className="dashboard-head-actions">
-          {myRole === "OWNER" && <Link href="/reports" className="dashboard-secondary-action"><BarChart3 size={18} /> گزارش‌ها</Link>}
-          <button onClick={() => { setNewTicketCategory(serviceCategories[0] || "MOBILE"); setShowNew(true); }} className="dashboard-primary-action"><Plus size={19} /> پذیرش دستگاه</button>
-        </div>
-      </div>
-
       <section className="dashboard-overview-grid">
         <div className="dashboard-stats">
           <div className="dashboard-stat"><span className="is-blue">{myRole === "OWNER" ? <BarChart3 size={20} /> : <Smartphone size={20} />}</span><div><small>{myRole === "OWNER" ? "درآمد امروز" : "کل دستگاه‌ها"}</small><b>{myRole === "OWNER" ? `${(dashboardMetrics?.todayRevenue ?? 0).toLocaleString("fa-IR")}` : tickets.length.toLocaleString("fa-IR")}</b><p>{myRole === "OWNER" ? "تومان · بر اساس فاکتورها" : "پرونده ثبت‌شده"}</p></div></div>
