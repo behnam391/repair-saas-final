@@ -977,7 +977,7 @@ select option {
 .repair-analytics-body{min-height:230px;grid-template-columns:minmax(0,1fr) 235px;padding:16px}
 .repair-line-chart svg{height:158px}
 .repair-donut{width:108px;height:108px}.repair-donut::before{width:72px;height:72px}
-.repair-side-panel.is-open{display:grid;height:300px;max-height:300px;gap:6px;overflow:hidden}
+.repair-side-panel.is-open{display:grid;height:332px;max-height:332px;gap:6px;overflow:hidden}
 .repair-side-panel-head{min-height:46px;padding-inline:11px}
 .repair-side-panel-head b{font-size:13px}.repair-side-panel-head small{font-size:10px}
 .repair-command-side{gap:6px}
