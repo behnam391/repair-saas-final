@@ -976,6 +976,30 @@ select option {
 .workspace-page>p.text-muted:first-of-type{font-size:13px!important}.workspace-page table th{font-size:12px!important}.workspace-page table td{font-size:13px!important}.workspace-page button.bg-copper{min-height:44px;font-size:13px!important}.workspace-page input,.workspace-page select,.workspace-page textarea{font-size:14px}.workspace-chat{font-size:14px}.workspace-chat .text-xs{font-size:13px}.workspace-chat .text-\[11px\]{font-size:12px}
 .peyvo-bnav{height:68px}.peyvo-bnav-bar{height:68px}.peyvo-bnav-label{bottom:8px;font-size:12px}
 
+/* Compact command-center composition: analytics and the live repair list stay
+   together while the smart daily panel owns the right-hand column. */
+.repair-command-grid{
+  grid-template-columns:minmax(0,1fr) 320px;
+  grid-template-areas:"analytics side" "table side";
+  align-items:start;
+}
+.repair-command-grid>.repair-analytics-card{grid-area:analytics}
+.repair-command-grid>.repair-side-panel{grid-area:side}
+.repair-command-grid>.repair-active-table{grid-area:table;margin-bottom:0}
+.repair-command-grid.is-side-collapsed{grid-template-columns:minmax(0,1fr) 210px}
+.repair-analytics-body{min-height:230px;grid-template-columns:minmax(0,1fr) 235px;padding:16px}
+.repair-line-chart svg{height:158px}
+.repair-donut{width:108px;height:108px}.repair-donut::before{width:72px;height:72px}
+.repair-side-panel.is-open{display:grid;gap:11px}
+.repair-command-side{gap:10px}
+.repair-command-side .morning-insights-grid{gap:7px;padding:0 10px 10px}
+.repair-command-side .morning-insight{min-height:60px;padding:9px!important}
+.repair-quick-actions>header{min-height:58px!important;padding-inline:14px!important}
+.repair-quick-actions>div{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:9px}
+.repair-quick-actions button,.repair-quick-actions a{min-height:56px;gap:4px;border-radius:11px;font-size:12px}
+.repair-active-table>header{min-height:60px;padding-inline:16px}
+.repair-table-head{min-height:38px}.repair-table-scroll>button{min-height:46px}
+
 @media(max-width:1260px){
   .dashboard-overview-grid{grid-template-columns:1fr;grid-template-areas:"stats" "assistant"}
   .dashboard-assistant-card{min-height:165px}.dashboard-assistant-copy{max-width:500px}
@@ -985,7 +1009,15 @@ select option {
   .dashboard-page{padding-top:15px!important}
   .dashboard-overview-grid>.dashboard-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .dashboard-overview-grid .dashboard-stat{min-height:132px}
-  .repair-command-grid{grid-template-columns:1fr}.repair-command-side{grid-template-columns:1fr 1fr}
+  .repair-command-grid,.repair-command-grid.is-side-collapsed{grid-template-columns:1fr;grid-template-areas:"side" "analytics" "table"}.repair-command-side{grid-template-columns:1fr 1fr}
+}
+@media(max-width:700px){
+  .repair-command-side{grid-template-columns:1fr}
+  .repair-analytics-body{grid-template-columns:1fr;padding:12px}
+  .repair-status-chart{padding-top:14px}
+  .repair-line-chart svg{height:140px}
+  .repair-quick-actions>div{grid-template-columns:repeat(4,minmax(0,1fr));overflow-x:auto}
+  .repair-quick-actions button,.repair-quick-actions a{min-width:82px;min-height:54px}
 }
 /* A4 shop QR poster — screen preview and print/PDF share one layout. */
 .qr-poster-page{min-height:100vh;padding:22px;background:#eaf0f8;color:#0b1d3b}.qr-poster-toolbar{width:min(794px,100%);display:flex;align-items:center;gap:9px;margin:0 auto 14px;padding:11px 13px;border:1px solid #d5deeb;border-radius:15px;background:#fff;box-shadow:0 10px 30px rgba(11,29,59,.08)}.qr-poster-toolbar>div{min-width:0;display:grid;margin-left:auto}.qr-poster-toolbar b{font-size:13px}.qr-poster-toolbar small{margin-top:2px;color:#63738d;font-size:10px}.qr-poster-toolbar button{min-height:40px;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 12px;border:1px solid #d5deeb;border-radius:10px;background:#f3f7fb;font-size:11px;font-weight:850;white-space:nowrap}.qr-poster-toolbar button.is-primary{border-color:#087de0;color:#fff;background:#087de0}

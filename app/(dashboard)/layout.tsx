@@ -8,7 +8,6 @@ import DashboardNav from "@/components/DashboardNav";
 import { ShopBottomNav } from "@/components/BottomNav";
 import Logo from "@/components/Logo";
 import { db } from "@/lib/db";
-import OnboardingChecklist, { type OnboardingItem } from "@/components/OnboardingChecklist";
 import ShopSidebar from "@/components/ShopSidebar";
 
 export const dynamic = "force-dynamic";
@@ -23,25 +22,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
   let shopType: string | null = null;
   let serviceCategories = "MOBILE";
   let avatarUrl: string | null = null;
-  let onboardingItems: OnboardingItem[] = [];
   try {
     const settings = await db.platformSettings.findUnique({ where: { id: "singleton" } });
     guideUrl = settings?.guideUrl ?? null;
-    const [shop, staffCount, customerCount, ticketCount, profile] = await Promise.all([
-      db.shop.findUnique({ where: { id: user.shopId }, select: { type: true, serviceCategories: true, address: true, bankCardNumber: true } }),
-      db.user.count({ where: { shopId: user.shopId } }), db.customer.count({ where: { shopId: user.shopId } }), db.ticket.count({ where: { shopId: user.shopId } }),
+    const [shop, profile] = await Promise.all([
+      db.shop.findUnique({ where: { id: user.shopId }, select: { type: true, serviceCategories: true } }),
       db.user.findUnique({ where: { id: user.id }, select: { avatarUrl: true } }),
     ]);
     shopType = shop?.type ?? null;
     serviceCategories = shop?.serviceCategories ?? "MOBILE";
     avatarUrl = profile?.avatarUrl ?? null;
-    if (user.role === "OWNER") onboardingItems = [
-      { label: "تکمیل مشخصات تعمیرگاه", href: "/admin", done: !!shop?.address },
-      { label: "افزودن اولین همکار", href: "/admin", done: staffCount > 1 },
-      { label: "ثبت اولین مشتری", href: "/customers", done: customerCount > 0 },
-      { label: "ایجاد اولین پذیرش", href: "/tickets", done: ticketCount > 0 },
-      { label: "تنظیم اطلاعات پرداخت", href: "/admin", done: !!shop?.bankCardNumber },
-    ];
   } catch {}
 
   return (
@@ -80,7 +70,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
           ⚠️ این نشست توسط پشتیبانی پلتفرم باز شده است — همه اقدامات ثبت می‌شود.
         </div>
       )}
-      {onboardingItems.length > 0 && <OnboardingChecklist items={onboardingItems} />}
       {/* Bottom padding on mobile only — that's where the floating nav sits. */}
       <main className="page-enter pb-[96px] md:pb-0">{children}</main>
       <ShopBottomNav role={user.role} />

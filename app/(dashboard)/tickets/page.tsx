@@ -11,7 +11,6 @@ import AiIntakeHelper from "@/components/AiIntakeHelper";
 import CustomerQuickPick from "@/components/CustomerQuickPick";
 import PartnerQuickPick from "@/components/PartnerQuickPick";
 import MorningInsights from "@/components/MorningInsights";
-import AdBanner from "@/components/AdBanner";
 import { useIsNativeApp } from "@/components/NativeAppContext";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
 import { COMPUTER_ACCESSORIES, COMPUTER_BRANDS, COMPUTER_DEVICE_TYPES, COMPUTER_LANE_LABELS, COMPUTER_OS_OPTIONS, COMPUTER_QUICK_ISSUES, computerAccessoryLabels, computerDeviceTypeLabel } from "@/lib/computer-intake";
@@ -199,9 +198,8 @@ export default function TicketsPage() {
               <RepairQuickActions onNew={() => setShowNew(true)} />
             </div>}
           </section>
+          <ActiveRepairTable tickets={tickets.filter((ticket) => ticket.lane !== "READY").slice(0, 6)} onOpen={setOpenTicket} />
         </div>
-        <ActiveRepairTable tickets={tickets.slice(0, 5)} onOpen={setOpenTicket} />
-        <AdBanner />
       </>}
 
       {/* Search — filters every lane live by device, customer, number, or issue. */}
