@@ -162,7 +162,8 @@ export default function TicketsPage() {
   return (
     <div className="dashboard-page p-3 sm:p-5 max-w-[1600px] mx-auto">
       <div className="dashboard-compact-actions">
-        <button onClick={() => { setNewTicketCategory(serviceCategories[0] || "MOBILE"); setShowNew(true); }} className="dashboard-primary-action"><Plus size={18} /> پذیرش دستگاه</button>
+        {serviceCategories.includes("MOBILE") && <button onClick={() => { setNewTicketCategory("MOBILE"); setShowNew(true); }} className="dashboard-primary-action"><Smartphone size={18} /> پذیرش موبایل</button>}
+        {serviceCategories.includes("COMPUTER") && <button onClick={() => { setNewTicketCategory("COMPUTER"); setShowNew(true); }} className="dashboard-primary-action is-computer"><MonitorSmartphone size={18} /> پذیرش کامپیوتر</button>}
       </div>
       <section className="dashboard-overview-grid">
         <div className="dashboard-stats">
