@@ -63,7 +63,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <LogoutButton />
           </div>
         </div>
-        <div className="brand-underline -mx-4" />
       </header>
       {user.isImpersonated && (
         <div className="no-print bg-danger/15 border-b border-danger/40 text-danger text-xs px-4 py-2 text-center font-semibold">

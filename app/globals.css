@@ -258,15 +258,6 @@ select option {
 .repair-tag.tag-awaiting { border-inline-start-color: var(--color-danger); }
 .repair-tag.tag-awaiting::before { border-color: var(--color-danger); }
 
-/* ── Peyvo brand line ─────────────────────────────────────────
-   Thin gradient trace under the sticky header, sampled from the logo
-   (blue → green). */
-.brand-underline {
-  height: 2px;
-  background: linear-gradient(90deg, #008AE9, #62BE38);
-  opacity: .8;
-}
-
 /* Clickable cards lift and glow with brand light on hover. */
 .card-hover {
   transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
