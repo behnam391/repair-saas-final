@@ -1,4 +1,5 @@
 "use client";
+import BaleInvite from "@/components/BaleInvite";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { IRAN_PROVINCES, PROVINCE_NAMES } from "@/lib/iran-locations";
 import ShopsMap from "@/components/ShopsMap";
@@ -117,6 +118,7 @@ export default function CustomerShopsPage() {
 
   return (
     <div className="customer-directory-page">
+      <BaleInvite audience="customer" />
       <section className="customer-directory-hero">
         <div><span className="customer-directory-eyebrow"><ShieldCheck size={16} /> شبکه تعمیرگاه‌های پیوو</span><h1>تعمیرگاه مناسب را با اطمینان پیدا کنید</h1><p>همه تعمیرگاه‌های فعال را ببینید، بر اساس شهر یا فاصله جستجو کنید و تجربه مشتریان را مقایسه کنید.</p></div>
         <div className="customer-directory-summary"><span><Building2 size={19} /><b>{loading ? "…" : shops.length.toLocaleString("fa-IR")}</b><small>مرکز قابل مشاهده</small></span><span><MapPin size={19} /><b>اردبیل</b><small>پوشش اولیه</small></span></div>

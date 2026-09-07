@@ -18,6 +18,7 @@ import EnamadServerBadge from "@/components/EnamadServerBadge";
 import ZarinpalTrustBadge from "@/components/ZarinpalTrustBadge";
 import ThemeToggle from "@/components/ThemeToggle";
 import PwaInstallButton from "@/components/PwaInstallButton";
+import BaleInvite from "@/components/BaleInvite";
 import { HOME_COPY, getPublicLocale, publicPath, PUBLIC_LANGUAGE_LABELS, type PublicLocale } from "@/lib/public-locales";
 
 export const dynamic = "force-dynamic";
@@ -253,6 +254,7 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
         </div>
       </section>
 
+      <div className="home-section"><BaleInvite locale={locale} /></div>
       <section className="home-final">
         <div className="home-final-glow" aria-hidden />
         <span>{copy.final.kicker}</span>

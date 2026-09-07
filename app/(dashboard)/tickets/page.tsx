@@ -1,4 +1,5 @@
 "use client";
+import BaleInvite from "@/components/BaleInvite";
 import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
@@ -161,6 +162,7 @@ export default function TicketsPage() {
 
   return (
     <div className="dashboard-page p-3 sm:p-5 max-w-[1600px] mx-auto">
+      <BaleInvite audience="shop" />
       <div className="dashboard-compact-actions">
         {serviceCategories.includes("MOBILE") && <button onClick={() => { setNewTicketCategory("MOBILE"); setShowNew(true); }} className="dashboard-primary-action"><Smartphone size={18} /> پذیرش موبایل</button>}
         {serviceCategories.includes("COMPUTER") && <button onClick={() => { setNewTicketCategory("COMPUTER"); setShowNew(true); }} className="dashboard-primary-action is-computer"><MonitorSmartphone size={18} /> پذیرش کامپیوتر</button>}
