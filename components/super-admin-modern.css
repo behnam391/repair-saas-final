@@ -1,0 +1,29 @@
+.super-modern{background:var(--color-bg);font-size:14px}
+.super-modern .super-sidebar{background:var(--color-surface);backdrop-filter:none;box-shadow:none;padding:20px 14px;transition:none}
+.super-modern .super-main{transition:none}
+.super-modern .super-brand b{font-size:23px}.super-modern .super-brand small{font-size:11px}
+.super-modern .super-sidebar nav{overflow-y:auto;scrollbar-width:thin;min-height:0}
+.super-modern .super-nav-group{margin-bottom:12px;border-radius:12px;transition:none}
+.super-modern .super-nav-group-title{min-height:40px;font-size:12px;letter-spacing:0}
+.super-modern .super-nav-items{transition:none}
+.super-modern .super-nav-group a{font-size:14px;min-height:44px;border-radius:9px;transition:none}
+.super-modern .super-nav-group a.is-active{background:rgb(var(--rgb-copper)/.12);color:var(--color-copper);box-shadow:none;border-inline-start:3px solid var(--color-copper)}
+.super-modern .super-sidebar-profile b{font-size:13px}.super-modern .super-sidebar-profile small{font-size:11px}.super-modern .super-logout{font-size:13px;min-height:44px}
+.super-modern .super-shop-card{background:var(--color-surface);border-radius:14px;box-shadow:none;padding:16px}
+.super-modern .super-shop-title h3{font-size:15px}.super-modern .super-shop-title p,.super-modern .super-shop-meta>span,.super-modern .super-expire{font-size:12px}
+.super-modern .super-shop-numbers b{font-size:17px}.super-modern .super-shop-numbers small{font-size:11px}
+.super-modern .super-shop-actions button{font-size:12px;min-height:40px}.super-modern .super-delete-link{font-size:12px}
+.super-modern .super-filter input{font-size:14px}.super-modern .super-filter select{font-size:12px}
+.super-modern .super-topbar p,.super-modern .super-panel-head p{font-size:13px}
+.super-mobile-toggle,.super-mobile-backdrop{display:none}
+@media(max-width:900px){
+ .super-modern .super-mobile-nav{display:none!important}
+ .super-modern .super-sidebar{display:flex!important;position:fixed!important;inset:0 0 0 auto!important;width:min(300px,85vw)!important;height:100dvh!important;z-index:101;visibility:hidden;transform:translateX(100%)}
+ .super-modern.is-mobile-open .super-sidebar{visibility:visible;transform:none}
+ .super-modern .super-main,.super-modern.is-collapsed .super-main{margin-right:0}
+ .super-modern .super-mobile-brand{padding-inline-end:50px}
+ .super-modern .super-collapse{display:none}
+ .super-mobile-toggle{display:grid;place-items:center;position:fixed;top:15px;left:15px;width:44px;height:44px;z-index:102;border-radius:12px;background:var(--color-surface2);color:var(--color-ink);border:1px solid var(--color-border)}
+ .super-mobile-backdrop{display:block;position:fixed;inset:0;background:#0008;z-index:100}
+ .super-modern .super-shop-grid{grid-template-columns:1fr}
+}

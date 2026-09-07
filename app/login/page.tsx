@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import EnamadBadge from "@/components/EnamadBadge";
 import { AuthShell, AuthSubmit, PasswordField, PhoneField } from "@/components/AuthShell";
@@ -8,6 +8,13 @@ import { toLatinDigits, normalizePhone } from "@/lib/phone";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+  useEffect(() => {
+    if (status === "authenticated" && session?.user && !session.user.disabled) {
+      const user = session.user as any;
+      router.replace(user.isSuperAdmin ? "/superadmin" : user.isCustomer ? "/customer" : "/tickets");
+    }
+  }, [status, session, router]);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -42,7 +49,7 @@ export default function LoginPage() {
         </a>
         <PhoneField value={phone} onChange={(v) => setPhone(toLatinDigits(v))} />
         <PasswordField value={password} status={loginState} onChange={(v) => { setPassword(v); setLoginState("idle"); }} />
-        <div className="auth-form-meta"><label><input type="checkbox" /> مرا به خاطر بسپار</label><a href="/forgot-password">رمز را فراموش کردم</a></div>
+        <div className="auth-form-meta"><span>ورود شما تا ۳۰ روز حفظ می‌شود</span><a href="/forgot-password">رمز را فراموش کردم</a></div>
         {error && <div className="auth-error">{error}</div>}
         <AuthSubmit loading={loading}>ورود به پنل</AuthSubmit>
         <p className="auth-switch">هنوز حساب ندارید؟ <a href="/signup">ساخت رایگان تعمیرگاه</a></p>

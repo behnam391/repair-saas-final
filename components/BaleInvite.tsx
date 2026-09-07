@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { usePanelI18n } from "@/lib/panel-i18n";
 
 const copy = {
@@ -13,7 +13,7 @@ export default function BaleInvite({ audience = "public", locale }: { audience?:
   const panel = usePanelI18n();
   const text = copy[locale ?? panel.locale];
   return <section className="no-print my-4 flex flex-wrap items-center gap-4 rounded-2xl border border-border bg-surface p-4" aria-label={text.title}>
-    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500"><MessageCircle size={27} aria-hidden="true" /></span>
+    <img src="/images/trust/bale.webp" width={48} height={48} alt="بله" className="h-12 w-12 shrink-0 rounded-xl" loading="lazy" decoding="async" />
     <div className="min-w-0 flex-1 basis-52"><h2 className="text-base font-bold">{text.title}</h2><p className="mt-1 text-sm leading-7 text-muted">{text[audience]}</p><p className="mt-1 text-xs leading-6 text-muted">{text.offers}</p></div>
     <div className="flex flex-col gap-2 w-full sm:w-auto"><a href="https://ble.ir/peyvo_bale_bot" target="_blank" rel="noopener noreferrer" className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white">{text.action}<ArrowUpRight size={17} aria-hidden="true" /></a>{audience !== "public" && <a className="text-center text-sm text-copper py-2" href={audience === "customer" ? "/customer/profile" : "/profile"}>{text.settings}</a>}</div>
   </section>;

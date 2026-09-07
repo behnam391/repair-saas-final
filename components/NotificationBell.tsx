@@ -1,106 +1,14 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Bell } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { notificationLink } from "@/lib/notification-link";
-
-type Notif = { id: string; title: string; message: string; link: string | null; read: boolean; createdAt: string; isBroadcast: boolean };
-
 export default function NotificationBell() {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [notifications, setNotifications] = useState<Notif[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  async function load() {
-    const res = await fetch("/api/notifications");
-    if (res.ok) {
-      const data = await res.json();
-      setNotifications(data.notifications ?? []);
-      setUnreadCount(data.unreadCount ?? 0);
-    }
-  }
-
+  const [count, setCount] = useState(0);
   useEffect(() => {
-    load();
-    const interval = setInterval(() => { if (!document.hidden) load(); }, 30000);
-    return () => clearInterval(interval);
+    let alive = true;
+    async function load() { try { const r = await fetch("/api/notifications"); if (r.ok) { const d = await r.json(); if (alive) setCount(d.unreadCount ?? 0); } } catch {} }
+    load(); const timer = setInterval(() => { if (!document.hidden) load(); }, 30000);
+    return () => { alive = false; clearInterval(timer); };
   }, []);
-
-  // Marking read is a separate, deliberate action from opening the panel —
-  // opening it should never silently zero the badge before the person has
-  // actually seen what's in it.
-  async function markRead(ids: string[]) {
-    if (ids.length === 0) return;
-    await fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids }),
-    });
-    load();
-  }
-
-  function handleClickNotification(n: Notif) {
-    if (!n.read) markRead([n.id]);
-  }
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="app-icon-button relative"
-        aria-label="اعلان‌ها"
-      >
-        <Bell size={17} />
-        {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -left-2 bg-danger text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </span>
-        )}
-      </button>
-
-      {open && (
-        // data-nav-menu gives this the dense, near-opaque "menu glass"
-        // (var(--glass-menu), ~88–92% opaque) used by every other dropdown —
-        // instead of the 7%-opacity bg-surface card, which was almost
-        // invisible over page content on mobile.
-        <div data-nav-menu className="absolute left-0 mt-2 w-72 border border-surface2 rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
-          <div className="p-3 border-b border-surface2 flex items-center justify-between">
-            <span className="text-xs font-bold">اعلان‌ها</span>
-            {unreadCount > 0 && (
-              <button onClick={() => markRead(notifications.filter((n) => !n.read).map((n) => n.id))} className="text-[10px] text-copper font-semibold">
-                علامت‌گذاری همه به‌عنوان خوانده‌شده
-              </button>
-            )}
-          </div>
-          {notifications.length === 0 && <p className="text-[11px] text-muted p-4 text-center">اعلانی وجود ندارد.</p>}
-          {notifications.map((n) => (
-            <a
-              key={n.id}
-              href={notificationLink(n.link) || "#"}
-              onClick={(event) => {
-                handleClickNotification(n);
-                const link = notificationLink(n.link);
-                if (!link) { event.preventDefault(); return; }
-                if (link.startsWith("/") && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
-                  event.preventDefault();
-                  setOpen(false);
-                  router.push(link);
-                }
-              }}
-              className={`block p-3 border-b border-surface2 text-xs hover:bg-surface2 transition ${!n.read ? "bg-copper/5" : ""}`}
-            >
-              <div className="font-bold flex items-center gap-1.5">
-                {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-copper shrink-0" />}
-                {n.isBroadcast && <span className="text-[9px] bg-copper/20 text-copper rounded-full px-1.5">عمومی</span>}
-                {n.title}
-              </div>
-              <div className="text-muted mt-1">{n.message}</div>
-              <div className="text-[10px] text-muted mt-1">{new Date(n.createdAt).toLocaleString("fa-IR")}</div>
-            </a>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return <Link href="/notifications" className="app-icon-button relative" aria-label={`اعلان‌ها، ${count} خوانده‌نشده`}><Bell size={20} />{count > 0 && <span className="absolute -top-1 -right-1 rounded-full bg-danger text-white text-xs px-1.5">{count > 99 ? "99+" : count}</span>}</Link>;
 }
