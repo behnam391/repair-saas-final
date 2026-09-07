@@ -33,7 +33,7 @@ export async function isSmsConfigured() {
   return !!apiKey;
 }
 
-export async function sendSms(to: string, message: string, sender?: string) {
+export async function sendSms(to: string, message: string, sender?: string, policy?: "mix") {
   const { apiKey, sender: defaultSender } = await getCredentials();
   if (!apiKey) {
     console.warn("[sms] no Kavenegar API key configured — skipping real send:", { to, message });
@@ -46,6 +46,7 @@ export async function sendSms(to: string, message: string, sender?: string) {
     sender: sender || defaultSender,
     message,
   });
+  if (policy) params.set("policy", policy);
 
   const res = await fetch(`${url}?${params.toString()}`, { method: "GET" });
   if (!res.ok) {
@@ -53,6 +54,12 @@ export async function sendSms(to: string, message: string, sender?: string) {
     throw new Error(`Kavenegar send failed: ${res.status} ${body}`);
   }
   return { ok: true, raw: await res.json() };
+}
+
+// Kavenegar routes this dedicated SMS line to its configured Bale arm and
+// manages the SMS fallback itself. Never retry separately: that may duplicate messages.
+export function sendRepairNotification(to: string, message: string) {
+  return sendSms(to, message, process.env.KAVENEGAR_REPAIR_SENDER || "100009361", "mix");
 }
 
 // ── Kavenegar Lookup (OTP / سرویس اعتبارسنجی) ──────────────────
@@ -115,6 +122,7 @@ export async function sendIntakeSms(
   to: string,
   args: { shopName: string; ticketNo: number; shopPhone?: string | null; fallback: string }
 ) {
+  if (process.env.KAVENEGAR_REPAIR_MIX !== "false") return sendRepairNotification(to, args.fallback);
   const cfg = await getLookupConfig();
   if (cfg.enabled && cfg.intake) {
     return sendLookup(to, cfg.intake, {
@@ -130,6 +138,7 @@ export async function sendReadySms(
   to: string,
   args: { shopName: string; ticketNo: number; price?: number | null; shopPhone?: string | null; fallback: string }
 ) {
+  if (process.env.KAVENEGAR_REPAIR_MIX !== "false") return sendRepairNotification(to, args.fallback);
   const cfg = await getLookupConfig();
   if (cfg.enabled && cfg.ready) {
     return sendLookup(to, cfg.ready, {
