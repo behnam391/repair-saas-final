@@ -1,10 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { notificationLink } from "@/lib/notification-link";
 
 type Notif = { id: string; title: string; message: string; link: string | null; read: boolean; createdAt: string; isBroadcast: boolean };
 
 export default function NotificationBell() {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notif[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -74,8 +77,17 @@ export default function NotificationBell() {
           {notifications.map((n) => (
             <a
               key={n.id}
-              href={n.link || "#"}
-              onClick={() => handleClickNotification(n)}
+              href={notificationLink(n.link) || "#"}
+              onClick={(event) => {
+                handleClickNotification(n);
+                const link = notificationLink(n.link);
+                if (!link) { event.preventDefault(); return; }
+                if (link.startsWith("/") && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey) {
+                  event.preventDefault();
+                  setOpen(false);
+                  router.push(link);
+                }
+              }}
               className={`block p-3 border-b border-surface2 text-xs hover:bg-surface2 transition ${!n.read ? "bg-copper/5" : ""}`}
             >
               <div className="font-bold flex items-center gap-1.5">
