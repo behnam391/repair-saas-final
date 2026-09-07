@@ -1,12 +1,16 @@
 "use client";
 
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import "./super-admin-modern.css";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import type { LucideIcon } from "lucide-react";
 import { BadgeCheck, BellRing, Bug, ChevronDown, ChevronLeft, CircleUserRound, DatabaseBackup, Gift, Headphones, KeyRound, LayoutDashboard, LogOut, Menu, MessageCircle, MonitorSmartphone, Settings2, ShieldCheck, Store, UsersRound } from "lucide-react";
 import Logo from "@/components/Logo";
+import Link from "next/link";
+import ThemeToggle from "@/components/ThemeToggle";
+import "@/app/superadmin-concept/preview.css";
+import "./super-admin-live.css";
 
 const GROUPS: { label: string; items: { href: string; label: string; Icon: LucideIcon }[] }[] = [
   { label: "مدیریت", items: [
@@ -43,29 +47,22 @@ export default function SuperAdminShell({ children }: { children: ReactNode }) {
   useEffect(() => { setMobileOpen(false); }, [pathname]);
   const isActive = (href: string) => href === "/superadmin" ? pathname === href : pathname.startsWith(href);
 
-  const currentGroup = useMemo(() => GROUPS.find(g => g.items.some(i => i.href === "/superadmin" ? pathname === i.href : pathname.startsWith(i.href)))?.label ?? GROUPS[0].label, [pathname]);
-  const [openGroup, setOpenGroup] = useState(currentGroup);
   const rawAdminName = session?.user?.name?.trim() || "";
-  const adminName = rawAdminName && !/^[?\s]+$/.test(rawAdminName) ? rawAdminName : "بهنام شفیعی";
+  const adminName = rawAdminName && !/^[?\s]+$/.test(rawAdminName) ? rawAdminName : "مدیر سامانه";
   const platformRole = (session?.user as any)?.platformRole;
   const platformPermissions = String((session?.user as any)?.platformPermissions ?? "").split(",").filter(Boolean);
   const permissionFor = (href: string) => href.includes("/managers") || href.includes("/profile") ? "owner" : href.includes("/customers") ? "customers" : href.includes("/support") || href.includes("/conversations") ? "support" : href.includes("/verification") ? "verification" : href.includes("/notifications") || href.includes("/ads") || href.includes("/gift-codes") ? "marketing" : href.includes("/sessions") || href.includes("/errors") ? "sessions" : href.includes("/settings") || href.includes("/external-keys") ? "settings" : href.includes("/maintenance") ? "maintenance" : "shops";
   const canSee = (href: string) => platformRole === "OWNER" || (permissionFor(href) !== "owner" && platformPermissions.includes(permissionFor(href)));
   if (pathname === "/superadmin/login") return <>{children}</>;
-  return <div className={`super-shell super-modern ${collapsed ? "is-collapsed" : ""} ${mobileOpen ? "is-mobile-open" : ""}`}>
-    {mobileOpen && <button className="super-mobile-backdrop" aria-label="بستن منو" onClick={() => setMobileOpen(false)} />}
-    <button className="super-mobile-toggle" aria-label={mobileOpen ? "بستن منوی مدیریت" : "باز کردن منوی مدیریت"} aria-expanded={mobileOpen} onClick={() => { setCollapsed(false); setMobileOpen(v => !v); }}><Menu size={22} /></button>
-    <aside className="super-sidebar">
-      <a href="/superadmin" className="super-brand"><div><Logo size={25} withText={false} /></div><span><b>Peyvo</b><small>Platform console</small></span></a>
-      <button className="super-collapse" onClick={() => setCollapsed(v => !v)} title={collapsed ? "باز کردن منو" : "جمع کردن منو"} aria-label={collapsed ? "باز کردن منوی مدیریت" : "جمع کردن منوی مدیریت"}>{collapsed ? <Menu size={17} /> : <ChevronLeft size={17} />}</button>
-      <nav>{GROUPS.map((group) => { const items=group.items.filter(item=>canSee(item.href)); if(!items.length)return null; const isOpen = openGroup === group.label; return <div className={`super-nav-group ${isOpen ? "is-open" : ""}`} key={group.label}><button type="button" className="super-nav-group-title" onClick={() => { if (collapsed) setCollapsed(false); setOpenGroup(isOpen && !collapsed ? "" : group.label); }}><span>{group.label}</span><ChevronDown size={13}/></button><div className="super-nav-items">{items.map((item) => <a key={item.href} href={item.href} title={collapsed ? item.label : undefined} className={isActive(item.href) ? "is-active" : ""}><item.Icon size={17} /><span>{item.label}</span>{isActive(item.href) && <i />}</a>)}</div></div>;})}</nav>
-      <div className="super-sidebar-profile"><CircleUserRound size={18} /><span><b>{adminName}</b><small>{platformRole === "OWNER" ? "مدیر اصلی" : "مدیر سامانه"}</small></span></div>
-      <button onClick={() => signOut({ callbackUrl: "/superadmin/login" })} className="super-logout"><LogOut size={16} /><span>خروج امن</span></button>
+  const currentLabel = GROUPS.flatMap(g => g.items).find(i => isActive(i.href))?.label ?? "مدیریت";
+  return <div className={`pc pc-live ${collapsed ? "pc-compact" : ""}`} dir="rtl">
+    {mobileOpen && <button className="pc-overlay" aria-label="بستن منو" onClick={() => setMobileOpen(false)} />}
+    <aside className={`pc-sidebar ${mobileOpen ? "pc-open" : ""}`}>
+      <div className="pc-brand"><Logo size={35} withText={false}/><strong>Peyvo<span>مدیریت پلتفرم</span></strong><button aria-label="باز و بسته کردن منو" aria-expanded={!collapsed} onClick={() => {setCollapsed(!collapsed);setMobileOpen(false);}}><Menu size={18}/></button></div>
+      <div className="pc-workspace"><span className="pc-avatar">P</span><div><b>فضای مدیریت پیوو</b><small>کنترل یکپارچه کسب‌وکار</small></div><ShieldCheck size={18}/></div>
+      <nav aria-label="مدیریت پلتفرم">{GROUPS.map(group => {const items = group.items.filter(i => canSee(i.href));return items.length ? <div key={group.label}><p className="pc-group">{group.label}</p>{items.map(item => <Link key={item.href} href={item.href} title={item.label} aria-current={isActive(item.href) ? "page" : undefined} className={isActive(item.href) ? "selected" : ""}><item.Icon size={19}/><span>{item.label}</span></Link>)}</div> : null;})}</nav>
+      <div className="pc-profile"><span className="pc-avatar">{adminName.slice(0,1)}</span><div><b>{adminName}</b><small>{platformRole === "OWNER" ? "مدیر اصلی" : "مدیر سامانه"}</small></div><button title="خروج امن" aria-label="خروج امن" onClick={() => signOut({callbackUrl:"/superadmin/login"})}><LogOut size={18}/></button></div>
     </aside>
-    <main className="super-main">
-      <div className="super-mobile-brand"><a href="/superadmin"><Logo size={23} /></a><span>مرکز مدیریت پلتفرم</span><button onClick={() => signOut({ callbackUrl: "/superadmin/login" })}><LogOut size={16} /></button></div>
-      <div className="super-mobile-nav">{GROUPS.flatMap((g) => g.items).filter(item => canSee(item.href)).map((item) => <a key={item.href} href={item.href} className={isActive(item.href) ? "is-active" : ""}><item.Icon size={16} /><span>{item.label}</span></a>)}</div>
-      <div className="super-page-frame">{children}</div>
-    </main>
+    <div className="pc-work"><header className="pc-top"><div className="pc-crumb"><button className="pc-mobile-menu" aria-label="باز کردن منو" aria-expanded={mobileOpen} onClick={() => {setCollapsed(false);setMobileOpen(!mobileOpen);}}><Menu size={22}/></button><span>مدیریت پلتفرم</span><ChevronLeft size={14}/><b>{currentLabel}</b></div><div className="pc-top-actions"><ThemeToggle/><span className="pc-avatar" title={adminName}>{adminName.slice(0,1)}</span></div></header><main className="pc-main">{children}</main></div>
   </div>;
 }
