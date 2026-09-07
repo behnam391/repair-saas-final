@@ -1,4 +1,5 @@
 "use client";
+import BaleCampaignManager from "@/components/BaleCampaignManager";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -30,6 +31,7 @@ export default function SuperAdminNotificationsPage() {
   return (
     <div className="min-h-screen p-4 max-w-md mx-auto">
       <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
+      <BaleCampaignManager />
       <h1 className="font-extrabold text-lg mt-2 mb-1">ارسال اعلان عمومی</h1>
       <p className="text-[11px] text-muted mb-4">این اعلان برای همه کاربران فعال در تمام مغازه‌های سراسر کشور ارسال می‌شود.</p>
 

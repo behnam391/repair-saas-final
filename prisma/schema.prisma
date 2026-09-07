@@ -1040,6 +1040,30 @@ model PlatformCustomer {
 // Same 10-minute single-use OTP pattern as PasswordResetToken, but for
 // PlatformCustomer accounts (separate table so the two login systems
 // stay fully independent).
+model BalePreference {
+  phone String @id
+  enabled Boolean @default(false)
+  updatedAt DateTime @updatedAt
+}
+
+model BaleCampaign {
+  id String @id @default(cuid())
+  message String
+  audience String
+  createdAt DateTime @default(now())
+  deliveries BaleDelivery[]
+}
+
+model BaleDelivery {
+  id String @id @default(cuid())
+  campaignId String
+  campaign BaleCampaign @relation(fields: [campaignId], references: [id])
+  phone String
+  status String @default("pending")
+  updatedAt DateTime @updatedAt
+  @@unique([campaignId, phone])
+}
+
 model CustomerPasswordResetToken {
   id         String           @id @default(cuid())
   customerId String

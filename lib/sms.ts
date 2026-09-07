@@ -48,18 +48,24 @@ export async function sendSms(to: string, message: string, sender?: string, poli
   });
   if (policy) params.set("policy", policy);
 
-  const res = await fetch(`${url}?${params.toString()}`, { method: "GET" });
+  const res = await fetch(url, { method: "POST", body: params, signal: AbortSignal.timeout(8000) });
   if (!res.ok) {
     const body = await res.text();
     throw new Error(`Kavenegar send failed: ${res.status} ${body}`);
   }
-  return { ok: true, raw: await res.json() };
+  const raw = await res.json();
+  if (raw.return?.status !== 200) throw new Error("Kavenegar rejected the message");
+  return { ok: true, raw };
 }
 
 // Kavenegar routes this dedicated SMS line to its configured Bale arm and
 // manages the SMS fallback itself. Never retry separately: that may duplicate messages.
 export function sendRepairNotification(to: string, message: string) {
   return sendSms(to, message, process.env.KAVENEGAR_REPAIR_SENDER || "100009361", "mix");
+}
+
+export function sendBaleOnly(to: string, message: string) {
+  return sendSms(to, message, "@peyvo_bale_bot");
 }
 
 // ── Kavenegar Lookup (OTP / سرویس اعتبارسنجی) ──────────────────

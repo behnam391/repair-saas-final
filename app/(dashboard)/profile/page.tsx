@@ -1,4 +1,5 @@
 "use client";
+import BalePreference from "@/components/BalePreference";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/ImageUploader";
@@ -80,6 +81,7 @@ export default function ProfilePage() {
   return (
     <div className="workspace-page profile-workspace p-4 max-w-4xl mx-auto">
       <div className="workspace-page-head"><div><span>حساب کاربری</span><h1 className="display-heading">پروفایل و تنظیمات من</h1><p>اطلاعات شخصی، تخصص و امنیت حساب خود را مدیریت کنید.</p></div></div>
+      <BalePreference />
 
       <div className="profile-hero">
         <div className="profile-avatar">

@@ -1,4 +1,5 @@
 "use client";
+import BalePreference from "@/components/BalePreference";
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 import { IRAN_PROVINCES, PROVINCE_NAMES } from "@/lib/iran-locations";
@@ -76,6 +77,7 @@ export default function CustomerProfilePage() {
   return (
     <div className="p-4 max-w-md mx-auto">
       <h1 className="display-heading text-lg mb-4">پروفایل من</h1>
+      <BalePreference />
 
       <label className="block text-xs text-muted mb-1">شماره موبایل (قابل تغییر نیست)</label>
       <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mono mb-3 opacity-70" value={phone} disabled />

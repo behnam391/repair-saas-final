@@ -1,4 +1,5 @@
 "use client";
+import SendInvoiceButton from "@/components/SendInvoiceButton";
 import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import { formatJalaliDate } from "@/lib/jalali";
@@ -277,6 +278,7 @@ export default function InvoicesPage() {
                   {inv.taxAmount > 0 && <div className="text-muted mt-0.5">شامل {inv.taxPercent}٪ مالیات ({inv.taxAmount.toLocaleString("fa-IR")} تومان)</div>}
                   <div className="flex gap-3 mt-2 flex-wrap">
                     <a href={`/invoices/${inv.id}/print`} target="_blank" className="text-copper text-[10px] font-semibold">🖨 چاپ</a>
+                    {inv.ticket && <SendInvoiceButton id={inv.id} />}
                     <button onClick={() => shareInvoice(inv)} className="text-teal text-[10px] font-semibold">📤 ارسال فاکتور</button>
                     {!inv.paid && (
                       <button

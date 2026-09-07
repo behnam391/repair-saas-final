@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
-import { sendSms } from "@/lib/sms";
+import { sendRepairNotification } from "@/lib/sms";
 import { getPublicOrigin } from "@/lib/public-url";
 import { z } from "zod";
 
@@ -96,16 +96,14 @@ export async function POST(req: NextRequest) {
       return inv;
     });
 
-    // SMS the customer their invoice + online payment link (fire-and-forget;
-    // silently skipped when no SMS provider is configured).
+    // Await the provider before the serverless request finishes.
     try {
       const customer = await db.customer.findUnique({ where: { id: ticket.customerId } });
       if (customer?.phone) {
         const origin = getPublicOrigin(req.nextUrl.origin);
-        sendSms(
+        await sendRepairNotification(
           customer.phone,
-          `${shop.name}\n${customer.name} عزیز، فاکتور تعمیر دستگاه شما (کد پیگیری #${ticket.no}) به مبلغ ${invoice.total.toLocaleString("fa-IR")} تومان صادر شد.\nمشاهده و پرداخت آنلاین: ${origin}/pay/${invoice.id}`,
-          shop.smsSenderName ?? undefined
+          `${shop.name}\n${customer.name} عزیز، فاکتور تعمیر دستگاه شما (کد پیگیری #${ticket.no}) به مبلغ ${invoice.total.toLocaleString("fa-IR")} تومان صادر شد.\nپرداخت‌شده: ${invoice.paidAmount.toLocaleString("fa-IR")} تومان\nمانده: ${(invoice.total - invoice.paidAmount).toLocaleString("fa-IR")} تومان\nمشاهده و پرداخت آنلاین: ${origin}/pay/${invoice.id}`
         ).catch((e) => console.error("[invoices] sms failed", e));
       }
     } catch (e) {

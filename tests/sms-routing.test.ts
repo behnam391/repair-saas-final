@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { db } from "../lib/db";
-import { sendCodeSms, sendIntakeSms, sendReadySms } from "../lib/sms";
+import { sendCodeSms, sendIntakeSms, sendReadySms, sendBaleOnly } from "../lib/sms";
 
 test("repair notifications use mix while login codes retain Lookup", async () => {
   const original = db.platformSettings.findUnique;
@@ -13,8 +13,10 @@ test("repair notifications use mix while login codes retain Lookup", async () =>
     process.env.KAVENEGAR_REPAIR_MIX = "true";
     delete process.env.KAVENEGAR_REPAIR_SENDER;
     db.platformSettings.findUnique = (async () => ({ kavenegarApiKey: "test-key", smsUseLookup: true, kavenegarOtpTemplate: "otp", kavenegarIntakeTemplate: "intake", kavenegarReadyTemplate: "ready" })) as any;
-    globalThis.fetch = (async (url: any) => {
-      requests.push(new URL(String(url)));
+    globalThis.fetch = (async (url: any, init: any) => {
+      const request = new URL(String(url));
+      if (init?.body) request.search = String(init.body);
+      requests.push(request);
       return new Response(JSON.stringify({ return: { status: 200 } }), { status: 200 });
     }) as typeof fetch;
     await sendIntakeSms("09000000000", { shopName: "Test", ticketNo: 1, fallback: "Intake" });
@@ -30,6 +32,11 @@ test("repair notifications use mix while login codes retain Lookup", async () =>
     process.env.KAVENEGAR_REPAIR_MIX = "false";
     await sendIntakeSms("09000000000", { shopName: "Test", ticketNo: 1, fallback: "Intake" });
     assert.equal(requests[3].searchParams.get("template"), "intake");
+    await sendBaleOnly("09000000000", "Offer");
+    assert.equal(requests[4].searchParams.get("sender"), "@peyvo_bale_bot");
+    assert.equal(requests[4].searchParams.get("policy"), null);
+    globalThis.fetch = (async () => new Response(JSON.stringify({ return: { status: 403 } }), { status: 200 })) as typeof fetch;
+    await assert.rejects(sendBaleOnly("09000000000", "Offer"));
   } finally {
     db.platformSettings.findUnique = original;
     globalThis.fetch = originalFetch;
