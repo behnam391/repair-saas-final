@@ -187,6 +187,7 @@ export const authOptions: NextAuthOptions = {
         token.phone = (user as any).phone;
         token.loginSessionId = (user as any).loginSessionId;
         token.sessionBlocked = false;
+        token.validationUnavailable = false;
         token.disabled = false;
         if ((user as any).isSuperAdmin) {
           token.isSuperAdmin = true;
@@ -207,6 +208,7 @@ export const authOptions: NextAuthOptions = {
 
       // The JWT authenticates the request; this shadow row lets the platform
       // owner revoke that JWT immediately without storing the JWT itself.
+      token.validationUnavailable = false;
       if (!token.loginSessionId || !token.sub) {
         token.sessionBlocked = true; // legacy/untracked cookie: require a clean login
       } else {
@@ -222,6 +224,7 @@ export const authOptions: NextAuthOptions = {
         } catch (e) {
           console.error("[auth] login-session validation failed", e);
           token.sessionBlocked = true;
+          token.validationUnavailable = true;
         }
       }
 
@@ -302,6 +305,7 @@ export const authOptions: NextAuthOptions = {
       (session.user as any).loginSessionId = token.loginSessionId;
       (session.user as any).platformRole = token.platformRole;
       (session.user as any).platformPermissions = token.platformPermissions;
+      (session.user as any).validationUnavailable = !!token.validationUnavailable && !token.disabled;
 
       // A session that failed revalidation (staff removed/deactivated, shop
       // suspended, or customer suspended/deleted) is stripped of every scope

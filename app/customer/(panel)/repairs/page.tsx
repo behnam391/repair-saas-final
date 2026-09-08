@@ -25,15 +25,18 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
 export default function CustomerRepairsPage() {
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [chatWith, setChatWith] = useState<Repair | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const res = await fetch("/api/customer/my-repairs");
-      if (res.ok) setRepairs((await res.json()).tickets ?? []);
-      setLoading(false);
-    })();
-  }, []);
+  async function load() {
+    setLoading(true); setLoadError(false);
+    try {
+      const res = await fetch("/api/customer/my-repairs", { signal: AbortSignal.timeout(15000) });
+      if (!res.ok) throw Error();
+      setRepairs((await res.json()).tickets ?? []);
+    } catch { setLoadError(true); } finally { setLoading(false); }
+  }
+  useEffect(() => { void load(); }, []);
 
   return (
     <div className="p-4 max-w-2xl mx-auto">
@@ -44,7 +47,7 @@ export default function CustomerRepairsPage() {
 
       {loading ? (
         <p className="text-muted text-sm text-center py-8">در حال بارگذاری...</p>
-      ) : repairs.length === 0 ? (
+      ) : loadError ? <div role="alert" className="border border-border rounded-lg p-4 text-sm">دریافت تعمیرها ممکن نشد؛ این پیام به معنی حذف اطلاعات نیست. <button className="border rounded px-3 py-2" onClick={load}>تلاش دوباره</button></div> : repairs.length === 0 ? (
         <div className="text-xs text-muted text-center py-8 leading-6">
           هنوز تعمیری با شماره موبایل شما ثبت نشده.
           <br />وقتی دستگاهی را به یکی از تعمیرگاه‌های عضو بسپارید، وضعیتش همین‌جا نمایش داده می‌شود.
@@ -88,6 +91,7 @@ export default function CustomerRepairsPage() {
                   {r.invoice && !r.invoice.paid && (
                     <a href={`/pay/${r.invoice.id}`} className="rounded-lg bg-teal px-3 py-1.5 font-bold text-[#0B1512]">💳 پرداخت فاکتور</a>
                   )}
+                  {r.invoice?.paid && <a href={`/pay/${r.invoice.id}`} className="rounded-lg border border-border px-3 py-1.5">مشاهده فاکتور</a>}
                   <a href={`/shop/${r.shop.id}`} className="text-teal">صفحه مغازه ↗</a>
                   {r.shop.phone && <a href={`tel:${r.shop.phone}`} className="text-muted">📞 تماس</a>}
                   {r.status === "DELIVERED" && !r.rated && (

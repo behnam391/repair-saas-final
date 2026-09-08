@@ -31,5 +31,6 @@ declare module "next-auth/jwt" {
     disabled?: boolean;
     loginSessionId?: string;
     sessionBlocked?: boolean;
+    validationUnavailable?: boolean;
   }
 }

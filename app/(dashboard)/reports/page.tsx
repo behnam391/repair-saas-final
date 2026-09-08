@@ -22,23 +22,27 @@ export default function ReportsPage() {
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [available, setAvailable] = useState({ monthly: false, team: false, insight: false });
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     if (status !== "authenticated") return;
     let live = true;
-    Promise.all([
-      fetch("/api/reports/monthly-revenue", { cache: "no-store" }).then((r) => r.ok ? r.json() : Promise.reject()),
-      fetch("/api/reports/staff", { cache: "no-store" }).then((r) => r.ok ? r.json() : Promise.reject()),
-      fetch("/api/dashboard/insights", { cache: "no-store" }).then((r) => r.ok ? r.json() : Promise.reject()),
+    setLoading(true); setFailed(false);
+    Promise.allSettled([
+      fetch("/api/reports/monthly-revenue", { cache: "no-store", signal: AbortSignal.timeout(15000) }).then((r) => r.ok ? r.json() : Promise.reject()),
+      fetch("/api/reports/staff", { cache: "no-store", signal: AbortSignal.timeout(15000) }).then((r) => r.ok ? r.json() : Promise.reject()),
+      fetch("/api/dashboard/insights", { cache: "no-store", signal: AbortSignal.timeout(15000) }).then((r) => r.ok ? r.json() : Promise.reject()),
     ]).then(([monthly, team, insight]) => {
       if (!live) return;
-      setMonths(monthly.months ?? []);
-      setStaff((team.staff ?? []).sort((a: Staff, b: Staff) => b.revenue - a.revenue));
-      setLast30DaysRevenue(team.last30DaysRevenue ?? 0);
-      setMetrics(insight.metrics ?? null);
+      setAvailable({ monthly: monthly.status === "fulfilled", team: team.status === "fulfilled", insight: insight.status === "fulfilled" });
+      setFailed([monthly,team,insight].some(r => r.status === "rejected"));
+      if (monthly.status === "fulfilled") setMonths(monthly.value.months ?? []);
+      if (team.status === "fulfilled") { setStaff((team.value.staff ?? []).sort((a: Staff, b: Staff) => b.revenue - a.revenue)); setLast30DaysRevenue(team.value.last30DaysRevenue ?? 0); }
+      if (insight.status === "fulfilled") setMetrics(insight.value.metrics ?? null);
     }).catch(() => live && setFailed(true)).finally(() => live && setLoading(false));
     return () => { live = false; };
-  }, [status]);
+  }, [status, reload]);
 
   const totals = useMemo(() => months.reduce((a, m) => ({ repair: a.repair + m.repair, sale: a.sale + m.sale }), { repair: 0, sale: 0 }), [months]);
   const max = Math.max(1, ...months.map((m) => m.total));
@@ -58,16 +62,16 @@ export default function ReportsPage() {
         <div className="report-period"><span /> اطلاعات به‌روز سیستم</div>
       </header>
 
-      {failed && <div className="report-error">دریافت بخشی از گزارش‌ها ناموفق بود. صفحه را دوباره بارگذاری کنید.</div>}
+      {failed && <div role="alert" className="report-error">بخشی از گزارش‌ها در دسترس نیست؛ بخش‌های دریافت‌شده نمایش داده می‌شوند. <button onClick={() => setReload(v => v+1)} className="border rounded px-3 py-2">تلاش دوباره</button></div>}
 
       <section className="report-kpis">
-        <ReportKpi icon={<CircleDollarSign />} tone="green" label="درآمد ۳۰ روز اخیر" value={money(last30DaysRevenue)} hint="مجموع فاکتورهای ثبت‌شده" />
-        <ReportKpi icon={<TrendingUp />} tone="blue" label="درآمد امروز" value={money(metrics?.todayRevenue ?? 0)} hint={`سود برآوردی: ${money(metrics?.todayProfit ?? 0)}`} />
-        <ReportKpi icon={<Wrench />} tone="amber" label="تعمیرات تحویل‌شده" value={delivered.toLocaleString("fa-IR")} hint="بر اساس عملکرد اعضای تیم" />
-        <ReportKpi icon={<ReceiptText />} tone="violet" label="درآمد ۱۲ ماه" value={money(totalAnnual)} hint="تعمیر و فروش مستقیم" />
+        <ReportKpi icon={<CircleDollarSign />} tone="green" label="درآمد ۳۰ روز اخیر" value={available.team ? money(last30DaysRevenue) : "دریافت نشد"} hint="مجموع فاکتورهای ثبت‌شده" />
+        <ReportKpi icon={<TrendingUp />} tone="blue" label="درآمد امروز" value={available.insight ? money(metrics?.todayRevenue ?? 0) : "دریافت نشد"} hint={available.insight ? `سود برآوردی: ${money(metrics?.todayProfit ?? 0)}` : "نیاز به دریافت مجدد"} />
+        <ReportKpi icon={<Wrench />} tone="amber" label="تعمیرات تحویل‌شده" value={available.team ? delivered.toLocaleString("fa-IR") : "دریافت نشد"} hint="بر اساس عملکرد اعضای تیم" />
+        <ReportKpi icon={<ReceiptText />} tone="violet" label="درآمد ۱۲ ماه" value={available.monthly ? money(totalAnnual) : "دریافت نشد"} hint="تعمیر و فروش مستقیم" />
       </section>
 
-      <section className="report-main-grid">
+      {available.monthly && <section className="report-main-grid">
         <article className="report-card report-revenue-card">
           <header><div><b>روند درآمد ۱۲ ماه اخیر</b><small>تعمیرات و فروش مستقیم</small></div><span><i className="is-repair" /> تعمیرات <i className="is-sale" /> فروش</span></header>
           {months.some((m) => m.total > 0) ? <div className="report-line-chart">
@@ -83,12 +87,12 @@ export default function ReportsPage() {
             <div className="report-split-legend"><span><i className="is-repair" /><em>درآمد تعمیرات</em><b>{money(totals.repair)}</b></span><span><i className="is-sale" /><em>فروش مستقیم</em><b>{money(totals.sale)}</b></span></div>
           </div>
         </article>
-      </section>
+      </section>}
 
       <section className="report-bottom-grid">
         <article className="report-card report-staff-card">
           <header><div><b>عملکرد اعضای تیم</b><small>مرتب‌شده بر اساس درآمد تعمیرات تحویل‌شده</small></div><UsersRound size={18} /></header>
-          {staff.length ? <div className="report-table"><div className="report-table-row is-head"><span>همکار</span><span>نقش</span><span>تحویل‌شده</span><span>درآمد</span></div>{staff.map((item, index) => <div className="report-table-row" key={item.techId}><span><i>{(index + 1).toLocaleString("fa-IR")}</i><b>{item.name}</b></span><span>{ROLE[item.role] ?? item.role}</span><span>{item.closedCount.toLocaleString("fa-IR")}</span><span>{money(item.revenue)}</span></div>)}</div> : <Empty text="هنوز عملکردی برای اعضای تیم ثبت نشده است." />}
+          {!available.team ? <Empty text="گزارش اعضا دریافت نشد." /> : staff.length ? <div className="report-table"><div className="report-table-row is-head"><span>همکار</span><span>نقش</span><span>تحویل‌شده</span><span>درآمد</span></div>{staff.map((item, index) => <div className="report-table-row" key={item.techId}><span><i>{(index + 1).toLocaleString("fa-IR")}</i><b>{item.name}</b></span><span>{ROLE[item.role] ?? item.role}</span><span>{item.closedCount.toLocaleString("fa-IR")}</span><span>{money(item.revenue)}</span></div>)}</div> : <Empty text="هنوز عملکردی برای اعضای تیم ثبت نشده است." />}
         </article>
 
         <article className="report-card report-export-card">

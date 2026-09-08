@@ -10,6 +10,7 @@ import ClientErrorReporter from "@/components/ClientErrorReporter";
 import AppUpdateNotice from "@/components/AppUpdateNotice";
 import { db } from "@/lib/db";
 import { getFont, DEFAULT_FONT } from "@/lib/fonts";
+import { unstable_cache } from "next/cache";
 
 // The root layout reads the live font/theme choice from PlatformSettings on
 // every request (see the super-admin تنظیمات panel), so changing them applies
@@ -42,9 +43,10 @@ export const viewport: Viewport = {
 
 // Never let a settings-read failure block the whole app from rendering — fall
 // back to the built-in defaults (Vazirmatn, dark) if the DB is unreachable.
+const readAppearance = unstable_cache(async () => db.platformSettings.findUnique({ where: { id: "singleton" }, select: { fontFamily: true, defaultTheme: true } }), ["platform-appearance-v1"], { revalidate: 60 });
 async function getAppearance(): Promise<{ fontKey: string; theme: string }> {
   try {
-    const s = (await db.platformSettings.findUnique({ where: { id: "singleton" } })) as any;
+    const s = await readAppearance();
     return {
       fontKey: s?.fontFamily || DEFAULT_FONT.key,
       theme: s?.defaultTheme === "light" ? "light" : "dark",

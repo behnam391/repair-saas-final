@@ -7,6 +7,8 @@ import Logo from "@/components/Logo";
 import PanelLanguageSwitcher from "@/components/PanelLanguageSwitcher";
 import { PanelI18nProvider, type PanelLocale } from "@/lib/panel-i18n";
 import { headers } from "next/headers";
+import SessionRetry from "@/components/SessionRetry";
+import "@/app/styles/workspace-formal.css";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +18,7 @@ export const dynamic = "force-dynamic";
 export default async function CustomerPanelLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
   const user = session?.user as any;
+  if (user?.validationUnavailable) return <SessionRetry/>;
   if (!user?.isCustomer || user.disabled) redirect("/customer/login");
   const headerLocale = headers().get("x-peyvo-locale");
   const initialLocale: PanelLocale = headerLocale === "en" || headerLocale === "ar" ? headerLocale : "fa";

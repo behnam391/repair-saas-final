@@ -12,11 +12,14 @@ import ShopSidebar from "@/components/ShopSidebar";
 import PanelLanguageSwitcher from "@/components/PanelLanguageSwitcher";
 import { PanelI18nProvider, type PanelLocale } from "@/lib/panel-i18n";
 import { headers } from "next/headers";
+import SessionRetry from "@/components/SessionRetry";
+import "@/app/styles/workspace-formal.css";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions);
+  if ((session?.user as any)?.validationUnavailable) return <SessionRetry/>;
   if (!session?.user || session.user.disabled) redirect("/login");
   const user = session.user;
   const headerLocale = headers().get("x-peyvo-locale");

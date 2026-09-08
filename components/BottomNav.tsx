@@ -33,7 +33,7 @@ export function ShopBottomNav({ role }: { role: string }) {
       { href: "/customers", label: "مشتریان", Icon: Users },
       { href: "/inventory", label: "انبار", Icon: Package },
       { href: "/profile", label: "پروفایل", Icon: User },
-      { href: "/admin/billing", label: "اشتراک", Icon: CreditCard },
+      { href: "/invoices", label: "فاکتورها", Icon: Receipt },
     ];
   }, [role]);
   return <SimpleBottomNav items={items} />;

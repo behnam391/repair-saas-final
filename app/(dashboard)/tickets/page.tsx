@@ -10,7 +10,7 @@ import TicketChat from "@/components/TicketChat";
 import AiIntakeHelper from "@/components/AiIntakeHelper";
 import CustomerQuickPick from "@/components/CustomerQuickPick";
 import PartnerQuickPick from "@/components/PartnerQuickPick";
-import MorningInsights from "@/components/MorningInsights";
+import MorningInsights, { type Insight } from "@/components/MorningInsights";
 import { useIsNativeApp } from "@/components/NativeAppContext";
 import { toLatinDigits, isValidMobile } from "@/lib/phone";
 import { COMPUTER_ACCESSORIES, COMPUTER_BRANDS, COMPUTER_DEVICE_TYPES, COMPUTER_LANE_LABELS, COMPUTER_OS_OPTIONS, COMPUTER_QUICK_ISSUES, computerAccessoryLabels, computerDeviceTypeLabel } from "@/lib/computer-intake";
@@ -70,6 +70,7 @@ export default function TicketsPage() {
   const [query, setQuery] = useState("");
   const [singleOperator, setSingleOperator] = useState(false);
   const [monthlyChart, setMonthlyChart] = useState<{ label: string; total: number }[]>([]);
+  const [dashboardInsights, setDashboardInsights] = useState<Insight[]>([]);
   const [dashboardMetrics, setDashboardMetrics] = useState<{ todayRevenue: number; todayProfit: number } | null>(null);
   const [performanceOpen, setPerformanceOpen] = useState(true);
   const [sideDashboardOpen, setSideDashboardOpen] = useState(true);
@@ -134,7 +135,7 @@ export default function TicketsPage() {
     if (myRole !== "OWNER") return;
     Promise.all([fetch("/api/reports/monthly-revenue"), fetch("/api/dashboard/insights")]).then(async ([chartRes, insightRes]) => {
       if (chartRes.ok) setMonthlyChart((await chartRes.json()).months ?? []);
-      if (insightRes.ok) setDashboardMetrics((await insightRes.json()).metrics ?? null);
+      if (insightRes.ok) { const data = await insightRes.json(); setDashboardMetrics(data.metrics ?? null); setDashboardInsights(data.insights ?? []); }
     }).catch(() => undefined);
   }, [myRole]);
 
@@ -162,7 +163,6 @@ export default function TicketsPage() {
 
   return (
     <div className="dashboard-page p-3 sm:p-5 max-w-[1600px] mx-auto">
-      <BaleInvite audience="shop" />
       <div className="dashboard-compact-actions">
         {serviceCategories.includes("MOBILE") && <button onClick={() => { setNewTicketCategory("MOBILE"); setShowNew(true); }} className="dashboard-primary-action"><Smartphone size={18} /> پذیرش موبایل</button>}
         {serviceCategories.includes("COMPUTER") && <button onClick={() => { setNewTicketCategory("COMPUTER"); setShowNew(true); }} className="dashboard-primary-action is-computer"><MonitorSmartphone size={18} /> پذیرش کامپیوتر</button>}
@@ -185,7 +185,7 @@ export default function TicketsPage() {
               <ChevronDown size={18} />
             </button>
             {sideDashboardOpen && <div className="repair-command-side">
-              <MorningInsights />
+              <MorningInsights suppliedItems={dashboardInsights} />
               <RepairQuickActions onNew={() => setShowNew(true)} />
             </div>}
           </section>
@@ -193,6 +193,7 @@ export default function TicketsPage() {
         </div>
       </>}
 
+      <BaleInvite audience="shop" />
       {/* Search — filters every lane live by device, customer, number, or issue. */}
       <div className="dashboard-toolbar">
         <Search size={18} />

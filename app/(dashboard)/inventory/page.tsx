@@ -27,21 +27,35 @@ export default function InventoryPage() {
   const [editForm, setEditForm] = useState<any>({});
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   async function load() {
-    const res = await fetch("/api/inventory");
-    const data = await res.json();
-    setItems(data.items ?? []);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/inventory", { signal: AbortSignal.timeout(15000) });
+      if (!res.ok) throw Error();
+      const data = await res.json();
+      setItems(data.items ?? []);
+    } catch { setError("دریافت موجودی ممکن نشد. برای دریافت مجدد تلاش کنید."); }
+    finally { setLoading(false); }
   }
   useEffect(() => { load(); }, []);
+  async function saveRequest(url: string, method: string, body?: unknown) {
+    if (busy) return false;
+    setBusy(true); setError("");
+    try {
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
+      if (!res.ok) { const data = await res.json().catch(() => ({})); throw Error(data.message || "عملیات انجام نشد؛ اطلاعات فرم حفظ شده است."); }
+      return true;
+    } catch (e) { setError(e instanceof Error ? e.message : "ارتباط قطع شد؛ قبل از تکرار موجودی را بررسی کنید."); return false; }
+    finally { setBusy(false); }
+  }
 
   async function add() {
     if (!form.name.trim()) return;
-    await fetch("/api/inventory", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    if (!(await saveRequest("/api/inventory", "POST", form))) return;
     setForm({ ...EMPTY_FORM, category: form.category });
     setShowAdd(false);
     load();
@@ -58,18 +72,14 @@ export default function InventoryPage() {
   }
 
   async function saveEdit(id: string) {
-    await fetch(`/api/inventory/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editForm),
-    });
+    if (!(await saveRequest(`/api/inventory/${id}`, "PATCH", editForm))) return;
     setEditingId(null);
     load();
   }
 
   async function remove(id: string) {
     if (!confirm("حذف این قلم از انبار؟")) return;
-    await fetch(`/api/inventory/${id}`, { method: "DELETE" });
+    if (!(await saveRequest(`/api/inventory/${id}`, "DELETE"))) return;
     load();
   }
 
@@ -88,6 +98,8 @@ export default function InventoryPage() {
 
   return (
     <div className="workspace-page p-4 max-w-5xl mx-auto">
+      {error && <div role="alert" className="border border-danger/30 rounded-lg p-3 mb-3 text-sm">{error} <button onClick={() => { setError(""); void load(); }} disabled={loading || busy} className="border rounded px-3 py-2">دریافت مجدد موجودی</button></div>}
+      {loading && <p role="status" className="text-sm text-muted">در حال دریافت موجودی…</p>}
       <div className="flex justify-between items-center mb-1">
         <h1 className="display-heading text-lg">انبار مغازه</h1>
         <button onClick={() => setShowAdd(!showAdd)} className="bg-copper text-[#1A1410] text-xs font-bold rounded-lg px-3 py-2">
@@ -148,7 +160,7 @@ export default function InventoryPage() {
           </div>
           <ImageUploader label="عکس کالا (اختیاری)" value={form.imageUrl}
             onChange={(url) => setForm({ ...form, imageUrl: url })} showUrlInput={false} />
-          <button onClick={add} className="w-full bg-copper text-[#1A1410] text-sm font-bold rounded-lg py-2.5">ثبت در انبار</button>
+          <button disabled={busy} onClick={add} className="w-full bg-copper text-[#1A1410] text-sm font-bold rounded-lg py-2.5">{busy ? "در حال ثبت…" : "ثبت در انبار"}</button>
         </div>
       )}
 
@@ -195,7 +207,7 @@ export default function InventoryPage() {
                 </label>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => saveEdit(i.id)} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">ذخیره</button>
+                <button disabled={busy} onClick={() => saveEdit(i.id)} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">{busy ? "در حال ثبت…" : "ذخیره"}</button>
                 <button onClick={() => setEditingId(null)} className="flex-1 bg-surface rounded-lg py-1.5">انصراف</button>
               </div>
             </div>

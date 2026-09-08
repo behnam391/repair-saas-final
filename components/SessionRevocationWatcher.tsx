@@ -10,7 +10,7 @@ export default function SessionRevocationWatcher() {
   const leaving = useRef(false);
 
   useEffect(() => {
-    if (status !== "authenticated" || !session?.user?.disabled || leaving.current) return;
+    if (status !== "authenticated" || !session?.user?.disabled || (session.user as any).validationUnavailable || leaving.current) return;
     leaving.current = true;
     const callbackUrl = pathname.startsWith("/superadmin")
       ? "/superadmin/login"
