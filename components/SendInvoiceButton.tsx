@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Send } from "lucide-react";
 export default function SendInvoiceButton({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -8,5 +9,5 @@ export default function SendInvoiceButton({ id }: { id: string }) {
     try { const r = await fetch(`/api/invoices/${id}/send`, { method: "POST" }); const d = await r.json(); setMessage(r.ok ? "درخواست ارسال پذیرفته شد" : d.error || "ارسال انجام نشد"); }
     catch { setMessage("نتیجه نامشخص؛ قبل از تکرار گزارش کاوه‌نگار را بررسی کنید"); }
     finally { setBusy(false); }
-  }}>{busy ? "در حال ارسال…" : "ارسال فاکتور در بله / پیامک"}</button><small role="status" className="block">{message}</small></span>;
+  }}><Send size={17}/>{busy ? "در حال ارسال…" : "ارسال متن بله / پیامک"}</button>{message && <small role="status" className="block">{message}</small>}</span>;
 }

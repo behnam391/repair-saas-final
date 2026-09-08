@@ -3,6 +3,8 @@ import SendInvoiceButton from "@/components/SendInvoiceButton";
 import { num } from "@/lib/num";
 import { useEffect, useState } from "react";
 import { formatJalaliDate } from "@/lib/jalali";
+import { FileText, Plus, Printer, Share2, CreditCard, Pencil, Trash2, Search, X, Save } from "lucide-react";
+import "./invoices.css";
 
 const PUBLIC_APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL || "https://peyvo.ir").replace(/\/+$/, "");
 
@@ -34,6 +36,13 @@ export default function InvoicesPage() {
   const [editInvoiceForm, setEditInvoiceForm] = useState({ laborCost: 0, applyTax: true, paidAmount: 0 });
   const [shareMsg, setShareMsg] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const visibleInvoices = invoices.filter(inv => {
+    const text = `${inv.ticket?.deviceModel ?? ""} ${inv.ticket?.no ?? ""} ${inv.ticket?.customer.name ?? inv.customerName ?? ""}`;
+    return text.toLowerCase().includes(query.toLowerCase()) && (statusFilter === "all" || (statusFilter === "paid" ? inv.paid : !inv.paid));
+  });
 
   async function load() {
     setLoading(true);
@@ -138,21 +147,21 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="workspace-page p-4 max-w-4xl mx-auto">
-      <h1 className="display-heading text-lg mb-4">صدور و تاریخچه فاکتور</h1>
+    <div className="invoice-workspace p-4 mx-auto" dir="rtl">
+      <header className="invoice-page-head"><div><span className="invoice-eyebrow">امور مالی / فاکتورها</span><h1><FileText size={24}/>مدیریت فاکتورها</h1><p>صدور، پیگیری پرداخت و ارسال فاکتور به مشتری</p></div><button className="invoice-button invoice-primary" aria-expanded={showCreate} onClick={() => setShowCreate(!showCreate)}>{showCreate ? <X size={18}/> : <Plus size={18}/>} {showCreate ? "بستن فرم" : "فاکتور جدید"}</button></header>
       {shareMsg && <div className="mb-3 rounded-lg bg-teal/15 p-2.5 text-center text-xs font-bold text-teal">{shareMsg}</div>}
 
       {loading ? (
         <p className="text-muted text-sm">در حال بارگذاری...</p>
       ) : (
         <>
-          <section className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <section className="invoice-summary mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
             <div className="rounded-xl border border-danger/20 bg-danger/10 p-3"><small className="text-[10px] text-muted">کل مطالبات باقی‌مانده</small><b className="mt-1 block text-base text-danger">{totalReceivable.toLocaleString("fa-IR")} تومان</b></div>
             <div className="rounded-xl border border-amber/20 bg-amber/10 p-3"><small className="text-[10px] text-muted">پرداخت ناقص</small><b className="mt-1 block text-base text-amber">{partialCount.toLocaleString("fa-IR")} فاکتور</b></div>
             <div className="rounded-xl border border-surface2 bg-surface p-3"><small className="text-[10px] text-muted">نسیه و تسویه‌نشده</small><b className="mt-1 block text-base">{outstandingInvoices.length.toLocaleString("fa-IR")} فاکتور</b></div>
           </section>
-          <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">
-            <div className="text-sm font-bold mb-3">صدور فاکتور جدید</div>
+          {showCreate && <div className="invoice-create bg-surface border border-surface2 rounded-xl p-4 mb-6">
+            <h2 className="text-sm font-bold mb-3">صدور فاکتور جدید</h2>
 
             <label className="block text-xs text-muted mb-1">دستگاه آماده تحویل بدون فاکتور</label>
             <select
@@ -179,7 +188,7 @@ export default function InvoicesPage() {
 
             <div className="flex justify-between items-center mb-2">
               <label className="text-xs text-muted">قطعات مصرفی</label>
-              <button onClick={addPartLine} className="text-xs text-copper font-semibold">+ افزودن قطعه</button>
+              <button onClick={addPartLine} disabled={!items.length} className="invoice-button"><Plus size={16}/>افزودن قطعه</button>
             </div>
             {parts.map((p, idx) => (
               <div key={idx} className="flex gap-2 mb-2">
@@ -198,7 +207,7 @@ export default function InvoicesPage() {
                   value={p.quantity}
                   onChange={(e) => updatePart(idx, "quantity", num(e.target.value))}
                 />
-                <button onClick={() => removePart(idx)} className="text-danger text-xs px-2">✕</button>
+                <button aria-label="حذف قطعه" onClick={() => removePart(idx)} className="invoice-button invoice-danger"><Trash2 size={16}/></button>
               </div>
             ))}
 
@@ -232,12 +241,13 @@ export default function InvoicesPage() {
             <button onClick={submit} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm mt-3">
               صدور فاکتور
             </button>
-          </div>
+          </div>}
 
-          <div className="text-sm font-bold mb-2">فاکتورهای صادرشده</div>
-          <div className="space-y-2">
+          <section className="invoice-history"><div className="invoice-history-head"><h2>فاکتورهای صادرشده <span>{visibleInvoices.length.toLocaleString("fa-IR")}</span></h2><div className="invoice-filters"><label className="invoice-search"><Search size={18}/><input aria-label="جست‌وجوی فاکتور" placeholder="نام مشتری، دستگاه یا کد پیگیری…" value={query} onChange={e => setQuery(e.target.value)}/></label><select aria-label="فیلتر وضعیت پرداخت" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="all">همه وضعیت‌ها</option><option value="paid">تسویه‌شده</option><option value="unpaid">دارای مانده</option></select></div></div>
+          <div className="invoice-list">
             {invoices.length === 0 && <p className="text-xs text-muted">هنوز فاکتوری صادر نشده.</p>}
-            {invoices.map((inv) => (
+            {invoices.length > 0 && !visibleInvoices.length && <p className="invoice-empty">فاکتوری با این مشخصات پیدا نشد.</p>}
+            {visibleInvoices.map((inv) => (
               editingInvoiceId === inv.id ? (
                 <div key={inv.id} className="bg-surface2 border border-copper rounded-lg p-3 text-xs space-y-2">
                   <label className="block text-[11px] text-muted">اجرت تعمیر (تومان)</label>
@@ -256,19 +266,19 @@ export default function InvoicesPage() {
                     <button type="button" onClick={() => setEditInvoiceForm({ ...editInvoiceForm, paidAmount: inv.total })} className="rounded-lg border border-teal/25 bg-teal/10 py-2 text-[10px] font-bold text-teal">تسویه کامل</button>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => saveInvoiceEdit(inv.id)} className="flex-1 bg-copper text-[#1A1410] font-bold rounded-lg py-1.5">ذخیره</button>
-                    <button onClick={() => setEditingInvoiceId(null)} className="flex-1 bg-surface rounded-lg py-1.5">انصراف</button>
+                    <button onClick={() => saveInvoiceEdit(inv.id)} className="invoice-button invoice-primary"><Save size={16}/>ذخیره تغییرات</button>
+                    <button onClick={() => setEditingInvoiceId(null)} className="invoice-button"><X size={16}/>انصراف</button>
                   </div>
                 </div>
               ) : (
-                <div key={inv.id} className="bg-surface2 border border-surface2 rounded-lg p-3 text-xs">
-                  <div className="flex justify-between">
+                <article key={inv.id} className="invoice-record">
+                  <div className="invoice-record-head">
                     <span className="font-bold">
                       {inv.ticket
                         ? `${inv.ticket.deviceModel} #${inv.ticket.no}`
                         : `🛒 فروش مستقیم${inv.items.length ? ` (${inv.items.map((it) => it.item.name).slice(0, 2).join("، ")}${inv.items.length > 2 ? "…" : ""})` : ""}`}
                     </span>
-                    <span className="mono">{inv.total.toLocaleString("fa-IR")} تومان</span>
+                    <span className="invoice-amount">{inv.total.toLocaleString("fa-IR")} <small>تومان</small></span>
                   </div>
                   <div className="text-muted mt-1">
                     {inv.ticket?.customer.name ?? inv.customerName ?? "مشتری متفرقه"} · {formatJalaliDate(inv.createdAt)}
@@ -276,27 +286,27 @@ export default function InvoicesPage() {
                   </div>
                   {!inv.paid && <div className="mt-1 text-[10px] text-muted">پرداخت‌شده: {(inv.paidAmount || 0).toLocaleString("fa-IR")} · مانده: {Math.max(0, inv.total - (inv.paidAmount || 0)).toLocaleString("fa-IR")} تومان</div>}
                   {inv.taxAmount > 0 && <div className="text-muted mt-0.5">شامل {inv.taxPercent}٪ مالیات ({inv.taxAmount.toLocaleString("fa-IR")} تومان)</div>}
-                  <div className="flex gap-3 mt-2 flex-wrap">
-                    <a href={`/invoices/${inv.id}/print`} target="_blank" className="text-copper text-[10px] font-semibold">🖨 چاپ</a>
+                  <div className="invoice-actions" aria-label="عملیات فاکتور">
+                    <a href={`/invoices/${inv.id}/print`} target="_blank" rel="noopener noreferrer" className="invoice-button"><Printer size={17}/>چاپ و مشاهده</a>
                     {inv.ticket && <SendInvoiceButton id={inv.id} />}
-                    <a href={`/invoices/${inv.id}/print`} className="text-teal text-[10px] font-semibold">ارسال تصویر فاکتور در بله</a>
-                    <button onClick={() => shareInvoice(inv)} className="text-teal text-[10px] font-semibold">اشتراک‌گذاری لینک فاکتور</button>
+                    <a href={`/invoices/${inv.id}/print`} className="invoice-button invoice-bale"><img src="/images/trust/bale.webp" width={20} height={20} alt=""/>تصویر در بله</a>
+                    <button onClick={() => shareInvoice(inv)} className="invoice-button"><Share2 size={17}/>اشتراک لینک</button>
                     {!inv.paid && (
                       <button
                         onClick={() => {
-                          navigator.clipboard?.writeText(`${PUBLIC_APP_ORIGIN}/pay/${inv.id}`);
+                          navigator.clipboard?.writeText(`${PUBLIC_APP_ORIGIN}/pay/${inv.id}`).then(() => setShareMsg("لینک پرداخت کپی شد"), () => setShareMsg("کپی لینک ممکن نشد؛ از اشتراک لینک استفاده کنید"));
                         }}
-                        className="text-teal text-[10px] font-semibold" title="لینک صفحه پرداخت آنلاین این فاکتور کپی می‌شود">
-                        💳 کپی لینک پرداخت
+                        className="invoice-button" title="لینک صفحه پرداخت آنلاین این فاکتور کپی می‌شود">
+                        <CreditCard size={17}/>لینک پرداخت
                       </button>
                     )}
-                    <button onClick={() => startInvoiceEdit(inv)} className="text-copper text-[10px] font-semibold">ویرایش</button>
-                    <button onClick={() => deleteInvoice(inv.id)} className="text-danger text-[10px] font-semibold">حذف</button>
+                    <button onClick={() => startInvoiceEdit(inv)} className="invoice-button"><Pencil size={17}/>ویرایش و تسویه</button>
+                    <button onClick={() => deleteInvoice(inv.id)} className="invoice-button invoice-danger"><Trash2 size={17}/>حذف</button>
                   </div>
-                </div>
+                </article>
               )
             ))}
-          </div>
+          </div></section>
         </>
       )}
     </div>
