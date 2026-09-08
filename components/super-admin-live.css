@@ -1,5 +1,17 @@
 .pc-live{--color-bg:var(--pc-bg);--color-surface:var(--pc-surface);--color-surface2:var(--pc-soft);--color-ink:var(--pc-text);--color-muted:var(--pc-muted);--color-border:var(--pc-line)}
 /* Shared page treatment for the live administrative routes, not the public site. */
+.pc-live .pc-settings-heading{margin-bottom:20px}.pc-live .pc-settings-heading p{font-size:13px;color:var(--pc-muted)}
+.pc-live .pc-settings-back{display:flex;align-items:center;gap:6px;color:#3b82f6;margin-bottom:12px;padding:4px 0}
+.pc-live .pc-settings-search{display:flex;align-items:center;gap:10px;max-width:640px;margin-bottom:20px;padding:4px 12px;background:var(--pc-surface);border:1px solid var(--pc-line);border-radius:8px;color:var(--pc-muted)}
+.pc-live .pc-settings-search input{width:100%;border:0;background:transparent}
+.pc-live .pc-settings-categories{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pc-live .pc-settings-categories button{display:flex;align-items:center;gap:14px;text-align:start;padding:18px;background:var(--pc-surface);border:1px solid var(--pc-line);border-radius:8px;color:var(--pc-text)}
+.pc-live .pc-settings-categories button:hover{border-color:#3b82f6}.pc-live .pc-settings-categories button>svg{flex-shrink:0;color:#3b82f6}.pc-live .pc-settings-categories span{flex:1}.pc-live .pc-settings-categories b{display:block;font-size:14px}.pc-live .pc-settings-categories small{display:block;margin-top:5px;font-size:12px;color:var(--pc-muted);font-weight:400}
+.pc-live .pc-settings-note{margin-top:20px;color:var(--pc-muted);font-size:12px}
+.pc-live .pc-settings-content{max-width:860px}.pc-live .pc-settings-content>div.bg-surface,.pc-live .pc-settings-content>div>div.bg-surface{padding:20px}
+.pc-live .pc-settings-save{position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;background:var(--pc-bg);border-top:1px solid var(--pc-line);z-index:5}.pc-live .pc-settings-save span{font-size:12px;color:var(--pc-muted)}
+.pc-live .pc-settings-advanced{border:1px solid var(--pc-line);border-radius:8px;padding:12px}.pc-live .pc-settings-advanced summary{cursor:pointer;font-size:13px;font-weight:600;min-height:32px}.pc-live .pc-settings-advanced[open] summary{margin-bottom:12px}
+@media(max-width:640px){.pc-live .pc-settings-categories{grid-template-columns:1fr}.pc-live .pc-settings-categories button{padding:14px}.pc-live .pc-settings-save{flex-wrap:wrap}.pc-live .pc-settings-save button{width:100%}.pc-live .pc-settings-content>div.bg-surface,.pc-live .pc-settings-content>div>div.bg-surface{padding:14px}}
 .pc-live .pc-page{width:100%;max-width:1280px;margin:0 auto;min-width:0;padding:0;font-size:14px;line-height:1.7}
 .pc-live .pc-page h1{font-size:23px;font-weight:700;line-height:1.5;margin-top:0;margin-bottom:8px;letter-spacing:0}
 .pc-live .pc-page>p.text-muted{font-size:13px;margin-bottom:22px}

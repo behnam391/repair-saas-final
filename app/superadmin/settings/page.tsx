@@ -3,25 +3,28 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { FONT_OPTIONS } from "@/lib/fonts";
+import { ArrowRight, Search, Palette, CreditCard, MessageSquare, Mail, ShieldCheck, BrainCircuit, Smartphone } from "lucide-react";
 
 // Settings are grouped into internal tabs so each concern has a clear home
 // (theme is no longer buried next to API keys). It's still ONE form and one
 // save — tabs only filter what's shown; switching tabs never loses edits.
-const TABS: [string, string][] = [
-  ["appearance", "🎨 ظاهر"],
-  ["subs", "💳 اشتراک"],
-  ["sms", "📩 پیامک"],
-  ["payment", "🏦 پرداخت"],
-  ["email", "✉️ ایمیل"],
-  ["trust", "🛡️ اعتماد"],
-  ["ai", "🤖 هوش مصنوعی"],
-  ["other", "⚙️ سایر"],
+const SECTIONS = [
+  { key: "appearance", title: "ظاهر سایت", description: "فونت و حالت پیش‌فرض روز و شب", Icon: Palette },
+  { key: "subs", title: "اشتراک و قیمت‌ها", description: "قیمت پلن‌ها، سهمیه و تخفیف دوره‌ها", Icon: CreditCard },
+  { key: "sms", title: "پیامک و کاوه‌نگار", description: "خط ارسال، کلید اتصال و الگوهای پذیرش و ورود", Icon: MessageSquare },
+  { key: "payment", title: "درگاه و پرداخت اپلیکیشن", description: "زرین‌پال، زیبال، نکست‌پی، بازار و مایکت", Icon: CreditCard },
+  { key: "email", title: "ایمیل و بازیابی رمز", description: "اتصال SMTP و ارسال ایمیل آزمایشی", Icon: Mail },
+  { key: "trust", title: "نماد اعتماد", description: "شناسه و کد اینماد سایت", Icon: ShieldCheck },
+  { key: "ai", title: "دستیار هوش مصنوعی", description: "سرویس اصلی، توکن، مدل و تنظیمات پیشرفته", Icon: BrainCircuit },
+  { key: "other", title: "اپلیکیشن و محتوای سایت", description: "لینک دانلود، نقشه نشان، راهنما و درباره ما", Icon: Smartphone },
 ];
 
 export default function SuperAdminSettingsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [tab, setTab] = useState("appearance");
+  const [tab, setTab] = useState("");
+  const [sectionSearch, setSectionSearch] = useState("");
+  const currentSection = SECTIONS.find(section => section.key === tab);
   const [form, setForm] = useState({
     kavenegarApiKey: "", kavenegarSender: "", zarinpalMerchantId: "",
     smsUseLookup: false, kavenegarOtpTemplate: "", kavenegarIntakeTemplate: "", kavenegarReadyTemplate: "",
@@ -60,6 +63,7 @@ export default function SuperAdminSettingsPage() {
   // Load every font's stylesheet so the pickers below preview in the real
   // typeface (only the active font + Vazirmatn are loaded by the layout).
   useEffect(() => {
+    if (tab !== "appearance") return;
     FONT_OPTIONS.forEach((f) => {
       if (!f.url || document.querySelector(`link[data-font="${f.key}"]`)) return;
       const l = document.createElement("link");
@@ -68,7 +72,7 @@ export default function SuperAdminSettingsPage() {
       l.setAttribute("data-font", f.key);
       document.head.appendChild(l);
     });
-  }, []);
+  }, [tab]);
 
   useEffect(() => {
     fetch("/api/superadmin/settings").then((r) => r.json()).then((d) => { setForm({
@@ -278,21 +282,21 @@ export default function SuperAdminSettingsPage() {
   }
 
   return (
-    <div className="pc-page">
-      <h1 className="font-extrabold text-lg mt-2 mb-1">تنظیمات پلتفرم</h1>
-      <p className="text-[11px] text-muted mb-4">
-        این مقادیر بر متغیرهای محیطی Vercel اولویت دارند — تغییرشان نیازی به دیپلوی مجدد ندارد.
-      </p>
-
-      {/* Internal section tabs — wrap so they never overflow the box. */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {TABS.map(([key, label]) => (
-          <button key={key} type="button" onClick={() => setTab(key)}
-            className={`text-[11px] font-bold rounded-lg px-3 py-1.5 transition ${tab === key ? "bg-copper text-[#0A0F1E]" : "bg-surface2 text-muted hover:text-ink"}`}>
-            {label}
-          </button>
-        ))}
-      </div>
+    <div className="pc-page pc-settings">
+      <header className="pc-settings-heading">
+        {currentSection && <button type="button" onClick={() => setTab("")} className="pc-settings-back"><ArrowRight size={17}/> همه تنظیمات</button>}
+        <h1>{currentSection?.title ?? "تنظیمات پلتفرم"}</h1>
+        <p className="text-muted">{currentSection?.description ?? "چه چیزی را می‌خواهید تغییر دهید؟ یک بخش را انتخاب کنید یا نام تنظیم را جستجو کنید."}</p>
+      </header>
+      {!currentSection && <>
+        <label className="pc-settings-search"><Search size={18}/><input aria-label="جستجوی تنظیمات" placeholder="مثلاً قیمت، مایکت، پیامک یا فونت…" value={sectionSearch} onChange={e => setSectionSearch(e.target.value)}/></label>
+        <div className="pc-settings-categories">
+          {SECTIONS.filter(section => `${section.title} ${section.description}`.includes(sectionSearch.trim())).map(({key,title,description,Icon}) => <button type="button" key={key} onClick={() => {setTab(key);setSaveFeedback(null);}}><Icon size={21}/><span><b>{title}</b><small>{description}</small></span><ArrowRight size={16} className="rotate-180"/></button>)}
+        </div>
+        {!SECTIONS.some(section => `${section.title} ${section.description}`.includes(sectionSearch.trim())) && <p role="status" className="text-muted py-6">بخشی پیدا نشد؛ عبارت کوتاه‌تری بنویسید.</p>}
+        <p className="pc-settings-note">تغییر دسته‌بندی، ویرایش‌های شما را پاک نمی‌کند. برای اعمال تغییرات، دکمه ذخیره را بزنید.</p>
+      </>}
+      <div className="pc-settings-content">
 
       {/* ── ظاهر ── */}
       {tab === "appearance" && (
@@ -485,8 +489,8 @@ export default function SuperAdminSettingsPage() {
         <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm" dir="ltr"
           value={form.nextpayApiKey} onChange={(e) => setForm({ ...form, nextpayApiKey: e.target.value })} />
 
-        <div className="border-t border-surface2 mt-5 pt-4">
-          <div className="text-sm font-bold mb-1">🛍️ سرویس‌های کافه‌بازار</div>
+        <details className="pc-settings-advanced mt-5">
+          <summary>پرداخت درون‌برنامه‌ای کافه‌بازار</summary>
           <p className="text-[10px] text-muted leading-5 mb-3">
             این کلیدها برای پرداخت درون‌برنامه‌ای و تخفیف پویای بازار نگهداری می‌شوند. ثبت آن‌ها به‌تنهایی این امکانات را فعال نمی‌کند و اطلاعات از بخش عمومی سایت نمایش داده نمی‌شود.
           </p>
@@ -501,9 +505,10 @@ export default function SuperAdminSettingsPage() {
             className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mono"
             value={form.bazaarDynamicDiscountKey} onChange={(e) => setForm({ ...form, bazaarDynamicDiscountKey: e.target.value })} />
           <p className="text-[9px] text-amber mt-2">کلید خصوصی امضای APK را در این قسمت وارد نکنید.</p>
-        </div>
+        </details>
 
-        <div className="border-t border-surface2 mt-5 pt-4">
+        <details className="pc-settings-advanced mt-3">
+          <summary>پرداخت درون‌برنامه‌ای مایکت</summary>
           <div className="flex items-center justify-between gap-3 mb-1">
             <div className="text-sm font-bold">🟢 پرداخت درون‌برنامه‌ای مایکت</div>
             <span className={`text-[10px] font-bold rounded-full px-2 py-1 ${myketSecretSet.publicKey && myketSecretSet.accessToken ? "bg-teal/20 text-teal" : "bg-amber/20 text-amber"}`}>
@@ -532,7 +537,7 @@ export default function SuperAdminSettingsPage() {
           <p className="text-[9px] text-amber mt-2">
             این دو مقدار با فیلدهای کافه‌بازار متفاوت‌اند. کلید یا توکن مایکت را در قسمت بازار وارد نکنید.
           </p>
-        </div>
+        </details>
       </div>
       )}
 
@@ -685,6 +690,8 @@ export default function SuperAdminSettingsPage() {
         </div>
 
         {/* Fallback provider */}
+        <details className="pc-settings-advanced">
+          <summary>تنظیمات پیشرفته: سرویس جایگزین و محدودیت مصرف</summary>
         <div className="border-t border-surface2 pt-3">
           <div className="flex items-center justify-between gap-2 mb-2">
             <div className="text-[12px] font-bold">ارائه‌دهنده جایگزین (اختیاری)</div>
@@ -734,6 +741,7 @@ export default function SuperAdminSettingsPage() {
           </div>
         </div>
 
+        </details>
         {/* Test connection */}
         <div className="border-t border-surface2 pt-3">
           <button type="button" onClick={testAiConnection} disabled={aiTesting}
@@ -746,9 +754,10 @@ export default function SuperAdminSettingsPage() {
       </div>
       )}
 
-      <button onClick={save} disabled={saving} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm disabled:opacity-50">
-        {saving ? "در حال ذخیره…" : saved ? "✅ ذخیره شد" : "ذخیره تنظیمات"}
-      </button>
+      </div>
+      {currentSection && <div className="pc-settings-save"><span>ذخیره، همه ویرایش‌های انجام‌شده در این صفحه را اعمال می‌کند.</span><button onClick={save} disabled={saving} className="bg-copper text-white font-bold rounded-lg px-5 py-2.5 text-sm disabled:opacity-50">
+        {saving ? "در حال ذخیره…" : saved ? "ذخیره شد" : "ذخیره تغییرات"}
+      </button></div>}
       {tab !== "other" && saveFeedback && <p className={`mt-2 text-center text-xs ${saveFeedback.ok ? "text-teal" : "text-danger"}`}>{saveFeedback.text}</p>}
     </div>
   );
