@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { db } from "../lib/db";
-import { sendCodeSms, sendIntakeSms, sendReadySms, sendBaleOnly } from "../lib/sms";
+import { sendCodeSms, sendIntakeSms, sendReadySms, sendBaleOnly, sendBaleInvoiceImage } from "../lib/sms";
 
 test("repair notifications use mix while login codes retain Lookup", async () => {
   const original = db.platformSettings.findUnique;
@@ -37,6 +37,21 @@ test("repair notifications use mix while login codes retain Lookup", async () =>
     assert.equal(requests[4].searchParams.get("policy"), null);
     globalThis.fetch = (async () => new Response(JSON.stringify({ return: { status: 403 } }), { status: 200 })) as typeof fetch;
     await assert.rejects(sendBaleOnly("09000000000", "Offer"));
+    const mediaRequests: { url: string; body: any }[] = [];
+    globalThis.fetch = (async (url: any, init: any) => {
+      mediaRequests.push({ url: String(url), body: init.body });
+      return new Response(JSON.stringify({ return: { status: 200 }, entries: String(url).includes("media/upload") ? { id: "media-test", status: 1, review: { status: 1 } } : [] }));
+    }) as typeof fetch;
+    await sendBaleInvoiceImage("09000000000", "Invoice", new Blob([new Uint8Array([255,216,255])], { type: "image/jpeg" }));
+    assert.ok(mediaRequests[0].body instanceof FormData);
+    assert.ok(mediaRequests[0].body.get("File"));
+    assert.equal(mediaRequests[1].body.get("mediaid"), "media-test");
+    assert.equal(mediaRequests[1].body.get("sender"), "@peyvo_bale_bot");
+    assert.equal(mediaRequests[1].body.get("policy"), null);
+    let uploadCalls = 0;
+    globalThis.fetch = (async () => { uploadCalls++; return new Response(JSON.stringify({ return: { status: 200 }, entries: { id: "pending", status: 0 } })); }) as typeof fetch;
+    await assert.rejects(sendBaleInvoiceImage("09000000000", "Invoice", new Blob(["image"])));
+    assert.equal(uploadCalls, 1, "Do not send while media is processing");
   } finally {
     db.platformSettings.findUnique = original;
     globalThis.fetch = originalFetch;

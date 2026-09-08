@@ -279,7 +279,8 @@ export default function InvoicesPage() {
                   <div className="flex gap-3 mt-2 flex-wrap">
                     <a href={`/invoices/${inv.id}/print`} target="_blank" className="text-copper text-[10px] font-semibold">🖨 چاپ</a>
                     {inv.ticket && <SendInvoiceButton id={inv.id} />}
-                    <button onClick={() => shareInvoice(inv)} className="text-teal text-[10px] font-semibold">📤 ارسال فاکتور</button>
+                    <a href={`/invoices/${inv.id}/print`} className="text-teal text-[10px] font-semibold">ارسال تصویر فاکتور در بله</a>
+                    <button onClick={() => shareInvoice(inv)} className="text-teal text-[10px] font-semibold">اشتراک‌گذاری لینک فاکتور</button>
                     {!inv.paid && (
                       <button
                         onClick={() => {

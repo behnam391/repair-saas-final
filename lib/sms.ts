@@ -33,7 +33,7 @@ export async function isSmsConfigured() {
   return !!apiKey;
 }
 
-export async function sendSms(to: string, message: string, sender?: string, policy?: "mix") {
+export async function sendSms(to: string, message: string, sender?: string, policy?: "mix", mediaId?: string) {
   const { apiKey, sender: defaultSender } = await getCredentials();
   if (!apiKey) {
     console.warn("[sms] no Kavenegar API key configured — skipping real send:", { to, message });
@@ -47,6 +47,10 @@ export async function sendSms(to: string, message: string, sender?: string, poli
     message,
   });
   if (policy) params.set("policy", policy);
+  if (mediaId) {
+    if (policy || sender !== "@peyvo_bale_bot") throw new Error("Media requires Bale-only routing");
+    params.set("mediaid", mediaId);
+  }
 
   const res = await fetch(url, { method: "POST", body: params, signal: AbortSignal.timeout(8000) });
   if (!res.ok) {
@@ -66,6 +70,19 @@ export function sendRepairNotification(to: string, message: string) {
 
 export function sendBaleOnly(to: string, message: string) {
   return sendSms(to, message, "@peyvo_bale_bot");
+}
+
+export async function sendBaleInvoiceImage(to: string, message: string, file: Blob) {
+  const { apiKey } = await getCredentials();
+  if (!apiKey) return { ok: false, skipped: true };
+  const form = new FormData();
+  form.set("File", file, "invoice.jpg");
+  const response = await fetch(`https://api.kavenegar.com/v1/${apiKey}/media/upload.json`, { method: "POST", body: form, signal: AbortSignal.timeout(15000) });
+  if (!response.ok) throw new Error("Media upload was not confirmed");
+  const data = await response.json();
+  if (data.return?.status !== 200 || !data.entries?.id) throw new Error("Media upload was not confirmed");
+  if (data.entries.status !== 1 || data.entries.review?.status === 2) throw new Error("Media is not ready for sending");
+  return sendSms(to, message, "@peyvo_bale_bot", undefined, data.entries.id);
 }
 
 // ── Kavenegar Lookup (OTP / سرویس اعتبارسنجی) ──────────────────

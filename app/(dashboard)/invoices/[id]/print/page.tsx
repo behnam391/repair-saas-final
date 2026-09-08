@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { formatJalaliDate } from "@/lib/jalali";
 import { computerAccessoryLabels, computerDeviceTypeLabel } from "@/lib/computer-intake";
@@ -20,6 +20,34 @@ export default function PrintInvoicePage() {
   const params = useParams();
   const id = params.id as string;
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const [image, setImage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  async function prepareImage() {
+    if (!receiptRef.current) return;
+    setBusy(true); setMessage("");
+    try {
+      await document.fonts.ready;
+      const { toJpeg } = await import("html-to-image");
+      const src = await toJpeg(receiptRef.current, { backgroundColor: "#ffffff", quality: .94, pixelRatio: 2 });
+      setImage(src);
+    } catch { setMessage("ساخت تصویر ممکن نشد؛ صفحه را تازه‌سازی کنید و دوباره امتحان کنید."); }
+    finally { setBusy(false); }
+  }
+  async function sendImage() {
+    if (!image) return;
+    setBusy(true); setMessage("");
+    try {
+      const blob = await (await fetch(image)).blob();
+      const form = new FormData(); form.set("image", blob, "invoice.jpg");
+      const r = await fetch(`/api/invoices/${id}/send-image`, { method: "POST", body: form });
+      const data = await r.json();
+      if (!r.ok || !data.ok) throw Error(data.error || "ارسال تأیید نشد؛ گزارش را بررسی کنید");
+      setMessage(data.message); setImage(null);
+    } catch (e) { setMessage(e instanceof Error ? e.message : "نتیجه ارسال نامشخص است؛ قبل از تکرار گزارش را بررسی کنید"); }
+    finally { setBusy(false); }
+  }
 
   useEffect(() => {
     fetch(`/api/invoices/${id}`).then((r) => r.json()).then((d) => setInvoice(d.invoice));
@@ -29,13 +57,16 @@ export default function PrintInvoicePage() {
 
   return (
     <div className="max-w-lg mx-auto p-6 print:p-0" dir="rtl">
-      <div className="no-print flex justify-end mb-4">
+      <div className="no-print flex flex-wrap gap-2 justify-end mb-4">
+        <button disabled={busy} onClick={prepareImage} className="bg-teal text-white rounded-lg px-4 py-2 text-sm">{busy ? "در حال پردازش…" : "آماده‌سازی تصویر برای بله"}</button>
         <button onClick={() => window.print()} className="bg-copper text-[#1A1410] font-bold rounded-lg px-4 py-2 text-sm">
           🖨 چاپ فاکتور
         </button>
       </div>
 
-      <div className="border border-gray-300 rounded-lg p-6 text-black bg-white">
+      {message && <p role="status" className="no-print text-sm mb-4">{message}</p>}
+      {image && <div className="no-print border border-border rounded-lg p-3 mb-4 space-y-3"><p className="text-sm">ارسال فقط به بله مشتری، بدون پیامک پشتیبان. تصویر زیر برای مشتری ارسال می‌شود.</p><img src={image} alt="پیش‌نمایش تصویر فاکتور" className="w-full"/><div className="flex flex-wrap gap-3"><button disabled={busy} onClick={sendImage} className="bg-teal text-white rounded p-2">تأیید و ارسال به بله مشتری</button><a href={image} download={`invoice-${id}.jpg`} className="border rounded p-2">دانلود تصویر</a><button disabled={busy} onClick={() => setImage(null)}>انصراف</button></div></div>}
+      <div ref={receiptRef} className="border border-gray-300 rounded-lg p-6 text-black bg-white">
         <div className="text-center mb-4">
           <div className="text-lg font-extrabold">{invoice.shop.name}</div>
           {invoice.shop.address && <div className="text-xs text-gray-600 mt-1">{invoice.shop.address}</div>}
