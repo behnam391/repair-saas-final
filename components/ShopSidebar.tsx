@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   BarChart3, Boxes, CircleDollarSign, FileText, Handshake, Headphones,
-  House, Menu, MessageSquareText, MonitorSmartphone, PackagePlus, PanelRightClose, Settings, Smartphone, Store, UserRound, UsersRound, Wrench,
+  House, ChevronLeft, ChevronRight, MessageSquareText, MonitorSmartphone, PackagePlus, Settings, Smartphone, Store, UserRound, UsersRound, Wrench,
   type LucideIcon,
 } from "lucide-react";
 import Logo from "./Logo";
@@ -37,7 +37,7 @@ const groups: { label: string; items: Item[] }[] = [
 ];
 
 export default function ShopSidebar({ role, shopType, serviceCategories = "MOBILE", shopName, userName, avatarUrl }: { role: string; shopType?: string; serviceCategories?: string; shopName: string; userName: string; avatarUrl?: string | null }) {
-  const { t } = usePanelI18n();
+  const { t, dir } = usePanelI18n();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const sidebarRef = useRef<HTMLElement>(null);
@@ -96,7 +96,7 @@ export default function ShopSidebar({ role, shopType, serviceCategories = "MOBIL
         aria-expanded={!collapsed}
         aria-controls="shop-sidebar-nav"
       >
-        {collapsed ? <Menu size={18} /> : <PanelRightClose size={18} />}
+        {(collapsed ? dir === "rtl" : dir !== "rtl") ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
       </button>
       </div>
       <nav id="shop-sidebar-nav">

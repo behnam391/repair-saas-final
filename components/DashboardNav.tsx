@@ -7,8 +7,8 @@ import { canSeeNav } from "@/lib/permissions";
 import { getNativeStore } from "@/lib/myket-billing-client";
 import type { LucideIcon } from "lucide-react";
 import {
-  BadgeHelp, BarChart3, Boxes, ChevronDown, CircleUserRound, Clock3, FileText,
-  Handshake, Headphones, History, House, Info, Landmark, Menu, MessageCircle,
+  BadgeHelp, BarChart3, Boxes, ChevronDown, ChevronLeft, ChevronRight, CircleUserRound, Clock3, FileText,
+  Handshake, Headphones, History, House, Info, Landmark, MessageCircle,
   MonitorSmartphone, NotebookTabs, PackageSearch, QrCode, ReceiptText, RotateCcw, ShoppingBag, Smartphone, Store, UsersRound,
   Settings, WalletCards, Wrench,
 } from "lucide-react";
@@ -32,7 +32,7 @@ export default function DashboardNav({
   shopName?: string;
   userName?: string;
 }) {
-  const { t } = usePanelI18n();
+  const { t, dir } = usePanelI18n();
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -62,8 +62,17 @@ export default function DashboardNav({
 
   // Lock body scroll while the mobile drawer is open.
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
+    if (!mobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
   }, [mobileOpen]);
 
   function toggleGroup(label: string) {
@@ -156,12 +165,16 @@ export default function DashboardNav({
     <>
       {/* ── Mobile (below md): quick pills + «منو» opening a Telegram-style
           side drawer. */}
-      <div className="flex md:hidden items-center gap-1.5 w-full order-last pt-1">
+      <div className="shop-mobile-nav-controls flex items-center gap-1.5 w-full">
         <button
+          type="button"
           onClick={() => setMobileOpen(true)}
-          className="app-nav-trigger"
+          className="shop-drawer-trigger"
+          aria-label={t("باز کردن منوی داشبورد")}
+          aria-expanded={mobileOpen}
+          aria-controls="shop-mobile-drawer"
         >
-          <Menu size={15} /> {t("منو")}
+          {dir === "rtl" ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
         </button>
         <div className="flex items-center gap-1.5 ms-auto">
           <Link href="/tickets" className="app-nav-quick is-primary">
@@ -176,19 +189,26 @@ export default function DashboardNav({
       </div>
 
       {mobileOpen && mounted && createPortal(
-        <div className="fixed inset-0 z-[300] md:hidden" onClick={() => setMobileOpen(false)}>
+        <div className="shop-drawer-overlay fixed inset-0 z-[300]" dir={dir} onClick={() => setMobileOpen(false)}>
           <div className="absolute inset-0 bg-black/55 drawer-fade" />
           <aside
             onClick={(e) => e.stopPropagation()}
-            className="nav-sheet drawer-enter absolute inset-y-0 right-0 w-[80vw] max-w-[320px] overflow-y-auto rounded-l-3xl"
+            id="shop-mobile-drawer"
+            aria-label={t("منو")}
+            className="nav-sheet shop-mobile-drawer absolute inset-y-0 overflow-y-auto"
           >
             {/* Profile header — like Telegram's drawer top. */}
-            <div className="drawer-head px-4 pt-5 pb-4 rounded-tl-3xl">
-              <div className="bg-white/95 rounded-2xl w-12 h-12 flex items-center justify-center shadow-lg">
-                <LogoMark size={30} />
+            <div className="shop-drawer-heading">
+              <div className="shrink-0">
+                <LogoMark size={26} />
               </div>
-              <div className="mt-3 font-extrabold text-white text-sm">{shopName ?? "Peyvo"}</div>
-              <div className="text-white/85 text-[11px] mt-0.5">{userName ?? ""}</div>
+              <div className="min-w-0 flex-1" data-no-translate>
+                <div className="font-bold text-sm break-words">{shopName ?? "Peyvo"}</div>
+                <div className="text-muted text-xs mt-1">{userName ?? ""}</div>
+              </div>
+              <button type="button" className="shop-drawer-close" aria-label={t("جمع کردن منوی داشبورد")} onClick={() => setMobileOpen(false)}>
+                {dir === "rtl" ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              </button>
             </div>
 
             {/* Quick actions */}
@@ -221,7 +241,7 @@ export default function DashboardNav({
       )}
 
       {/* ── Desktop (md+): unchanged — centered pills with dropdown groups. */}
-      <div ref={containerRef} className="hidden md:flex items-center gap-1 flex-1 justify-center flex-wrap">
+      <div ref={containerRef} className="shop-desktop-nav hidden items-center gap-1 flex-1 justify-center flex-wrap">
         <Link href="/tickets" className="app-nav-quick is-primary">
           <House size={14} /> {t("صفحه اصلی")}
         </Link>
@@ -290,10 +310,10 @@ function DrawerRow({
   external?: boolean;
   bold?: boolean;
 }) {
-  const cls = `flex items-center gap-3 px-4 py-2.5 text-[13px] active:bg-surface2 ${bold ? "font-bold" : ""}`;
+  const cls = `shop-drawer-row flex items-center gap-3 px-4 text-sm active:bg-surface2 ${bold ? "font-bold" : ""}`;
   const inner = (
     <>
-      <span className="w-8 h-8 rounded-xl bg-surface2 flex items-center justify-center text-copper shrink-0"><Icon size={16} /></span>
+      <span className="flex items-center justify-center text-copper shrink-0"><Icon size={18} /></span>
       <span className="flex-1">{label}</span>
       {external && <span className="text-muted text-[10px]">↗</span>}
     </>
