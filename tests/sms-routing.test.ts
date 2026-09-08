@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { db } from "../lib/db";
-import { sendCodeSms, sendIntakeSms, sendReadySms, sendBaleOnly, sendBaleInvoiceImage } from "../lib/sms";
+import { sendCodeSms, sendIntakeSms, sendReadySms, sendBaleOnly, sendBaleInvoiceImage, getMessageStatuses } from "../lib/sms";
 
 test("repair notifications use mix while login codes retain Lookup", async () => {
   const original = db.platformSettings.findUnique;
@@ -52,6 +52,18 @@ test("repair notifications use mix while login codes retain Lookup", async () =>
     globalThis.fetch = (async () => { uploadCalls++; return new Response(JSON.stringify({ return: { status: 200 }, entries: { id: "pending", status: 0 } })); }) as typeof fetch;
     await assert.rejects(sendBaleInvoiceImage("09000000000", "Invoice", new Blob(["image"])));
     assert.equal(uploadCalls, 1, "Do not send while media is processing");
+    let statusCalls = 0;
+    globalThis.fetch = (async (url: any, init: any) => {
+      statusCalls++;
+      assert.ok(String(url).endsWith("/sms/status.json"));
+      assert.equal(init.body.get("messageid"), "123");
+      return new Response(JSON.stringify({ return: { status: 200 }, entries: [{ messageid: 123, status: 10, statustext: "رسیده به گیرنده" }, { messageid: 999, status: 10 }] }));
+    }) as typeof fetch;
+    const reports = await getMessageStatuses(["123", "123"]);
+    assert.equal(reports.length, 1, "Ignore reports outside the requested IDs");
+    assert.equal(reports[0].status, 10);
+    await assert.rejects(getMessageStatuses(["invalid"]));
+    assert.equal(statusCalls, 1, "Invalid IDs must not call the provider");
   } finally {
     db.platformSettings.findUnique = original;
     globalThis.fetch = originalFetch;

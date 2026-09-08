@@ -1,6 +1,8 @@
 "use client";
 import { num } from "@/lib/num";
-import { useEffect, useMemo, useState } from "react";
+import { useRef, useState } from "react";
+import { usePagedList } from "@/lib/use-paged-list";
+import ListPagination from "@/components/ListPagination";
 import ImageUploader from "@/components/ImageUploader";
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -20,7 +22,7 @@ const EMPTY_FORM = {
 };
 
 export default function InventoryPage() {
-  const [items, setItems] = useState<Item[]>([]);
+
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [showAdd, setShowAdd] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -29,28 +31,19 @@ export default function InventoryPage() {
   const [catFilter, setCatFilter] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  async function load() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/inventory", { signal: AbortSignal.timeout(15000) });
-      if (!res.ok) throw Error();
-      const data = await res.json();
-      setItems(data.items ?? []);
-    } catch { setError("دریافت موجودی ممکن نشد. برای دریافت مجدد تلاش کنید."); }
-    finally { setLoading(false); }
-  }
-  useEffect(() => { load(); }, []);
+  const list = usePagedList<Item, { value: number; lowCount: number }>("/api/inventory", "items", new URLSearchParams({ q: search, category: catFilter }).toString(), { value: 0, lowCount: 0 });
+  const loading = list.loading;
+  const saving = useRef(false);
+  function load() { list.reload(); }
   async function saveRequest(url: string, method: string, body?: unknown) {
-    if (busy) return false;
-    setBusy(true); setError("");
+    if (saving.current) return false;
+    saving.current = true; setBusy(true); setError("");
     try {
       const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
       if (!res.ok) { const data = await res.json().catch(() => ({})); throw Error(data.message || "عملیات انجام نشد؛ اطلاعات فرم حفظ شده است."); }
       return true;
     } catch (e) { setError(e instanceof Error ? e.message : "ارتباط قطع شد؛ قبل از تکرار موجودی را بررسی کنید."); return false; }
-    finally { setBusy(false); }
+    finally { saving.current = false; setBusy(false); }
   }
 
   async function add() {
@@ -83,21 +76,14 @@ export default function InventoryPage() {
     load();
   }
 
-  const filtered = useMemo(() => items.filter((i) => {
-    const q = search.trim().toLowerCase();
-    const matchesSearch = !q ||
-      i.name.toLowerCase().includes(q) ||
-      (i.deviceModel ?? "").toLowerCase().includes(q) ||
-      (i.description ?? "").toLowerCase().includes(q);
-    const matchesCat = !catFilter || i.category === catFilter;
-    return matchesSearch && matchesCat;
-  }), [items, search, catFilter]);
-
-  const totalValue = items.reduce((s, i) => s + i.quantity * i.costPrice, 0);
-  const lowCount = items.filter((i) => i.lowStock).length;
+  const filtered = list.items;
+  const totalValue = list.summary.value;
+  const lowCount = list.summary.lowCount;
 
   return (
     <div className="workspace-page p-4 max-w-5xl mx-auto">
+      {list.error && <div role="alert">{list.error} <button onClick={load}>تلاش مجدد</button></div>}
+      <ListPagination page={list.page} total={list.total} loading={loading} onChange={list.setPage}/>
       {error && <div role="alert" className="border border-danger/30 rounded-lg p-3 mb-3 text-sm">{error} <button onClick={() => { setError(""); void load(); }} disabled={loading || busy} className="border rounded px-3 py-2">دریافت مجدد موجودی</button></div>}
       {loading && <p role="status" className="text-sm text-muted">در حال دریافت موجودی…</p>}
       <div className="flex justify-between items-center mb-1">
@@ -113,11 +99,11 @@ export default function InventoryPage() {
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-3">
           <div className="text-[11px] text-muted mb-0.5">ارزش کل انبار (قیمت خرید)</div>
-          <div className="text-base font-extrabold mono">{totalValue.toLocaleString("fa-IR")} <span className="text-[10px] font-normal">تومان</span></div>
+          <div className="text-base font-extrabold mono">{list.loaded ? totalValue.toLocaleString("fa-IR") : "—"} <span className="text-[10px] font-normal">تومان</span></div>
         </div>
         <div className="bg-gradient-to-br from-surface to-surface2 border border-surface2 rounded-xl p-3">
           <div className="text-[11px] text-muted mb-0.5">اقلام رو به اتمام</div>
-          <div className={`text-base font-extrabold mono ${lowCount ? "text-danger" : "text-teal"}`}>{lowCount}</div>
+          <div className={`text-base font-extrabold mono ${lowCount ? "text-danger" : "text-teal"}`}>{list.loaded ? lowCount : "—"}</div>
         </div>
       </div>
 
@@ -174,7 +160,7 @@ export default function InventoryPage() {
       </div>
 
       <div className="space-y-2">
-        {filtered.length === 0 && <p className="text-xs text-muted text-center py-8">موردی پیدا نشد.</p>}
+        {!loading && !list.error && filtered.length === 0 && <p className="text-xs text-muted text-center py-8">موردی پیدا نشد.</p>}
         {filtered.map((i) => (
           editingId === i.id ? (
             <div key={i.id} className="bg-surface2 border border-copper rounded-lg p-3 text-xs space-y-2">

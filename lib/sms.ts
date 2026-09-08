@@ -72,6 +72,22 @@ export function sendBaleOnly(to: string, message: string) {
   return sendSms(to, message, "@peyvo_bale_bot");
 }
 
+/** Read provider reports only; never resends a message or infers account membership. */
+export async function getMessageStatuses(ids: string[]) {
+  const unique = [...new Set(ids)].filter(id => /^\d+$/.test(id));
+  if (!unique.length || unique.length > 500) throw new Error("Invalid message identifiers");
+  const { apiKey } = await getCredentials();
+  if (!apiKey) throw new Error("Messaging is not configured");
+  const res = await fetch(`https://api.kavenegar.com/v1/${apiKey}/sms/status.json`, {
+    method: "POST", body: new URLSearchParams({ messageid: unique.join(",") }),
+    signal: AbortSignal.timeout(10000), cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Provider report unavailable");
+  const data = await res.json();
+  if (data.return?.status !== 200 || !Array.isArray(data.entries)) throw new Error("Provider report unavailable");
+  return data.entries.filter((entry: any) => unique.includes(String(entry.messageid)) && Number.isInteger(entry.status)) as { messageid: number | string; status: number; statustext?: string }[];
+}
+
 export async function sendBaleInvoiceImage(to: string, message: string, file: Blob) {
   const { apiKey } = await getCredentials();
   if (!apiKey) return { ok: false, skipped: true };

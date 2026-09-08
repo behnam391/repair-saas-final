@@ -2,6 +2,7 @@
 import BalePreference from "@/components/BalePreference";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSafeMutation } from "@/lib/use-safe-mutation";
 import ImageUploader from "@/components/ImageUploader";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
@@ -19,10 +20,12 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [saveErr, setSaveErr] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "" });
   const [pwMsg, setPwMsg] = useState("");
   const [pwError, setPwError] = useState("");
+  const passwordMutation = useSafeMutation();
 
   async function load() {
     try {
@@ -43,11 +46,13 @@ export default function ProfilePage() {
         notifyEmail: data.user.notifyEmail,
         specialty: data.user.specialty ?? "",
       });
+      setLoaded(true);
     } catch { setSaveErr("ارتباط با سرور برقرار نشد. اتصال اینترنت را بررسی کنید."); }
   }
   useEffect(() => { load(); }, []);
 
   async function save() {
+    if (!loaded || saving) return;
     setSaved(false); setSaveErr("");
     if (name.trim().length < 2) { setSaveErr("نام باید حداقل دو حرف باشد"); return; }
     // Changing this changes how I log in from now on. See lib/phone.ts.
@@ -61,23 +66,18 @@ export default function ProfilePage() {
       });
       if (res.ok) { setSaved(true); router.refresh(); setTimeout(() => setSaved(false), 2500); }
       else { const d = await res.json().catch(() => ({})); setSaveErr(d.message || d.error || `ذخیره ناموفق بود (کد ${res.status})`); }
-    } catch { setSaveErr("ارتباط با سرور برقرار نشد؛ تغییرات ذخیره نشد."); }
+    } catch { setSaveErr("پاسخ ذخیره دریافت نشد؛ قبل از تکرار، نتیجه را بررسی کنید. اطلاعات فرم حفظ شده است."); }
     finally { setSaving(false); }
   }
 
   async function changePassword() {
     setPwMsg(""); setPwError("");
-    const res = await fetch("/api/profile/password", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pwForm),
-    });
-    const data = await res.json();
-    if (!res.ok) { setPwError(data.message || "تغییر رمز ناموفق بود"); return; }
+    if (!(await passwordMutation.run("/api/profile/password", "PATCH", pwForm))) return;
     setPwMsg("✅ رمز عبور با موفقیت تغییر کرد");
     setPwForm({ currentPassword: "", newPassword: "" });
   }
 
+  if (!loaded) return <div className="p-4" role={saveErr ? "alert" : "status"}>{saveErr || "در حال بارگذاری..."}{saveErr && <button className="border rounded-lg px-3 py-2 ms-2" onClick={load}>تلاش مجدد</button>}</div>;
   return (
     <div className="workspace-page profile-workspace p-4 max-w-4xl mx-auto">
       <div className="workspace-page-head"><div><span>حساب کاربری</span><h1 className="display-heading">پروفایل و تنظیمات من</h1><p>اطلاعات شخصی، تخصص و امنیت حساب خود را مدیریت کنید.</p></div></div>
@@ -156,8 +156,8 @@ export default function ProfilePage() {
         <input type="password" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
           value={pwForm.newPassword} onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
         {pwMsg && <p className="text-teal text-xs mb-2">{pwMsg}</p>}
-        {pwError && <p className="text-danger text-xs mb-2">{pwError}</p>}
-        <button onClick={changePassword} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm">
+        {passwordMutation.error && <p role="alert" className="text-danger text-sm mb-2">{passwordMutation.error}</p>}
+        <button disabled={passwordMutation.busy} onClick={changePassword} className="w-full bg-surface2 hover:bg-copper hover:text-[#1A1410] transition-colors font-bold rounded-lg py-2.5 text-sm">
           تغییر رمز عبور
         </button>
         <p className="text-[11px] text-muted text-center mt-3">

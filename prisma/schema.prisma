@@ -1060,6 +1060,10 @@ model BaleDelivery {
   campaign BaleCampaign @relation(fields: [campaignId], references: [id])
   phone String
   status String @default("pending")
+  providerMessageId String?
+  providerStatus Int?
+  providerStatusText String?
+  checkedAt DateTime?
   updatedAt DateTime @updatedAt
   @@unique([campaignId, phone])
 }

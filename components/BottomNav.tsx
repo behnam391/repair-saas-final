@@ -41,8 +41,8 @@ export function ShopBottomNav({ role }: { role: string }) {
 
 export function CustomerBottomNav() {
   const items = useMemo<Item[]>(() => [
-    { href: "/customer", label: "مغازه‌ها", Icon: Store },
     { href: "/customer/repairs", label: "تعمیرهای من", Icon: Wrench },
+    { href: "/customer", label: "مغازه‌ها", Icon: Store },
     { href: "/customer/ratings", label: "امتیازها", Icon: Star },
     { href: "/customer/profile", label: "پروفایل", Icon: User },
   ], []);

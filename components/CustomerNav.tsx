@@ -9,8 +9,8 @@ import { LogOut, Menu, Star, Store, UserRound, Wrench, type LucideIcon } from "l
 import { usePanelI18n } from "@/lib/panel-i18n";
 
 const LINKS = [
-  { href: "/customer", label: "مغازه‌ها", Icon: Store },
   { href: "/customer/repairs", label: "تعمیرهای من", Icon: Wrench },
+  { href: "/customer", label: "مغازه‌ها", Icon: Store },
   { href: "/customer/ratings", label: "امتیازهای من", Icon: Star },
   { href: "/customer/profile", label: "پروفایل", Icon: UserRound },
 ] satisfies { href: string; label: string; Icon: LucideIcon }[];

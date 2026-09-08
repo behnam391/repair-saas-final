@@ -1,6 +1,5 @@
 import "./globals.css";
 import "./styles/public-experience.css";
-import "./styles/home-premium.css";
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import { Providers } from "./providers";

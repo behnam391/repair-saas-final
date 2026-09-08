@@ -62,6 +62,7 @@ export default function TicketsPage() {
   const mySpecialty = (session?.user as any)?.specialty as string | null | undefined;
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [openTicket, setOpenTicket] = useState<Ticket | null>(null);
   const [showNew, setShowNew] = useState(false);
   const [serviceCategories, setServiceCategories] = useState<string[]>(["MOBILE"]);
@@ -83,22 +84,28 @@ export default function TicketsPage() {
 
   async function load() {
     setLoading(true);
-    const [ticketRes, shopRes, staffRes] = await Promise.all([
-      fetch("/api/tickets"),
-      fetch("/api/shop"),
-      fetch("/api/staff"),
+    try {
+    const [ticketRes, shopResult, staffResult] = await Promise.all([
+      fetch("/api/tickets", { signal: AbortSignal.timeout(15000) }),
+      fetch("/api/shop", { signal: AbortSignal.timeout(15000) }).catch(() => null),
+      fetch("/api/staff", { signal: AbortSignal.timeout(15000) }).catch(() => null),
     ]);
+    if (!ticketRes.ok) throw Error();
     const data = await ticketRes.json();
     setTickets(data.tickets ?? []);
-    if (shopRes.ok && staffRes.ok) {
-      const shop = (await shopRes.json()).shop;
+    if (shopResult?.ok) {
+      const shop = (await shopResult.json()).shop;
       const categories = (shop?.serviceCategories || "MOBILE").split(",").filter((item: string) => item === "MOBILE" || item === "COMPUTER");
       setServiceCategories(categories.length ? categories : ["MOBILE"]);
-      const staff = (await staffRes.json()).staff ?? [];
-      const activeStaffCount = staff.filter((member: any) => member.active).length;
-      setSingleOperator(shop?.businessSize === "SOLO" || activeStaffCount <= 1);
+      if (staffResult?.ok) {
+        const staff = (await staffResult.json()).staff ?? [];
+        const activeStaffCount = staff.filter((member: any) => member.active).length;
+        setSingleOperator(shop?.businessSize === "SOLO" || activeStaffCount <= 1);
+      } else setSingleOperator(shop?.businessSize === "SOLO");
     }
-    setLoading(false);
+    setLoadError("");
+    } catch { setLoadError("دریافت تعمیرها ممکن نشد؛ اطلاعات قبلی حفظ شده است."); }
+    finally { setLoading(false); }
   }
 
   useEffect(() => {
@@ -145,6 +152,7 @@ export default function TicketsPage() {
   }
 
   async function transition(id: string, action: string, targetLane?: string, extra?: Record<string, any>) {
+    try {
     const res = await fetch(`/api/tickets/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -159,20 +167,41 @@ export default function TicketsPage() {
     await load();
     setOpenTicket(null);
     if (action === "ready") flash(result.sms?.sent ? "📩 پیامک آماده‌تحویل برای مشتری ارسال شد" : result.sms?.message || "دستگاه آماده‌تحویل ثبت شد، اما پیامک ارسال نشد");
+    } catch { flash("پاسخ عملیات دریافت نشد؛ قبل از تکرار، وضعیت دستگاه را بررسی کنید."); }
   }
 
   return (
     <div className="dashboard-page p-3 sm:p-5 max-w-[1600px] mx-auto">
+      {loadError && <div role="alert" className="border rounded-lg p-3 mb-3 text-sm">{loadError} <button disabled={loading} onClick={load}>تلاش مجدد</button></div>}
       <div className="dashboard-compact-actions">
         {serviceCategories.includes("MOBILE") && <button onClick={() => { setNewTicketCategory("MOBILE"); setShowNew(true); }} className="dashboard-primary-action"><Smartphone size={18} /> پذیرش موبایل</button>}
         {serviceCategories.includes("COMPUTER") && <button onClick={() => { setNewTicketCategory("COMPUTER"); setShowNew(true); }} className="dashboard-primary-action is-computer"><MonitorSmartphone size={18} /> پذیرش کامپیوتر</button>}
       </div>
+      {/* Search — filters every lane live by device, customer, number, or issue. */}
+      <div className="dashboard-toolbar">
+        <Search size={18} />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="جستجوی مدل گوشی، نام مشتری یا شماره تیکت..."
+        />
+        {query && (
+          <button
+            onClick={() => setQuery("")}
+            className="dashboard-search-clear"
+            title="پاک کردن"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
       <section className="dashboard-overview-grid">
         <div className="dashboard-stats">
-          <div className="dashboard-stat"><span className="is-blue">{myRole === "OWNER" ? <BarChart3 size={20} /> : <Smartphone size={20} />}</span><div><small>{myRole === "OWNER" ? "درآمد امروز" : "کل دستگاه‌ها"}</small><b>{myRole === "OWNER" ? `${(dashboardMetrics?.todayRevenue ?? 0).toLocaleString("fa-IR")}` : tickets.length.toLocaleString("fa-IR")}</b><p>{myRole === "OWNER" ? "تومان · بر اساس فاکتورها" : "پرونده ثبت‌شده"}</p></div></div>
-          <div className="dashboard-stat"><span className="is-green"><BadgeCheck size={20} /></span><div><small>آماده تحویل</small><b>{readyCount.toLocaleString("fa-IR")}</b><p>دستگاه تکمیل‌شده</p></div></div>
-          <div className="dashboard-stat"><span className="is-amber"><Clock3 size={20} /></span><div><small>در انتظار تأیید</small><b>{waitingCount.toLocaleString("fa-IR")}</b><p>نیازمند پیگیری</p></div></div>
-          <div className="dashboard-stat"><span className="is-violet"><Wrench size={20} /></span><div><small>تعمیرات فعال</small><b>{activeCount.toLocaleString("fa-IR")}</b><p>در جریان تعمیر</p></div></div>
+          <div className="dashboard-stat"><span className="is-blue">{myRole === "OWNER" ? <BarChart3 size={20} /> : <Smartphone size={20} />}</span><div><small>{myRole === "OWNER" ? "درآمد امروز" : "کل دستگاه‌ها"}</small><b>{myRole === "OWNER" ? (dashboardMetrics ? dashboardMetrics.todayRevenue.toLocaleString("fa-IR") : "—") : (loading || loadError ? "—" : tickets.length.toLocaleString("fa-IR"))}</b><p>{myRole === "OWNER" ? "تومان · بر اساس فاکتورها" : "پرونده ثبت‌شده"}</p></div></div>
+          <div className="dashboard-stat"><span className="is-green"><BadgeCheck size={20} /></span><div><small>آماده تحویل</small><b>{(loading || loadError ? "—" : readyCount.toLocaleString("fa-IR"))}</b><p>دستگاه تکمیل‌شده</p></div></div>
+          <div className="dashboard-stat"><span className="is-amber"><Clock3 size={20} /></span><div><small>در انتظار تأیید</small><b>{(loading || loadError ? "—" : waitingCount.toLocaleString("fa-IR"))}</b><p>نیازمند پیگیری</p></div></div>
+          <div className="dashboard-stat"><span className="is-violet"><Wrench size={20} /></span><div><small>تعمیرات فعال</small><b>{(loading || loadError ? "—" : activeCount.toLocaleString("fa-IR"))}</b><p>در جریان تعمیر</p></div></div>
         </div>
       </section>
 
@@ -194,24 +223,6 @@ export default function TicketsPage() {
       </>}
 
       <BaleInvite audience="shop" />
-      {/* Search — filters every lane live by device, customer, number, or issue. */}
-      <div className="dashboard-toolbar">
-        <Search size={18} />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="جستجوی مدل گوشی، نام مشتری یا شماره تیکت..."
-        />
-        {query && (
-          <button
-            onClick={() => setQuery("")}
-            className="dashboard-search-clear"
-            title="پاک کردن"
-          >
-            <X size={14} />
-          </button>
-        )}
-      </div>
 
       {loading ? (
         <p className="text-muted text-sm text-center py-10">در حال بارگذاری...</p>

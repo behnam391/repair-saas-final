@@ -1,10 +1,13 @@
 "use client";
 import SendInvoiceButton from "@/components/SendInvoiceButton";
 import { num } from "@/lib/num";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatJalaliDate } from "@/lib/jalali";
 import { FileText, Plus, Printer, Share2, CreditCard, Pencil, Trash2, Search, X, Save } from "lucide-react";
 import "./invoices.css";
+import { usePagedList } from "@/lib/use-paged-list";
+import ListPagination from "@/components/ListPagination";
+import { usePanelI18n } from "@/lib/panel-i18n";
 
 const PUBLIC_APP_ORIGIN = (process.env.NEXT_PUBLIC_APP_URL || "https://peyvo.ir").replace(/\/+$/, "");
 
@@ -21,9 +24,10 @@ type Invoice = {
 };
 
 export default function InvoicesPage() {
+  const { dir } = usePanelI18n();
   const [readyTickets, setReadyTickets] = useState<Ticket[]>([]);
   const [items, setItems] = useState<InvItem[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+
   const [selectedTicket, setSelectedTicket] = useState<string>("");
   const [laborCost, setLaborCost] = useState(0);
   const [parts, setParts] = useState<{ itemId: string; quantity: number }[]>([]);
@@ -35,36 +39,49 @@ export default function InvoicesPage() {
   const [editingInvoiceId, setEditingInvoiceId] = useState<string | null>(null);
   const [editInvoiceForm, setEditInvoiceForm] = useState({ laborCost: 0, applyTax: true, paidAmount: 0 });
   const [shareMsg, setShareMsg] = useState("");
-  const [loading, setLoading] = useState(true);
+
   const [showCreate, setShowCreate] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const visibleInvoices = invoices.filter(inv => {
-    const text = `${inv.ticket?.deviceModel ?? ""} ${inv.ticket?.no ?? ""} ${inv.ticket?.customer.name ?? inv.customerName ?? ""}`;
-    return text.toLowerCase().includes(query.toLowerCase()) && (statusFilter === "all" || (statusFilter === "paid" ? inv.paid : !inv.paid));
-  });
-
-  async function load() {
-    setLoading(true);
-    const [tRes, iRes, invRes, shopRes] = await Promise.all([
-      fetch("/api/tickets?lane=READY"),
-      fetch("/api/inventory"),
-      fetch("/api/invoices"),
-      fetch("/api/shop"),
-    ]);
-    const tData = await tRes.json();
-    const iData = await iRes.json();
-    const invData = await invRes.json();
-    setReadyTickets((tData.tickets ?? []).filter((t: Ticket) => !t.invoice));
-    setItems(iData.items ?? []);
-    setInvoices(invData.invoices ?? []);
-    if (shopRes.ok) {
-      const shopData = await shopRes.json();
-      setTaxPercent(shopData.shop.taxPercent ?? 10);
-    }
-    setLoading(false);
+  const saving = useRef(false);
+  const [busy, setBusy] = useState(false);
+  async function saveRequest(url: string, method: string, body?: unknown) {
+    if (saving.current) return false;
+    saving.current = true; setBusy(true); setError("");
+    try {
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.message || "ذخیره انجام نشد؛ اطلاعات فرم حفظ شده است.");
+        return false;
+      }
+      return true;
+    } catch {
+      setError("پاسخ ذخیره دریافت نشد؛ قبل از تکرار، فهرست فاکتورها را بررسی کنید. اطلاعات فرم حفظ شده است.");
+      return false;
+    } finally { saving.current = false; setBusy(false); }
   }
-  useEffect(() => { load(); }, []);
+  const list = usePagedList<Invoice, { receivable: number; outstanding: number; partial: number }>("/api/invoices", "invoices", new URLSearchParams({ q: query, status: statusFilter }).toString(), { receivable: 0, outstanding: 0, partial: 0 });
+  const visibleInvoices = list.items;
+  const loading = list.loading;
+  function load() { list.reload(); }
+  useEffect(() => {
+    if (!showCreate) return;
+    let current = true;
+    async function loadOptions() {
+      try {
+        const responses = await Promise.all(["/api/tickets?lane=READY", "/api/inventory", "/api/shop"].map(url => fetch(url, { signal: AbortSignal.timeout(15000) })));
+        if (responses.some(res => !res.ok)) throw Error();
+        const [tickets, inventory, shop] = await Promise.all(responses.map(res => res.json()));
+        if (!current) return;
+        setReadyTickets((tickets.tickets ?? []).filter((ticket: Ticket) => !ticket.invoice));
+        setItems(inventory.items ?? []);
+        setTaxPercent(shop.shop?.taxPercent ?? 10);
+      } catch { if (current) setError("دریافت اطلاعات صدور فاکتور ممکن نشد؛ فرم را ببندید و دوباره باز کنید."); }
+    }
+    void loadOptions();
+    return () => { current = false; };
+  }, [showCreate]);
 
   function addPartLine() {
     if (items.length === 0) return;
@@ -84,29 +101,19 @@ export default function InvoicesPage() {
     return sum + (item ? item.sellPrice * p.quantity : 0);
   }, 0);
   const invoiceTotalPreview = partsCostPreview + laborCost + (applyTax ? Math.round(((partsCostPreview + laborCost) * taxPercent) / 100) : 0);
-  const outstandingInvoices = invoices.filter((invoice) => !invoice.paid);
-  const totalReceivable = outstandingInvoices.reduce((sum, invoice) => sum + Math.max(0, invoice.total - (invoice.paidAmount || 0)), 0);
-  const partialCount = outstandingInvoices.filter((invoice) => invoice.paidAmount > 0).length;
+  const totalReceivable = list.summary.receivable;
+  const partialCount = list.summary.partial;
 
   async function submit() {
     setError("");
     if (!selectedTicket) { setError("یک دستگاه آماده‌تحویل را انتخاب کنید"); return; }
-    const res = await fetch("/api/invoices", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    if (!(await saveRequest("/api/invoices", "POST", {
         ticketId: selectedTicket,
         laborCost,
         parts,
         applyTax,
         paidAmount: settlementMode === "PAID" ? invoiceTotalPreview : settlementMode === "PARTIAL" ? Math.min(initialPaidAmount, invoiceTotalPreview) : 0,
-      }),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      setError(err.message || "صدور فاکتور ناموفق بود");
-      return;
-    }
+      }))) return;
     setSelectedTicket(""); setLaborCost(0); setParts([]); setSettlementMode("CREDIT"); setInitialPaidAmount(0);
     load();
   }
@@ -117,18 +124,14 @@ export default function InvoicesPage() {
   }
 
   async function saveInvoiceEdit(id: string) {
-    await fetch(`/api/invoices/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editInvoiceForm),
-    });
+    if (!(await saveRequest(`/api/invoices/${id}`, "PATCH", editInvoiceForm))) return;
     setEditingInvoiceId(null);
     load();
   }
 
   async function deleteInvoice(id: string) {
     if (!confirm("این فاکتور حذف شود؟ قطعات مصرفی به انبار برمی‌گردند.")) return;
-    await fetch(`/api/invoices/${id}`, { method: "DELETE" });
+    if (!(await saveRequest(`/api/invoices/${id}`, "DELETE"))) return;
     load();
   }
 
@@ -147,18 +150,21 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="invoice-workspace p-4 mx-auto" dir="rtl">
+    <div className="invoice-workspace p-4 mx-auto" dir={dir}>
+      {error && <div role="alert" className="border border-danger/30 rounded-lg p-3 mb-3">{error}</div>}
+      {list.error && <div role="alert">{list.error} <button onClick={load}>تلاش مجدد</button></div>}
+      <ListPagination page={list.page} total={list.total} loading={loading} onChange={list.setPage}/>
+      {busy && <p role="status">در حال ذخیره؛ لطفاً منتظر بمانید…</p>}
       <header className="invoice-page-head"><div><span className="invoice-eyebrow">امور مالی / فاکتورها</span><h1><FileText size={24}/>مدیریت فاکتورها</h1><p>صدور، پیگیری پرداخت و ارسال فاکتور به مشتری</p></div><button className="invoice-button invoice-primary" aria-expanded={showCreate} onClick={() => setShowCreate(!showCreate)}>{showCreate ? <X size={18}/> : <Plus size={18}/>} {showCreate ? "بستن فرم" : "فاکتور جدید"}</button></header>
       {shareMsg && <div className="mb-3 rounded-lg bg-teal/15 p-2.5 text-center text-xs font-bold text-teal">{shareMsg}</div>}
 
-      {loading ? (
-        <p className="text-muted text-sm">در حال بارگذاری...</p>
-      ) : (
+      {loading && <p role="status" className="text-muted text-sm">در حال بارگذاری...</p>}
+      {(
         <>
           <section className="invoice-summary mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <div className="rounded-xl border border-danger/20 bg-danger/10 p-3"><small className="text-[10px] text-muted">کل مطالبات باقی‌مانده</small><b className="mt-1 block text-base text-danger">{totalReceivable.toLocaleString("fa-IR")} تومان</b></div>
-            <div className="rounded-xl border border-amber/20 bg-amber/10 p-3"><small className="text-[10px] text-muted">پرداخت ناقص</small><b className="mt-1 block text-base text-amber">{partialCount.toLocaleString("fa-IR")} فاکتور</b></div>
-            <div className="rounded-xl border border-surface2 bg-surface p-3"><small className="text-[10px] text-muted">نسیه و تسویه‌نشده</small><b className="mt-1 block text-base">{outstandingInvoices.length.toLocaleString("fa-IR")} فاکتور</b></div>
+            <div className="rounded-xl border border-danger/20 bg-danger/10 p-3"><small className="text-[10px] text-muted">کل مطالبات باقی‌مانده</small><b className="mt-1 block text-base text-danger">{list.loaded ? totalReceivable.toLocaleString("fa-IR") : "—"} تومان</b></div>
+            <div className="rounded-xl border border-amber/20 bg-amber/10 p-3"><small className="text-[10px] text-muted">پرداخت ناقص</small><b className="mt-1 block text-base text-amber">{list.loaded ? partialCount.toLocaleString("fa-IR") : "—"} فاکتور</b></div>
+            <div className="rounded-xl border border-surface2 bg-surface p-3"><small className="text-[10px] text-muted">نسیه و تسویه‌نشده</small><b className="mt-1 block text-base">{list.loaded ? list.summary.outstanding.toLocaleString("fa-IR") : "—"} فاکتور</b></div>
           </section>
           {showCreate && <div className="invoice-create bg-surface border border-surface2 rounded-xl p-4 mb-6">
             <h2 className="text-sm font-bold mb-3">صدور فاکتور جدید</h2>
@@ -238,15 +244,14 @@ export default function InvoicesPage() {
 
             {error && <p className="text-danger text-xs mt-2">{error}</p>}
 
-            <button onClick={submit} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm mt-3">
+            <button disabled={busy} onClick={submit} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm mt-3">
               صدور فاکتور
             </button>
           </div>}
 
-          <section className="invoice-history"><div className="invoice-history-head"><h2>فاکتورهای صادرشده <span>{visibleInvoices.length.toLocaleString("fa-IR")}</span></h2><div className="invoice-filters"><label className="invoice-search"><Search size={18}/><input aria-label="جست‌وجوی فاکتور" placeholder="نام مشتری، دستگاه یا کد پیگیری…" value={query} onChange={e => setQuery(e.target.value)}/></label><select aria-label="فیلتر وضعیت پرداخت" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="all">همه وضعیت‌ها</option><option value="paid">تسویه‌شده</option><option value="unpaid">دارای مانده</option></select></div></div>
+          <section className="invoice-history"><div className="invoice-history-head"><h2>فاکتورهای صادرشده <span>{list.loaded ? list.total.toLocaleString("fa-IR") : "—"}</span></h2><div className="invoice-filters"><label className="invoice-search"><Search size={18}/><input aria-label="جست‌وجوی فاکتور" placeholder="نام مشتری، دستگاه یا کد پیگیری…" value={query} onChange={e => setQuery(e.target.value)}/></label><select aria-label="فیلتر وضعیت پرداخت" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option value="all">همه وضعیت‌ها</option><option value="paid">تسویه‌شده</option><option value="unpaid">دارای مانده</option></select></div></div>
           <div className="invoice-list">
-            {invoices.length === 0 && <p className="text-xs text-muted">هنوز فاکتوری صادر نشده.</p>}
-            {invoices.length > 0 && !visibleInvoices.length && <p className="invoice-empty">فاکتوری با این مشخصات پیدا نشد.</p>}
+            {!loading && !list.error && !visibleInvoices.length && <p className="invoice-empty">فاکتوری با این مشخصات پیدا نشد.</p>}
             {visibleInvoices.map((inv) => (
               editingInvoiceId === inv.id ? (
                 <div key={inv.id} className="bg-surface2 border border-copper rounded-lg p-3 text-xs space-y-2">
@@ -266,8 +271,8 @@ export default function InvoicesPage() {
                     <button type="button" onClick={() => setEditInvoiceForm({ ...editInvoiceForm, paidAmount: inv.total })} className="rounded-lg border border-teal/25 bg-teal/10 py-2 text-[10px] font-bold text-teal">تسویه کامل</button>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={() => saveInvoiceEdit(inv.id)} className="invoice-button invoice-primary"><Save size={16}/>ذخیره تغییرات</button>
-                    <button onClick={() => setEditingInvoiceId(null)} className="invoice-button"><X size={16}/>انصراف</button>
+                    <button disabled={busy} onClick={() => saveInvoiceEdit(inv.id)} className="invoice-button invoice-primary"><Save size={16}/>ذخیره تغییرات</button>
+                    <button disabled={busy} onClick={() => setEditingInvoiceId(null)} className="invoice-button"><X size={16}/>انصراف</button>
                   </div>
                 </div>
               ) : (

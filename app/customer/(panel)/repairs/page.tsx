@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { formatJalaliDate } from "@/lib/jalali";
 import TicketChat from "@/components/TicketChat";
 import { computerDeviceTypeLabel } from "@/lib/computer-intake";
+import { MessageSquare, CreditCard, Phone, Star, Smartphone, Monitor } from "lucide-react";
 
 type Repair = {
   id: string; no: number; deviceModel: string; deviceCategory?: string; deviceType?: string | null; status: string; lane: string;
@@ -33,7 +34,9 @@ export default function CustomerRepairsPage() {
     try {
       const res = await fetch("/api/customer/my-repairs", { signal: AbortSignal.timeout(15000) });
       if (!res.ok) throw Error();
-      setRepairs((await res.json()).tickets ?? []);
+      const tickets: Repair[] = (await res.json()).tickets ?? [];
+      const done = (ticket: Repair) => ticket.status === "DELIVERED" || ticket.status === "CANCELLED";
+      setRepairs(tickets.sort((a,b) => Number(done(a)) - Number(done(b))));
     } catch { setLoadError(true); } finally { setLoading(false); }
   }
   useEffect(() => { void load(); }, []);
@@ -51,6 +54,7 @@ export default function CustomerRepairsPage() {
         <div className="text-xs text-muted text-center py-8 leading-6">
           هنوز تعمیری با شماره موبایل شما ثبت نشده.
           <br />وقتی دستگاهی را به یکی از تعمیرگاه‌های عضو بسپارید، وضعیتش همین‌جا نمایش داده می‌شود.
+          <a href="/customer" className="block border rounded-lg px-4 py-3 mt-3">پیدا کردن تعمیرگاه</a>
         </div>
       ) : (
         <div className="space-y-2">
@@ -61,7 +65,7 @@ export default function CustomerRepairsPage() {
               <div key={r.id} className={`repair-tag card-hover ${tagCls} bg-surface border border-surface2 rounded-xl p-3 text-xs`}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-bold text-sm">{r.deviceCategory === "COMPUTER" ? "💻" : "📱"} {r.deviceModel}</div>
+                    <div className="font-bold text-sm flex items-center gap-2">{r.deviceCategory === "COMPUTER" ? <Monitor size={18}/> : <Smartphone size={18}/>} {r.deviceModel}</div>
                     {r.deviceCategory === "COMPUTER" && <div className="mt-0.5 text-[10px] text-teal">{computerDeviceTypeLabel(r.deviceType)}</div>}
                     <div className="text-muted mt-0.5">
                       {r.shop.name}{r.shop.province ? ` · ${r.shop.province}` : ""} · کد پیگیری #{r.no}
@@ -87,15 +91,15 @@ export default function CustomerRepairsPage() {
                 </div>
 
                 <div className="flex gap-3 mt-2 pt-2 border-t border-surface2 flex-wrap items-center">
-                  <button onClick={() => setChatWith(r)} className="text-copper font-bold">💬 گفتگو با مغازه</button>
+                  <button onClick={() => setChatWith(r)} className="text-copper font-bold gap-2"><MessageSquare size={16}/> گفتگو با مغازه</button>
                   {r.invoice && !r.invoice.paid && (
-                    <a href={`/pay/${r.invoice.id}`} className="rounded-lg bg-teal px-3 py-1.5 font-bold text-[#0B1512]">💳 پرداخت فاکتور</a>
+                    <a href={`/pay/${r.invoice.id}`} className="rounded-lg bg-teal px-3 py-1.5 font-bold text-[#0B1512] gap-2"><CreditCard size={16}/> پرداخت فاکتور</a>
                   )}
                   {r.invoice?.paid && <a href={`/pay/${r.invoice.id}`} className="rounded-lg border border-border px-3 py-1.5">مشاهده فاکتور</a>}
                   <a href={`/shop/${r.shop.id}`} className="text-teal">صفحه مغازه ↗</a>
-                  {r.shop.phone && <a href={`tel:${r.shop.phone}`} className="text-muted">📞 تماس</a>}
+                  {r.shop.phone && <a href={`tel:${r.shop.phone}`} className="text-muted gap-2"><Phone size={16}/> تماس</a>}
                   {r.status === "DELIVERED" && !r.rated && (
-                    <a href={`/rate/${r.id}`} className="text-amber mr-auto">⭐ امتیاز به این تعمیر</a>
+                    <a href={`/rate/${r.id}`} className="text-amber ms-auto gap-2"><Star size={16}/> امتیاز به این تعمیر</a>
                   )}
                 </div>
               </div>

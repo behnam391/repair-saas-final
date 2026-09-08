@@ -1,4 +1,5 @@
 import { getServerSession } from "next-auth";
+import "./styles/home-premium.css";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -119,7 +120,7 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
   const session = await getServerSession(authOptions);
   const user = session?.user;
   if (user?.isSuperAdmin) redirect("/superadmin");
-  if (user?.isCustomer) redirect("/customer");
+  if (user?.isCustomer) redirect("/customer/repairs");
   if (user?.shopId) redirect("/tickets");
   // Store APKs are application clients, not download landing pages.  A
   // native WebView is sent to the role-specific login instead of exposing

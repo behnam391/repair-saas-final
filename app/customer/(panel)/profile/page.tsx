@@ -1,17 +1,23 @@
 "use client";
 import BalePreference from "@/components/BalePreference";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { signOut } from "next-auth/react";
+import { useSafeMutation } from "@/lib/use-safe-mutation";
 import { IRAN_PROVINCES, PROVINCE_NAMES } from "@/lib/iran-locations";
 
 export default function CustomerProfilePage() {
   const [form, setForm] = useState({ name: "", email: "", province: "", city: "" });
   const [phone, setPhone] = useState("");
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const saving = useRef(false);
 
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "" });
   const [pwMsg, setPwMsg] = useState("");
   const [pwError, setPwError] = useState("");
+  const passwordMutation = useSafeMutation();
 
   const [delOpen, setDelOpen] = useState(false);
   const [delPassword, setDelPassword] = useState("");
@@ -19,9 +25,11 @@ export default function CustomerProfilePage() {
   const [deleting, setDeleting] = useState(false);
 
   async function deleteAccount() {
+    if (deleting) return;
     setDelErr("");
     if (!delPassword) { setDelErr("برای حذف حساب، رمز عبورتان را وارد کنید"); return; }
     setDeleting(true);
+    try {
     const res = await fetch("/api/customer/profile", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
@@ -36,44 +44,54 @@ export default function CustomerProfilePage() {
     // Account gone — end the session and leave the panel.
     await signOut({ redirect: false });
     window.location.href = "/";
+    } catch { setDelErr("پاسخ حذف حساب دریافت نشد؛ قبل از تکرار وضعیت حساب را بررسی کنید."); }
+    finally { setDeleting(false); }
   }
 
   const cities = form.province ? IRAN_PROVINCES[form.province] ?? [] : [];
 
   useEffect(() => {
     (async () => {
-      const res = await fetch("/api/customer/profile");
+      try {
+      const res = await fetch("/api/customer/profile", { signal: AbortSignal.timeout(15000) });
+      if (!res.ok) throw Error();
       if (res.ok) {
         const { customer } = await res.json();
         setPhone(customer.phone);
         setForm({ name: customer.name ?? "", email: customer.email ?? "", province: customer.province ?? "", city: customer.city ?? "" });
+        setLoaded(true);
       }
+      } catch { setError("دریافت پروفایل ممکن نشد؛ صفحه را دوباره باز کنید."); }
     })();
   }, []);
 
   async function save() {
-    setSaved(false);
-    const res = await fetch("/api/customer/profile", {
+    if (!loaded || saving.current) return;
+    saving.current = true; setBusy(true); setSaved(false); setError("");
+    try {
+      const res = await fetch("/api/customer/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
-    if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500); }
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.message || "ذخیره انجام نشد؛ اطلاعات شما در فرم حفظ شده است.");
+        return;
+      }
+      setSaved(true); setTimeout(() => setSaved(false), 2500);
+    } catch { setError("پاسخ ذخیره دریافت نشد؛ اتصال را بررسی کنید. اطلاعات فرم حفظ شده است."); }
+    finally { saving.current = false; setBusy(false); }
   }
 
   async function changePassword() {
     setPwMsg(""); setPwError("");
-    const res = await fetch("/api/customer/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(pwForm),
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) { setPwError(data.message || "تغییر رمز ناموفق بود"); return; }
+    if (!(await passwordMutation.run("/api/customer/profile", "PATCH", pwForm))) return;
     setPwMsg("✅ رمز عبور با موفقیت تغییر کرد");
     setPwForm({ currentPassword: "", newPassword: "" });
   }
 
+  if (!loaded) return <div className="p-4" role={error ? "alert" : "status"}>{error || "در حال بارگذاری..."}{error && <button className="border rounded-lg px-3 py-2 ms-2" onClick={() => window.location.reload()}>تلاش مجدد</button>}</div>;
   return (
     <div className="p-4 max-w-md mx-auto">
       <h1 className="display-heading text-lg mb-4">پروفایل من</h1>
@@ -111,8 +129,9 @@ export default function CustomerProfilePage() {
       </div>
       <p className="text-[10px] text-muted mb-3">استان و شهر شما به‌عنوان فیلتر پیش‌فرض «مغازه‌های اطراف» استفاده می‌شود.</p>
 
-      <button onClick={save} className="w-full bg-teal text-[#0B1512] font-bold rounded-lg py-2.5 text-sm">
-        {saved ? "✅ ذخیره شد" : "ذخیره تغییرات"}
+      {error && <p role="alert" className="text-danger text-sm mb-3">{error}</p>}
+      <button disabled={busy} onClick={save} className="w-full bg-teal text-[#0B1512] font-bold rounded-lg py-2.5 text-sm">
+        {busy ? "در حال ذخیره…" : saved ? "ذخیره شد" : "ذخیره تغییرات"}
       </button>
 
       <div className="border-t border-surface2 my-6 pt-5">
@@ -124,8 +143,8 @@ export default function CustomerProfilePage() {
         <input type="password" className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"
           value={pwForm.newPassword} onChange={(e) => setPwForm({ ...pwForm, newPassword: e.target.value })} />
         {pwMsg && <p className="text-teal text-xs mb-2">{pwMsg}</p>}
-        {pwError && <p className="text-danger text-xs mb-2">{pwError}</p>}
-        <button onClick={changePassword} className="w-full bg-surface2 hover:bg-teal hover:text-[#0B1512] transition-colors font-bold rounded-lg py-2.5 text-sm">
+        {passwordMutation.error && <p role="alert" className="text-danger text-sm mb-2">{passwordMutation.error}</p>}
+        <button disabled={passwordMutation.busy} onClick={changePassword} className="w-full bg-surface2 hover:bg-teal hover:text-[#0B1512] transition-colors font-bold rounded-lg py-2.5 text-sm">
           تغییر رمز عبور
         </button>
         <p className="text-[11px] text-muted text-center mt-3">

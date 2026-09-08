@@ -4,6 +4,8 @@ import { requireDeskSession, UnauthorizedError } from "@/lib/tenant";
 import { sendRepairNotification } from "@/lib/sms";
 import { getPublicOrigin } from "@/lib/public-url";
 import { z } from "zod";
+import { listPagination } from "@/lib/list-pagination";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -17,18 +19,30 @@ const InvoiceSchema = z.object({
 });
 
 // GET /api/invoices — list invoices for the signed-in shop, newest first.
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const { shopId } = await requireDeskSession();
+    const params = req.nextUrl.searchParams;
+    const paged = params.has("page");
+    const paging = listPagination(params);
+    const q = (params.get("q") || "").trim().slice(0,150);
+    const status = params.get("status");
+    const where: Prisma.InvoiceWhereInput = { shopId, ...(status === "paid" ? { paid: true } : status === "unpaid" ? { paid: false } : {}), ...(q ? { OR: [{ customerName: { contains: q, mode: "insensitive" } }, { ticket: { deviceModel: { contains: q, mode: "insensitive" } } }, { ticket: { customer: { name: { contains: q, mode: "insensitive" } } } }, ...( /^\d+$/.test(q) && Number.isSafeInteger(Number(q)) && Number(q) <= 2147483647 ? [{ ticket: { no: Number(q) } }] : [])] } : {}) };
     const invoices = await db.invoice.findMany({
-      where: { shopId },
+      where,
       include: {
         ticket: { include: { customer: true } },
         items: { include: { item: { select: { name: true } } } },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      ...(paged ? { skip: paging.skip, take: paging.take } : {}),
     });
-    return NextResponse.json({ invoices });
+    const summary = paged ? await db.$queryRaw<{ receivable: number; outstanding: number; partial: number }[]>`
+      SELECT COALESCE(SUM(GREATEST(0, "total"::bigint - "paidAmount")), 0)::float8 AS "receivable",
+        COUNT(*)::int AS "outstanding", COUNT(*) FILTER (WHERE "paidAmount" > 0)::int AS "partial"
+      FROM "Invoice" WHERE "shopId" = ${shopId} AND "paid" = false
+    ` : [];
+    return NextResponse.json({ invoices, ...(paged ? { total: await db.invoice.count({ where }), page: paging.page, summary: summary[0] ?? { receivable: 0, outstanding: 0, partial: 0 } } : {}) });
   } catch (e) {
     if (e instanceof UnauthorizedError) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     return NextResponse.json({ error: "internal_error" }, { status: 500 });

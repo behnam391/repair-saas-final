@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSuperAdmin, UnauthorizedError } from "@/lib/tenant";
 import { normalizePhone } from "@/lib/phone";
-import { sendBaleOnly } from "@/lib/sms";
+import { sendBaleOnly, getMessageStatuses } from "@/lib/sms";
 import { getPublicOrigin } from "@/lib/public-url";
 import { z } from "zod";
 import { rateLimit } from "@/lib/ratelimit";
 import { getBaleContacts } from "@/lib/bale-contacts";
 export const maxDuration = 60;
-const schema = z.object({ action: z.enum(["create", "send", "test"]), message: z.string().trim().min(1).max(1500).optional(), audience: z.enum(["all", "shops", "customers"]).default("all"), id: z.string().optional(), phone: z.string().optional(), selectedPhones: z.array(z.string().regex(/^09\d{9}$/)).max(1000).optional() });
+const schema = z.object({ action: z.enum(["create", "send", "test", "refresh"]), page: z.number().int().min(1).max(100000).default(1), message: z.string().trim().min(1).max(1500).optional(), audience: z.enum(["all", "shops", "customers"]).default("all"), id: z.string().optional(), phone: z.string().optional(), selectedPhones: z.array(z.string().regex(/^09\d{9}$/)).max(1000).optional() });
 async function eligible(audience: string) {
   const [users, customers, preferences] = await Promise.all([
     audience === "customers" ? [] : db.user.findMany({ where: { active: true }, select: { phone: true } }),
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     const campaignId = req.nextUrl.searchParams.get("id");
     if (campaignId) {
       const page = Math.max(1, Math.min(100000, Number(req.nextUrl.searchParams.get("page")) || 1));
-      const deliveries = await db.baleDelivery.findMany({ where: { campaignId }, orderBy: { phone: "asc" }, skip: (Math.floor(page) - 1) * 50, take: 50, select: { phone: true, status: true, updatedAt: true } });
+      const deliveries = await db.baleDelivery.findMany({ where: { campaignId }, orderBy: { phone: "asc" }, skip: (Math.floor(page) - 1) * 50, take: 50, select: { phone: true, status: true, updatedAt: true, providerMessageId: true, providerStatus: true, providerStatusText: true, checkedAt: true } });
       const total = await db.baleDelivery.count({ where: { campaignId } });
       return NextResponse.json({ deliveries, total }, { headers: { "Cache-Control": "no-store" } });
     }
@@ -60,6 +60,18 @@ export async function POST(req: NextRequest) {
     }
     if (!body.id) return NextResponse.json({ error: "شناسه لازم است" }, { status: 400 });
     const campaign = await db.baleCampaign.findUniqueOrThrow({ where: { id: body.id } });
+    if (body.action === "refresh") {
+      const rows = await db.baleDelivery.findMany({ where: { campaignId: campaign.id }, orderBy: { phone: "asc" }, skip: (body.page - 1) * 50, take: 50 });
+      const ids = rows.flatMap(row => row.providerMessageId ? [row.providerMessageId] : []);
+      if (!ids.length) return NextResponse.json({ ok: true, checked: 0 });
+      const reports = await getMessageStatuses(ids);
+      for (const report of reports) {
+        await db.baleDelivery.updateMany({ where: { campaignId: campaign.id, providerMessageId: String(report.messageid) }, data: {
+          providerStatus: report.status, providerStatusText: report.statustext?.slice(0, 200) || null, checkedAt: new Date(),
+        } });
+      }
+      return NextResponse.json({ ok: true, checked: reports.length });
+    }
     const allowed = new Set(await eligible(campaign.audience));
     const deliveries = await db.baleDelivery.findMany({ where: { campaignId: campaign.id, status: "pending" }, take: 5 });
     for (const d of deliveries) {
@@ -68,7 +80,14 @@ export async function POST(req: NextRequest) {
       if (!allowed.has(d.phone)) { await db.baleDelivery.update({ where: { id: d.id }, data: { status: "skipped" } }); continue; }
       try {
         const result = await sendBaleOnly(d.phone, campaign.message);
-        await db.baleDelivery.update({ where: { id: d.id }, data: { status: result.ok ? "accepted" : "failed" } });
+        const entry = result.ok ? result.raw?.entries?.[0] : null;
+        const rawId = entry?.messageid;
+        const messageId = (typeof rawId === "string" && /^\d+$/.test(rawId)) || (typeof rawId === "number" && Number.isSafeInteger(rawId) && rawId > 0) ? String(rawId) : null;
+        await db.baleDelivery.update({ where: { id: d.id }, data: {
+          status: result.ok ? "accepted" : "failed", providerMessageId: messageId,
+          providerStatus: Number.isInteger(entry?.status) ? entry.status : null,
+          providerStatusText: typeof entry?.statustext === "string" ? entry.statustext.slice(0,200) : null,
+        } });
       } catch { await db.baleDelivery.update({ where: { id: d.id }, data: { status: "uncertain" } }); }
     }
     return NextResponse.json({ ok: true, pending: await db.baleDelivery.count({ where: { campaignId: campaign.id, status: "pending" } }) });

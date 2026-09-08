@@ -1,12 +1,14 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { workspaceLabels } from "./panel-workspace-labels";
 
 export type PanelLocale = "fa" | "en" | "ar";
 
 const labels: Record<PanelLocale, Record<string, string>> = {
   fa: {},
   en: {
+    ...workspaceLabels.en,
     "پنل مشتری": "Customer panel", "خوش آمدید،": "Welcome,", "مغازه‌ها": "Repair shops",
     "تعمیرهای من": "My repairs", "امتیازهای من": "My ratings", "امتیازها": "Ratings", "پروفایل": "Profile",
     "منو": "Menu", "خروج": "Sign out", "خروج از حساب": "Sign out", "ناوبری اصلی": "Main navigation",
@@ -57,6 +59,7 @@ const labels: Record<PanelLocale, Record<string, string>> = {
     "نظر شما (اختیاری)...": "Your review (optional)...", "نظر شما درباره این مغازه (اختیاری)...": "Your review of this shop (optional)...",
   },
   ar: {
+    ...workspaceLabels.ar,
     "پنل مشتری": "لوحة العميل", "خوش آمدید،": "مرحباً،", "مغازه‌ها": "مراكز الصيانة",
     "تعمیرهای من": "إصلاحاتي", "امتیازهای من": "تقييماتي", "امتیازها": "التقييمات", "پروفایل": "الملف الشخصي",
     "منو": "القائمة", "خروج": "تسجيل الخروج", "خروج از حساب": "تسجيل الخروج", "ناوبری اصلی": "التنقل الرئيسي",
@@ -125,13 +128,14 @@ function translateText(value: string, locale: PanelLocale) {
 
 export function PanelI18nProvider({ children, initialLocale = "fa" }: { children: React.ReactNode; initialLocale?: PanelLocale }) {
   const [locale, setLocaleState] = useState<PanelLocale>(initialLocale);
+  const originalText = useRef(new WeakMap<Node, { source: string; rendered: string }>());
+  const originalAttributes = useRef(new WeakMap<Element, Map<string, { source: string; rendered: string }>>());
   const setLocale = (next: PanelLocale) => {
     try {
       localStorage.setItem("peyvo-panel-locale", next);
       document.cookie = `peyvo_panel_locale=${next}; max-age=31536000; path=/; samesite=lax`;
     } catch {}
     setLocaleState(next);
-    window.setTimeout(() => window.location.reload(), 20);
   };
 
   useEffect(() => {
@@ -148,35 +152,48 @@ export function PanelI18nProvider({ children, initialLocale = "fa" }: { children
   }, [locale]);
 
   useEffect(() => {
-    if (locale === "fa") return;
+    const translateNode = (node: Node) => {
+      const parent = node.parentElement;
+      if (!parent || parent.closest("script,style,textarea,[contenteditable],[data-no-translate]")) return;
+      const current = node.textContent ?? "";
+      const previous = originalText.current.get(node);
+      const source = previous && current === previous.rendered ? previous.source : current;
+      const rendered = translateText(source, locale);
+      originalText.current.set(node, { source, rendered });
+      if (rendered !== current) node.textContent = rendered;
+    };
     const translateElement = (root: ParentNode) => {
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
       let node: Node | null;
       while ((node = walker.nextNode())) {
-        const parent = node.parentElement;
-        if (!parent || ["SCRIPT", "STYLE", "TEXTAREA"].includes(parent.tagName)) continue;
-        const next = translateText(node.textContent ?? "", locale);
-        if (next !== node.textContent) node.textContent = next;
+        translateNode(node);
       }
       root.querySelectorAll?.("[placeholder],[title],[aria-label]").forEach((element) => {
         for (const attribute of ["placeholder", "title", "aria-label"]) {
           const current = element.getAttribute(attribute);
-          if (current) element.setAttribute(attribute, translateText(current, locale));
+          if (!current || element.closest("[data-no-translate]")) continue;
+          const attributes = originalAttributes.current.get(element) ?? new Map();
+          const previous = attributes.get(attribute);
+          const source = previous && current === previous.rendered ? previous.source : current;
+          const rendered = translateText(source, locale);
+          attributes.set(attribute, { source, rendered });
+          originalAttributes.current.set(element, attributes);
+          if (current !== rendered) element.setAttribute(attribute, rendered);
         }
       });
     };
     translateElement(document.body);
     const observer = new MutationObserver((mutations) => {
       for (const mutation of mutations) {
+        if (mutation.type === "characterData") translateNode(mutation.target);
         mutation.addedNodes.forEach((node) => {
           if (node.nodeType === Node.TEXT_NODE) {
-            const next = translateText(node.textContent ?? "", locale);
-            if (next !== node.textContent) node.textContent = next;
+            translateNode(node);
           } else if (node instanceof HTMLElement) translateElement(node);
         });
       }
     });
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, characterData: true, subtree: true });
     return () => observer.disconnect();
   }, [locale]);
 

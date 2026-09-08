@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSafeMutation } from "@/lib/use-safe-mutation";
 import { BadgeCheck, MapPin, NotebookTabs, Pencil, Phone, Plus, Search, Store, Trash2, X } from "lucide-react";
 import { toLatinDigits } from "@/lib/phone";
 
@@ -15,30 +16,37 @@ export default function PartnersPage() {
   const [form, setForm] = useState(EMPTY);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState("");
+  const mutation = useSafeMutation();
+  const request = useRef(0);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const response = await fetch(`/api/partners?q=${encodeURIComponent(query)}`, { cache: "no-store" });
-    if (response.ok) setRows((await response.json()).partners ?? []);
-    setLoading(false);
+    const id = ++request.current;
+    try {
+      const response = await fetch(`/api/partners?q=${encodeURIComponent(query)}`, { cache: "no-store", signal: AbortSignal.timeout(15000) });
+      if (!response.ok) throw Error();
+      const data = await response.json();
+      if (id === request.current) { setRows(data.partners ?? []); setError(""); }
+    } catch { if (id === request.current) setError("دریافت دفترچه ممکن نشد؛ دوباره تلاش کنید."); }
+    finally { if (id === request.current) setLoading(false); }
   }, [query]);
-  useEffect(() => { const timer = setTimeout(load, 220); return () => clearTimeout(timer); }, [load]);
+  useEffect(() => { const timer = setTimeout(load, 220); return () => { clearTimeout(timer); request.current++; }; }, [load]);
 
   function add() { setEditing(null); setForm(EMPTY); setError(""); setOpen(true); }
   function edit(row: Partner) { setEditing(row); setForm({ name: row.name, phone: row.phone, address: row.address, note: row.note }); setError(""); setOpen(true); }
   async function save() {
     setError("");
-    const response = await fetch(editing ? `/api/partners/${editing.id}` : "/api/partners", { method: editing ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    if (!response.ok) { setError((await response.json().catch(() => ({}))).message || "ذخیره انجام نشد"); return; }
+    if (!(await mutation.run(editing ? `/api/partners/${editing.id}` : "/api/partners", editing ? "PATCH" : "POST", form))) return;
     setOpen(false); load();
   }
   async function remove(row: Partner) {
     if (!confirm(`«${row.name}» از دفترچه حذف شود؟`)) return;
-    const response = await fetch(`/api/partners/${row.id}`, { method: "DELETE" });
-    if (response.ok) load();
+    if (await mutation.run(`/api/partners/${row.id}`, "DELETE")) load();
   }
 
   return <div className="workspace-page partner-workspace mx-auto max-w-5xl p-4">
+    {error && <div role="alert">{error} <button onClick={load}>تلاش دوباره</button></div>}
+    {!open && mutation.error && <div role="alert">{mutation.error}</div>}
     <div className="workspace-page-head">
       <div><span>شبکه همکاران</span><h1 className="display-heading">دفترچه همکاران</h1><p>همکارهای لینک‌شده، مخاطبان دستی و پذیرش‌های قبلی را سریع پیدا کنید.</p></div>
       <div className="workspace-head-actions"><span className="workspace-head-stat"><b>{rows.length.toLocaleString("fa-IR")}</b><small>همکار در فهرست</small></span><button onClick={add} className="workspace-primary-button"><Plus size={17} /> افزودن همکار</button></div>
@@ -56,7 +64,7 @@ export default function PartnersPage() {
       <label className="mb-1 block text-[11px] text-muted">شماره تماس</label><input dir="ltr" inputMode="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: toLatinDigits(e.target.value) })} className="mb-3 w-full rounded-xl bg-surface2 px-3 py-2.5 text-sm" />
       <label className="mb-1 block text-[11px] text-muted">آدرس</label><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className="mb-3 w-full rounded-xl bg-surface2 px-3 py-2.5 text-sm" />
       <label className="mb-1 block text-[11px] text-muted">یادداشت</label><textarea rows={3} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} className="mb-3 w-full rounded-xl bg-surface2 px-3 py-2.5 text-sm" />
-      {error && <p className="mb-2 text-xs text-danger">{error}</p>}<button onClick={save} className="w-full rounded-xl bg-copper py-2.5 text-sm font-bold text-[#1A1410]">ذخیره در دفترچه</button>
+      {mutation.error && <p role="alert" className="mb-2 text-sm text-danger">{mutation.error}</p>}<button disabled={mutation.busy} onClick={save} className="w-full rounded-xl bg-copper py-2.5 text-sm font-bold text-[#1A1410]">{mutation.busy ? "در حال ذخیره…" : "ذخیره در دفترچه"}</button>
     </div></div>}
   </div>;
 }

@@ -1,4 +1,13 @@
 /* Shared, scoped treatment for working screens. Public brand artwork is unchanged. */
+.shop-shell .repair-analytics-card{background:var(--color-surface);box-shadow:none;border-radius:10px}
+.shop-shell .repair-line-chart polyline,.shop-shell .report-line-chart polyline{filter:none}
+.shop-shell .workspace-page button,.shop-shell .invoice-button,.customer-shell button{touch-action:manipulation}
+.shop-shell :is(button,a,input,select,textarea):focus-visible,.customer-shell :is(button,a,input,select,textarea):focus-visible{outline:2px solid var(--color-copper);outline-offset:3px}
+.shop-shell .dashboard-toolbar{margin-block:12px}
+.shop-shell .profile-card,.shop-shell .profile-hero,.shop-shell .workspace-modal-panel,.customer-shell .nav-sheet{background:var(--color-surface);box-shadow:none;backdrop-filter:none;border-radius:10px}
+.shop-shell .repair-active-table header small,.shop-shell .repair-quick-actions header small{font-size:12px}
+.shop-shell .repair-table-head,.shop-shell .repair-table-scroll>button{font-size:13px}
+@media(max-width:760px){.shop-shell .invoice-workspace input,.shop-shell .invoice-workspace select,.shop-shell .workspace-page textarea{font-size:16px!important}.shop-shell .workspace-modal-panel{max-height:calc(100dvh - 32px);overflow-y:auto}.shop-shell .invoice-button,.customer-shell .repair-tag button,.customer-shell .repair-tag a{min-height:44px}.shop-shell .shop-shell-main{transition:none}.customer-shell .drawer-enter,.customer-shell .drawer-fade{animation:none}}
 .shop-shell .shop-sidebar-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;padding:0 4px 14px;border-bottom:1px solid var(--color-border)}
 .shop-shell .shop-sidebar-heading .shop-sidebar-brand{min-height:44px;padding:0;border:0;align-items:center;min-width:0}
 .shop-shell .shop-sidebar-heading .shop-sidebar-collapse{position:static;inset:auto;width:40px;height:40px;flex-shrink:0;border-radius:8px;box-shadow:none;transform:none;transition:none;background:var(--color-surface);color:var(--color-muted)}

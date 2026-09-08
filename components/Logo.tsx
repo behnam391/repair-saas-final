@@ -8,6 +8,8 @@
  *     where there's room for the full lockup)
  * Used across every header, login screen, and the PWA/Android icon.
  */
+import Image from "next/image";
+
 export function LogoMark({ size = 28 }: { size?: number }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -37,15 +39,21 @@ export default function Logo({
   return (
     <span className="inline-flex">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src="/icons/logo-full.png"
+        width={763}
+        height={267}
+        sizes={`${Math.ceil(size * 1.35 * 763 / 267)}px`}
         alt="Peyvo"
         style={{ height: size * 1.35, width: "auto", objectFit: "contain" }}
         className={`${textClassName} block dark:hidden`}
       />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src="/icons/logo-full-dark.png"
+        width={763}
+        height={267}
+        sizes={`${Math.ceil(size * 1.35 * 763 / 267)}px`}
         alt="Peyvo"
         style={{ height: size * 1.35, width: "auto", objectFit: "contain" }}
         className={`${textClassName} hidden dark:block`}

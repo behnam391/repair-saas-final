@@ -26,7 +26,7 @@ export default function CustomerLoginPage() {
       return;
     }
     setLoginState("success");
-    window.setTimeout(() => router.push("/customer"), 700);
+    router.push("/customer/repairs");
   }
 
   return (
