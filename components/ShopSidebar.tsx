@@ -83,6 +83,7 @@ export default function ShopSidebar({ role, shopType, serviceCategories = "MOBIL
 
   return (
     <aside ref={sidebarRef} className={`shop-sidebar no-print ${collapsed ? "is-collapsed" : ""}`}>
+      <div className="shop-sidebar-heading">
       <Link href="/tickets" className="shop-sidebar-brand" title={collapsed ? t("داشبورد پیوو") : undefined}>
         <Logo size={34} withText={!collapsed} />
       </Link>
@@ -97,6 +98,7 @@ export default function ShopSidebar({ role, shopType, serviceCategories = "MOBIL
       >
         {collapsed ? <Menu size={18} /> : <PanelRightClose size={18} />}
       </button>
+      </div>
       <nav id="shop-sidebar-nav">
         {menuGroups.map((group) => {
           const items = group.items.filter((item) =>

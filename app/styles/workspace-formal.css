@@ -1,4 +1,10 @@
 /* Shared, scoped treatment for working screens. Public brand artwork is unchanged. */
+.shop-shell .shop-sidebar-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;padding:0 4px 14px;border-bottom:1px solid var(--color-border)}
+.shop-shell .shop-sidebar-heading .shop-sidebar-brand{min-height:44px;padding:0;border:0;align-items:center;min-width:0}
+.shop-shell .shop-sidebar-heading .shop-sidebar-collapse{position:static;inset:auto;width:40px;height:40px;flex-shrink:0;border-radius:8px;box-shadow:none;transform:none;transition:none;background:var(--color-surface);color:var(--color-muted)}
+.shop-shell .shop-sidebar-heading .shop-sidebar-collapse:hover{background:var(--color-surface2);transform:none}
+.shop-shell.is-sidebar-collapsed .shop-sidebar-heading{flex-direction:column;padding-inline:0;gap:10px}
+@media(min-width:981px){.shop-shell .app-topbar .app-brand-mark{display:none}}
 .shop-shell,.customer-shell{background:var(--color-bg);--glass-highlight:transparent}
 .shop-shell .shop-sidebar,.shop-shell .app-topbar,.customer-shell .customer-topbar{background:var(--color-surface)!important;backdrop-filter:none!important;box-shadow:none!important;border-color:var(--color-border)}
 .shop-shell .shop-sidebar nav a,.customer-shell .customer-topbar a{transition:none}
