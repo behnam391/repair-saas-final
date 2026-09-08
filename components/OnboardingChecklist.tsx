@@ -1,4 +1,5 @@
 "use client";
+import "@/app/styles/onboarding-checklist.css";
 import { useState } from "react";
 import Link from "next/link";
 import { Check, ChevronLeft, Rocket, X } from "lucide-react";

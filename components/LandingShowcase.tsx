@@ -1,4 +1,5 @@
 "use client";
+import "@/app/styles/public-experience.css";
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";

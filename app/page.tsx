@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth";
 import "./styles/home-premium.css";
+import "./styles/public-experience.css";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";

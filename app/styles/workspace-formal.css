@@ -1,4 +1,8 @@
 /* Shared, scoped treatment for working screens. Public brand artwork is unchanged. */
+.shop-shell,.customer-shell{--color-surface:#131c2e;--color-surface2:#1e2a40;--glass-sheet:#131c2e;--glass-menu:#131c2e}
+[data-theme="light"] .shop-shell,[data-theme="light"] .customer-shell{--color-surface:#ffffff;--color-surface2:#f1f4f9;--glass-sheet:#ffffff;--glass-menu:#ffffff}
+.nav-sheet{background:#131c2e!important;backdrop-filter:none!important}
+[data-theme="light"] .nav-sheet{background:#ffffff!important}
 .shop-shell .repair-analytics-card{background:var(--color-surface);box-shadow:none;border-radius:10px}
 .shop-shell .repair-line-chart polyline,.shop-shell .report-line-chart polyline{filter:none}
 .shop-shell .workspace-page button,.shop-shell .invoice-button,.customer-shell button{touch-action:manipulation}

@@ -1,4 +1,5 @@
 "use client";
+import "@/app/styles/auth-experience.css";
 
 import { ReactNode, useState } from "react";
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, LoaderCircle, LockKeyhole, ShieldCheck, Smartphone, XCircle } from "lucide-react";

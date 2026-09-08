@@ -7,10 +7,12 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { formatJalaliTime } from "@/lib/jalali";
+import { usePanelI18n } from "@/lib/panel-i18n";
 
 type Msg = { id: string; fromCustomer: boolean; content: string; createdAt: string };
 
 export default function TicketChat({ endpoint, iAmCustomer }: { endpoint: string; iAmCustomer: boolean }) {
+  const { t, locale } = usePanelI18n();
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(true);
@@ -57,9 +59,9 @@ export default function TicketChat({ endpoint, iAmCustomer }: { endpoint: string
     <div className="flex flex-col h-full">
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-2 p-1 min-h-[180px] max-h-[46vh]">
         {loading ? (
-          <p className="text-muted text-xs text-center py-6">در حال بارگذاری گفتگو...</p>
+          <p className="text-muted text-xs text-center py-6">{t("در حال بارگذاری گفتگو...")}</p>
         ) : messages.length === 0 ? (
-          <p className="text-muted text-xs text-center py-6">هنوز پیامی رد و بدل نشده. اولین پیام را بفرستید.</p>
+          <p className="text-muted text-xs text-center py-6">{t("هنوز پیامی رد و بدل نشده. اولین پیام را بفرستید.")}</p>
         ) : (
           messages.map((m) => {
             const mine = iAmCustomer ? m.fromCustomer : !m.fromCustomer;
@@ -68,8 +70,8 @@ export default function TicketChat({ endpoint, iAmCustomer }: { endpoint: string
                 <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-xs ${
                   mine ? "bg-copper text-white rounded-bl-sm" : "bg-surface2 border border-border rounded-br-sm"
                 }`}>
-                  <div className="whitespace-pre-wrap break-words">{m.content}</div>
-                  <div className={`text-[9px] mt-1 ${mine ? "text-white/70" : "text-muted"}`}>{formatJalaliTime(m.createdAt)}</div>
+                  <div data-no-translate dir="auto" className="whitespace-pre-wrap break-words">{m.content}</div>
+                  <div className={`text-[11px] mt-1 ${mine ? "text-white/70" : "text-muted"}`}>{locale === "fa" ? formatJalaliTime(m.createdAt) : new Date(m.createdAt).toLocaleTimeString(locale, {hour:"2-digit",minute:"2-digit"})}</div>
                 </div>
               </div>
             );
@@ -82,12 +84,12 @@ export default function TicketChat({ endpoint, iAmCustomer }: { endpoint: string
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-          placeholder="پیام خود را بنویسید..."
+          placeholder={t("پیام خود را بنویسید...")}
           className="flex-1 bg-surface2 border border-border rounded-xl px-3 py-2 text-sm"
         />
         <button onClick={send} disabled={sending || !text.trim()}
           className="bg-copper text-white font-bold rounded-xl px-4 text-sm disabled:opacity-50">
-          ارسال
+          {t("ارسال")}
         </button>
       </div>
     </div>

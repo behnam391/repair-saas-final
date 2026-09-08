@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { formatJalaliDate } from "@/lib/jalali";
+import { panelDate, panelNumber } from "@/lib/panel-format";
+import { usePanelI18n } from "@/lib/panel-i18n";
 import TicketChat from "@/components/TicketChat";
 import { computerDeviceTypeLabel } from "@/lib/computer-intake";
 import { MessageSquare, CreditCard, Phone, Star, Smartphone, Monitor } from "lucide-react";
@@ -24,6 +25,8 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
 };
 
 export default function CustomerRepairsPage() {
+  const { locale, t, dir } = usePanelI18n();
+  const money = (value: number) => `${panelNumber(value, locale)} ${t("تومان")}`;
   const [repairs, setRepairs] = useState<Repair[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -42,19 +45,14 @@ export default function CustomerRepairsPage() {
   useEffect(() => { void load(); }, []);
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="display-heading text-lg mb-1">تعمیرهای من</h1>
-      <p className="text-xs text-muted mb-4">
-        سابقه تعمیر دستگاه‌های شما در همه تعمیرگاه‌های عضو — بر اساس شماره موبایلی که هنگام پذیرش داده‌اید.
-      </p>
+    <div className="p-4 max-w-2xl mx-auto" dir={dir}>
+      <h1 className="display-heading text-lg mb-1">{t("تعمیرهای من")}</h1>
+      <p className="text-xs text-muted mb-4">{t("سابقه تعمیر دستگاه‌های شما در همه تعمیرگاه‌های عضو — بر اساس شماره موبایلی که هنگام پذیرش داده‌اید.")}</p>
 
       {loading ? (
-        <p className="text-muted text-sm text-center py-8">در حال بارگذاری...</p>
-      ) : loadError ? <div role="alert" className="border border-border rounded-lg p-4 text-sm">دریافت تعمیرها ممکن نشد؛ این پیام به معنی حذف اطلاعات نیست. <button className="border rounded px-3 py-2" onClick={load}>تلاش دوباره</button></div> : repairs.length === 0 ? (
-        <div className="text-xs text-muted text-center py-8 leading-6">
-          هنوز تعمیری با شماره موبایل شما ثبت نشده.
-          <br />وقتی دستگاهی را به یکی از تعمیرگاه‌های عضو بسپارید، وضعیتش همین‌جا نمایش داده می‌شود.
-          <a href="/customer" className="block border rounded-lg px-4 py-3 mt-3">پیدا کردن تعمیرگاه</a>
+        <p className="text-muted text-sm text-center py-8">{t("در حال بارگذاری...")}</p>
+      ) : loadError ? <div role="alert" className="border border-border rounded-lg p-4 text-sm">{t("دریافت تعمیرها ممکن نشد؛ این پیام به معنی حذف اطلاعات نیست.")}<button className="border rounded px-3 py-2" onClick={load}>{t("تلاش دوباره")}</button></div> : repairs.length === 0 ? (
+        <div className="text-xs text-muted text-center py-8 leading-6">{t("هنوز تعمیری با شماره موبایل شما ثبت نشده.")}<br />{t("وقتی دستگاهی را به یکی از تعمیرگاه‌های عضو بسپارید، وضعیتش همین‌جا نمایش داده می‌شود.")}<a href="/customer" className="block border rounded-lg px-4 py-3 mt-3">{t("پیدا کردن تعمیرگاه")}</a>
         </div>
       ) : (
         <div className="space-y-2">
@@ -65,41 +63,41 @@ export default function CustomerRepairsPage() {
               <div key={r.id} className={`repair-tag card-hover ${tagCls} bg-surface border border-surface2 rounded-xl p-3 text-xs`}>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="font-bold text-sm flex items-center gap-2">{r.deviceCategory === "COMPUTER" ? <Monitor size={18}/> : <Smartphone size={18}/>} {r.deviceModel}</div>
-                    {r.deviceCategory === "COMPUTER" && <div className="mt-0.5 text-[10px] text-teal">{computerDeviceTypeLabel(r.deviceType)}</div>}
+                    <div className="font-bold text-sm flex items-center gap-2">{r.deviceCategory === "COMPUTER" ? <Monitor size={18}/> : <Smartphone size={18}/>} <span data-no-translate>{r.deviceModel}</span></div>
+                    {r.deviceCategory === "COMPUTER" && <div className="mt-0.5 text-[10px] text-teal">{t(computerDeviceTypeLabel(r.deviceType))}</div>}
                     <div className="text-muted mt-0.5">
-                      {r.shop.name}{r.shop.province ? ` · ${r.shop.province}` : ""} · کد پیگیری #{r.no}
+                      <span data-no-translate>{r.shop.name}{r.shop.province ? ` · ${r.shop.province}` : ""}</span> · {t("کد پیگیری")} #{panelNumber(r.no, locale)}
                     </div>
                   </div>
-                  <span className={`text-[10px] rounded-lg px-2 py-1 whitespace-nowrap ${st.cls}`}>{st.label}</span>
+                  <span className={`text-[10px] rounded-lg px-2 py-1 whitespace-nowrap ${st.cls}`}>{t(st.label)}</span>
                 </div>
 
                 <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-muted">
-                  <span>پذیرش: {formatJalaliDate(r.createdAt)}</span>
-                  {r.deliveredAt && <span>تحویل: {formatJalaliDate(r.deliveredAt)}</span>}
+                  <span>{t("پذیرش")}: {panelDate(r.createdAt, locale)}</span>
+                  {r.deliveredAt && <span>{t("تحویل")}: {panelDate(r.deliveredAt, locale)}</span>}
                   {r.invoice ? (
                     <span>
-                      فاکتور: {r.invoice.total.toLocaleString("fa-IR")} تومان
-                      {r.invoice.paid ? " (تسویه‌شده)" : r.invoice.paidAmount > 0 ? " (پرداخت بخشی)" : " (نسیه/پرداخت‌نشده)"}
-                      {!r.invoice.paid && r.invoice.paidAmount > 0 && ` — پرداخت‌شده ${r.invoice.paidAmount.toLocaleString("fa-IR")}, مانده ${(r.invoice.total - r.invoice.paidAmount).toLocaleString("fa-IR")} تومان`}
+                      {t("فاکتور")}: {money(r.invoice.total)}
+                      {" (" + t(r.invoice.paid ? "تسویه‌شده" : r.invoice.paidAmount > 0 ? "پرداخت بخشی" : "نسیه/پرداخت‌نشده") + ")"}
+                      {!r.invoice.paid && r.invoice.paidAmount > 0 && ` — ${t("پرداخت‌شده")}: ${money(r.invoice.paidAmount)}, ${t("مانده")}: ${money(Math.max(0, r.invoice.total - r.invoice.paidAmount))}`}
                     </span>
                   ) : r.finalCost ? (
-                    <span>هزینه نهایی: {r.finalCost.toLocaleString("fa-IR")} تومان</span>
+                    <span>{t("هزینه نهایی")}: {money(r.finalCost)}</span>
                   ) : r.estimatedCost ? (
-                    <span>برآورد هزینه: {r.estimatedCost.toLocaleString("fa-IR")} تومان</span>
+                    <span>{t("برآورد هزینه")}: {money(r.estimatedCost)}</span>
                   ) : null}
                 </div>
 
                 <div className="flex gap-3 mt-2 pt-2 border-t border-surface2 flex-wrap items-center">
-                  <button onClick={() => setChatWith(r)} className="text-copper font-bold gap-2"><MessageSquare size={16}/> گفتگو با مغازه</button>
+                  <button onClick={() => setChatWith(r)} className="text-copper font-bold gap-2"><MessageSquare size={16}/>{t("گفتگو با مغازه")}</button>
                   {r.invoice && !r.invoice.paid && (
-                    <a href={`/pay/${r.invoice.id}`} className="rounded-lg bg-teal px-3 py-1.5 font-bold text-[#0B1512] gap-2"><CreditCard size={16}/> پرداخت فاکتور</a>
+                    <a href={`/pay/${r.invoice.id}`} className="rounded-lg bg-teal px-3 py-1.5 font-bold text-[#0B1512] gap-2"><CreditCard size={16}/>{t("پرداخت فاکتور")}</a>
                   )}
-                  {r.invoice?.paid && <a href={`/pay/${r.invoice.id}`} className="rounded-lg border border-border px-3 py-1.5">مشاهده فاکتور</a>}
-                  <a href={`/shop/${r.shop.id}`} className="text-teal">صفحه مغازه ↗</a>
-                  {r.shop.phone && <a href={`tel:${r.shop.phone}`} className="text-muted gap-2"><Phone size={16}/> تماس</a>}
+                  {r.invoice?.paid && <a href={`/pay/${r.invoice.id}`} className="rounded-lg border border-border px-3 py-1.5">{t("مشاهده فاکتور")}</a>}
+                  <a href={`/shop/${r.shop.id}`} className="text-teal">{t("صفحه مغازه ↗")}</a>
+                  {r.shop.phone && <a href={`tel:${r.shop.phone}`} className="text-muted gap-2"><Phone size={16}/>{t("تماس")}</a>}
                   {r.status === "DELIVERED" && !r.rated && (
-                    <a href={`/rate/${r.id}`} className="text-amber ms-auto gap-2"><Star size={16}/> امتیاز به این تعمیر</a>
+                    <a href={`/rate/${r.id}`} className="text-amber ms-auto gap-2"><Star size={16}/>{t("امتیاز به این تعمیر")}</a>
                   )}
                 </div>
               </div>
@@ -109,14 +107,14 @@ export default function CustomerRepairsPage() {
       )}
 
       {chatWith && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center px-4" onClick={() => setChatWith(null)}>
-          <div className="bg-surface border border-surface2 rounded-t-2xl sm:rounded-2xl p-4 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+        <div role="dialog" aria-modal="true" aria-label={t("گفتگو با مغازه")} className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center px-4" onClick={() => setChatWith(null)}>
+          <div className="bg-surface border border-surface2 rounded-t-2xl sm:rounded-2xl p-4 w-full max-w-md max-h-[90dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <div className="font-bold text-sm">گفتگو با {chatWith.shop.name}</div>
-                <div className="text-[11px] text-muted">{chatWith.deviceModel} · کد #{chatWith.no}</div>
+                <div className="font-bold text-sm">{t("گفتگو با")} <span data-no-translate>{chatWith.shop.name}</span></div>
+                <div className="text-[11px] text-muted"><span data-no-translate>{chatWith.deviceModel}</span> · {t("کد پیگیری")} #{panelNumber(chatWith.no, locale)}</div>
               </div>
-              <button onClick={() => setChatWith(null)} className="bg-surface2 rounded-full w-8 h-8 text-sm">✕</button>
+              <button aria-label={t("بستن")} onClick={() => setChatWith(null)} className="bg-surface2 rounded-full w-8 h-8 text-sm">✕</button>
             </div>
             <TicketChat endpoint={`/api/customer/repairs/${chatWith.id}/messages`} iAmCustomer />
           </div>
