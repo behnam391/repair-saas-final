@@ -49,8 +49,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <header className="glass-header app-topbar sticky top-0 z-20 px-4">
         {/* Mobile: two tiers — identity + actions on the first line, nav on its
             own swipeable line below. Desktop (md+): everything on one row. */}
-        <div className="max-w-[1600px] mx-auto min-h-[70px] flex items-center justify-between gap-3 flex-wrap md:flex-nowrap">
-          <div className="flex items-center gap-2.5 shrink-0">
+        <div className="shop-header-inner max-w-[1600px] mx-auto min-h-[70px] flex items-center justify-between gap-3 flex-wrap md:flex-nowrap">
+          <div className="shop-header-identity flex items-center gap-2.5 shrink-0">
             <div className="app-brand-mark"><Logo size={25} withText={false} /></div>
             <div>
               <div className="font-extrabold text-sm leading-tight">{user.shopName}</div>
@@ -65,7 +65,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               shopName={user.shopName}
               userName={`${user.name} · ${roleLabel(user.role)}`}
             /></div>
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="shop-header-actions flex items-center gap-1.5 shrink-0">
             <PanelLanguageSwitcher />
             <ThemeToggle />
             <NotificationBell />

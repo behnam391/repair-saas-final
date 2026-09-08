@@ -1,10 +1,28 @@
 /* Shared, scoped treatment for working screens. Public brand artwork is unchanged. */
-.shop-mobile-drawer{inset-inline-end:0;width:min(260px,76vw);border-radius:0!important;box-shadow:none;border-inline-start:1px solid var(--color-border);overscroll-behavior:contain;animation:none}
-.shop-drawer-heading{display:flex;align-items:center;gap:8px;padding:14px 10px;border-bottom:1px solid var(--color-border);min-height:78px}
+.shop-mobile-drawer{inset-inline-start:0;width:min(184px,64vw);border-radius:0!important;box-shadow:none;border-inline-end:1px solid var(--color-border);overscroll-behavior:contain;animation:none}
+.shop-drawer-heading{display:flex;align-items:center;gap:4px;padding:8px 6px;border-bottom:1px solid var(--color-border);min-height:60px}
+.shop-drawer-heading>div:first-child{display:none}.shop-drawer-heading .text-sm{font-size:12px}.shop-drawer-heading .text-xs{font-size:11px}
 .shop-drawer-close,.shop-drawer-trigger{display:grid;place-items:center;width:44px;height:44px;flex-shrink:0;color:var(--color-copper);border-radius:0;background:transparent;border:0;touch-action:manipulation}
-.shop-drawer-row{min-height:44px;padding-block:8px;line-height:1.5}
+.shop-drawer-row{min-height:44px;padding:5px 10px;gap:8px;font-size:13px;line-height:1.4}
 .shop-drawer-overlay button:focus-visible,.shop-drawer-overlay a:focus-visible{outline:2px solid var(--color-copper);outline-offset:-3px}
-@media(max-width:980px){.shop-shell .app-topbar{padding-inline-start:52px}.shop-drawer-trigger{position:absolute;inset-inline-start:4px;top:12px}.shop-desktop-nav{display:none}.shop-drawer-overlay .drawer-fade{animation:none}}
+@media(max-width:980px){
+ .shop-shell .app-topbar{padding:8px 10px}
+ .shop-shell .shop-header-inner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;min-height:100px;direction:rtl;align-items:center}
+ .shop-header-identity{grid-column:1 / -1;grid-row:1;min-height:48px;padding-inline-start:38px;min-width:0;align-self:center}
+ .shop-header-identity>div:last-child{min-width:0}.shop-header-identity .font-extrabold{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .shop-shell .app-brand-mark{width:34px;height:34px;flex-shrink:0;border-radius:7px}
+ .shop-shell .shop-mobile-navigation{grid-column:1;grid-row:2;min-width:0}
+ .shop-header-actions{grid-column:2;grid-row:2;justify-self:end;gap:2px;direction:rtl;margin:0}
+ .shop-header-actions>button{min-width:36px;width:36px;height:40px;padding:0}
+ .shop-header-actions>button:first-child{width:auto;padding-inline:8px}
+ .shop-mobile-nav-controls>div{margin:0}.shop-mobile-nav-controls .app-nav-quick{padding-inline:7px;font-size:11px}
+ .shop-drawer-trigger{position:absolute;right:4px;left:auto;top:10px}
+ html[data-panel-locale="en"] .shop-header-inner{direction:ltr}
+ html[data-panel-locale="en"] .shop-drawer-trigger{right:auto;left:4px}
+ html[data-panel-locale="en"] .shop-header-actions{grid-column:1;justify-self:start}
+ html[data-panel-locale="en"] .shop-mobile-navigation{grid-column:2}
+ .shop-desktop-nav{display:none}.shop-drawer-overlay .drawer-fade{animation:none}
+}
 @media(min-width:981px){.shop-mobile-nav-controls,.shop-drawer-overlay{display:none}.shop-shell .shop-sidebar{width:240px;border-radius:0;padding-inline:12px}.shop-shell .shop-shell-main{margin-right:240px}html[data-panel-locale="en"] .shop-shell .shop-shell-main{margin-right:0;margin-left:240px}.shop-shell.is-sidebar-collapsed .shop-shell-main{margin-right:84px}html[data-panel-locale="en"] .shop-shell.is-sidebar-collapsed .shop-shell-main{margin-right:0;margin-left:84px}}
 .shop-shell,.customer-shell{--color-surface:#131c2e;--color-surface2:#1e2a40;--glass-sheet:#131c2e;--glass-menu:#131c2e}
 [data-theme="light"] .shop-shell,[data-theme="light"] .customer-shell{--color-surface:#ffffff;--color-surface2:#f1f4f9;--glass-sheet:#ffffff;--glass-menu:#ffffff}
