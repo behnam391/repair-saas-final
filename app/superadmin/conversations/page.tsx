@@ -31,13 +31,12 @@ export default function SuperAdminConversationsPage() {
   }, [activeId]);
 
   return (
-    <div className="min-h-screen p-4 max-w-2xl mx-auto">
-      <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
+    <div className="pc-page">
       <h1 className="font-extrabold text-lg mt-2 mb-1">نظارت بر چت‌های بازار سراسری</h1>
       <p className="text-[11px] text-muted mb-4">این لیست فقط برای نظارت و رسیدگی به گزارش‌هاست.</p>
 
-      <div className="flex gap-3">
-        <div className="w-1/2 space-y-1.5 max-h-[70vh] overflow-y-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1.5 max-h-[70vh] overflow-y-auto border border-border rounded-lg p-3">
           {conversations.map((c) => (
             <button key={c.id} onClick={() => setActiveId(c.id)}
               className={`w-full text-right p-2.5 rounded-lg text-xs ${activeId === c.id ? "bg-surface2" : "bg-surface"}`}>
@@ -46,7 +45,7 @@ export default function SuperAdminConversationsPage() {
             </button>
           ))}
         </div>
-        <div className="w-1/2 space-y-1.5 max-h-[70vh] overflow-y-auto">
+        <div className="space-y-1.5 max-h-[70vh] overflow-y-auto border border-border rounded-lg p-3">
           {messages.map((m) => (
             <div key={m.id} className="bg-surface2 rounded-lg p-2 text-xs">
               <span className="font-semibold">{m.sender.name}:</span> {m.content}

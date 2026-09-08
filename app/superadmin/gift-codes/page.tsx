@@ -58,8 +58,7 @@ export default function GiftCodesPage() {
   const unusedCount = codes.filter((c) => !c.redeemedByShopId).length;
 
   return (
-    <div className="min-h-screen p-4 max-w-2xl mx-auto">
-      <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
+    <div className="pc-page">
       <h1 className="font-extrabold text-lg mt-2 mb-1">کدهای هدیه اشتراک</h1>
       <p className="text-[11px] text-muted mb-4">
         کد بسازید و به مغازه بدهید؛ مغازه با ثبت آن در بخش «اشتراک و پرداخت»، بدون پرداخت، اشتراک رایگان می‌گیرد.

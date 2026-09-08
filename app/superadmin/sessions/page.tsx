@@ -269,7 +269,7 @@ export default function SuperAdminSessionsPage() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-7xl p-4 md:p-6" dir="rtl">
+    <div className="pc-page" dir="rtl">
       <header className="mb-5 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-teal/20 bg-teal/10 px-3 py-1 text-[10px] font-bold text-teal">

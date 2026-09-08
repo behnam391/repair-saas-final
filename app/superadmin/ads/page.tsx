@@ -48,8 +48,7 @@ export default function SuperAdminAdsPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 max-w-md mx-auto">
-      <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
+    <div className="pc-page">
       <h1 className="font-extrabold text-lg mt-2 mb-4">تبلیغات سایت</h1>
 
       <div className="bg-surface border border-surface2 rounded-xl p-4 mb-6">

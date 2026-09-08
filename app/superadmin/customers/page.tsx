@@ -60,8 +60,7 @@ export default function SuperAdminCustomersPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 max-w-4xl mx-auto">
-      <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
+    <div className="pc-page">
       <div className="flex items-center gap-3 mt-2"><span className="w-11 h-11 rounded-2xl bg-copper/10 text-copper grid place-items-center"><UsersRound size={21} /></span><h1 className="font-extrabold text-lg">مشتریان پلتفرم</h1></div>
       <p className="text-xs text-muted mb-4">
         حساب‌های سراسری مشتریان (پنل `/customer`) — مجموع {total.toLocaleString("fa-IR")} حساب. تعلیق یک حساب، ورود و امتیازدهی جدید را مسدود می‌کند.

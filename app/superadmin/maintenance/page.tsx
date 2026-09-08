@@ -136,8 +136,7 @@ export default function MaintenancePage() {
   }
 
   return (
-    <div className="min-h-screen p-4 max-w-2xl mx-auto">
-      <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
+    <div className="pc-page">
       <h1 className="font-extrabold text-lg mt-2 mb-4">نگهداری و پاکسازی</h1>
 
       {/* ── Backup ── */}

@@ -78,8 +78,7 @@ export default function ExternalKeysPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 max-w-xl mx-auto">
-      <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
+    <div className="pc-page">
       <h1 className="font-extrabold text-lg mt-2 mb-1">دسترسی API برای سازمان‌های بیرونی</h1>
       <p className="text-[11px] text-muted mb-4">
         ⚠️ این کلیدها دسترسی به یک API فقط‌خواندنی از داده‌های خودمان می‌دهند — استعلام رسمی و تأییدشده از سامانه‌های

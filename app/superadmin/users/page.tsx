@@ -103,8 +103,7 @@ export default function SuperAdminUsersPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 max-w-4xl mx-auto">
-      <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
+    <div className="pc-page">
       <div className="flex items-center gap-3 mt-2 mb-1"><span className="w-11 h-11 grid place-items-center rounded-2xl bg-copper/10 text-copper"><UsersRound size={21}/></span><h1 className="font-extrabold text-lg">کاربران پلتفرم</h1></div>
       <p className="text-[11px] text-muted mb-4">
         برای کمک به بازیابی حساب کاربرانی که به شماره موبایل خود دسترسی ندارند، ابتدا هویت آن‌ها را از طریق روش‌های دیگر (ایمیل، مدارک) تأیید کنید و سپس رمز موقت تعیین نمایید.

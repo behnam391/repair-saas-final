@@ -97,8 +97,7 @@ export default function SuperAdminErrorsPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 max-w-3xl mx-auto">
-      <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
+    <div className="pc-page">
       <h1 className="font-extrabold text-lg mt-2 mb-1">خطاها</h1>
       <p className="text-[11px] text-muted mb-4">
         هر خطایی که در برنامه رخ دهد (سرور، مرورگر، پرداخت یا کرش صفحه) اینجا ثبت می‌شود تا وقتی چیزی خراب شد بتوانی سریع پیدایش کنی.

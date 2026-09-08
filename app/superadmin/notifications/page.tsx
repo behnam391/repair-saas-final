@@ -29,12 +29,10 @@ export default function SuperAdminNotificationsPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 max-w-md mx-auto">
-      <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
-      <BaleCampaignManager />
+    <div className="pc-page">
       <h1 className="font-extrabold text-lg mt-2 mb-1">ارسال اعلان عمومی</h1>
       <p className="text-[11px] text-muted mb-4">این اعلان برای همه کاربران فعال در تمام مغازه‌های سراسر کشور ارسال می‌شود.</p>
-
+      <section className="super-panel mb-6">
       <input className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3" placeholder="عنوان"
         value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
       <textarea className="w-full bg-surface2 border border-surface2 rounded-lg px-3 py-2 text-sm mb-3" placeholder="متن پیام"
@@ -46,6 +44,8 @@ export default function SuperAdminNotificationsPage() {
       <button onClick={send} className="w-full bg-copper text-[#1A1410] font-bold rounded-lg py-2.5 text-sm">
         ارسال به همه
       </button>
+      </section>
+      <BaleCampaignManager />
     </div>
   );
 }

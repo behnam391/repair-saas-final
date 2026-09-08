@@ -278,8 +278,7 @@ export default function SuperAdminSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 max-w-md mx-auto">
-      <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
+    <div className="pc-page">
       <h1 className="font-extrabold text-lg mt-2 mb-1">تنظیمات پلتفرم</h1>
       <p className="text-[11px] text-muted mb-4">
         این مقادیر بر متغیرهای محیطی Vercel اولویت دارند — تغییرشان نیازی به دیپلوی مجدد ندارد.

@@ -32,8 +32,7 @@ export default function SuperAdminVerificationPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 max-w-2xl mx-auto">
-      <a href="/superadmin" className="text-xs text-copper">← بازگشت</a>
+    <div className="pc-page">
       <h1 className="font-extrabold text-lg mt-2 mb-4">درخواست‌های ارتقای سطح احراز هویت</h1>
       <div className="space-y-3">
         {shops.length === 0 && <p className="text-xs text-muted">درخواستی موجود نیست.</p>}
