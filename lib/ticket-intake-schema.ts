@@ -1,5 +1,7 @@
 import { preprocessPhone } from "@/lib/phone";
 import { z } from "zod";
+import { SHOP_SERVICES } from "./shop-services";
+import { IndustryDetailsSchema } from "./industry-intake";
 
 const emptyToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
@@ -10,7 +12,8 @@ export const CreateTicketSchema = z.object({
   // number Kavenegar can deliver to. See lib/phone.ts.
   customerPhone: z.preprocess(preprocessPhone, z.string().optional().default("")),
   deviceModel: z.string().trim().min(1, "مدل یا مشخصات دستگاه را وارد کنید"),
-  deviceCategory: z.enum(["MOBILE", "COMPUTER"]).default("MOBILE"),
+  deviceCategory: z.enum(SHOP_SERVICES).default("MOBILE"),
+  industryDetails: IndustryDetailsSchema,
   // Mobile intake posts an empty deviceType. Treat empty optional fields as
   // absent; otherwise Zod rejects every mobile ticket after computer intake
   // fields were added.

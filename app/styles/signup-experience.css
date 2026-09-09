@@ -1,4 +1,6 @@
-/* Premium signup onboarding */
+/* Signup: readable, restrained surfaces and no animation runtime. */
+.signup-industry-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.signup-industry-choices button{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:14px;min-height:118px;padding:16px;border:1px solid var(--color-border);border-radius:10px;background:var(--color-surface);text-align:start;color:var(--color-muted)}.signup-industry-choices strong{font-size:15px;font-weight:650;color:var(--color-ink)}.signup-industry-choices button.active{border-color:#368af0;background:rgb(var(--rgb-blue)/.065);color:#368af0}.signup-choice-check{position:absolute;inset-inline-end:12px;top:12px;display:grid;place-items:center;width:18px;height:18px;border:1px solid var(--color-border);border-radius:5px}.signup-industry-choices .active .signup-choice-check{background:#1764cb;border-color:#1764cb;color:white}.signup-selection-result{display:flex;align-items:flex-start;gap:10px;margin-top:16px;padding:12px 14px;border-radius:8px;background:var(--color-bg);color:var(--color-muted);font-size:14px}.signup-selection-result>svg{flex-shrink:0;margin-top:4px;color:#368af0}.signup-selection-result strong{color:var(--color-ink);font-weight:650}.signup-selection-result p{margin-top:3px;line-height:1.8}.signup-extra-options{margin-top:24px;border-top:1px solid var(--color-border);padding-top:16px}.signup-extra-options summary{cursor:pointer;font-size:14px;font-weight:650;line-height:1.8}.signup-extra-options summary span{display:block;color:var(--color-muted);font-size:14px;font-weight:400;margin-inline-start:18px}.signup-extra-options summary:focus-visible{outline:2px solid #1764cb;outline-offset:5px}.signup-extra-options .signup-compact-options{margin-top:16px}@media(max-width:600px){.signup-industry-choices{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.signup-industry-choices button{min-height:108px;padding:12px;gap:12px}.signup-industry-choices strong{font-size:14px}}
+.signup-compact-options{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:24px}.signup-compact-options label{display:grid;gap:8px;font-size:14px;font-weight:700}.signup-compact-options select{width:100%;min-width:0;border:1px solid var(--color-border);border-radius:8px;padding:12px;background:var(--color-surface);color:var(--color-ink);font:inherit;font-size:16px}.signup-compact-options select:focus-visible{outline:2px solid #1764cb;outline-offset:2px}@media(max-width:600px){.signup-compact-options{grid-template-columns:1fr}}
 .signup-scene{font-size:16px;line-height:1.7}
 .signup-scene .text-xs{font-size:14px;line-height:1.8}
 .signup-scene :is(a,button,input):focus-visible{outline:2px solid var(--color-copper);outline-offset:3px}
@@ -15,6 +17,41 @@
 @media(max-width:480px){.signup-heading h1{font-size:23px}.signup-form-panel{padding-inline:16px}.signup-model-grid>button:hover{transform:none}.signup-subsection>div{display:grid}.signup-navigation button{font-size:14px}.signup-verification{padding:9px}}
 .signup-verification :is(.text-xs,.text-\[10px\],.text-\[11px\]){font-size:14px;line-height:1.8}
 .signup-verification input{font-size:16px}
+.signup-scene{padding:76px 24px 32px;overflow:visible}
+.signup-shell{grid-template-columns:230px minmax(0,1fr);max-width:1050px;min-height:580px;border-radius:12px;background:var(--color-surface);box-shadow:none;backdrop-filter:none}
+.signup-rail{padding:28px 22px;background:var(--color-bg)}
+.signup-rail::after{display:none}
+.signup-rail-copy{margin:32px 0 24px}
+.signup-rail-copy h2{font-size:24px;font-weight:700;letter-spacing:normal}
+.signup-form-panel{padding:32px}
+.signup-scene :is(button,a,input){transition:none}
+.signup-heading h1{font-size:26px;font-weight:700;letter-spacing:normal}
+.signup-heading{margin-bottom:22px}
+.signup-model-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.signup-model-grid>button{padding:14px;min-height:0;border-radius:8px;background:var(--color-surface);box-shadow:none}
+.signup-model-grid>button:hover{transform:none}
+.signup-model-grid>button.active{background:rgb(var(--rgb-blue)/.06);box-shadow:none}
+.signup-model-top{margin-bottom:10px}
+.signup-model-grid button>small,.signup-model-grid button>em{display:none}
+.signup-model-grid button>p{min-height:0;line-height:1.8}
+.signup-model-grid button>strong{font-size:16px;font-weight:700}
+.signup-subsection{margin-top:20px}
+.signup-activity-grid{grid-template-columns:1fr}
+.signup-activity-grid>button{padding:10px 12px;border-radius:8px}
+.signup-specialty-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.signup-specialty-grid button{border-radius:8px}
+.signup-specialty-grid strong{font-weight:650}
+.signup-fields label>div:not(.signup-verification),.signup-date-input{border-radius:8px!important}
+.signup-next{background:#1764cb;box-shadow:none}
+.signup-navigation button{border-radius:8px;font-weight:700}
+.signup-summary{color:var(--color-ink);background:var(--color-bg);border-color:var(--color-border);border-radius:8px}
+.signup-account-picker{width:min(760px,100%);padding:32px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface)}
+.signup-account-picker .group{border:1px solid var(--color-border);border-radius:8px;background:var(--color-surface);color:var(--color-ink);text-align:start}
+.signup-account-picker .group:hover{border-color:#1764cb;background:rgb(var(--rgb-blue)/.04)}
+.signup-account-picker .group>span{background:rgb(var(--rgb-blue)/.08);color:var(--color-ink);border-radius:8px}
+.signup-account-picker .group>b{color:var(--color-ink)}
+.signup-mobile-progress b{transition:none;background:#1764cb}
+@media(max-width:850px){.signup-scene{padding:64px 12px 20px}.signup-shell{display:block;border-radius:10px}.signup-form-panel{padding:22px 16px;min-height:0}.signup-model-grid,.signup-specialty-grid{grid-template-columns:1fr}.signup-model-grid>button{padding:12px}.signup-heading h1{font-size:23px}.signup-account-picker{padding:22px 16px}.signup-mobile-progress{font-size:14px;margin-bottom:20px}}
 .signup-activity-grid>button,.signup-specialty-grid button{min-width:0;min-height:48px}
 .signup-specialty-grid button>span{min-width:0;overflow-wrap:anywhere}
 .signup-specialty-grid button>svg,.signup-activity-grid>button>svg{flex-shrink:0}

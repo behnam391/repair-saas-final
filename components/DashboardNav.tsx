@@ -86,7 +86,7 @@ export default function DashboardNav({
   }
 
   const services = serviceCategories.split(",").filter((value) => value === "MOBILE" || value === "COMPUTER");
-  const intakeItems: NavItem[] = services.length > 1
+  const intakeItems: NavItem[] = services.length === 0 ? [] : services.length > 1
     ? [
         { href: "/tickets?new=1&device=MOBILE", label: "پذیرش موبایل", Icon: Smartphone },
         { href: "/tickets?new=1&device=COMPUTER", label: "پذیرش کامپیوتر", Icon: MonitorSmartphone },
@@ -100,6 +100,7 @@ export default function DashboardNav({
       label: "عملیات",
       items: [
         ...intakeItems,
+        { href: "/industry-workspaces", label: "صنف‌ها و داشبوردها", Icon: Store },
         { href: "/inventory", label: "انبار قطعات", Icon: Boxes },
         { href: "/sales", label: "فروش مستقیم", Icon: ShoppingBag },
         { href: "/invoices", label: "فاکتورها", Icon: ReceiptText },

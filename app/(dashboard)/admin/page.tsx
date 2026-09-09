@@ -1,4 +1,5 @@
 "use client";
+import { INDUSTRY_WORKSPACES } from "@/lib/industry-workspaces";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -317,6 +318,7 @@ export default function AdminPage() {
           {([
             { value: "MOBILE", label: "موبایل و تبلت", Icon: Smartphone },
             { value: "COMPUTER", label: "کامپیوتر و لپ‌تاپ", Icon: MonitorSmartphone },
+            ...Object.values(INDUSTRY_WORKSPACES).map(item => ({ value: item.category, label: item.title, Icon: MonitorSmartphone })),
           ] as const).map(({ value, label, Icon }) => {
             const active = shopInfo.serviceCategories?.includes(value);
             return <button key={value} type="button" onClick={() => setShopInfo((current) => {
@@ -326,7 +328,7 @@ export default function AdminPage() {
             })} className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-3 text-[11px] font-bold transition ${active ? "border-teal bg-teal/10 text-teal" : "border-surface2 bg-surface2 text-muted"}`}><Icon size={17} />{label}</button>;
           })}
         </div>
-        {shopInfo.serviceCategories?.length === 2 && <p className="text-[10px] text-teal mb-4 -mt-2">دو مسیر جداگانه «پذیرش موبایل» و «پذیرش کامپیوتر» در منو فعال می‌شود.</p>}
+        <p className="text-sm text-muted mb-4">برای هر صنف، پذیرش و داشبورد مرتبط فعال می‌شود. غیرفعال‌کردن صنف، پرونده‌های قبلی آن را حذف نمی‌کند.</p>
 
         <label className="block text-xs text-muted mb-1">نام مغازه</label>
         <input className="w-full bg-surface2 rounded-lg px-3 py-2 text-sm mb-3"

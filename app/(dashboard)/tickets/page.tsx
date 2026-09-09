@@ -92,10 +92,11 @@ export default function TicketsPage() {
     ]);
     if (!ticketRes.ok) throw Error();
     const data = await ticketRes.json();
-    setTickets(data.tickets ?? []);
+    setTickets((data.tickets ?? []).filter((ticket: { deviceCategory?: string }) => !ticket.deviceCategory || ticket.deviceCategory === "MOBILE" || ticket.deviceCategory === "COMPUTER"));
     if (shopResult?.ok) {
       const shop = (await shopResult.json()).shop;
       const categories = (shop?.serviceCategories || "MOBILE").split(",").filter((item: string) => item === "MOBILE" || item === "COMPUTER");
+      if (!categories.length) { window.location.replace("/workspace"); return; }
       setServiceCategories(categories.length ? categories : ["MOBILE"]);
       if (staffResult?.ok) {
         const staff = (await staffResult.json()).staff ?? [];

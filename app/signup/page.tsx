@@ -7,14 +7,16 @@ import Link from "next/link";
 import JalaliDatePicker from "@/components/JalaliDatePicker";
 import PhoneVerify from "@/components/PhoneVerify";
 import { toLatinDigits, normalizePhone, isValidMobile } from "@/lib/phone";
-import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Building2, Check, ChevronLeft, CircuitBoard, Code2, Crown, Eye, EyeOff, LockKeyhole, MonitorSmartphone, ShieldCheck, ShoppingBag, Smartphone, Sparkles, Store, UserRound, UsersRound, Wrench } from "lucide-react";
+
+import { AirVent, CarFront, Factory, Refrigerator, ArrowLeft, ArrowRight, Building2, Check, ChevronLeft, CircuitBoard, Code2, Crown, Eye, EyeOff, LockKeyhole, MonitorSmartphone, ShieldCheck, ShoppingBag, Smartphone, Sparkles, Store, UserRound, UsersRound, Wrench } from "lucide-react";
 import Logo from "@/components/Logo";
 import WebHomeLink from "@/components/WebHomeLink";
+import { INDUSTRY_WORKSPACES } from "@/lib/industry-workspaces";
+import { shopHome } from "@/lib/shop-services";
 
 const BUSINESS_SIZE_OPTIONS = [
-  { key: "SOLO", label: "استودیوی شخصی", eyebrow: "فقط خودم", desc: "برای تعمیرکار مستقلی که پذیرش، تعمیر و تحویل را خودش مدیریت می‌کند.", meta: "۱ نفر", icon: UserRound, popular: false },
-  { key: "TEAM", label: "تعمیرگاه در حال رشد", eyebrow: "انتخاب محبوب", desc: "برای تیمی که پذیرش و تعمیرات بین چند نفر و چند تخصص تقسیم می‌شود.", meta: "۲ تا ۱۰ نفر", icon: UsersRound, popular: true },
+  { key: "SOLO", label: "تعمیرکار مستقل", eyebrow: "فقط خودم", desc: "برای تعمیرکار مستقلی که پذیرش، تعمیر و تحویل را خودش مدیریت می‌کند.", meta: "۱ نفر", icon: UserRound, popular: false },
+  { key: "TEAM", label: "تعمیرگاه تیمی", eyebrow: "تیم کوچک", desc: "برای تیمی که پذیرش و تعمیرات بین چند نفر و چند تخصص تقسیم می‌شود.", meta: "۲ تا ۱۰ نفر", icon: UsersRound, popular: false },
   { key: "ENTERPRISE", label: "مرکز خدمات حرفه‌ای", eyebrow: "ساختار پیشرفته", desc: "برای مجموعه‌های بزرگ با چند بخش، نقش‌های متعدد یا شعبه‌های مختلف.", meta: "+۱۰ نفر", icon: Building2, popular: false },
 ] as const;
 
@@ -33,12 +35,14 @@ const ACTIVITY_OPTIONS = [
 const SERVICE_CATEGORY_OPTIONS = [
   { key: "MOBILE", label: "موبایل و تبلت", desc: "پذیرش و تعمیر گوشی و تبلت", icon: Smartphone },
   { key: "COMPUTER", label: "کامپیوتر و لپ‌تاپ", desc: "تعمیر، ارتقا و خدمات نرم‌افزاری رایانه", icon: MonitorSmartphone },
+  ...Object.values(INDUSTRY_WORKSPACES).map(item => ({ key: item.category, label: item.title, desc: item.examples.join("، "), icon: item.category === "APPLIANCE" ? Refrigerator : item.category === "FACILITIES" ? AirVent : item.category === "VEHICLE" ? CarFront : Factory })),
 ] as const;
 
 // Step wizard: 1=کسب‌وکار، 2=مغازه، 3=مدیر، 4=موبایل و رمز — same visual
 // pattern as the device-intake wizard, so signup doesn't read as one long,
 // cluttered form on mobile.
-const STEPS = ["کسب‌وکار", "مغازه", "مدیر", "ورود"];
+const STEPS = ["نوع فعالیت", "تعمیرگاه", "مدیر", "تأیید شماره"];
+const SERVICE_SHORT_LABELS: Record<string, string> = { MOBILE: "موبایل و تبلت", COMPUTER: "کامپیوتر و لپ‌تاپ", APPLIANCE: "لوازم خانگی", FACILITIES: "تأسیسات", VEHICLE: "خودرو و موتور", INDUSTRIAL: "تجهیزات صنعتی" };
 
 export default function SignupPage() {
   const router = useRouter();
@@ -98,6 +102,7 @@ export default function SignupPage() {
     const phone = normalizePhone(form.phone);
     if (!phoneVerified) { setError("ابتدا شماره موبایل را با کد تأیید کنید"); return; }
     setLoading(true);
+    try {
     const res = await fetch("/api/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -114,7 +119,10 @@ export default function SignupPage() {
     });
     setLoading(false);
     if (signInRes?.error) { setError("ثبت‌نام شد ولی ورود خودکار ناموفق بود، لطفاً وارد شوید"); return; }
-    router.push("/tickets");
+    router.push(shopHome(form.serviceCategories.join(",")));
+    } catch {
+      setError("پاسخ سرور دریافت نشد. قبل از تکرار ثبت‌نام، ورود با همین شماره را امتحان کنید.");
+    } finally { setLoading(false); }
   }
 
   const selectedModel = BUSINESS_SIZE_OPTIONS.find((option) => option.key === form.businessSize)!;
@@ -122,9 +130,8 @@ export default function SignupPage() {
   if (!businessConfirmed) {
     return (
       <main className="signup-scene">
-        <div className="signup-ambient" aria-hidden><i /><i /><i /></div>
         <WebHomeLink className="signup-home"><ArrowRight size={15} /> بازگشت به سایت</WebHomeLink>
-        <div className="relative z-10 mx-auto w-[min(92vw,760px)] rounded-3xl border border-white/10 bg-surface/95 p-5 shadow-2xl sm:p-8">
+        <div className="signup-account-picker">
           <div className="mb-6 text-center">
             <Logo size={35} textClassName="text-2xl" />
             <h1 className="display-heading mt-5 text-2xl">چه نوع حسابی می‌خواهید؟</h1>
@@ -152,7 +159,6 @@ export default function SignupPage() {
 
   return (
     <main className="signup-scene">
-      <div className="signup-ambient" aria-hidden><i /><i /><i /></div>
       <WebHomeLink className="signup-home"><ArrowRight size={15} /> بازگشت به سایت</WebHomeLink>
 
       <div className="signup-shell">
@@ -160,7 +166,7 @@ export default function SignupPage() {
           <Logo size={31} textClassName="text-xl" />
           <div className="signup-rail-copy">
             <span>راه‌اندازی فضای کاری</span>
-            <h2>چند قدم تا یک<br />تعمیرگاه هوشمند.</h2>
+            <h2>ساخت حساب<br />تعمیرگاه</h2>
             <p>پیوو براساس مدل کاری شما، فضای مناسب و ابزارهای موردنیازتان را آماده می‌کند.</p>
           </div>
           <div className="signup-steps">
@@ -170,41 +176,37 @@ export default function SignupPage() {
               return <button type="button" key={label} disabled={number > step} onClick={() => number < step && setStep(number)} className={`is-${state}`}><i>{state === "done" ? <Check size={14} /> : number}</i><span><strong>{label}</strong><small>{["مدل و نوع فعالیت", "مشخصات فضای کاری", "اطلاعات مدیر", "امنیت و تأیید"][index]}</small></span></button>;
             })}
           </div>
-          <div className="signup-rail-security"><ShieldCheck size={15} /><span><strong>اطلاعات شما امن است</strong><small>رمزگذاری و محافظت‌شده</small></span></div>
+          <div className="signup-rail-security"><ShieldCheck size={15} /><span><strong>تأیید شماره مدیر</strong><small>با کد تأیید پیامکی</small></span></div>
         </aside>
 
         <form onSubmit={step === STEPS.length ? submit : (e) => e.preventDefault()} className="signup-form-panel">
           <div className="signup-mobile-progress"><span>مرحله {step} از {STEPS.length}</span><i><b style={{ width: `${step * 25}%` }} /></i></div>
-          <AnimatePresence mode="wait">
-            <motion.div key={step} className="signup-step-content" initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 12 }} transition={{ duration: .28 }}>
+            <div key={step} className="signup-step-content">
               {step === 1 && <>
-                <div className="signup-heading"><span><Sparkles size={14} /> شخصی‌سازی فضای شما</span><h1>کدام مدل به کار شما نزدیک‌تر است؟</h1><p>این انتخاب فقط چیدمان اولیه را مشخص می‌کند و هر زمان قابل تغییر است.</p></div>
-                <div className="signup-model-grid">
-                  {BUSINESS_SIZE_OPTIONS.map((option) => { const Icon = option.icon; const active = form.businessSize === option.key; return <button key={option.key} type="button" onClick={() => setForm({ ...form, businessSize: option.key })} className={active ? "active" : ""}><div className="signup-model-top"><i><Icon size={20} /></i>{active && <span><Check size={13} /></span>}</div><small>{option.eyebrow}</small><strong>{option.label}</strong><p>{option.desc}</p><em>{option.meta}</em>{option.popular && <b>پیشنهاد پیوو</b>}</button>; })}
+                <div className="signup-heading"><span><Sparkles size={14} /> شخصی‌سازی فضای شما</span><h1>چه دستگاه‌هایی تعمیر می‌کنید؟</h1><p>صنف خود را انتخاب کنید تا ابزارهای مرتبط برایتان آماده شود.</p></div>
+                {form.shopType !== "DEALER" && <div className="signup-specialties"><div className="signup-subsection"><div><strong>انتخاب صنف</strong><small>انتخاب چند مورد ممکن است</small></div></div><div className="signup-industry-choices">{SERVICE_CATEGORY_OPTIONS.map((option) => { const Icon = option.icon; const active = form.serviceCategories.includes(option.key); return <button key={option.key} type="button" onClick={() => toggleServiceCategory(option.key)} aria-label={option.label} aria-pressed={active} className={active ? "active" : ""}><Icon size={25} /><span><strong>{SERVICE_SHORT_LABELS[option.key]}</strong></span><i aria-hidden="true" className="signup-choice-check">{active && <Check size={12} />}</i></button>; })}</div></div>}
+                {form.shopType !== "DEALER" && <div className="signup-selection-result" aria-live="polite"><Check size={17}/><div><strong>فضای کاری شما</strong><p>{form.serviceCategories.map(key => SERVICE_SHORT_LABELS[key]).join("، ")} · پذیرش و پیگیری اختصاصی</p></div></div>}
+                <details className="signup-extra-options"><summary>تنظیمات بیشتر <span>{selectedModel.label} · {ACTIVITY_OPTIONS.find(item => item.key === form.shopType)?.label}</span></summary>
+                <div className="signup-compact-options">
+                  <label>اندازه مجموعه<select value={form.businessSize} onChange={e => setForm({ ...form, businessSize: e.target.value })}>{BUSINESS_SIZE_OPTIONS.map(option => <option key={option.key} value={option.key}>{option.label} · {option.meta}</option>)}</select></label>
+                  <label>نوع خدمات<select value={form.shopType} onChange={e => setForm({ ...form, shopType: e.target.value })}>{ACTIVITY_OPTIONS.map(option => <option key={option.key} value={option.key}>{option.label}</option>)}</select></label>
                 </div>
 
-                <div className="signup-subsection"><div><strong>حوزه فعالیت شما</strong><small>کدام بخش‌ها را مدیریت می‌کنید؟</small></div></div>
-                <div className="signup-activity-grid">
-                  {ACTIVITY_OPTIONS.map((option) => { const Icon = option.icon; const active = form.shopType === option.key; return <button key={option.key} type="button" onClick={() => setForm({ ...form, shopType: option.key })} className={active ? "active" : ""}><i><Icon size={18} /></i><span><strong>{option.label}</strong><small>{option.desc}</small></span>{active && <Check size={15} />}</button>; })}
-                </div>
-
-                {form.shopType !== "DEALER" && <div className="signup-specialties"><div className="signup-subsection"><div><strong>دستگاه‌های تحت پوشش</strong><small>برای هر دو نوع، دو مسیر پذیرش جدا ساخته می‌شود</small></div></div><div className="signup-specialty-grid">{SERVICE_CATEGORY_OPTIONS.map((option) => { const Icon = option.icon; const active = form.serviceCategories.includes(option.key); return <button key={option.key} type="button" onClick={() => toggleServiceCategory(option.key)} className={active ? "active" : ""}><Icon size={17} /><span><strong>{option.label}</strong><small>{option.desc}</small></span>{active && <Check size={14} />}</button>; })}</div></div>}
-
-                {form.shopType !== "DEALER" && <motion.div className="signup-specialties" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}><div className="signup-subsection"><div><strong>تخصص‌های فعال</strong><small>یک یا چند مورد را انتخاب کنید</small></div></div><div className="signup-specialty-grid">{SPECIALTY_OPTIONS.map((option) => { const Icon = option.icon; const active = form.specialties.includes(option.key); return <button key={option.key} type="button" onClick={() => toggleSpecialty(option.key)} className={active ? "active" : ""}><Icon size={17} /><span><strong>{option.label}</strong><small>{option.desc}</small></span>{active && <Check size={14} />}</button>; })}</div></motion.div>}
+                {form.shopType !== "DEALER" && form.serviceCategories.some(v => v === "MOBILE" || v === "COMPUTER") && <div className="signup-specialties"><div className="signup-subsection"><div><strong>تخصص‌های فعال</strong><small>یک یا چند مورد را انتخاب کنید</small></div></div><div className="signup-specialty-grid">{SPECIALTY_OPTIONS.map((option) => { const Icon = option.icon; const active = form.specialties.includes(option.key); return <button key={option.key} type="button" onClick={() => toggleSpecialty(option.key)} aria-pressed={active} className={active ? "active" : ""}><Icon size={17} /><span><strong>{option.label}</strong><small>{option.desc}</small></span>{active && <Check size={14} />}</button>; })}</div></div>}
+                </details>
               </>}
 
               {step === 2 && <><div className="signup-heading"><span><Store size={14} /> هویت کسب‌وکار</span><h1>فضای کاری‌تان را معرفی کنید</h1><p>این اطلاعات در پنل و ارتباط با مشتریان نمایش داده می‌شود.</p></div><div className="signup-fields"><label><span>نام فروشگاه یا تعمیرگاه</span><div><Store size={18} /><input autoFocus value={form.shopName} onChange={(e) => setForm({ ...form, shopName: e.target.value })} placeholder="مثلاً مرکز خدمات فناوری" /></div></label><label><span>آدرس <small>اختیاری</small></span><div><MonitorSmartphone size={18} /><input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="شهر، خیابان و پلاک" /></div></label><label><span>تلفن ثابت <small>اختیاری</small></span><div><Smartphone size={18} /><input dir="ltr" value={form.landlinePhone} onChange={(e) => setForm({ ...form, landlinePhone: toLatinDigits(e.target.value) })} placeholder="021xxxxxxxx" /></div></label></div><div className="signup-summary"><Crown size={17} /><span><small>فضای انتخاب‌شده</small><strong>{selectedModel.label} · {ACTIVITY_OPTIONS.find((x) => x.key === form.shopType)?.label}{form.shopType !== "DEALER" ? ` · ${form.serviceCategories.map((key) => SERVICE_CATEGORY_OPTIONS.find((item) => item.key === key)?.label).filter(Boolean).join(" و ")}` : ""}</strong></span></div></>}
 
               {step === 3 && <><div className="signup-heading"><span><UserRound size={14} /> مدیر فضای کاری</span><h1>حساب مدیر را بسازید</h1><p>این حساب دسترسی مالک و مدیریت کامل فضای کاری را خواهد داشت.</p></div><div className="signup-fields"><label><span>نام و نام خانوادگی مدیر</span><div><UserRound size={18} /><input autoFocus value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} placeholder="نام کامل شما" /></div></label><div className="signup-field-row"><label><span>کد ملی</span><div><ShieldCheck size={18} /><input dir="ltr" inputMode="numeric" value={form.nationalId} onChange={(e) => setForm({ ...form, nationalId: toLatinDigits(e.target.value) })} placeholder="۱۰ رقم" /></div></label><label><span>تاریخ تولد</span><JalaliDatePicker className="signup-date-input" value={form.birthDate} onChange={(value) => setForm({ ...form, birthDate: value })} /></label></div></div></>}
 
-              {step === 4 && <><div className="signup-heading"><span><LockKeyhole size={14} /> ورود امن</span><h1>آخرین قدم؛ تأیید هویت</h1><p>شماره موبایل شما، شناسه ورود به فضای مدیریت خواهد بود.</p></div><div className="signup-fields"><label><span>شماره موبایل مدیر</span><div><Smartphone size={18} /><input autoFocus inputMode="tel" dir="ltr" maxLength={11} placeholder="0912 345 6789" value={form.phone} onChange={(e) => setForm({ ...form, phone: toLatinDigits(e.target.value) })} /></div></label><div className="signup-verification"><PhoneVerify phone={form.phone} email={undefined} onChange={setPhoneVerified} /></div><label><span>رمز عبور</span><div><LockKeyhole size={18} /><input type={showPassword ? "text" : "password"} dir="ltr" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="حداقل ۸ کاراکتر" /><button type="button" onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label></div></>}
-            </motion.div>
-          </AnimatePresence>
+              {step === 4 && <><div className="signup-heading"><span><LockKeyhole size={14} /> ورود امن</span><h1>آخرین قدم؛ تأیید هویت</h1><p>شماره موبایل شما، شناسه ورود به فضای مدیریت خواهد بود.</p></div><div className="signup-fields"><label><span>شماره موبایل مدیر</span><div><Smartphone size={18} /><input autoFocus inputMode="tel" dir="ltr" maxLength={11} placeholder="0912 345 6789" value={form.phone} onChange={(e) => setForm({ ...form, phone: toLatinDigits(e.target.value) })} /></div></label><div className="signup-verification"><PhoneVerify phone={form.phone} email={undefined} onChange={setPhoneVerified} /></div><label><span>رمز عبور</span><div><LockKeyhole size={18} /><input type={showPassword ? "text" : "password"} dir="ltr" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="حداقل ۸ کاراکتر" /><button type="button" aria-label={showPassword ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button></div></label></div></>}
+            </div>
 
-          {error && <motion.p className="signup-error" initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }}>{error}</motion.p>}
+          {error && <p role="alert" className="signup-error">{error}</p>}
           <div className="signup-navigation">
             {step > 1 && <button type="button" className="signup-prev" onClick={() => { setError(""); setStep(step - 1); }}><ArrowRight size={17} /> مرحله قبل</button>}
-            {step < STEPS.length ? <button type="button" className="signup-next" onClick={nextStep}>ادامه مسیر <ArrowLeft size={18} /></button> : <button type="submit" disabled={loading || !phoneVerified} className="signup-next">{loading ? "در حال ساخت فضای شما..." : !phoneVerified ? "ابتدا شماره را تأیید کنید" : "ساخت فضای کاری"}<ChevronLeft size={18} /></button>}
+            {step < STEPS.length ? <button type="button" className="signup-next" onClick={nextStep}>ادامه <ArrowLeft size={18} /></button> : <button type="submit" disabled={loading || !phoneVerified} className="signup-next">{loading ? "در حال ساخت فضای شما..." : !phoneVerified ? "ابتدا شماره را تأیید کنید" : "ساخت فضای کاری"}<ChevronLeft size={18} /></button>}
           </div>
           <p className="signup-login">قبلاً حساب ساخته‌اید؟ <Link href="/login">وارد شوید</Link></p>
         </form>

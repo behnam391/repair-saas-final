@@ -5,6 +5,7 @@ import { sendSms, sendReadySms, readyForPickupMessage } from "@/lib/sms";
 import { notifyUser } from "@/lib/notify";
 import { getPublicOrigin } from "@/lib/public-url";
 import { z } from "zod";
+import { INDUSTRY_WORKSPACES } from "@/lib/industry-workspaces";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
 
     let updated;
+    if (Object.values(INDUSTRY_WORKSPACES).some(v => v.category === ticket.deviceCategory)) {
+      requireRole(role, ["OWNER", "FRONTDESK"]);
+      if (["DELIVERED", "CANCELLED"].includes(ticket.status) || (body.action === "start" && ticket.status !== "PENDING") || (body.action === "ready" && ticket.status !== "IN_PROGRESS") || (body.action === "deliver" && ticket.status !== "READY")) return NextResponse.json({ message: "وضعیت پرونده تغییر کرده؛ صفحه را به‌روزرسانی کنید" }, { status: 409 });
+      if (body.action === "ready" && (body.estimatedCost == null || body.estimatedCost < 0 || body.estimatedCost > 2000000000)) return NextResponse.json({ message: "هزینه معتبر وارد کنید" }, { status: 400 });
+      if (body.action === "deliver" && !await db.invoice.findUnique({ where: { ticketId: ticket.id }, select: { id: true } })) return NextResponse.json({ message: "ابتدا فاکتور و مبلغ پرداختی را ثبت کنید" }, { status: 400 });
+    }
     let sms: { sent: boolean; message?: string } | undefined;
 
     switch (body.action) {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession, requireRole, UnauthorizedError } from "@/lib/tenant";
 import { preprocessPhone, preprocessDigits } from "@/lib/phone";
-import { serializeServiceCategories } from "@/lib/device-category";
+import { SHOP_SERVICES, serializeShopServices } from "@/lib/shop-services";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ const UpdateSchema = z.object({
   name: z.string().min(2).optional(),
   type: z.enum(["REPAIR", "DEALER", "BOTH"]).optional(),
   businessSize: z.enum(["SOLO", "TEAM", "ENTERPRISE"]).optional(),
-  serviceCategories: z.array(z.enum(["MOBILE", "COMPUTER"])).min(1).optional(),
+  serviceCategories: z.array(z.enum(SHOP_SERVICES)).min(1).optional(),
   address: z.string().optional(),
   // Digits only, Latin only: the shop phone becomes a `tel:` link and an SMS
   // destination, and a card number typed as ۶۰۳۷… is not a card number at
@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest) {
     const { serviceCategories, ...rest } = body;
     const shop = await db.shop.update({
       where: { id: shopId },
-      data: { ...rest, ...(serviceCategories ? { serviceCategories: serializeServiceCategories(serviceCategories) } : {}) },
+      data: { ...rest, ...(serviceCategories ? { serviceCategories: serializeShopServices(serviceCategories) } : {}) },
     });
     return NextResponse.json({ shop });
   } catch (e) {

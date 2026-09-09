@@ -3,10 +3,13 @@ import { db } from "@/lib/db";
 import { requireSession, UnauthorizedError } from "@/lib/tenant";
 import { sendSms, sendIntakeSms, intakeReceivedMessage } from "@/lib/sms";
 import { encryptSecretOrPassthrough } from "@/lib/crypto";
-import { parseServiceCategories } from "@/lib/device-category";
+import { parseShopServices } from "@/lib/shop-services";
+import { INDUSTRY_WORKSPACES, type IndustryKey } from "@/lib/industry-workspaces";
+import { industryIntakeNotes } from "@/lib/industry-intake";
 import { logCaught } from "@/lib/logError";
 import { CreateTicketSchema } from "@/lib/ticket-intake-schema";
 import { z } from "zod";
+import { isValidMobile } from "@/lib/phone";
 
 export const dynamic = "force-dynamic";
 
@@ -73,9 +76,17 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   let actor: { shopId?: string; userId?: string } = {};
   try {
-    const { shopId, userId } = await requireSession();
+    const { shopId, userId, role } = await requireSession();
     actor = { shopId, userId };
     const body = CreateTicketSchema.parse(await req.json());
+    const industry = Object.entries(INDUSTRY_WORKSPACES).find(([,v]) => v.category === body.deviceCategory);
+    let intakeNotes = "";
+    if (industry) {
+      if (!["OWNER", "FRONTDESK"].includes(role)) return NextResponse.json({ message: "اجازه پذیرش ندارید" }, { status: 403 });
+      if (!isValidMobile(body.customerPhone) || !body.customerName.trim()) return NextResponse.json({ message: "نام و شماره معتبر مشتری را وارد کنید" }, { status: 400 });
+      try { intakeNotes = industryIntakeNotes(industry[0] as IndustryKey, body.industryDetails); }
+      catch (error) { return NextResponse.json({ message: (error as Error).message }, { status: 400 }); }
+    }
     const partnerWithoutCustomer = body.intakeSource === "PARTNER" && (!body.customerName.trim() || !body.customerPhone);
     if (body.intakeSource === "PARTNER" && !body.partnerName?.trim()) {
       return NextResponse.json({ message: "نام همکار تحویل‌دهنده را وارد کنید" }, { status: 400 });
@@ -93,7 +104,7 @@ export async function POST(req: NextRequest) {
         { status: 403 }
       );
     }
-    const enabledCategories = parseServiceCategories(shop.serviceCategories);
+    const enabledCategories = parseShopServices(shop.serviceCategories);
     if (!enabledCategories.includes(body.deviceCategory)) {
       return NextResponse.json({ message: "این نوع دستگاه در تنظیمات تعمیرگاه فعال نیست" }, { status: 400 });
     }
@@ -150,7 +161,7 @@ export async function POST(req: NextRequest) {
           operatingSystem: body.deviceCategory === "COMPUTER" ? body.operatingSystem?.trim() || undefined : undefined,
           accessories: body.deviceCategory === "COMPUTER" ? body.accessories || undefined : undefined,
           imei: body.imei,
-          issueInitial: body.issueInitial,
+          issueInitial: intakeNotes ? `${body.issueInitial}\n\nمشخصات پذیرش:\n${intakeNotes}` : body.issueInitial,
           lane: body.lane,
           status: "PENDING",
           estimatedCost: body.estimatedCost,
@@ -165,7 +176,7 @@ export async function POST(req: NextRequest) {
           partnerPhone: body.partnerPhone || undefined,
           history: {
             create: [
-              { lane: body.lane, action: body.deviceCategory === "COMPUTER" ? "پذیرش کامپیوتر" : "پذیرش موبایل", techId: userId, note: body.issueInitial },
+              { lane: body.lane, action: industry ? `پذیرش ${industry[1].title}` : body.deviceCategory === "COMPUTER" ? "پذیرش کامپیوتر" : "پذیرش موبایل", techId: userId, note: body.issueInitial },
               { lane: body.lane, action: `ارجاع به ${laneLabel(body.lane)}`, techId: userId },
             ],
           },

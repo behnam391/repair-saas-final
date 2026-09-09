@@ -1,4 +1,5 @@
 "use client";
+import { INDUSTRY_WORKSPACES } from "@/lib/industry-workspaces";
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
@@ -53,7 +54,7 @@ export default function IntakeReceiptPage() {
         <section className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
           <div><span className="text-gray-500">مشتری:</span> {ticket.customer.name}</div>
           <div><span className="text-gray-500">شماره تماس:</span> <span dir="ltr">{ticket.customer.phone}</span></div>
-          <div><span className="text-gray-500">نوع پذیرش:</span> {ticket.deviceCategory === "COMPUTER" ? "کامپیوتر/لپ‌تاپ" : "موبایل/تبلت"}</div>
+          <div><span className="text-gray-500">نوع پذیرش:</span> {Object.values(INDUSTRY_WORKSPACES).find(v => v.category === ticket.deviceCategory)?.title ?? (ticket.deviceCategory === "COMPUTER" ? "کامپیوتر/لپ‌تاپ" : "موبایل/تبلت")}</div>
           <div><span className="text-gray-500">دستگاه:</span> {ticket.deviceModel}</div>
           <div><span className="text-gray-500">تاریخ پذیرش:</span> {formatJalaliDate(ticket.createdAt)}</div>
           {ticket.imei && <div className="col-span-2"><span className="text-gray-500">{ticket.deviceCategory === "COMPUTER" ? "شماره سریال:" : "IMEI:"}</span> <span dir="ltr">{ticket.imei}</span></div>}
@@ -69,7 +70,7 @@ export default function IntakeReceiptPage() {
 
         <section className="mt-4 rounded-lg border border-gray-300 p-3 text-xs">
           <b>شرح ایراد اعلام‌شده</b>
-          <p className="mt-1 leading-6">{ticket.issueInitial}</p>
+          <p className="mt-1 leading-6 whitespace-pre-wrap">{ticket.issueInitial}</p>
           {ticket.customerDamageNotes && <p className="mt-2 border-t border-gray-200 pt-2"><b>وضعیت ظاهری/سابقه:</b> {ticket.customerDamageNotes}</p>}
         </section>
 

@@ -12,7 +12,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (status === "authenticated" && session?.user && !session.user.disabled) {
       const user = session.user as any;
-      router.replace(user.isSuperAdmin ? "/superadmin" : user.isCustomer ? "/customer" : "/tickets");
+      router.replace(user.isSuperAdmin ? "/superadmin" : user.isCustomer ? "/customer" : "/workspace");
     }
   }, [status, session, router]);
   const [phone, setPhone] = useState("");
@@ -36,7 +36,7 @@ export default function LoginPage() {
       return;
     }
     setLoginState("success");
-    window.setTimeout(() => router.push("/tickets"), 700);
+    window.setTimeout(() => router.push("/workspace"), 700);
   }
 
   return (

@@ -17,6 +17,7 @@ type Item = { href: string; label: string; Icon: LucideIcon; owner?: boolean; de
 const groups: { label: string; items: Item[] }[] = [
   { label: "کار روزانه", items: [
     { href: "/tickets", label: "داشبورد", Icon: House },
+    { href: "/industry-workspaces", label: "صنف‌ها و داشبوردها", Icon: Store },
     { href: "/history", label: "تعمیرات و سوابق", Icon: Wrench },
     { href: "/customers", label: "مشتریان", Icon: UsersRound },
   ] },
@@ -44,7 +45,7 @@ export default function ShopSidebar({ role, shopType, serviceCategories = "MOBIL
   const [collapsed, setCollapsed] = useState(false);
   const dealer = shopType === "DEALER" || shopType === "BOTH";
   const services = serviceCategories.split(",").filter((value) => value === "MOBILE" || value === "COMPUTER");
-  const intakeItems: Item[] = services.length > 1
+  const intakeItems: Item[] = services.length === 0 ? [] : services.length > 1
     ? [
         { href: "/tickets?new=1&device=MOBILE", label: "پذیرش موبایل", Icon: Smartphone },
         { href: "/tickets?new=1&device=COMPUTER", label: "پذیرش کامپیوتر", Icon: MonitorSmartphone },
@@ -53,7 +54,7 @@ export default function ShopSidebar({ role, shopType, serviceCategories = "MOBIL
       ? [{ href: "/tickets?new=1&device=COMPUTER", label: "پذیرش کامپیوتر", Icon: MonitorSmartphone }]
       : [{ href: "/tickets?new=1&device=MOBILE", label: "پذیرش موبایل", Icon: PackagePlus }];
   const menuGroups = groups.map((group) => group.label === "کار روزانه"
-    ? { ...group, items: [group.items[0], ...intakeItems, ...group.items.slice(1)] }
+    ? { ...group, items: [{ ...group.items[0], href: services.length ? "/tickets" : "/workspace" }, ...intakeItems, ...group.items.slice(1)] }
     : group);
 
   useEffect(() => {

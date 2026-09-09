@@ -5,7 +5,7 @@ import { isPhoneVerifiedForSignup, consumeSignupVerification } from "@/lib/signu
 import { preprocessPhone, normalizeOptionalPhone } from "@/lib/phone";
 import { z } from "zod";
 import { strongPassword } from "@/lib/security";
-import { serializeServiceCategories } from "@/lib/device-category";
+import { SHOP_SERVICES, serializeShopServices } from "@/lib/shop-services";
 
 const SignupSchema = z.object({
   shopName: z.string().min(2),
@@ -14,7 +14,7 @@ const SignupSchema = z.object({
   businessSize: z.enum(["SOLO", "TEAM", "ENTERPRISE"]).default("SOLO"),
   shopType: z.enum(["REPAIR", "DEALER", "BOTH"]).default("REPAIR"),
   specialties: z.array(z.enum(["HARDWARE", "SOFTWARE", "BOARD"])).default([]),
-  serviceCategories: z.array(z.enum(["MOBILE", "COMPUTER"])).min(1).default(["MOBILE"]),
+  serviceCategories: z.array(z.enum(SHOP_SERVICES)).min(1).default(["MOBILE"]),
   ownerName: z.string().min(2),
   nationalId: z.string().optional(),
   birthDate: z.string().optional(),
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
           landlinePhone: normalizeOptionalPhone(body.landlinePhone),
           businessSize: body.businessSize,
           specialties: body.specialties.join(","),
-          serviceCategories: serializeServiceCategories(body.serviceCategories),
+          serviceCategories: serializeShopServices(body.serviceCategories),
           plan: "free",
           monthlyQuota: 10,
         },
