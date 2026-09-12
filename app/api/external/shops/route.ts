@@ -16,6 +16,7 @@ export async function GET(req: NextRequest) {
     const shops = await db.shop.findMany({
       where: {
         active: true,
+        isTest: false,
         ...(query ? { name: { contains: query, mode: "insensitive" } } : {}),
         ...(province ? { province } : {}),
       },

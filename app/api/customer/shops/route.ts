@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
     const shops = await db.shop.findMany({
       where: {
         active: true,
+        isTest: false,
         type: { in: ["REPAIR", "BOTH"] }, // only shops that actually repair
         ...(province ? { province } : {}),
         ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),

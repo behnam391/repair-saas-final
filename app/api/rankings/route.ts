@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const province = searchParams.get("province");
 
   const shops = await db.shop.findMany({
-    where: { active: true, ...(province ? { province } : {}) },
+    where: { active: true, isTest: false, ...(province ? { province } : {}) },
     select: {
       id: true, name: true, province: true, address: true,
       ratings: { select: { stars: true } },

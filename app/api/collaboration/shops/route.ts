@@ -20,6 +20,7 @@ export async function GET(req: NextRequest) {
       db.shop.findMany({
         where: {
           active: true,
+          isTest: false,
           id: { not: shopId },
           ...(q ? { name: { contains: q, mode: "insensitive" } } : {}),
           ...(province ? { province } : {}),

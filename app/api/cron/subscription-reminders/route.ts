@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
   const expiringShops = await db.shop.findMany({
-    where: { planExpiresAt: { gte: now, lte: in3Days }, plan: { not: "free" }, active: true },
+    where: { planExpiresAt: { gte: now, lte: in3Days }, plan: { not: "free" }, active: true, isTest: false },
     include: { users: { where: { role: "OWNER" }, take: 1 } },
   });
 
