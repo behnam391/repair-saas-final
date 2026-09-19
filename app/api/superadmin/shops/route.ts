@@ -23,6 +23,7 @@ export async function GET() {
       active: s.active,
       isTest: s.isTest,
       supportAccessEnabled: s.supportAccessEnabled,
+      serviceCategories: s.serviceCategories,
       planExpiresAt: s.planExpiresAt,
       userCount: s._count.users,
       ticketCount: s._count.tickets,

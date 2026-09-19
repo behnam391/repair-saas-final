@@ -17,7 +17,6 @@ type Item = { href: string; label: string; Icon: LucideIcon; owner?: boolean; de
 const groups: { label: string; items: Item[] }[] = [
   { label: "کار روزانه", items: [
     { href: "/tickets", label: "داشبورد", Icon: House },
-    { href: "/industry-workspaces", label: "صنف‌ها و داشبوردها", Icon: Store },
     { href: "/history", label: "تعمیرات و سوابق", Icon: Wrench },
     { href: "/customers", label: "مشتریان", Icon: UsersRound },
   ] },
@@ -28,6 +27,7 @@ const groups: { label: string; items: Item[] }[] = [
     { href: "/dealer", label: "خرید و فروش", Icon: Store, dealer: true },
   ] },
   { label: "ارتباط و مدیریت", items: [
+    { href: "/market", label: "بازار سراسری", Icon: Store },
     { href: "/collaboration", label: "همکاری تعمیرگاه‌ها", Icon: Handshake },
     { href: "/chats", label: "پیام‌ها", Icon: MessageSquareText },
     { href: "/support", label: "پشتیبانی", Icon: Headphones },

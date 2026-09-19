@@ -3,15 +3,20 @@ import { useEffect, useMemo, useState } from "react";
 import { formatJalaliDate } from "@/lib/jalali";
 import { useToast } from "@/components/ToastProvider";
 import type { LucideIcon } from "lucide-react";
-import { Activity, BadgeCheck, ChevronLeft, ChevronRight, CircleDollarSign, Gift, Headphones, MoreVertical, Search, ShieldCheck, Store, TrendingUp } from "lucide-react";
+import { Activity, BadgeCheck, BriefcaseBusiness, ChevronLeft, ChevronRight, CircleDollarSign, Gift, Headphones, MoreVertical, Search, ShieldCheck, Store, TrendingUp } from "lucide-react";
 
 const PLAN_LABEL: Record<string, string> = { free: "رایگان", pro: "حرفه‌ای", business: "تجاری" };
+const CATEGORY_OPTIONS = [
+  ["MOBILE", "تعمیرات موبایل"], ["COMPUTER", "تعمیرات کامپیوتر"],
+  ["APPLIANCE", "تعمیرات لوازم خانگی"], ["FACILITIES", "تأسیسات گرمایشی و سرمایشی"],
+  ["VEHICLE", "خودرو و موتورسیکلت"], ["INDUSTRIAL", "تجهیزات برقی و صنعتی"],
+] as const;
 
 // Grouped superadmin navigation. Grouping + wrapping keeps the many
 // destinations tidy and inside the box, instead of one long scrolling row.
 type ShopRow = {
   id: string; name: string; plan: string; active: boolean; isTest: boolean; supportAccessEnabled: boolean; planExpiresAt: string | null;
-  userCount: number; ticketCount: number; totalPaid: number; createdAt: string;
+  userCount: number; ticketCount: number; totalPaid: number; createdAt: string; serviceCategories: string;
 };
 
 export default function SuperAdminClient() {
@@ -68,6 +73,27 @@ export default function SuperAdminClient() {
     load();
   }
 
+  const [categoryShop, setCategoryShop] = useState<ShopRow | null>(null);
+  async function updateCategories(id: string, serviceCategories: string[]) {
+    const res = await fetch(`/api/superadmin/shops/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ serviceCategories }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showToast({ title: "اصلاح دسته شغلی انجام نشد", message: data.message, type: "error" });
+      return;
+    }
+    showToast({
+      title: "دسته شغلی اصلاح شد",
+      message: data.notified ? `اعلان تغییر برای ${data.notified.toLocaleString("fa-IR")} مدیر فروشگاه ارسال شد.` : "تغییر ذخیره شد؛ مدیر فعالی برای دریافت اعلان وجود نداشت.",
+      type: "success",
+    });
+    setCategoryShop(null);
+    load();
+  }
+
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   async function deleteShop(id: string) {
@@ -119,7 +145,7 @@ export default function SuperAdminClient() {
           <div className="super-panel-head"><div><h2>مدیریت فروشگاه‌ها</h2><p>{filtered.length.toLocaleString("fa-IR")} نتیجه از {shops.length.toLocaleString("fa-IR")} فروشگاه</p></div><div className="super-filter"><Search size={16} /><input placeholder="جستجوی نام فروشگاه..." value={search} onChange={(e) => setSearch(e.target.value)} /><select value={planFilter} onChange={(e) => setPlanFilter(e.target.value)}><option value="">همه پلن‌ها</option><option value="free">رایگان</option><option value="pro">حرفه‌ای</option><option value="business">تجاری</option></select></div></div>
 
           {loading ? <div className="super-loading">{[1,2,3].map((i) => <i key={i} className="skeleton" />)}</div> : filtered.length === 0 ? <div className="empty-state">فروشگاهی با این مشخصات پیدا نشد.</div> : <><div className="pc-table-scroll"><table><thead><tr><th>فروشگاه</th><th>اشتراک / انقضا</th><th>وضعیت</th><th>کاربر / پذیرش</th><th>پرداختی (تومان)</th><th>عملیات</th></tr></thead><tbody>
-{visible.map(s => <tr key={s.id}><td><div className="pc-shop"><span className="pc-shop-icon"><Store size={18}/></span><div><b>{s.name}{s.isTest && <span className="pc-badge pc-orange mr-2">آزمایشی</span>}</b><small>عضویت از {formatJalaliDate(s.createdAt)}</small></div></div></td><td>{PLAN_LABEL[s.plan] ?? s.plan}<small>{s.planExpiresAt ? formatJalaliDate(s.planExpiresAt) : "—"}</small></td><td><span className={s.active ? "pc-badge pc-green" : "pc-badge pc-orange"}>{s.active ? "فعال" : "معلق"}</span></td><td>{s.userCount.toLocaleString("fa-IR")} / {s.ticketCount.toLocaleString("fa-IR")}</td><td>{s.totalPaid.toLocaleString("fa-IR")}</td><td><details className="pc-row-actions"><summary>مدیریت فروشگاه</summary><div><button onClick={() => toggleActive(s.id,s.active)}>{s.active ? "تعلیق فروشگاه" : "فعال‌سازی فروشگاه"}</button><button onClick={() => toggleSupportAccess(s.id,s.supportAccessEnabled)}>{s.supportAccessEnabled ? "قطع دسترسی پشتیبانی" : "فعال‌سازی دسترسی پشتیبانی"}</button><button onClick={() => setGiftShop(s)}>هدیه اشتراک</button>{confirmDelete === s.id ? <div className="super-delete-confirm"><p>«{s.name}» و تمام داده‌هایش برای همیشه حذف شود؟</p><button onClick={() => deleteShop(s.id)} disabled={deletingId === s.id}>{deletingId === s.id ? "در حال حذف…" : "حذف قطعی"}</button><button onClick={() => setConfirmDelete(null)}>انصراف</button></div> : <button className="pc-danger" onClick={() => setConfirmDelete(s.id)}>حذف کامل فروشگاه</button>}</div></details></td></tr>)}
+{visible.map(s => <tr key={s.id}><td><div className="pc-shop"><span className="pc-shop-icon"><Store size={18}/></span><div><b>{s.name}{s.isTest && <span className="pc-badge pc-orange mr-2">آزمایشی</span>}</b><small>{s.serviceCategories.split(",").map(key => CATEGORY_OPTIONS.find(x => x[0] === key)?.[1]).filter(Boolean).join("، ")}</small><small>عضویت از {formatJalaliDate(s.createdAt)}</small></div></div></td><td>{PLAN_LABEL[s.plan] ?? s.plan}<small>{s.planExpiresAt ? formatJalaliDate(s.planExpiresAt) : "—"}</small></td><td><span className={s.active ? "pc-badge pc-green" : "pc-badge pc-orange"}>{s.active ? "فعال" : "معلق"}</span></td><td>{s.userCount.toLocaleString("fa-IR")} / {s.ticketCount.toLocaleString("fa-IR")}</td><td>{s.totalPaid.toLocaleString("fa-IR")}</td><td><details className="pc-row-actions"><summary>مدیریت فروشگاه</summary><div><button onClick={() => toggleActive(s.id,s.active)}>{s.active ? "تعلیق فروشگاه" : "فعال‌سازی فروشگاه"}</button><button onClick={() => toggleSupportAccess(s.id,s.supportAccessEnabled)}>{s.supportAccessEnabled ? "قطع دسترسی پشتیبانی" : "فعال‌سازی دسترسی پشتیبانی"}</button><button onClick={() => setCategoryShop(s)}>اصلاح دسته شغلی و اعلان</button><button onClick={() => setGiftShop(s)}>هدیه اشتراک</button>{confirmDelete === s.id ? <div className="super-delete-confirm"><p>«{s.name}» و تمام داده‌هایش برای همیشه حذف شود؟</p><button onClick={() => deleteShop(s.id)} disabled={deletingId === s.id}>{deletingId === s.id ? "در حال حذف…" : "حذف قطعی"}</button><button onClick={() => setConfirmDelete(null)}>انصراف</button></div> : <button className="pc-danger" onClick={() => setConfirmDelete(s.id)}>حذف کامل فروشگاه</button>}</div></details></td></tr>)}
 </tbody></table></div><div className="super-pagination"><button disabled={page === 1} onClick={() => setPage(p => p - 1)}><ChevronRight size={15} /> قبلی</button><span>صفحه {page.toLocaleString("fa-IR")} از {pages.toLocaleString("fa-IR")}</span><button disabled={page === pages} onClick={() => setPage(p => p + 1)}>بعدی <ChevronLeft size={15} /></button></div></>}
         </section>
 
@@ -128,8 +154,34 @@ export default function SuperAdminClient() {
           <GiftModal shop={giftShop} onClose={() => setGiftShop(null)} onGrant={grantGift} />
         </div>
       )}
+      {categoryShop && (
+        <div className="ticket-modal-backdrop" onClick={() => setCategoryShop(null)}>
+          <CategoryModal shop={categoryShop} onClose={() => setCategoryShop(null)} onSave={updateCategories} />
+        </div>
+      )}
     </>
   );
+}
+
+function CategoryModal({ shop, onClose, onSave }: { shop: ShopRow; onClose: () => void; onSave: (id: string, categories: string[]) => Promise<void> }) {
+  const [selected, setSelected] = useState(() => shop.serviceCategories.split(",").filter(Boolean));
+  const [saving, setSaving] = useState(false);
+  const toggle = (key: string) => setSelected(current => current.includes(key) ? (current.length > 1 ? current.filter(item => item !== key) : current) : [...current, key]);
+  return <div className="bg-surface border border-surface2 rounded-2xl p-5 w-full max-w-lg" onClick={(event) => event.stopPropagation()}>
+    <div className="flex items-center gap-2 mb-1"><BriefcaseBusiness size={19}/><div className="font-bold text-sm">اصلاح دسته شغلی</div></div>
+    <p className="text-[12px] text-muted mb-4">دسته درست «{shop.name}» را انتخاب کنید. با ذخیره، داشبورد متناسب فعال و اعلان تغییر برای مدیران فروشگاه ارسال می‌شود.</p>
+    <div className="grid sm:grid-cols-2 gap-2 mb-4">
+      {CATEGORY_OPTIONS.map(([key, label]) => <label key={key} className={`flex items-center gap-2 rounded-xl border p-3 cursor-pointer ${selected.includes(key) ? "border-blue-500 bg-blue-500/10" : "border-border bg-surface2"}`}>
+        <input type="checkbox" checked={selected.includes(key)} onChange={() => toggle(key)} />
+        <span className="text-sm font-semibold">{label}</span>
+      </label>)}
+    </div>
+    <div className="rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-[11px] text-muted mb-4">پرونده‌های قبلی حذف نمی‌شوند؛ فقط فضای کاری، پذیرش و داشبورد پیش‌فرض فروشگاه مطابق دسته جدید تنظیم می‌شود.</div>
+    <div className="flex gap-2">
+      <button disabled={saving || !selected.length} onClick={async () => { setSaving(true); await onSave(shop.id, selected); setSaving(false); }} className="flex-[2] bg-blue-600 text-white font-bold rounded-lg py-2.5 text-sm disabled:opacity-50">{saving ? "در حال ذخیره…" : "ذخیره و ارسال اعلان"}</button>
+      <button onClick={onClose} className="flex-1 bg-surface2 border border-border rounded-lg py-2.5 text-sm">انصراف</button>
+    </div>
+  </div>;
 }
 
 function SuperKpi({ icon: Icon, label, value, hint, tone }: { icon: LucideIcon; label: string; value: string; hint: string; tone: string }) {

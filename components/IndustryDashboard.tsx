@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { INDUSTRY_WORKSPACES, INDUSTRY_STATUS_LABELS, type IndustryKey } from "@/lib/industry-workspaces";
 import { panelDate, panelNumber } from "@/lib/panel-format";
-import { ClipboardList, Clock3, CheckCircle2, Wrench, RefreshCw } from "lucide-react";
+import { AirVent, BarChart3, Boxes, CarFront, CheckCircle2, ClipboardList, Clock3, Factory, FileText, Plus, ReceiptText, Refrigerator, RefreshCw, Store, UsersRound, Wrench } from "lucide-react";
 import IndustryIntake from "./IndustryIntake";
 import IndustryTicketActions from "./IndustryTicketActions";
 type Data = { counts: Record<string, number>; tickets: { id: string; no: number; deviceModel: string; status: string; createdAt: string; customer: { name: string } }[] };
@@ -50,24 +50,29 @@ export default function IndustryDashboard({ industry, demoData }: { industry: In
     { label: "در حال انجام", value: count("IN_PROGRESS"), Icon: Wrench },
     { label: "تحویل‌شده", value: count("DELIVERED"), Icon: CheckCircle2 },
   ];
+  const IndustryIcon = industry === "appliances" ? Refrigerator : industry === "facilities" ? AirVent : industry === "vehicles" ? CarFront : Factory;
+  const quickLinks = [
+    { href: "/customers", label: "مشتری جدید", Icon: UsersRound },
+    { href: "/inventory", label: "ورود قطعه", Icon: Boxes },
+    { href: "/invoices", label: "فاکتور جدید", Icon: ReceiptText },
+    { href: "/market", label: "بازار سراسری", Icon: Store },
+  ];
+  const activeTickets = data?.tickets.filter(ticket => !["DELIVERED", "CANCELLED"].includes(ticket.status)) ?? [];
   return <div className={`industry-dashboard industry-${industry}`}>
-    <Link href={demoData ? "/industry-demo" : "/industry-workspaces"} className="industry-back">همه دسته‌بندی‌ها ←</Link>
-    <div className="industry-heading"><div><h1>{config.title}</h1><p className="industry-muted">{config.description}</p></div><button disabled={loading} onClick={() => setReload(n=>n+1)}><RefreshCw size={16}/> به‌روزرسانی</button></div>
-    <nav className="industry-tabs" aria-label="انتخاب داشبورد">{Object.entries(INDUSTRY_WORKSPACES).map(([key,item])=><Link key={key} aria-current={key===industry?"page":undefined} href={demoData ? `/industry-demo?industry=${key}` : `/industry-workspaces/${key}`}>{item.title}</Link>)}</nav>
+    <header className="industry-hero"><div className="industry-hero-icon"><IndustryIcon size={28}/></div><div><small>{config.group}</small><h1>{config.title}</h1><p>{config.description}</p></div><div className="industry-hero-actions"><button className="industry-primary" aria-expanded={showIntake} onClick={() => setShowIntake(v => !v)}><Plus size={17}/>{showIntake ? "بستن پذیرش" : "پذیرش جدید"}</button><button aria-label="به‌روزرسانی" disabled={loading} onClick={() => setReload(n=>n+1)}><RefreshCw size={16}/></button></div></header>
     {demoData && <p className="industry-notice">تعمیرگاه نمونه پیوو — تمام مشتریان و پرونده‌های این صفحه ساختگی هستند؛ هیچ اطلاعاتی در سامانه ذخیره نمی‌شود.</p>}
-    <div className="industry-links"><button aria-expanded={showIntake} onClick={() => setShowIntake(v => !v)}>{showIntake ? "بستن فرم پذیرش" : "+ پذیرش جدید"}</button>{!demoData && <><Link href="/invoices">فاکتور و تسویه</Link><Link href="/history">سوابق و مدیریت تعمیرات</Link></>}</div>
-    <p className="industry-notice">فقط پرونده‌های دسته «{config.title}» در آمار محاسبه می‌شوند؛ اطلاعات موبایل و کامپیوتر وارد این نما نمی‌شود.</p>
     {notice && <p role="status" className="industry-notice">{notice}</p>}
     {showIntake && <IndustryIntake key={industry} industry={industry} demo={!!demoData} onCreated={() => { setShowIntake(false); setNotice("پذیرش ثبت شد."); setReload(n => n+1); }}/>}
     {error && <div role="alert" className="industry-error">اطلاعات دریافت نشد؛ این خطا به معنی خالی بودن پرونده‌ها نیست. دوباره به‌روزرسانی کنید.</div>}
     <section className="industry-metrics" aria-label="آمار پرونده‌ها">{cards.map(({label,value,Icon})=><article key={label}><Icon size={20}/><span>{label}</span><strong>{data?panelNumber(value,"fa"):"—"}</strong></article>)}</section>
-    <div className="industry-panels">
-      <section className="industry-panel"><h2>وضعیت پرونده‌ها</h2>{data ? total ? Object.entries(INDUSTRY_STATUS_LABELS).map(([status,label])=><div className="industry-bar" key={status}><div><span>{label}</span><b>{panelNumber(count(status),"fa")}</b></div><progress value={count(status)} max={total} aria-label={label}/></div>) : <p className="industry-empty">هنوز پرونده‌ای در این دسته ثبت نشده است.</p> : <p className="industry-empty">{loading?"در حال دریافت…":"اطلاعات در دسترس نیست."}</p>}</section>
-      <section className="industry-panel"><h2>خدمات تحت پوشش این نما</h2><ul className="industry-specialties">{config.examples.map(item=><li key={item}>{item}</li>)}</ul><h3>اطلاعات پذیرش اختصاصی</h3><p className="industry-muted">{config.intakeNeeds}</p>{!demoData && <div className="industry-links"><Link href="/customers">دفترچه مشتریان</Link><Link href="/inventory">انبار و قطعات</Link></div>}</section>
+    <div className="industry-overview">
+      <section className="industry-panel industry-performance"><div className="industry-section-title"><span><BarChart3 size={18}/></span><div><h2>نمای عملکرد تعمیرگاه</h2><p>توزیع زنده پرونده‌های این صنف</p></div></div>{data ? total ? <div className="industry-status-visual"><div className="industry-donut" style={{background:`conic-gradient(var(--iw-accent) 0 ${Math.round(count("IN_PROGRESS")/total*100)}%, #32c787 0 ${Math.round((count("IN_PROGRESS")+count("READY"))/total*100)}%, #f1ad3c 0 ${Math.round((count("IN_PROGRESS")+count("READY")+count("AWAITING_APPROVAL"))/total*100)}%, var(--iw-line) 0)`}}><span><b>{panelNumber(open,"fa")}</b><small>فعال</small></span></div><div className="industry-status-bars">{Object.entries(INDUSTRY_STATUS_LABELS).filter(([status]) => count(status)>0).map(([status,label])=><div className="industry-bar" key={status}><div><span>{label}</span><b>{panelNumber(count(status),"fa")}</b></div><progress value={count(status)} max={total} aria-label={label}/></div>)}</div></div> : <p className="industry-empty">هنوز پرونده‌ای در این دسته ثبت نشده است.</p> : <p className="industry-empty">{loading?"در حال دریافت…":"اطلاعات در دسترس نیست."}</p>}</section>
+      <aside className="industry-daily"><section className="industry-panel"><div className="industry-section-title"><span><Clock3 size={18}/></span><div><h2>داشبورد روزانه</h2><p>کارهای نیازمند پیگیری</p></div></div><div className="industry-daily-row"><span>{config.focus}</span><strong>{panelNumber(count(config.focusStatus),"fa")}</strong></div><div className="industry-daily-row"><span>پرونده‌های باز</span><strong>{panelNumber(open,"fa")}</strong></div></section>{!demoData && <section className="industry-panel"><h2>میانبرهای سریع</h2><div className="industry-quick-links">{quickLinks.map(({href,label,Icon})=><Link key={href} href={href}><Icon size={17}/><span>{label}</span></Link>)}</div></section>}</aside>
     </div>
-    <section className="industry-panel"><div className="industry-heading"><h2>آخرین پرونده‌ها</h2><input aria-label="جستجو در ۳۰ پرونده اخیر" placeholder="جستجو در ۳۰ پرونده اخیر…" value={search} onChange={e=>setSearch(e.target.value)}/></div>
+    <section className="industry-panel industry-active"><div className="industry-heading"><div><h2>تعمیرات فعال</h2><p className="industry-muted">آخرین پذیرش‌های در جریان · {panelNumber(activeTickets.length,"fa")} مورد</p></div><div className="industry-search"><FileText size={16}/><input aria-label="جستجو در ۳۰ پرونده اخیر" placeholder="شماره، دستگاه یا مشتری…" value={search} onChange={e=>setSearch(e.target.value)}/></div></div>
       <div className="industry-table"><table><thead><tr><th>شماره</th><th>{config.assetLabel}</th><th>مشتری</th><th>وضعیت</th><th>تاریخ ثبت</th><th>عملیات</th></tr></thead><tbody>{data?.tickets.filter(t=>`${t.no} ${t.deviceModel} ${t.customer.name}`.includes(search.trim())).map(t=><tr key={t.id}><td>{panelNumber(t.no,"fa")}</td><td>{t.deviceModel}</td><td>{t.customer.name}</td><td>{INDUSTRY_STATUS_LABELS[t.status]??t.status}</td><td>{panelDate(t.createdAt,"fa")}</td><td><IndustryTicketActions key={`${t.id}-${t.status}`} ticket={t} demo={!!demoData} onChange={(message) => { if (message) setNotice(message); setReload(n => n+1); }}/>{t.status === "PENDING" && <button disabled={!!pending} onClick={() => startTicket(t.id)}>شروع کار</button>}{!demoData && <Link href={`/tickets/${t.id}/receipt`}> مشاهده رسید</Link>}</td></tr>)}</tbody></table></div>
       {data && !data.tickets.some(t=>`${t.no} ${t.deviceModel} ${t.customer.name}`.includes(search.trim())) && <p className="industry-empty">{search?"نتیجه‌ای در پرونده‌های اخیر پیدا نشد.":"پرونده‌ای برای نمایش وجود ندارد."}</p>}
     </section>
+    <section className="industry-panel industry-scope"><div><h2>خدمات این فضای کاری</h2><ul className="industry-specialties">{config.examples.map(item=><li key={item}>{item}</li>)}</ul></div><div><h2>پذیرش متناسب با صنف</h2><p className="industry-muted">{config.intakeNeeds}</p>{!demoData && <div className="industry-links"><Link href="/history">سوابق تعمیرات</Link><Link href="/reports">گزارش‌ها</Link></div>}</div></section>
   </div>;
 }
