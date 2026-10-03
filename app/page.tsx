@@ -22,6 +22,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 import PwaInstallButton from "@/components/PwaInstallButton";
 import BaleInvite from "@/components/BaleInvite";
 import { HOME_COPY, getPublicLocale, publicPath, PUBLIC_LANGUAGE_LABELS, type PublicLocale } from "@/lib/public-locales";
+import { SEO_SOLUTIONS } from "@/lib/seo-solutions";
 
 export const dynamic = "force-dynamic";
 
@@ -129,9 +130,18 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
   if (/\bPeyvoNativeApp\b/i.test(headers().get("user-agent") || "")) redirect("/login");
 
   const appLinks = await getAppLinks();
+  const homeSchema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      { "@type": "Organization", "@id": `${BASE_URL}/#organization`, name: "پیوو", alternateName: "Peyvo", url: BASE_URL, logo: `${BASE_URL}/icons/logo-full.png`, email: "support@peyvo.ir" },
+      { "@type": "WebSite", "@id": `${BASE_URL}/#website`, url: BASE_URL, name: "پیوو", inLanguage: ["fa-IR", "en", "ar"], publisher: { "@id": `${BASE_URL}/#organization` } },
+      { "@type": "SoftwareApplication", "@id": `${BASE_URL}/#software`, name: "پیوو", alternateName: "Peyvo", url: BASE_URL, applicationCategory: "BusinessApplication", operatingSystem: "Web, Android", description: HOME_COPY.fa.seo.description, publisher: { "@id": `${BASE_URL}/#organization` }, offers: { "@type": "Offer", price: "0", priceCurrency: "IRR", description: "شروع رایگان" } },
+    ],
+  };
 
   return (
     <main className="landing-root home-v2" lang={copy.locale} dir={copy.dir}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeSchema).replace(/</g, "\\u003c") }} />
       <div className="home-atmosphere" aria-hidden><i /><i /><i /></div>
 
       <header className="home-header">
@@ -241,6 +251,13 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
         </div>
       </section>
 
+      {locale === "fa" && <section id="solutions" className="home-section home-workflow">
+        <div className="home-section-head compact"><span>راهکارهای تخصصی</span><h2>پنل متناسب با صنف تعمیرگاه شما</h2><p>هر صنف فرم پذیرش و داشبورد مرتبط با جریان واقعی خودش را دارد.</p></div>
+        <div className="home-workflow-grid">
+          {Object.entries(SEO_SOLUTIONS).map(([slug, item], index) => <article key={slug}><div><span>{String(index + 1).padStart(2, "0")}</span>{index < Object.keys(SEO_SOLUTIONS).length - 1 && <i />}</div><h3><Link href={`/solutions/${slug}`}>{item.title}</Link></h3><p>{item.description}</p><Link href={`/solutions/${slug}`} className="text-teal text-xs font-bold">مشاهده راهکار <ArrowLeft size={13} className="inline" /></Link></article>)}
+        </div>
+      </section>}
+
       <section id="trust" className="home-section home-trust">
         <div className="home-trust-copy">
           <span><ShieldCheck size={15} /> {copy.trust.kicker}</span>
@@ -268,7 +285,7 @@ export default async function Home({ searchParams }: { searchParams?: { lang?: s
       <footer className="home-footer">
         <div className="home-footer-main">
           <div className="home-footer-brand"><Logo size={34} /><p>{copy.footer.tagline}</p><div><i /> {copy.footer.online}</div></div>
-          <div><strong>{copy.footer.product}</strong><a href="#features">{copy.footer.features}</a><a href="#workflow">{copy.footer.workflow}</a><Link href={publicPath(locale, "/download")}>{copy.footer.download}</Link></div>
+          <div><strong>{copy.footer.product}</strong><a href="#features">{copy.footer.features}</a><a href="#workflow">{copy.footer.workflow}</a>{locale === "fa" && <Link href="/solutions/mobile-repair-shop">راهکارهای صنفی</Link>}<Link href={publicPath(locale, "/download")}>{copy.footer.download}</Link></div>
           <div><strong>{copy.footer.access}</strong><Link href="/login">{copy.footer.shopLogin}</Link><Link href="/customer/login">{copy.footer.customerLogin}</Link><Link href="/signup">{copy.footer.signup}</Link></div>
           <div><strong>{copy.footer.supportAndLegal}</strong><a href="mailto:support@peyvo.ir">{copy.footer.support}</a><Link href={publicPath(locale, "/terms")}>{copy.footer.terms}</Link><Link href={publicPath(locale, "/privacy")}>{copy.footer.privacy}</Link></div>
           <div className="home-footer-seal"><EnamadBadge /><small>{copy.footer.verified}</small></div>

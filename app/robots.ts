@@ -4,7 +4,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
-      allow: ["/", "/en", "/ar", "/download", "/about", "/terms", "/privacy", "/refund"],
+      allow: ["/", "/en", "/ar", "/download", "/about", "/terms", "/privacy", "/refund", "/solutions/"],
       disallow: ["/api/", "/admin/", "/superadmin/", "/customer/", "/tickets", "/invoices", "/reports"],
     },
     sitemap: "https://peyvo.ir/sitemap.xml",

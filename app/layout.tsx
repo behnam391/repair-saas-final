@@ -17,8 +17,14 @@ import { unstable_cache } from "next/cache";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Peyvo | پیوند تعمیرکار، فروشنده و مشتری",
-  description: "پیوو (Peyvo) — مدیریت گردش‌کار چندتخصصی تعمیر موبایل و پیوند تعمیرکار، فروشنده و مشتری",
+  metadataBase: new URL("https://peyvo.ir"),
+  title: { default: "پیوو | نرم‌افزار مدیریت تعمیرگاه و خدمات پس از فروش", template: "%s" },
+  description: "سامانه مدیریت پذیرش، تعمیرات، مشتریان، فاکتور، بدهی، انبار و اطلاع‌رسانی برای تعمیرگاه‌های موبایل، کامپیوتر، لوازم خانگی، تأسیسات، خودرو و تجهیزات صنعتی.",
+  applicationName: "پیوو",
+  authors: [{ name: "پیوو", url: "https://peyvo.ir" }],
+  creator: "پیوو",
+  publisher: "پیوو",
+  category: "business software",
   manifest: "/manifest.json",
   // Enamad (نماد اعتماد الکترونیکی) domain-ownership verification meta tag.
   // Renders <meta name="enamad" content="64662765"> in the site <head> on

@@ -44,10 +44,11 @@ const SERVICE_CATEGORY_OPTIONS = [
 const STEPS = ["نوع فعالیت", "تعمیرگاه", "مدیر", "تأیید شماره"];
 const SERVICE_SHORT_LABELS: Record<string, string> = { MOBILE: "موبایل و تبلت", COMPUTER: "کامپیوتر و لپ‌تاپ", APPLIANCE: "لوازم خانگی", FACILITIES: "تأسیسات", VEHICLE: "خودرو و موتور", INDUSTRIAL: "تجهیزات صنعتی" };
 
-export default function SignupPage() {
+export default function SignupPage({ searchParams }: { searchParams?: { category?: string } }) {
   const router = useRouter();
+  const requestedCategory = SERVICE_CATEGORY_OPTIONS.some(option => option.key === searchParams?.category) ? searchParams?.category : "MOBILE";
   const [form, setForm] = useState({
-    shopName: "", address: "", landlinePhone: "", businessSize: "SOLO" as string, specialties: [] as string[], serviceCategories: ["MOBILE"] as string[], shopType: "REPAIR" as string,
+    shopName: "", address: "", landlinePhone: "", businessSize: "SOLO" as string, specialties: [] as string[], serviceCategories: [requestedCategory] as string[], shopType: "REPAIR" as string,
     ownerName: "", nationalId: "", birthDate: "", phone: "", password: "",
   });
   const [error, setError] = useState("");
