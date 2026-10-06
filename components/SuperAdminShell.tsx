@@ -5,7 +5,7 @@ import "./super-admin-modern.css";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import type { LucideIcon } from "lucide-react";
-import { BadgeCheck, BellRing, Bug, ChevronDown, ChevronLeft, CircleUserRound, DatabaseBackup, Gift, Headphones, KeyRound, LayoutDashboard, LogOut, Menu, MessageCircle, MonitorSmartphone, Settings2, ShieldCheck, Store, UsersRound } from "lucide-react";
+import { BadgeCheck, BellRing, BrainCircuit, Bug, ChevronDown, ChevronLeft, CircleUserRound, DatabaseBackup, Gift, Headphones, KeyRound, LayoutDashboard, LogOut, Menu, MessageCircle, MonitorSmartphone, Settings2, ShieldCheck, Store, UsersRound } from "lucide-react";
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -25,6 +25,7 @@ const GROUPS: { label: string; items: { href: string; label: string; Icon: Lucid
     { href: "/superadmin/verification", label: "احراز هویت", Icon: BadgeCheck },
   ] },
   { label: "بازاریابی", items: [
+    { href: "/superadmin/marketing-advisor", label: "اتاق فکر بازاریابی", Icon: BrainCircuit },
     { href: "/superadmin/notifications", label: "اعلان عمومی", Icon: BellRing },
     { href: "/superadmin/ads", label: "تبلیغات", Icon: LayoutDashboard },
     { href: "/superadmin/gift-codes", label: "کد هدیه", Icon: Gift },
@@ -51,7 +52,7 @@ export default function SuperAdminShell({ children }: { children: ReactNode }) {
   const adminName = rawAdminName && !/^[?\s]+$/.test(rawAdminName) ? rawAdminName : "مدیر سامانه";
   const platformRole = (session?.user as any)?.platformRole;
   const platformPermissions = String((session?.user as any)?.platformPermissions ?? "").split(",").filter(Boolean);
-  const permissionFor = (href: string) => href.includes("/managers") || href.includes("/profile") ? "owner" : href.includes("/customers") ? "customers" : href.includes("/support") || href.includes("/conversations") ? "support" : href.includes("/verification") ? "verification" : href.includes("/notifications") || href.includes("/ads") || href.includes("/gift-codes") ? "marketing" : href.includes("/sessions") || href.includes("/errors") ? "sessions" : href.includes("/settings") || href.includes("/external-keys") ? "settings" : href.includes("/maintenance") ? "maintenance" : "shops";
+  const permissionFor = (href: string) => href.includes("/managers") || href.includes("/profile") ? "owner" : href.includes("/customers") ? "customers" : href.includes("/support") || href.includes("/conversations") ? "support" : href.includes("/verification") ? "verification" : href.includes("/marketing-advisor") || href.includes("/notifications") || href.includes("/ads") || href.includes("/gift-codes") ? "marketing" : href.includes("/sessions") || href.includes("/errors") ? "sessions" : href.includes("/settings") || href.includes("/external-keys") ? "settings" : href.includes("/maintenance") ? "maintenance" : "shops";
   const canSee = (href: string) => platformRole === "OWNER" || (permissionFor(href) !== "owner" && platformPermissions.includes(permissionFor(href)));
   if (pathname === "/superadmin/login") return <>{children}</>;
   const currentLabel = GROUPS.flatMap(g => g.items).find(i => isActive(i.href))?.label ?? "مدیریت";
